@@ -1,0 +1,377 @@
+# =============================================================================
+# AZALPLUS - Traducciones en Espanol
+# =============================================================================
+
+# Metadatos del idioma
+meta:
+  code: "es"
+  name: "Spanish"
+  native_name: "Espanol"
+  direction: "ltr"
+  date_format: "DD/MM/YYYY"
+  datetime_format: "DD/MM/YYYY HH:mm"
+  currency_format: "{amount} EUR"
+  decimal_separator: ","
+  thousands_separator: "."
+
+# Acciones comunes
+common:
+  save: "Guardar"
+  cancel: "Cancelar"
+  delete: "Eliminar"
+  edit: "Editar"
+  create: "Crear"
+  add: "Agregar"
+  remove: "Quitar"
+  search: "Buscar"
+  filter: "Filtrar"
+  sort: "Ordenar"
+  export: "Exportar"
+  import: "Importar"
+  print: "Imprimir"
+  download: "Descargar"
+  upload: "Subir"
+  confirm: "Confirmar"
+  close: "Cerrar"
+  back: "Volver"
+  next: "Siguiente"
+  previous: "Anterior"
+  refresh: "Actualizar"
+  reset: "Restablecer"
+  copy: "Copiar"
+  duplicate: "Duplicar"
+  archive: "Archivar"
+  restore: "Restaurar"
+  view: "Ver"
+  details: "Detalles"
+  actions: "Acciones"
+  yes: "Si"
+  no: "No"
+  ok: "OK"
+  loading: "Cargando..."
+  saving: "Guardando..."
+  deleting: "Eliminando..."
+  processing: "Procesando..."
+  select: "Seleccionar"
+  select_all: "Seleccionar todo"
+  deselect_all: "Deseleccionar todo"
+  none: "Ninguno"
+  all: "Todos"
+  new: "Nuevo"
+
+# Mensajes
+messages:
+  success: "Operacion exitosa"
+  error: "Ha ocurrido un error"
+  warning: "Advertencia"
+  info: "Informacion"
+  confirm_delete: "Esta seguro de que desea eliminar este elemento?"
+  confirm_cancel: "Esta seguro de que desea cancelar?"
+  saved_successfully: "Guardado exitosamente"
+  deleted_successfully: "Eliminado exitosamente"
+  created_successfully: "Creado exitosamente"
+  updated_successfully: "Actualizado exitosamente"
+  no_results: "Sin resultados"
+  no_data: "Sin datos"
+  loading_error: "Error de carga"
+  connection_error: "Error de conexion"
+  invalid_form: "Por favor corrija los errores del formulario"
+  required_field: "Este campo es obligatorio"
+  invalid_email: "Direccion de correo invalida"
+  invalid_format: "Formato invalido"
+  session_expired: "Su sesion ha expirado"
+  unauthorized: "Acceso no autorizado"
+  forbidden: "Acceso prohibido"
+  not_found: "Elemento no encontrado"
+
+# Navegacion
+navigation:
+  dashboard: "Panel de control"
+  calendar: "Calendario"
+  search: "Buscar"
+  settings: "Configuracion"
+  profile: "Perfil"
+  logout: "Cerrar sesion"
+  notifications: "Notificaciones"
+  help: "Ayuda"
+
+# Autenticacion
+auth:
+  login: "Iniciar sesion"
+  logout: "Cerrar sesion"
+  email: "Correo electronico"
+  password: "Contrasena"
+  remember_me: "Recordarme"
+  forgot_password: "Olvido su contrasena?"
+  reset_password: "Restablecer contrasena"
+  new_password: "Nueva contrasena"
+  confirm_password: "Confirmar contrasena"
+  login_button: "Iniciar sesion"
+  login_subtitle: "Inicie sesion para continuar"
+  invalid_credentials: "Credenciales invalidas"
+  account_locked: "Cuenta bloqueada"
+  change_password: "Cambiar contrasena"
+
+# Modulos de negocio
+modules:
+  # Productos
+  produits: "Productos"
+  produit: "Producto"
+
+  # Clientes
+  clients: "Clientes"
+  client: "Cliente"
+
+  # Presupuestos
+  devis: "Presupuestos"
+  devis_singular: "Presupuesto"
+
+  # Facturas
+  factures: "Facturas"
+  facture: "Factura"
+
+  # Intervenciones
+  interventions: "Intervenciones"
+  intervention: "Intervencion"
+
+  # Proveedores
+  fournisseurs: "Proveedores"
+  fournisseur: "Proveedor"
+
+  # Compras
+  achats: "Compras"
+  achat: "Compra"
+
+  # Tesoreria
+  tresorerie: "Tesoreria"
+
+  # Contabilidad
+  comptabilite: "Contabilidad"
+
+# Campos comunes
+fields:
+  id: "ID"
+  name: "Nombre"
+  description: "Descripcion"
+  reference: "Referencia"
+  status: "Estado"
+  created_at: "Creado el"
+  updated_at: "Actualizado el"
+  created_by: "Creado por"
+  updated_by: "Actualizado por"
+  date: "Fecha"
+  start_date: "Fecha de inicio"
+  end_date: "Fecha de fin"
+  due_date: "Fecha de vencimiento"
+  validity_date: "Fecha de validez"
+  amount: "Importe"
+  quantity: "Cantidad"
+  unit_price: "Precio unitario"
+  discount: "Descuento"
+  tax: "IVA"
+  total: "Total"
+  total_ht: "Base imponible"
+  total_ttc: "Total"
+  notes: "Notas"
+  comments: "Comentarios"
+  address: "Direccion"
+  postal_code: "Codigo postal"
+  city: "Ciudad"
+  country: "Pais"
+  phone: "Telefono"
+  mobile: "Movil"
+  fax: "Fax"
+  email: "Correo electronico"
+  website: "Sitio web"
+  company_name: "Razon social"
+  first_name: "Nombre"
+  last_name: "Apellidos"
+  siret: "CIF"
+  vat_number: "NIF/IVA"
+  payment_terms: "Condiciones de pago"
+  payment_method: "Forma de pago"
+  bank_account: "Cuenta bancaria"
+  category: "Categoria"
+  type: "Tipo"
+  priority: "Prioridad"
+  tags: "Etiquetas"
+  attachments: "Adjuntos"
+  lines: "Lineas"
+  object: "Asunto"
+
+# Estados
+statuses:
+  draft: "Borrador"
+  sent: "Enviado"
+  accepted: "Aceptado"
+  refused: "Rechazado"
+  cancelled: "Cancelado"
+  expired: "Caducado"
+  validated: "Validada"
+  paid: "Pagada"
+  partially_paid: "Parcialmente pagada"
+  pending: "Pendiente"
+  in_progress: "En curso"
+  completed: "Completado"
+  blocked: "Bloqueado"
+  to_plan: "Por planificar"
+  planned: "Planificado"
+  active: "Activo"
+  inactive: "Inactivo"
+
+# Documentos (PDF)
+documents:
+  quote: "PRESUPUESTO"
+  invoice: "FACTURA"
+  document_number: "N"
+  date: "Fecha"
+  validity: "Validez"
+  due_date: "Vencimiento"
+  client: "Cliente"
+  object: "Asunto"
+  description: "Descripcion"
+  qty: "Cant."
+  unit_price: "P.U."
+  discount: "Dto."
+  total: "Total"
+  subtotal: "Base imponible"
+  tax: "IVA"
+  grand_total: "Total"
+  already_paid: "Ya pagado"
+  remaining: "Pendiente"
+  notes: "Notas"
+  conditions: "Condiciones"
+  page: "Pagina"
+  of: "de"
+
+  # Condiciones de pago
+  payment_immediate: "Pago inmediato"
+  payment_30_days: "30 dias"
+  payment_60_days: "60 dias"
+  payment_end_of_month: "Fin de mes"
+
+  # Menciones legales
+  vat_mention: "IVA no aplicable, art. 293B del CGI"
+  late_payment: "Recargo por mora: 3 veces el tipo de interes legal"
+  recovery_fee: "Gastos de recobro: 40 EUR"
+
+# Configuracion
+settings:
+  title: "Configuracion"
+  general: "General"
+  company: "Empresa"
+  appearance: "Apariencia"
+  language: "Idioma"
+  theme: "Tema"
+  document_style: "Estilo de documentos"
+  notifications_settings: "Notificaciones"
+  security: "Seguridad"
+  users: "Usuarios"
+  roles: "Roles"
+  permissions: "Permisos"
+  integrations: "Integraciones"
+  api: "API"
+  billing: "Facturacion"
+  subscription: "Suscripcion"
+
+  # Idioma
+  language_select: "Seleccionar idioma"
+  language_saved: "Idioma guardado"
+  available_languages: "Idiomas disponibles"
+
+# Fechas y horas
+datetime:
+  today: "Hoy"
+  yesterday: "Ayer"
+  tomorrow: "Manana"
+  this_week: "Esta semana"
+  last_week: "Semana pasada"
+  next_week: "Proxima semana"
+  this_month: "Este mes"
+  last_month: "Mes pasado"
+  next_month: "Proximo mes"
+  this_year: "Este ano"
+  last_year: "Ano pasado"
+  custom: "Personalizado"
+
+  # Dias
+  monday: "Lunes"
+  tuesday: "Martes"
+  wednesday: "Miercoles"
+  thursday: "Jueves"
+  friday: "Viernes"
+  saturday: "Sabado"
+  sunday: "Domingo"
+
+  # Meses
+  january: "Enero"
+  february: "Febrero"
+  march: "Marzo"
+  april: "Abril"
+  may: "Mayo"
+  june: "Junio"
+  july: "Julio"
+  august: "Agosto"
+  september: "Septiembre"
+  october: "Octubre"
+  november: "Noviembre"
+  december: "Diciembre"
+
+# Formularios de documentos
+document_form:
+  new_quote: "Nuevo presupuesto"
+  new_invoice: "Nueva factura"
+  select_client: "Seleccionar un cliente..."
+  billing_address: "Direccion de facturacion"
+  order_lines: "Lineas de pedido"
+  optional_products: "Productos opcionales"
+  other_info: "Otra informacion"
+  add_product: "Agregar un producto"
+  add_section: "Agregar una seccion"
+  add_note: "Agregar una nota"
+  no_lines: "Sin lineas. Agregue un producto abajo."
+  product_name: "Nombre del producto"
+
+# Interfaz de usuario
+ui:
+  sidebar: "Barra lateral"
+  header: "Encabezado"
+  footer: "Pie de pagina"
+  main_content: "Contenido principal"
+  show_menu: "Mostrar menu"
+  hide_menu: "Ocultar menu"
+  expand: "Expandir"
+  collapse: "Contraer"
+  fullscreen: "Pantalla completa"
+  exit_fullscreen: "Salir de pantalla completa"
+  dark_mode: "Modo oscuro"
+  light_mode: "Modo claro"
+
+# Tablas
+table:
+  showing: "Mostrando"
+  of: "de"
+  entries: "registros"
+  first: "Primero"
+  last: "Ultimo"
+  empty: "Sin registros"
+  per_page: "por pagina"
+  selected: "seleccionado(s)"
+  bulk_actions: "Acciones masivas"
+  columns: "Columnas"
+  export_csv: "Exportar CSV"
+  export_excel: "Exportar Excel"
+  export_pdf: "Exportar PDF"
+
+# Errores
+errors:
+  generic: "Ha ocurrido un error"
+  network: "Error de red"
+  server: "Error del servidor"
+  validation: "Error de validacion"
+  permission: "Permiso denegado"
+  not_found: "Recurso no encontrado"
+  timeout: "Tiempo de espera agotado"
+  file_too_large: "Archivo demasiado grande"
+  invalid_file_type: "Tipo de archivo no soportado"
+  upload_failed: "Error al subir"

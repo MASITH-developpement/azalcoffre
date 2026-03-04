@@ -1,0 +1,27 @@
+# AZALPLUS - Module Documents (Attachments)
+# Gestion des fichiers attachés aux enregistrements de tous les modules
+Document:
+  nom: "Document"
+  nom_affichage: "Documents"
+  icone: "file"
+  menu: "Système"
+  description: "Fichiers attachés aux enregistrements"
+  actif: true
+
+  champs:
+    nom: texte requis
+    type_mime: texte requis
+    taille: entier requis
+    chemin: texte requis
+    module: texte requis
+    record_id: uuid requis
+    uploaded_by: uuid requis
+    uploaded_at: datetime
+
+  # Pas de workflow pour les documents
+  workflow: []
+
+  # Actions disponibles
+  actions:
+    - telecharger
+    - supprimer

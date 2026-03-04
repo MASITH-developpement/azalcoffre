@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feuille de temps - AZALPLUS</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .timesheet-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .timesheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .week-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .week-nav button {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .week-nav button:hover {
+            background: #f7fafc;
+        }
+
+        .week-label {
+            font-size: 1.25rem;
+            font-weight: 600;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .timesheet-grid {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .timesheet-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .timesheet-table th,
+        .timesheet-table td {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .timesheet-table th {
+            background: #f7fafc;
+            font-weight: 600;
+        }
+
+        .timesheet-table th.day-header {
+            min-width: 100px;
+        }
+
+        .timesheet-table th.day-header.today {
+            background: #eef6ff;
+            color: #3b82f6;
+        }
+
+        .timesheet-table th.day-header.weekend {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .project-cell {
+            text-align: left;
+            min-width: 250px;
+        }
+
+        .project-name {
+            font-weight: 500;
+            color: #1a202c;
+        }
+
+        .project-client {
+            font-size: 0.875rem;
+            color: #718096;
+        }
+
+        .time-input {
+            width: 60px;
+            padding: 6px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .time-input.has-time {
+            background: #f0fdf4;
+            border-color: #22c55e;
+        }
+
+        .total-cell {
+            font-weight: 600;
+            background: #f7fafc;
+        }
+
+        .total-row td {
+            background: #edf2f7;
+            font-weight: 600;
+        }
+
+        .add-row-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            color: #3b82f6;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .add-row-btn:hover {
+            background: #f7fafc;
+        }
+
+        .timesheet-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-draft { background: #e2e8f0; color: #4a5568; }
+        .status-submitted { background: #dbeafe; color: #2563eb; }
+        .status-approved { background: #dcfce7; color: #16a34a; }
+        .status-rejected { background: #fee2e2; color: #dc2626; }
+
+        .timer-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 1000;
+        }
+
+        .timer-display {
+            font-family: monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .timer-context {
+            font-size: 0.875rem;
+            color: #718096;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .timer-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .timer-btn.start { background: #22c55e; color: white; }
+        .timer-btn.stop { background: #ef4444; color: white; }
+        .timer-btn:hover { opacity: 0.9; }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .summary-card .label {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .summary-card .value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .summary-card .value.billable { color: #22c55e; }
+        .summary-card .value.non-billable { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="timesheet-container">
+        <!-- Header -->
+        <div class="timesheet-header">
+            <h1>Feuille de temps</h1>
+            <div class="week-nav">
+                <button onclick="prevWeek()">Semaine precedente</button>
+                <span class="week-label" id="week-label">Semaine 09 - Mars 2026</span>
+                <button onclick="nextWeek()">Semaine suivante</button>
+                <button onclick="goToday()">Aujourd'hui</button>
+            </div>
+            <div>
+                <span class="status-badge status-draft" id="week-status">Brouillon</span>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="label">Total semaine</div>
+                <div class="value" id="total-week">0h 00m</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Facturable</div>
+                <div class="value billable" id="total-billable">0h 00m</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Non facturable</div>
+                <div class="value non-billable" id="total-non-billable">0h 00m</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Heures restantes</div>
+                <div class="value" id="remaining-hours">35h 00m</div>
+            </div>
+        </div>
+
+        <!-- Timesheet Grid -->
+        <div class="timesheet-grid">
+            <table class="timesheet-table">
+                <thead>
+                    <tr>
+                        <th class="project-cell">Projet / Intervention</th>
+                        <th class="day-header" id="day-0">Lun 03</th>
+                        <th class="day-header" id="day-1">Mar 04</th>
+                        <th class="day-header" id="day-2">Mer 05</th>
+                        <th class="day-header" id="day-3">Jeu 06</th>
+                        <th class="day-header" id="day-4">Ven 07</th>
+                        <th class="day-header weekend" id="day-5">Sam 08</th>
+                        <th class="day-header weekend" id="day-6">Dim 09</th>
+                        <th class="total-cell">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="timesheet-body">
+                    <!-- Dynamic rows -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="9">
+                            <button class="add-row-btn" onclick="addRow()">
+                                + Ajouter une ligne
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="total-row">
+                        <td class="project-cell"><strong>Total journalier</strong></td>
+                        <td id="total-day-0">0:00</td>
+                        <td id="total-day-1">0:00</td>
+                        <td id="total-day-2">0:00</td>
+                        <td id="total-day-3">0:00</td>
+                        <td id="total-day-4">0:00</td>
+                        <td id="total-day-5">0:00</td>
+                        <td id="total-day-6">0:00</td>
+                        <td id="grand-total">0:00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Actions -->
+        <div class="timesheet-actions">
+            <button class="btn btn-secondary" onclick="saveDraft()">Enregistrer brouillon</button>
+            <button class="btn btn-primary" onclick="submitWeek()">Soumettre la semaine</button>
+        </div>
+    </div>
+
+    <!-- Timer Widget -->
+    <div class="timer-widget" id="timer-widget" style="display: none;">
+        <div>
+            <div class="timer-display" id="timer-display">00:00:00</div>
+            <div class="timer-context" id="timer-context">-</div>
+        </div>
+        <button class="timer-btn stop" onclick="stopTimer()">Stop</button>
+    </div>
+
+    <script>
+        // State
+        let currentWeekStart = getWeekStart(new Date());
+        let timeEntries = {};
+        let timerRunning = false;
+        let timerStart = null;
+        let timerInterval = null;
+        let timerContext = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateWeekDisplay();
+            loadTimeEntries();
+            checkActiveTimer();
+        });
+
+        // Week navigation
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function prevWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            updateWeekDisplay();
+            loadTimeEntries();
+        }
+
+        function nextWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            updateWeekDisplay();
+            loadTimeEntries();
+        }
+
+        function goToday() {
+            currentWeekStart = getWeekStart(new Date());
+            updateWeekDisplay();
+            loadTimeEntries();
+        }
+
+        function updateWeekDisplay() {
+            const weekNum = getWeekNumber(currentWeekStart);
+            const monthName = currentWeekStart.toLocaleString('fr-FR', { month: 'long' });
+            const year = currentWeekStart.getFullYear();
+            document.getElementById('week-label').textContent =
+                `Semaine ${weekNum} - ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+
+            // Update day headers
+            const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+            const today = new Date();
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(currentWeekStart);
+                date.setDate(date.getDate() + i);
+                const header = document.getElementById(`day-${i}`);
+                header.textContent = `${days[i]} ${date.getDate().toString().padStart(2, '0')}`;
+                header.classList.remove('today');
+                if (date.toDateString() === today.toDateString()) {
+                    header.classList.add('today');
+                }
+            }
+        }
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        // Time entries
+        async function loadTimeEntries() {
+            const weekKey = currentWeekStart.toISOString().split('T')[0];
+            try {
+                const res = await fetch(`/api/temps/semaine/${weekKey}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    timeEntries = data.entries || {};
+                    renderTimesheet();
+                    updateTotals();
+                }
+            } catch (e) {
+                console.error('Error loading time entries:', e);
+                // Load sample data for demo
+                renderSampleData();
+            }
+        }
+
+        function renderSampleData() {
+            const tbody = document.getElementById('timesheet-body');
+            tbody.innerHTML = `
+                <tr data-row-id="1">
+                    <td class="project-cell">
+                        <select class="context-select" onchange="updateContext(this, 1)">
+                            <option value="">-- Selectionner --</option>
+                            <option value="INT-2026-0042" selected>INT-2026-0042 - Maintenance climatisation</option>
+                            <option value="INT-2026-0043">INT-2026-0043 - Installation electrique</option>
+                            <option value="PRJ-001">Projet: Renovation bureaux</option>
+                        </select>
+                        <div class="project-client">Client: ACME Corp</div>
+                    </td>
+                    <td><input type="text" class="time-input has-time" value="7:30" onchange="updateTime(this, 1, 0)"></td>
+                    <td><input type="text" class="time-input has-time" value="8:00" onchange="updateTime(this, 1, 1)"></td>
+                    <td><input type="text" class="time-input has-time" value="6:30" onchange="updateTime(this, 1, 2)"></td>
+                    <td><input type="text" class="time-input" value="" onchange="updateTime(this, 1, 3)"></td>
+                    <td><input type="text" class="time-input" value="" onchange="updateTime(this, 1, 4)"></td>
+                    <td><input type="text" class="time-input" value="" onchange="updateTime(this, 1, 5)"></td>
+                    <td><input type="text" class="time-input" value="" onchange="updateTime(this, 1, 6)"></td>
+                    <td class="total-cell">22:00</td>
+                </tr>
+                <tr data-row-id="2">
+                    <td class="project-cell">
+                        <select class="context-select" onchange="updateContext(this, 2)">
+                            <option value="">-- Selectionner --</option>
+                            <option value="INT-2026-0042">INT-2026-0042 - Maintenance climatisation</option>
+                            <option value="INT-2026-0043" selected>INT-2026-0043 - Installation electrique</option>
+                            <option value="PRJ-001">Projet: Renovation bureaux</option>
+                        </select>
+                        <div class="project-client">Client: Tech Solutions</div>
+                    </td>
+                    <td><input type="text" class="time-input" value="" onchange="updateTime(this, 2, 0)"></td>
+                    <td><input type="text" class="time-input" value="" onchange="updateTime(this, 2, 1)"></td>
+                    <td><input type="text" class="time-input has-time" value="1:30" onchange="updateTime(this, 2, 2)"></td>
+                    <td><input type="text" class="time-input has-time" value="8:00" onchange="updateTime(this, 2, 3)"></td>
+                    <td><input type="text" class="time-input has-time" value="8:00" onchange="updateTime(this, 2, 4)"></td>
+                    <td><input type="text" class="time-input" value="" onchange="updateTime(this, 2, 5)"></td>
+                    <td><input type="text" class="time-input" value="" onchange="updateTime(this, 2, 6)"></td>
+                    <td class="total-cell">17:30</td>
+                </tr>
+            `;
+            updateTotals();
+        }
+
+        function renderTimesheet() {
+            // Implementation for actual data rendering
+        }
+
+        function addRow() {
+            const tbody = document.getElementById('timesheet-body');
+            const rowId = Date.now();
+            const row = document.createElement('tr');
+            row.dataset.rowId = rowId;
+            row.innerHTML = `
+                <td class="project-cell">
+                    <select class="context-select" onchange="updateContext(this, ${rowId})">
+                        <option value="">-- Selectionner --</option>
+                        <option value="INT-2026-0042">INT-2026-0042 - Maintenance climatisation</option>
+                        <option value="INT-2026-0043">INT-2026-0043 - Installation electrique</option>
+                        <option value="PRJ-001">Projet: Renovation bureaux</option>
+                    </select>
+                    <div class="project-client"></div>
+                </td>
+                <td><input type="text" class="time-input" value="" onchange="updateTime(this, ${rowId}, 0)"></td>
+                <td><input type="text" class="time-input" value="" onchange="updateTime(this, ${rowId}, 1)"></td>
+                <td><input type="text" class="time-input" value="" onchange="updateTime(this, ${rowId}, 2)"></td>
+                <td><input type="text" class="time-input" value="" onchange="updateTime(this, ${rowId}, 3)"></td>
+                <td><input type="text" class="time-input" value="" onchange="updateTime(this, ${rowId}, 4)"></td>
+                <td><input type="text" class="time-input" value="" onchange="updateTime(this, ${rowId}, 5)"></td>
+                <td><input type="text" class="time-input" value="" onchange="updateTime(this, ${rowId}, 6)"></td>
+                <td class="total-cell">0:00</td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        function updateTime(input, rowId, dayIndex) {
+            const value = input.value.trim();
+            if (value) {
+                input.classList.add('has-time');
+            } else {
+                input.classList.remove('has-time');
+            }
+            updateRowTotal(rowId);
+            updateTotals();
+        }
+
+        function updateRowTotal(rowId) {
+            const row = document.querySelector(`tr[data-row-id="${rowId}"]`);
+            if (!row) return;
+            const inputs = row.querySelectorAll('.time-input');
+            let totalMinutes = 0;
+            inputs.forEach(input => {
+                totalMinutes += parseTimeToMinutes(input.value);
+            });
+            const totalCell = row.querySelector('.total-cell');
+            totalCell.textContent = formatMinutesToTime(totalMinutes);
+        }
+
+        function updateTotals() {
+            const rows = document.querySelectorAll('#timesheet-body tr');
+            const dayTotals = [0, 0, 0, 0, 0, 0, 0];
+            let grandTotal = 0;
+
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('.time-input');
+                inputs.forEach((input, i) => {
+                    const minutes = parseTimeToMinutes(input.value);
+                    dayTotals[i] += minutes;
+                    grandTotal += minutes;
+                });
+            });
+
+            for (let i = 0; i < 7; i++) {
+                document.getElementById(`total-day-${i}`).textContent = formatMinutesToTime(dayTotals[i]);
+            }
+            document.getElementById('grand-total').textContent = formatMinutesToTime(grandTotal);
+
+            // Update summary cards
+            document.getElementById('total-week').textContent = formatMinutesToDisplay(grandTotal);
+            document.getElementById('total-billable').textContent = formatMinutesToDisplay(grandTotal); // Simplified
+            document.getElementById('remaining-hours').textContent = formatMinutesToDisplay(Math.max(0, 35*60 - grandTotal));
+        }
+
+        function parseTimeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.split(':');
+            if (parts.length === 2) {
+                return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            }
+            return parseInt(timeStr) * 60 || 0;
+        }
+
+        function formatMinutesToTime(minutes) {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return `${h}:${m.toString().padStart(2, '0')}`;
+        }
+
+        function formatMinutesToDisplay(minutes) {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return `${h}h ${m.toString().padStart(2, '0')}m`;
+        }
+
+        // Timer
+        function checkActiveTimer() {
+            const saved = localStorage.getItem('activeTimer');
+            if (saved) {
+                const timer = JSON.parse(saved);
+                timerStart = new Date(timer.start);
+                timerContext = timer.context;
+                startTimerDisplay();
+            }
+        }
+
+        function startTimer(context) {
+            timerStart = new Date();
+            timerContext = context;
+            localStorage.setItem('activeTimer', JSON.stringify({
+                start: timerStart.toISOString(),
+                context: context
+            }));
+            startTimerDisplay();
+        }
+
+        function startTimerDisplay() {
+            timerRunning = true;
+            document.getElementById('timer-widget').style.display = 'flex';
+            document.getElementById('timer-context').textContent = timerContext || '-';
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const elapsed = Math.floor((new Date() - timerStart) / 1000);
+            const h = Math.floor(elapsed / 3600);
+            const m = Math.floor((elapsed % 3600) / 60);
+            const s = elapsed % 60;
+            document.getElementById('timer-display').textContent =
+                `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function stopTimer() {
+            if (!timerRunning) return;
+            clearInterval(timerInterval);
+            timerRunning = false;
+
+            const elapsed = Math.floor((new Date() - timerStart) / 1000 / 60);
+            localStorage.removeItem('activeTimer');
+            document.getElementById('timer-widget').style.display = 'none';
+
+            // Create time entry
+            if (elapsed > 0) {
+                createTimeEntry(timerContext, elapsed);
+            }
+        }
+
+        async function createTimeEntry(context, minutes) {
+            try {
+                await fetch('/api/temps', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        date: new Date().toISOString().split('T')[0],
+                        duree_minutes: minutes,
+                        intervention_id: context,
+                        description: 'Saisie via timer'
+                    })
+                });
+                loadTimeEntries();
+            } catch (e) {
+                console.error('Error creating time entry:', e);
+            }
+        }
+
+        // Actions
+        async function saveDraft() {
+            alert('Brouillon enregistre');
+        }
+
+        async function submitWeek() {
+            if (confirm('Soumettre cette feuille de temps pour approbation ?')) {
+                alert('Feuille de temps soumise');
+            }
+        }
+
+        function updateContext(select, rowId) {
+            const row = document.querySelector(`tr[data-row-id="${rowId}"]`);
+            const clientDiv = row.querySelector('.project-client');
+            if (select.value) {
+                clientDiv.textContent = 'Client: -';
+            } else {
+                clientDiv.textContent = '';
+            }
+        }
+    </script>
+</body>
+</html>

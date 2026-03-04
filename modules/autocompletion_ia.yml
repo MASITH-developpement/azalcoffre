@@ -1,0 +1,407 @@
+# =============================================================================
+# AZALPLUS - Module Autocompletion IA
+# =============================================================================
+# Configuration de l'autocompletion intelligente utilisant des modeles IA
+# Supporte OpenAI (ChatGPT) et Anthropic (Claude)
+# =============================================================================
+
+nom: AutocompletionIA
+nom_affichage: Autocompletion IA
+icone: sparkles
+menu: Parametres
+description: Configuration de l'autocompletion intelligente par IA
+
+# -----------------------------------------------------------------------------
+# Configuration des fournisseurs IA
+# -----------------------------------------------------------------------------
+fournisseurs:
+  - nom: openai
+    nom_affichage: OpenAI (ChatGPT)
+    description: Modeles GPT d'OpenAI
+    modeles:
+      - id: gpt-4o
+        nom: GPT-4o
+        description: Modele multimodal rapide et intelligent
+        contexte_max: 128000
+        recommande: true
+      - id: gpt-4o-mini
+        nom: GPT-4o Mini
+        description: Modele economique pour taches simples
+        contexte_max: 128000
+        economique: true
+      - id: gpt-4-turbo
+        nom: GPT-4 Turbo
+        description: Modele puissant avec grand contexte
+        contexte_max: 128000
+    endpoint: https://api.openai.com/v1/chat/completions
+    auth_header: Authorization
+    auth_prefix: "Bearer "
+
+  - nom: anthropic
+    nom_affichage: Anthropic (Claude)
+    description: Modeles Claude d'Anthropic
+    modeles:
+      - id: claude-sonnet-4-20250514
+        nom: Claude Sonnet 4
+        description: Equilibre performance/cout
+        contexte_max: 200000
+        recommande: true
+      - id: claude-opus-4-20250514
+        nom: Claude Opus 4
+        description: Modele le plus puissant
+        contexte_max: 200000
+      - id: claude-3-5-haiku-20241022
+        nom: Claude 3.5 Haiku
+        description: Modele rapide et economique
+        contexte_max: 200000
+        economique: true
+    endpoint: https://api.anthropic.com/v1/messages
+    auth_header: x-api-key
+    version_header: anthropic-version
+    version: "2023-06-01"
+
+# -----------------------------------------------------------------------------
+# Champs de configuration (stockes par tenant)
+# -----------------------------------------------------------------------------
+champs:
+  # Activation globale
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Activer l'autocompletion IA
+
+  # Fournisseur par defaut
+  - nom: fournisseur_defaut
+    type: select
+    obligatoire: true
+    defaut: anthropic
+    options: [openai, anthropic]
+    description: Fournisseur IA par defaut
+
+  # Modele par defaut
+  - nom: modele_defaut
+    type: text
+    obligatoire: true
+    defaut: claude-sonnet-4-20250514
+    description: Modele IA par defaut
+    autocompletion: true
+
+  # Cle API OpenAI (chiffree)
+  - nom: openai_api_key
+    type: text
+    obligatoire: false
+    chiffre: true
+    description: Cle API OpenAI (sk-...)
+    masque: true
+
+  # Cle API Anthropic (chiffree)
+  - nom: anthropic_api_key
+    type: text
+    obligatoire: false
+    chiffre: true
+    description: Cle API Anthropic (sk-ant-...)
+    masque: true
+
+  # Mode de fonctionnement
+  - nom: mode
+    type: select
+    obligatoire: false
+    defaut: suggestions
+    options: [suggestions, completion, hybrid]
+    description: |
+      Mode de fonctionnement:
+      - suggestions: Propose des suggestions dans une liste
+      - completion: Complete automatiquement le texte
+      - hybrid: Combine les deux modes
+
+  # Nombre de suggestions
+  - nom: nombre_suggestions
+    type: number
+    obligatoire: false
+    defaut: 5
+    min: 1
+    max: 10
+    description: Nombre de suggestions a afficher
+
+  # Delai avant declenchement (ms)
+  - nom: delai_declenchement
+    type: number
+    obligatoire: false
+    defaut: 300
+    min: 100
+    max: 2000
+    description: Delai en millisecondes avant declenchement
+
+  # Longueur minimale pour declencher
+  - nom: longueur_min
+    type: number
+    obligatoire: false
+    defaut: 2
+    min: 1
+    max: 10
+    description: Nombre minimum de caracteres pour declencher
+
+  # Temperature (creativite)
+  - nom: temperature
+    type: number
+    obligatoire: false
+    defaut: 0.3
+    min: 0
+    max: 1
+    description: Temperature (0=precis, 1=creatif)
+
+  # Utiliser le contexte du module
+  - nom: utiliser_contexte_module
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Enrichir les suggestions avec le contexte du module
+
+  # Utiliser l'historique
+  - nom: utiliser_historique
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Utiliser l'historique des saisies precedentes
+
+  # Cache des suggestions
+  - nom: cache_actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Mettre en cache les suggestions
+
+  - nom: cache_duree_minutes
+    type: number
+    obligatoire: false
+    defaut: 60
+    description: Duree du cache en minutes
+
+  # Limites d'utilisation
+  - nom: limite_requetes_jour
+    type: number
+    obligatoire: false
+    defaut: 1000
+    description: Limite de requetes par jour par tenant
+
+  - nom: limite_tokens_jour
+    type: number
+    obligatoire: false
+    defaut: 100000
+    description: Limite de tokens par jour par tenant
+
+  # Fallback
+  - nom: fallback_fournisseur
+    type: select
+    obligatoire: false
+    options: [openai, anthropic, local, none]
+    description: Fournisseur de secours si le principal echoue
+
+  # Mode local (sans IA)
+  - nom: mode_local_actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Activer le mode local (suggestions basees sur historique)
+
+# -----------------------------------------------------------------------------
+# Configuration par type de champ
+# -----------------------------------------------------------------------------
+config_par_type:
+  text:
+    actif: true
+    prompt_systeme: |
+      Tu es un assistant d'autocompletion pour un ERP.
+      Propose des completions pertinentes et professionnelles.
+      Reponds uniquement avec les suggestions, une par ligne.
+      Contexte: champ de type texte.
+
+  email:
+    actif: true
+    prompt_systeme: |
+      Tu es un assistant d'autocompletion pour les emails professionnels.
+      Propose des adresses email professionnelles plausibles.
+      Format: prenom.nom@domaine.com
+      Reponds uniquement avec les suggestions, une par ligne.
+
+  textarea:
+    actif: true
+    prompt_systeme: |
+      Tu es un assistant de redaction professionnelle pour un ERP.
+      Aide a completer le texte de maniere coherente et professionnelle.
+      Garde le meme ton et style que le debut du texte.
+
+  adresse:
+    actif: true
+    prompt_systeme: |
+      Tu es un assistant d'autocompletion pour les adresses francaises.
+      Propose des adresses plausibles basees sur le debut saisi.
+      Format: numero rue, code postal ville.
+
+  nom_personne:
+    actif: true
+    prompt_systeme: |
+      Tu es un assistant d'autocompletion pour les noms de personnes.
+      Propose des noms francophones courants.
+      Format: Nom ou Prenom selon le contexte.
+
+  nom_entreprise:
+    actif: true
+    prompt_systeme: |
+      Tu es un assistant d'autocompletion pour les noms d'entreprises.
+      Propose des noms d'entreprises plausibles.
+      Inclus le statut juridique si pertinent (SARL, SAS, etc.).
+
+  reference:
+    actif: true
+    prompt_systeme: |
+      Tu es un assistant d'autocompletion pour les references de documents.
+      Propose des references suivant les patterns courants (FAC-, DEV-, CMD-).
+      Base-toi sur le format detecte.
+
+# -----------------------------------------------------------------------------
+# Configuration par module (surcharge)
+# -----------------------------------------------------------------------------
+config_par_module:
+  Clients:
+    champs:
+      nom:
+        type_completion: nom_entreprise
+        contexte_additionnel: "Client B2B ou B2C selon le type"
+      email:
+        type_completion: email
+      adresse:
+        type_completion: adresse
+
+  Contacts:
+    champs:
+      nom:
+        type_completion: nom_personne
+      prenom:
+        type_completion: nom_personne
+      email:
+        type_completion: email
+
+  Factures:
+    champs:
+      reference:
+        type_completion: reference
+        pattern: "FAC-{ANNEE}-{NUMERO}"
+      objet:
+        type_completion: textarea
+        contexte_additionnel: "Objet de facture professionnelle"
+
+  Devis:
+    champs:
+      reference:
+        type_completion: reference
+        pattern: "DEV-{ANNEE}-{NUMERO}"
+      objet:
+        type_completion: textarea
+        contexte_additionnel: "Objet de devis commercial"
+
+  Interventions:
+    champs:
+      description:
+        type_completion: textarea
+        contexte_additionnel: "Description technique d'intervention"
+      rapport:
+        type_completion: textarea
+        contexte_additionnel: "Rapport d'intervention technique"
+
+# -----------------------------------------------------------------------------
+# Prompts de base
+# -----------------------------------------------------------------------------
+prompts:
+  base_completion: |
+    Tu es un assistant d'autocompletion pour l'ERP AZALPLUS.
+    Module: {module}
+    Champ: {champ}
+    Type: {type}
+    Valeur actuelle: {valeur}
+
+    Historique recent du champ (pour reference):
+    {historique}
+
+    Propose {nombre} suggestions pertinentes pour completer cette saisie.
+    Reponds uniquement avec les suggestions, une par ligne, sans numerotation.
+
+  base_generation: |
+    Tu es un assistant de redaction pour l'ERP AZALPLUS.
+    Module: {module}
+    Champ: {champ}
+    Contexte: {contexte}
+
+    Genere un contenu professionnel et adapte au contexte metier.
+
+  correction_orthographe: |
+    Corrige les fautes d'orthographe et de grammaire dans le texte suivant.
+    Ne modifie pas le sens ni le style.
+    Texte: {texte}
+
+  reformulation: |
+    Reformule le texte suivant de maniere plus professionnelle.
+    Garde le meme sens et la meme longueur approximative.
+    Texte: {texte}
+
+# -----------------------------------------------------------------------------
+# Actions disponibles
+# -----------------------------------------------------------------------------
+actions:
+  - tester_connexion_openai
+  - tester_connexion_anthropic
+  - vider_cache
+  - voir_statistiques
+  - configurer_module
+  - importer_historique
+
+# -----------------------------------------------------------------------------
+# Statistiques d'utilisation
+# -----------------------------------------------------------------------------
+statistiques:
+  champs:
+    - nom: date
+      type: date
+    - nom: fournisseur
+      type: text
+    - nom: modele
+      type: text
+    - nom: requetes
+      type: number
+    - nom: tokens_input
+      type: number
+    - nom: tokens_output
+      type: number
+    - nom: cout_estime
+      type: number
+    - nom: temps_reponse_moyen_ms
+      type: number
+    - nom: erreurs
+      type: number
+
+# -----------------------------------------------------------------------------
+# Marceau (alertes et suggestions)
+# -----------------------------------------------------------------------------
+marceau:
+  alertes:
+    - si openai_api_key vide et anthropic_api_key vide: "Aucune cle API configuree - autocompletion IA desactivee"
+    - si requetes_jour > limite_requetes_jour * 0.8: "Limite de requetes bientot atteinte (80%)"
+    - si tokens_jour > limite_tokens_jour * 0.8: "Limite de tokens bientot atteinte (80%)"
+    - si erreurs_consecutives > 5: "Erreurs repetees - verifier la configuration"
+
+  suggestions:
+    - "Configurez les deux fournisseurs pour avoir un fallback"
+    - "Utilisez Claude pour les taches complexes, GPT-4o-mini pour les simples"
+    - "Activez le cache pour reduire les couts"
+
+# -----------------------------------------------------------------------------
+# Securite
+# -----------------------------------------------------------------------------
+securite:
+  chiffrement_cles: obligatoire
+  audit_trail: true
+  rgpd:
+    - Les donnees ne sont pas stockees par les fournisseurs IA
+    - Aucune donnee personnelle n'est envoyee sans consentement
+    - Les cles API sont chiffrees en base

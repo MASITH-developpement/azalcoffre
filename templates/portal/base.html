@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - AZALPLUS Portail Client</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .portal-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .portal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+        .portal-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .portal-company {
+            text-align: right;
+        }
+        .portal-company-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        .portal-company-details {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+        .document-card {
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+        .document-header {
+            background: var(--gray-50);
+            padding: 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .document-type {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-500);
+            margin-bottom: 4px;
+        }
+        .document-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        .document-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 24px;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .meta-block { }
+        .meta-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-500);
+            margin-bottom: 4px;
+        }
+        .meta-value {
+            font-size: 14px;
+            color: var(--gray-800);
+        }
+        .document-lines {
+            padding: 24px;
+        }
+        .lines-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .lines-table th {
+            text-align: left;
+            padding: 12px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--gray-500);
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .lines-table td {
+            padding: 14px 8px;
+            font-size: 14px;
+            color: var(--gray-700);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .lines-table .col-qty,
+        .lines-table .col-price,
+        .lines-table .col-total {
+            text-align: right;
+        }
+        .document-totals {
+            padding: 24px;
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+        }
+        .total-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 48px;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+        .total-row .label {
+            color: var(--gray-600);
+            min-width: 120px;
+            text-align: right;
+        }
+        .total-row .value {
+            min-width: 100px;
+            text-align: right;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+        .total-row.grand-total {
+            padding-top: 12px;
+            margin-top: 8px;
+            border-top: 2px solid var(--gray-300);
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .total-row.grand-total .value {
+            color: var(--primary);
+        }
+        .document-notes {
+            padding: 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+        .notes-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+        .notes-content {
+            font-size: 14px;
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+        .document-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            padding: 32px;
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+        }
+        .btn-lg {
+            padding: 12px 24px;
+            font-size: 15px;
+        }
+        .portal-footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--gray-400);
+            font-size: 12px;
+        }
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .alert-success {
+            background: var(--success-light);
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+        .alert-error {
+            background: var(--error-light);
+            color: #991B1B;
+            border: 1px solid #FECACA;
+        }
+        .alert-info {
+            background: var(--info-light);
+            color: #1E40AF;
+            border: 1px solid #BFDBFE;
+        }
+        @media print {
+            .document-actions, .portal-footer {
+                display: none;
+            }
+            .portal-container {
+                margin: 0;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body style="background: var(--gray-100);">
+    {% block content %}{% endblock %}
+</body>
+</html>

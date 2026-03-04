@@ -1,0 +1,91 @@
+# AZALPLUS - Module Stock
+nom: Stock
+icone: database
+menu: Inventaire
+
+champs:
+  - nom: produit_id
+    type: relation
+    relation: Produits
+    obligatoire: true
+    description: Produit
+    autocompletion: true
+
+  - nom: variante_id
+    type: relation
+    relation: VariantesProduit
+    obligatoire: false
+    description: Variante produit
+    autocompletion: true
+
+  - nom: quantite_en_stock
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Quantite en stock
+
+  - nom: quantite_reservee
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Quantite reservee
+
+  - nom: quantite_disponible
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Quantite disponible
+
+  - nom: stock_minimum
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Stock minimum (alerte)
+
+  - nom: stock_maximum
+    type: number
+    obligatoire: false
+    description: Stock maximum
+
+  - nom: seuil_reapprovisionnement
+    type: number
+    obligatoire: false
+    description: Seuil de reapprovisionnement
+
+  - nom: cout_moyen
+    type: number
+    obligatoire: false
+    description: Cout moyen unitaire
+
+  - nom: valeur_stock
+    type: number
+    obligatoire: false
+    description: Valeur totale du stock
+
+  - nom: emplacement
+    type: text
+    obligatoire: false
+    description: Emplacement entrepot
+    autocompletion: true
+
+  - nom: statut_stock
+    type: select
+    defaut: EN_STOCK
+    options: [EN_STOCK, STOCK_BAS, RUPTURE, SURSTOCKAGE]
+    description: Statut du stock
+
+  - nom: alerte_active
+    type: boolean
+    defaut: false
+    description: Alerte stock bas active
+
+  - nom: derniere_maj
+    type: datetime
+    description: Derniere mise a jour
+
+actions:
+  - ajuster_stock
+  - inventorier
+  - commander
+  - transferer
+  - voir_historique

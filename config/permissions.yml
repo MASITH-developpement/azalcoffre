@@ -1,0 +1,197 @@
+# =============================================================================
+# AZALPLUS - Permissions et Rôles (RBAC)
+# =============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Rôles
+# ─────────────────────────────────────────────────────────────────────────────
+roles:
+  admin:
+    nom: "Administrateur"
+    description: "Accès complet au tenant"
+    permissions: "*"  # Toutes les permissions
+    peut_creer_utilisateurs: true
+    peut_modifier_roles: true
+
+  manager:
+    nom: "Manager"
+    description: "Gestion opérationnelle"
+    modules:
+      - clients
+      - produits
+      - devis
+      - factures
+      - interventions
+      - temps
+    actions:
+      - lire
+      - creer
+      - modifier
+      - supprimer
+    permissions_speciales:
+      - temps_approuver
+      - temps_facturer
+    peut_exporter: true
+    peut_importer: true
+
+  commercial:
+    nom: "Commercial"
+    description: "Gestion commerciale"
+    modules:
+      - clients
+      - produits
+      - devis
+    actions:
+      - lire
+      - creer
+      - modifier
+    restrictions:
+      - "devis: voir uniquement les siens"
+    peut_exporter: true
+
+  technicien:
+    nom: "Technicien"
+    description: "Gestion des interventions"
+    modules:
+      - interventions
+      - clients
+      - temps
+    actions:
+      - lire
+      - modifier
+    restrictions:
+      - "interventions: voir uniquement les siennes"
+      - "clients: lecture seule"
+      - "temps: voir et modifier uniquement les siens"
+
+  comptable:
+    nom: "Comptable"
+    description: "Gestion comptable et financière"
+    modules:
+      - factures
+      - clients
+      - paiements
+    actions:
+      - lire
+      - creer
+      - modifier
+    peut_exporter: true
+
+  lecture_seule:
+    nom: "Consultation"
+    description: "Accès en lecture uniquement"
+    modules: "*"
+    actions:
+      - lire
+    peut_exporter: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Actions disponibles
+# ─────────────────────────────────────────────────────────────────────────────
+actions:
+  lire:
+    code: "read"
+    description: "Voir les données"
+
+  creer:
+    code: "create"
+    description: "Créer de nouvelles entrées"
+
+  modifier:
+    code: "update"
+    description: "Modifier les entrées existantes"
+
+  supprimer:
+    code: "delete"
+    description: "Supprimer des entrées"
+
+  exporter:
+    code: "export"
+    description: "Exporter les données"
+
+  importer:
+    code: "import"
+    description: "Importer des données"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Permissions spéciales
+# ─────────────────────────────────────────────────────────────────────────────
+permissions_speciales:
+  admin_tenant:
+    description: "Administrer le tenant"
+    actions:
+      - gerer_utilisateurs
+      - modifier_config_tenant
+      - voir_audit
+
+  admin_facturation:
+    description: "Gérer la facturation"
+    actions:
+      - valider_factures
+      - annuler_factures
+      - envoyer_relances
+
+  temps_approuver:
+    description: "Approuver les saisies de temps"
+    actions:
+      - approuver_temps
+      - rejeter_temps
+      - voir_temps_equipe
+
+  temps_facturer:
+    description: "Facturer le temps"
+    actions:
+      - generer_facture_temps
+      - marquer_facture
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Permissions module Temps
+# ─────────────────────────────────────────────────────────────────────────────
+temps:
+  lire:
+    description: "Voir ses propres saisies de temps"
+    defaut: true
+
+  lire_equipe:
+    description: "Voir les temps de son équipe"
+    roles: [manager, admin]
+
+  lire_tous:
+    description: "Voir tous les temps du tenant"
+    roles: [admin, comptable]
+
+  creer:
+    description: "Saisir du temps"
+    defaut: true
+
+  modifier:
+    description: "Modifier ses propres saisies (si brouillon)"
+    defaut: true
+
+  supprimer:
+    description: "Supprimer ses propres saisies (si brouillon)"
+    defaut: true
+
+  soumettre:
+    description: "Soumettre pour approbation"
+    defaut: true
+
+  approuver:
+    description: "Approuver les saisies de temps"
+    roles: [manager, admin]
+
+  rejeter:
+    description: "Rejeter les saisies de temps"
+    roles: [manager, admin]
+
+  facturer:
+    description: "Convertir le temps en facture"
+    roles: [admin, comptable, manager]
+
+  rapports:
+    description: "Voir les rapports de temps"
+    roles: [manager, admin, comptable]
+
+  configurer_taux:
+    description: "Configurer les taux horaires"
+    roles: [admin]

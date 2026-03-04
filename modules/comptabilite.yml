@@ -1,0 +1,129 @@
+# AZALPLUS - Module Comptabilite
+nom: EcrituresComptables
+icone: book-open
+menu: Comptabilite
+description: Gestion des ecritures comptables
+
+champs:
+  - nom: numero
+    type: text
+    obligatoire: false
+    description: Numero de l'ecriture
+    autocompletion: true
+
+  - nom: numero_piece
+    type: text
+    obligatoire: true
+    description: Numero de piece justificative
+    autocompletion: true
+
+  - nom: code_journal
+    type: select
+    obligatoire: true
+    options: [VT, AC, BQ, CA, OD, AN]
+    description: Code du journal comptable
+
+  - nom: libelle_journal
+    type: text
+    obligatoire: false
+    description: Libelle du journal
+    autocompletion: true
+
+  - nom: date_ecriture
+    type: date
+    obligatoire: true
+    description: Date de l'ecriture
+
+  - nom: date_comptabilisation
+    type: date
+    obligatoire: false
+    description: Date de comptabilisation
+
+  - nom: periode
+    type: text
+    obligatoire: false
+    description: Periode comptable
+    autocompletion: true
+
+  - nom: libelle
+    type: textarea
+    obligatoire: true
+    description: Libelle de l'ecriture
+
+  - nom: type_document
+    type: select
+    obligatoire: false
+    options: [FACTURE, AVOIR, REGLEMENT, BANQUE, PAIE, AUTRE]
+    description: Type de document d'origine
+
+  - nom: document_origine
+    type: text
+    obligatoire: false
+    description: Reference du document d'origine
+    autocompletion: true
+
+  - nom: total_debit
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total des debits
+
+  - nom: total_credit
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total des credits
+
+  - nom: devise
+    type: text
+    obligatoire: false
+    defaut: EUR
+    description: Devise de l'ecriture
+    autocompletion: true
+
+  - nom: equilibre
+    type: boolean
+    obligatoire: false
+    description: Ecriture equilibree
+
+  - nom: lignes
+    type: json
+    obligatoire: false
+    description: Lignes de l'ecriture comptable
+
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, EN_ATTENTE, COMPTABILISEE, VALIDEE, ANNULEE]
+    description: Statut de l'ecriture
+
+  - nom: date_validation
+    type: datetime
+    obligatoire: false
+    description: Date de validation
+
+  - nom: validateur_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Validateur de l'ecriture
+    autocompletion: true
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+actions:
+  - comptabiliser
+  - valider
+  - annuler
+  - dupliquer
+  - exporter
+
+workflow:
+  "BROUILLON -> EN_ATTENTE": "si equilibre"
+  "EN_ATTENTE -> COMPTABILISEE": "action comptabiliser"
+  "COMPTABILISEE -> VALIDEE": "action valider"
+  "BROUILLON -> ANNULEE": "action annuler"

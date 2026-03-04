@@ -1,0 +1,293 @@
+# =============================================================================
+# AZALPLUS - Regles d'Autocompletion IA par Champ
+# =============================================================================
+# Definit quels champs utilisent l'autocompletion IA et comment
+# =============================================================================
+
+nom: ReglesAutocompletion
+nom_affichage: Regles d'Autocompletion
+icone: list-check
+menu: Parametres
+description: Configuration des regles d'autocompletion par champ
+
+champs:
+  - nom: module
+    type: select
+    obligatoire: true
+    options: [Clients, Contacts, Fournisseurs, Leads, Employes, Factures, Devis, Interventions, Produits, Projets, Contrats, Tickets, Chantiers, Patients]
+    description: Module concerne
+    autocompletion: true
+
+  - nom: champ
+    type: text
+    obligatoire: true
+    description: Nom du champ (ex nom, email, adresse)
+    autocompletion: true
+
+  - nom: type_completion
+    type: select
+    obligatoire: true
+    defaut: text
+    options: [text, email, adresse, nom_personne, nom_entreprise, telephone, reference, description, montant, date, code_postal, ville, pays, url, siret, tva_intra]
+    description: Type de completion intelligente
+
+  - nom: fournisseur
+    type: select
+    obligatoire: false
+    options: [defaut, openai, anthropic, local]
+    defaut: defaut
+    description: Fournisseur IA (ou defaut du tenant)
+
+  - nom: modele
+    type: text
+    obligatoire: false
+    description: Modele specifique (ou defaut du tenant)
+    autocompletion: true
+
+  - nom: prompt_personnalise
+    type: textarea
+    obligatoire: false
+    description: Prompt personnalise pour ce champ
+
+  - nom: contexte_supplementaire
+    type: textarea
+    obligatoire: false
+    description: Contexte metier a ajouter au prompt
+
+  - nom: sources_suggestions
+    type: json
+    obligatoire: false
+    description: |
+      Sources pour les suggestions:
+      - historique: utiliser les valeurs precedentes
+      - relation: utiliser les valeurs d'un champ lie
+      - api: appeler une API externe
+      - statique: liste fixe de valeurs
+
+  - nom: priorite
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Priorite de la regle (plus eleve = prioritaire)
+
+  - nom: conditions
+    type: json
+    obligatoire: false
+    description: Conditions d'application (ex si type_client = B2B)
+
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Regle active
+
+# -----------------------------------------------------------------------------
+# Regles predefinies par type de completion
+# -----------------------------------------------------------------------------
+regles_predefinies:
+  nom_personne:
+    prompt: |
+      Propose des noms de personnes francophones.
+      Contexte: {contexte}
+      Debut saisi: {valeur}
+    sources:
+      - historique
+    temperature: 0.5
+    exemples:
+      - Martin
+      - Dupont
+      - Bernard
+      - Petit
+      - Robert
+
+  nom_entreprise:
+    prompt: |
+      Propose des noms d'entreprises francaises plausibles.
+      Inclus le statut juridique si approprie.
+      Contexte: {contexte}
+      Debut saisi: {valeur}
+    sources:
+      - historique
+      - api_sirene
+    temperature: 0.4
+    exemples:
+      - ACME SARL
+      - Solutions Tech SAS
+      - Groupe Martin SA
+
+  email:
+    prompt: |
+      Propose des adresses email professionnelles.
+      Base-toi sur le nom de la personne ou entreprise si disponible.
+      Contexte: {contexte}
+      Debut saisi: {valeur}
+    pattern: "{prenom}.{nom}@{domaine}"
+    sources:
+      - historique
+      - derive_nom
+    temperature: 0.2
+
+  adresse:
+    prompt: |
+      Propose des adresses francaises completes.
+      Format: numero rue, complement
+      Contexte: {contexte}
+      Debut saisi: {valeur}
+    sources:
+      - historique
+      - api_adresse_gouv
+    temperature: 0.3
+    api_externe:
+      url: https://api-adresse.data.gouv.fr/search/
+      param: q
+
+  code_postal:
+    prompt: |
+      Propose des codes postaux francais.
+      Si une ville est mentionnee, propose son code postal.
+      Debut saisi: {valeur}
+    sources:
+      - api_adresse_gouv
+    longueur: 5
+    pattern: "^[0-9]{5}$"
+
+  ville:
+    prompt: |
+      Propose des noms de villes francaises.
+      Si un code postal est saisi, propose la ville correspondante.
+      Debut saisi: {valeur}
+    sources:
+      - historique
+      - api_adresse_gouv
+    temperature: 0.2
+
+  telephone:
+    prompt: |
+      Propose des numeros de telephone francais.
+      Format: 0X XX XX XX XX ou +33 X XX XX XX XX
+      Debut saisi: {valeur}
+    pattern: "^(0|\\+33)[0-9 ]{9,14}$"
+    sources:
+      - historique
+    temperature: 0.1
+
+  siret:
+    prompt: |
+      Valide et complete un numero SIRET (14 chiffres).
+      Debut saisi: {valeur}
+    pattern: "^[0-9]{14}$"
+    sources:
+      - api_sirene
+    validation: luhn_siret
+
+  tva_intra:
+    prompt: |
+      Propose un numero de TVA intracommunautaire.
+      Format francais: FR XX XXXXXXXXX
+      Debut saisi: {valeur}
+    pattern: "^FR[0-9A-Z]{2}[0-9]{9}$"
+    sources:
+      - derive_siret
+    validation: tva_checksum
+
+  reference:
+    prompt: |
+      Propose une reference de document suivant le pattern du module.
+      Module: {module}
+      Pattern: {pattern}
+      Derniere reference: {derniere}
+    sources:
+      - sequence
+    auto_increment: true
+
+  description:
+    prompt: |
+      Complete cette description professionnelle.
+      Module: {module}
+      Contexte: {contexte}
+      Debut saisi: {valeur}
+    sources:
+      - historique
+      - ia
+    temperature: 0.6
+    max_tokens: 200
+
+  montant:
+    prompt: |
+      Propose des montants plausibles pour ce contexte.
+      Module: {module}
+      Type: {type_document}
+      Historique moyen: {moyenne}
+    sources:
+      - historique
+      - statistiques
+    format: nombre
+    devise: EUR
+
+# -----------------------------------------------------------------------------
+# APIs externes pour enrichissement
+# -----------------------------------------------------------------------------
+apis_externes:
+  api_adresse_gouv:
+    nom: API Adresse (data.gouv.fr)
+    url: https://api-adresse.data.gouv.fr/search/
+    type: GET
+    param_recherche: q
+    champ_resultat: features[].properties.label
+    gratuit: true
+    limite: 10
+
+  api_sirene:
+    nom: API SIRENE (INSEE)
+    url: https://api.insee.fr/entreprises/sirene/V3/
+    type: GET
+    auth: bearer
+    champ_resultat: etablissements[]
+    gratuit: false
+    limite: 100
+
+  api_vies:
+    nom: VIES (validation TVA UE)
+    url: https://ec.europa.eu/taxation_customs/vies/rest-api/ms/
+    type: GET
+    champ_resultat: valid
+    gratuit: true
+
+# -----------------------------------------------------------------------------
+# Configuration du cache
+# -----------------------------------------------------------------------------
+cache:
+  actif: true
+  strategies:
+    historique:
+      duree_minutes: 1440  # 24h
+      max_entrees: 1000
+    api_externe:
+      duree_minutes: 60
+      max_entrees: 500
+    ia:
+      duree_minutes: 30
+      max_entrees: 200
+      cle: "{module}:{champ}:{valeur_hash}"
+
+# -----------------------------------------------------------------------------
+# Actions
+# -----------------------------------------------------------------------------
+actions:
+  - creer_regle
+  - dupliquer_regle
+  - tester_regle
+  - desactiver_regle
+  - importer_regles
+  - exporter_regles
+
+# -----------------------------------------------------------------------------
+# Marceau
+# -----------------------------------------------------------------------------
+marceau:
+  alertes:
+    - si actif=true et sources_suggestions vide: "Regle sans source de suggestions"
+    - si type_completion=api et api_externe non configuree: "API externe requise mais non configuree"
+  suggestions:
+    - "Utilisez le type 'historique' pour les champs frequemment saisis"
+    - "Combinez plusieurs sources pour de meilleures suggestions"

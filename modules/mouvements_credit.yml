@@ -1,0 +1,138 @@
+# AZALPLUS - Module Mouvements de Crédit
+# Suivi des mouvements sur le compte client (crédit/débit)
+
+nom: Mouvements Credit
+icone: trending-up-down
+menu: Comptabilite
+
+champs:
+  # Identification
+  - nom: numero
+    type: text
+    obligatoire: true
+    auto: true
+    description: Numéro du mouvement (auto-généré)
+
+  # Relation client
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client concerné
+    autocompletion: true
+
+  # Type de mouvement
+  - nom: type
+    type: select
+    obligatoire: true
+    options: [CREDIT, DEBIT]
+    description: Type de mouvement (CREDIT = avoir, DEBIT = dû)
+
+  # Montant
+  - nom: montant
+    type: number
+    obligatoire: true
+    description: Montant du mouvement (toujours positif)
+
+  # Devise
+  - nom: devise
+    type: relation
+    obligatoire: false
+    relation: Devises
+    defaut: EUR
+    description: Devise du mouvement
+    autocompletion: true
+
+  # Références
+  - nom: reference
+    type: text
+    obligatoire: false
+    description: Référence du document lié (facture, avoir, paiement)
+    autocompletion: true
+
+  - nom: facture_id
+    type: relation
+    obligatoire: false
+    relation: Factures
+    description: Facture liée (si débit)
+    autocompletion: true
+
+  - nom: paiement_id
+    type: relation
+    obligatoire: false
+    relation: Paiements
+    description: Paiement lié (si crédit)
+    autocompletion: true
+
+  # Motif du mouvement
+  - nom: motif
+    type: select
+    obligatoire: true
+    options: [FACTURE, PAIEMENT, AVOIR, REMBOURSEMENT, AJUSTEMENT, OUVERTURE, CLOTURE]
+    description: Motif du mouvement
+
+  # Date
+  - nom: date
+    type: date
+    obligatoire: true
+    defaut: aujourd'hui
+    description: Date du mouvement
+
+  - nom: date_valeur
+    type: date
+    obligatoire: false
+    description: Date de valeur (si différente)
+
+  # Solde après mouvement
+  - nom: solde_apres
+    type: number
+    obligatoire: false
+    description: Solde du compte après ce mouvement (calculé)
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes ou commentaires
+
+  # Métadonnées
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Créé par
+    autocompletion: true
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+    description: Date de création
+
+# Règles de validation
+validations:
+  - champ: montant
+    regle: montant_strictement_positif
+    message: "Le montant doit être strictement positif"
+
+  - condition: "type == DEBIT implique facture_id ou motif in [AJUSTEMENT, OUVERTURE]"
+    message: "Un débit doit être lié à une facture ou être un ajustement"
+
+  - condition: "type == CREDIT implique paiement_id ou motif in [AVOIR, REMBOURSEMENT, AJUSTEMENT, OUVERTURE]"
+    message: "Un crédit doit être lié à un paiement, un avoir ou être un ajustement"
+
+# Actions automatiques (hooks)
+hooks:
+  apres_creation:
+    - action: recalculer_solde_client
+      description: "Met à jour le solde_credit du client après chaque mouvement"
+
+actions:
+  - annuler_mouvement
+  - exporter_releve
+
+marceau:
+  alertes:
+    - si type=DEBIT et client.solde_credit < -client.credit_limit: "Attention: limite de crédit dépassée pour ce client"
+  suggestions:
+    - "Vérifier les mouvements en attente de validation"
+    - "Rapprocher les paiements avec les factures"

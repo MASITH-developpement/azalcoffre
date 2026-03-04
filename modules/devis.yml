@@ -1,0 +1,187 @@
+# AZALPLUS - Module Devis
+nom: Devis
+icone: file-text
+menu: Commercial
+description: Gestion des devis clients
+
+champs:
+  - nom: numero
+    type: text
+    obligatoire: true
+    description: Numero du devis
+    autocompletion: true
+
+  - nom: date
+    type: date
+    obligatoire: true
+    defaut: aujourd'hui
+    description: Date du devis
+
+  - nom: date_validite
+    type: date
+    obligatoire: false
+    description: Date de validite
+
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client
+    autocompletion: true
+
+  - nom: contact_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du contact
+
+  - nom: contact_name
+    type: text
+    obligatoire: false
+    description: Nom du contact
+    autocompletion: true
+
+  - nom: objet
+    type: text
+    obligatoire: true
+    description: Objet du devis
+    autocompletion: true
+
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, ENVOYE, ACCEPTE, REFUSE, EXPIRE, ANNULE]
+    description: Statut du devis
+
+  - nom: montant_ht
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant HT
+
+  - nom: taux_tva
+    type: number
+    obligatoire: false
+    defaut: 20
+    description: Taux TVA (%)
+
+  - nom: montant_tva
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant TVA
+
+  - nom: montant_ttc
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant TTC
+
+  - nom: remise_percent
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Remise (%)
+
+  - nom: conditions
+    type: textarea
+    obligatoire: false
+    description: Conditions particulieres
+    autocompletion: true
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  - nom: pdf_url
+    type: text
+    obligatoire: false
+    description: URL du PDF
+
+  - nom: access_token
+    type: text
+    obligatoire: false
+    description: Token d'acces portail
+
+  - nom: assigned_to
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Commercial responsable
+    autocompletion: true
+
+  - nom: billing_address
+    type: textarea
+    obligatoire: false
+    description: Adresse de facturation
+    autocompletion: true
+
+  - nom: shipping_address
+    type: textarea
+    obligatoire: false
+    description: Adresse de livraison
+    autocompletion: true
+
+lignes:
+  champs:
+    - nom: produit_id
+      type: relation
+      relation: Produits
+      description: Produit
+      autocompletion: true
+
+    - nom: description
+      type: text
+      obligatoire: true
+      description: Description
+      autocompletion: true
+
+    - nom: quantite
+      type: number
+      obligatoire: true
+      defaut: 1
+      description: Quantite
+
+    - nom: prix_unitaire
+      type: number
+      obligatoire: true
+      description: Prix unitaire HT
+
+    - nom: remise_percent
+      type: number
+      defaut: 0
+      description: Remise ligne (%)
+
+    - nom: taux_tva
+      type: number
+      defaut: 20
+      description: Taux TVA (%)
+
+    - nom: montant_ht
+      type: number
+      description: Total HT ligne
+
+    - nom: montant_ttc
+      type: number
+      description: Total TTC ligne
+
+workflow:
+  BROUILLON -> ENVOYE: action envoyer
+  ENVOYE -> ACCEPTE: action accepter
+  ENVOYE -> REFUSE: action refuser
+  ACCEPTE -> FACTURE: action facturer
+
+actions:
+  - envoyer
+  - accepter
+  - refuser
+  - facturer
+  - dupliquer
+  - generer_pdf
+
+marceau:
+  alertes:
+    - si statut = ENVOYE et date_validite < aujourd'hui: "Devis expire"
+    - si statut = BROUILLON et created_at < aujourd'hui - 7 jours: "Devis brouillon depuis plus de 7 jours"

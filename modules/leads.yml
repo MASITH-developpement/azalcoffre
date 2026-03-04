@@ -1,0 +1,277 @@
+# AZALPLUS - Module Leads
+nom: Leads
+icone: user-plus
+menu: CRM
+description: Gestion des leads et prospects avant conversion en clients/opportunites
+
+champs:
+  - nom: code
+    type: text
+    obligatoire: false
+    description: Code auto-genere LEAD-YYYY-XXXX
+    autocompletion: true
+
+  - nom: civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite
+
+  - nom: first_name
+    type: text
+    obligatoire: true
+    description: Prenom
+    autocompletion: true
+
+  - nom: last_name
+    type: text
+    obligatoire: true
+    description: Nom
+    autocompletion: true
+
+  - nom: job_title
+    type: text
+    obligatoire: false
+    description: Fonction/Poste
+    autocompletion: true
+
+  - nom: company_name
+    type: text
+    obligatoire: false
+    description: Nom de l'entreprise
+    autocompletion: true
+
+  - nom: company_industry
+    type: text
+    obligatoire: false
+    description: Secteur d'activite
+    autocompletion: true
+
+  - nom: company_size
+    type: select
+    obligatoire: false
+    options: [1-10, 11-50, 51-200, 201-500, 501-1000, 1001-5000, 5000+]
+    description: Taille de l'entreprise
+
+  - nom: email
+    type: email
+    obligatoire: true
+    description: Email principal
+    autocompletion: true
+
+  - nom: phone
+    type: tel
+    obligatoire: false
+
+  - nom: mobile
+    type: tel
+    obligatoire: false
+
+  - nom: linkedin_url
+    type: text
+    obligatoire: false
+    description: Profil LinkedIn
+    autocompletion: true
+
+  - nom: address
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: city
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: postal_code
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: country_code
+    type: text
+    obligatoire: false
+    defaut: FR
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: NEW
+    options: [NEW, CONTACTED, QUALIFIED, NURTURING, CONVERTED, DISQUALIFIED, LOST]
+    description: Statut du lead
+
+  - nom: qualification_status
+    type: select
+    obligatoire: false
+    defaut: NOT_QUALIFIED
+    options: [NOT_QUALIFIED, MQL, SAL, SQL]
+    description: Niveau de qualification
+
+  - nom: rating
+    type: select
+    obligatoire: false
+    defaut: UNKNOWN
+    options: [HOT, WARM, COLD, UNKNOWN]
+    description: Temperature du lead
+
+  - nom: source
+    type: select
+    obligatoire: false
+    options: [WEBSITE, LANDING_PAGE, SOCIAL_MEDIA, REFERRAL, EVENT, WEBINAR, COLD_CALL, INBOUND_CALL, EMAIL_CAMPAIGN, ADVERTISEMENT, PARTNER, ORGANIC_SEARCH, PAID_SEARCH, CONTENT, OTHER]
+    description: Source d'acquisition
+
+  - nom: source_detail
+    type: text
+    obligatoire: false
+    description: Detail de la source
+    autocompletion: true
+
+  - nom: campaign_id
+    type: relation
+    obligatoire: false
+    relation: Campagnes
+    description: Campagne d'origine
+    autocompletion: true
+
+  - nom: utm_source
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: utm_medium
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: utm_campaign
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: lead_score
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Score global (0-100)
+
+  - nom: demographic_score
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Score demographique
+
+  - nom: behavior_score
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Score comportemental
+
+  - nom: bant_budget
+    type: select
+    obligatoire: false
+    options: [UNKNOWN, NO, YES_LOW, YES_MEDIUM, YES_HIGH]
+    description: Budget identifie
+
+  - nom: bant_authority
+    type: select
+    obligatoire: false
+    options: [UNKNOWN, INFLUENCER, DECISION_MAKER, BUDGET_HOLDER, CHAMPION]
+    description: Niveau d'autorite
+
+  - nom: bant_need
+    type: select
+    obligatoire: false
+    options: [UNKNOWN, NO_NEED, LATENT, ACTIVE, URGENT]
+    description: Niveau de besoin
+
+  - nom: bant_timeline
+    type: select
+    obligatoire: false
+    options: [UNKNOWN, NO_TIMELINE, 6_MONTHS_PLUS, 3_6_MONTHS, 1_3_MONTHS, IMMEDIATE]
+    description: Calendrier decision
+
+  - nom: owner_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Commercial responsable
+    autocompletion: true
+
+  - nom: disqualification_reason
+    type: select
+    obligatoire: false
+    options: [NO_BUDGET, NO_AUTHORITY, NO_NEED, NO_TIMELINE, WRONG_INDUSTRY, COMPETITOR, DUPLICATE, SPAM, NO_RESPONSE, OTHER]
+    description: Motif de disqualification
+
+  - nom: converted_at
+    type: datetime
+    obligatoire: false
+    description: Date de conversion
+
+  - nom: converted_contact_id
+    type: relation
+    obligatoire: false
+    relation: Contacts
+    description: Contact cree lors de la conversion
+    autocompletion: true
+
+  - nom: converted_opportunity_id
+    type: relation
+    obligatoire: false
+    relation: Opportunites
+    description: Opportunite creee
+    autocompletion: true
+
+  - nom: marketing_opt_in
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Consentement marketing
+
+  - nom: do_not_call
+    type: boolean
+    obligatoire: false
+    defaut: false
+
+  - nom: do_not_email
+    type: boolean
+    obligatoire: false
+    defaut: false
+
+  - nom: tags
+    type: tags
+    obligatoire: false
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+workflow:
+  NEW -> CONTACTED: premier contact effectue
+  CONTACTED -> QUALIFIED: criteres BANT valides
+  CONTACTED -> NURTURING: lead pas pret
+  NURTURING -> CONTACTED: lead reactive
+  QUALIFIED -> CONVERTED: conversion en contact/opportunite
+  "* -> DISQUALIFIED": lead non pertinent
+  "* -> LOST": lead perdu
+
+actions:
+  - contacter
+  - qualifier
+  - assigner
+  - ajouter_activite
+  - envoyer_email
+  - planifier_rdv
+  - passer_en_nurturing
+  - convertir
+  - disqualifier
+  - fusionner
+
+marceau:
+  alertes:
+    - si status = NEW et created_at < now()-24h: "Nouveau lead non traite depuis 24h"
+    - si rating = HOT et last_contacted_at < now()-48h: "Lead chaud sans contact recent"
+    - si lead_score > 80 et status != CONVERTED: "Lead a fort potentiel non converti"
+    - si qualification_status = SQL et owner_id = null: "SQL non assigne"

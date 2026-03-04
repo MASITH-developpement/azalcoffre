@@ -1,0 +1,377 @@
+# =============================================================================
+# AZALPLUS - English Translations
+# =============================================================================
+
+# Language metadata
+meta:
+  code: "en"
+  name: "English"
+  native_name: "English"
+  direction: "ltr"
+  date_format: "MM/DD/YYYY"
+  datetime_format: "MM/DD/YYYY HH:mm"
+  currency_format: "EUR {amount}"
+  decimal_separator: "."
+  thousands_separator: ","
+
+# Common actions
+common:
+  save: "Save"
+  cancel: "Cancel"
+  delete: "Delete"
+  edit: "Edit"
+  create: "Create"
+  add: "Add"
+  remove: "Remove"
+  search: "Search"
+  filter: "Filter"
+  sort: "Sort"
+  export: "Export"
+  import: "Import"
+  print: "Print"
+  download: "Download"
+  upload: "Upload"
+  confirm: "Confirm"
+  close: "Close"
+  back: "Back"
+  next: "Next"
+  previous: "Previous"
+  refresh: "Refresh"
+  reset: "Reset"
+  copy: "Copy"
+  duplicate: "Duplicate"
+  archive: "Archive"
+  restore: "Restore"
+  view: "View"
+  details: "Details"
+  actions: "Actions"
+  yes: "Yes"
+  no: "No"
+  ok: "OK"
+  loading: "Loading..."
+  saving: "Saving..."
+  deleting: "Deleting..."
+  processing: "Processing..."
+  select: "Select"
+  select_all: "Select all"
+  deselect_all: "Deselect all"
+  none: "None"
+  all: "All"
+  new: "New"
+
+# Messages
+messages:
+  success: "Operation successful"
+  error: "An error occurred"
+  warning: "Warning"
+  info: "Information"
+  confirm_delete: "Are you sure you want to delete this item?"
+  confirm_cancel: "Are you sure you want to cancel?"
+  saved_successfully: "Saved successfully"
+  deleted_successfully: "Deleted successfully"
+  created_successfully: "Created successfully"
+  updated_successfully: "Updated successfully"
+  no_results: "No results"
+  no_data: "No data"
+  loading_error: "Loading error"
+  connection_error: "Connection error"
+  invalid_form: "Please correct the form errors"
+  required_field: "This field is required"
+  invalid_email: "Invalid email address"
+  invalid_format: "Invalid format"
+  session_expired: "Your session has expired"
+  unauthorized: "Unauthorized access"
+  forbidden: "Access forbidden"
+  not_found: "Item not found"
+
+# Navigation
+navigation:
+  dashboard: "Dashboard"
+  calendar: "Calendar"
+  search: "Search"
+  settings: "Settings"
+  profile: "Profile"
+  logout: "Logout"
+  notifications: "Notifications"
+  help: "Help"
+
+# Authentication
+auth:
+  login: "Login"
+  logout: "Logout"
+  email: "Email"
+  password: "Password"
+  remember_me: "Remember me"
+  forgot_password: "Forgot password?"
+  reset_password: "Reset password"
+  new_password: "New password"
+  confirm_password: "Confirm password"
+  login_button: "Sign in"
+  login_subtitle: "Sign in to continue"
+  invalid_credentials: "Invalid credentials"
+  account_locked: "Account locked"
+  change_password: "Change password"
+
+# Business modules
+modules:
+  # Products
+  produits: "Products"
+  produit: "Product"
+
+  # Clients
+  clients: "Customers"
+  client: "Customer"
+
+  # Quotes
+  devis: "Quotes"
+  devis_singular: "Quote"
+
+  # Invoices
+  factures: "Invoices"
+  facture: "Invoice"
+
+  # Interventions
+  interventions: "Interventions"
+  intervention: "Intervention"
+
+  # Suppliers
+  fournisseurs: "Suppliers"
+  fournisseur: "Supplier"
+
+  # Purchases
+  achats: "Purchases"
+  achat: "Purchase"
+
+  # Treasury
+  tresorerie: "Treasury"
+
+  # Accounting
+  comptabilite: "Accounting"
+
+# Common fields
+fields:
+  id: "ID"
+  name: "Name"
+  description: "Description"
+  reference: "Reference"
+  status: "Status"
+  created_at: "Created at"
+  updated_at: "Updated at"
+  created_by: "Created by"
+  updated_by: "Updated by"
+  date: "Date"
+  start_date: "Start date"
+  end_date: "End date"
+  due_date: "Due date"
+  validity_date: "Validity date"
+  amount: "Amount"
+  quantity: "Quantity"
+  unit_price: "Unit price"
+  discount: "Discount"
+  tax: "VAT"
+  total: "Total"
+  total_ht: "Subtotal"
+  total_ttc: "Grand total"
+  notes: "Notes"
+  comments: "Comments"
+  address: "Address"
+  postal_code: "Postal code"
+  city: "City"
+  country: "Country"
+  phone: "Phone"
+  mobile: "Mobile"
+  fax: "Fax"
+  email: "Email"
+  website: "Website"
+  company_name: "Company name"
+  first_name: "First name"
+  last_name: "Last name"
+  siret: "Company ID"
+  vat_number: "VAT number"
+  payment_terms: "Payment terms"
+  payment_method: "Payment method"
+  bank_account: "Bank account"
+  category: "Category"
+  type: "Type"
+  priority: "Priority"
+  tags: "Tags"
+  attachments: "Attachments"
+  lines: "Lines"
+  object: "Subject"
+
+# Statuses
+statuses:
+  draft: "Draft"
+  sent: "Sent"
+  accepted: "Accepted"
+  refused: "Refused"
+  cancelled: "Cancelled"
+  expired: "Expired"
+  validated: "Validated"
+  paid: "Paid"
+  partially_paid: "Partially paid"
+  pending: "Pending"
+  in_progress: "In progress"
+  completed: "Completed"
+  blocked: "Blocked"
+  to_plan: "To plan"
+  planned: "Planned"
+  active: "Active"
+  inactive: "Inactive"
+
+# Documents (PDF)
+documents:
+  quote: "QUOTE"
+  invoice: "INVOICE"
+  document_number: "No."
+  date: "Date"
+  validity: "Validity"
+  due_date: "Due date"
+  client: "Customer"
+  object: "Subject"
+  description: "Description"
+  qty: "Qty"
+  unit_price: "Unit Price"
+  discount: "Discount"
+  total: "Total"
+  subtotal: "Subtotal"
+  tax: "VAT"
+  grand_total: "Grand Total"
+  already_paid: "Already paid"
+  remaining: "Remaining"
+  notes: "Notes"
+  conditions: "Terms & Conditions"
+  page: "Page"
+  of: "of"
+
+  # Payment terms
+  payment_immediate: "Immediate payment"
+  payment_30_days: "Net 30"
+  payment_60_days: "Net 60"
+  payment_end_of_month: "End of month"
+
+  # Legal mentions
+  vat_mention: "VAT not applicable, art. 293B of CGI"
+  late_payment: "Late payment penalty: 3 times the legal interest rate"
+  recovery_fee: "Fixed recovery fee: 40 EUR"
+
+# Settings
+settings:
+  title: "Settings"
+  general: "General"
+  company: "Company"
+  appearance: "Appearance"
+  language: "Language"
+  theme: "Theme"
+  document_style: "Document style"
+  notifications_settings: "Notifications"
+  security: "Security"
+  users: "Users"
+  roles: "Roles"
+  permissions: "Permissions"
+  integrations: "Integrations"
+  api: "API"
+  billing: "Billing"
+  subscription: "Subscription"
+
+  # Language
+  language_select: "Select language"
+  language_saved: "Language saved"
+  available_languages: "Available languages"
+
+# Dates and times
+datetime:
+  today: "Today"
+  yesterday: "Yesterday"
+  tomorrow: "Tomorrow"
+  this_week: "This week"
+  last_week: "Last week"
+  next_week: "Next week"
+  this_month: "This month"
+  last_month: "Last month"
+  next_month: "Next month"
+  this_year: "This year"
+  last_year: "Last year"
+  custom: "Custom"
+
+  # Days
+  monday: "Monday"
+  tuesday: "Tuesday"
+  wednesday: "Wednesday"
+  thursday: "Thursday"
+  friday: "Friday"
+  saturday: "Saturday"
+  sunday: "Sunday"
+
+  # Months
+  january: "January"
+  february: "February"
+  march: "March"
+  april: "April"
+  may: "May"
+  june: "June"
+  july: "July"
+  august: "August"
+  september: "September"
+  october: "October"
+  november: "November"
+  december: "December"
+
+# Document forms
+document_form:
+  new_quote: "New quote"
+  new_invoice: "New invoice"
+  select_client: "Select a customer..."
+  billing_address: "Billing address"
+  order_lines: "Order lines"
+  optional_products: "Optional products"
+  other_info: "Other information"
+  add_product: "Add a product"
+  add_section: "Add a section"
+  add_note: "Add a note"
+  no_lines: "No lines. Add a product below."
+  product_name: "Product name"
+
+# User interface
+ui:
+  sidebar: "Sidebar"
+  header: "Header"
+  footer: "Footer"
+  main_content: "Main content"
+  show_menu: "Show menu"
+  hide_menu: "Hide menu"
+  expand: "Expand"
+  collapse: "Collapse"
+  fullscreen: "Fullscreen"
+  exit_fullscreen: "Exit fullscreen"
+  dark_mode: "Dark mode"
+  light_mode: "Light mode"
+
+# Tables
+table:
+  showing: "Showing"
+  of: "of"
+  entries: "entries"
+  first: "First"
+  last: "Last"
+  empty: "No records"
+  per_page: "per page"
+  selected: "selected"
+  bulk_actions: "Bulk actions"
+  columns: "Columns"
+  export_csv: "Export CSV"
+  export_excel: "Export Excel"
+  export_pdf: "Export PDF"
+
+# Errors
+errors:
+  generic: "An error occurred"
+  network: "Network error"
+  server: "Server error"
+  validation: "Validation error"
+  permission: "Permission denied"
+  not_found: "Resource not found"
+  timeout: "Request timeout"
+  file_too_large: "File too large"
+  invalid_file_type: "Invalid file type"
+  upload_failed: "Upload failed"

@@ -1,0 +1,264 @@
+# AZALPLUS - Module Patients
+nom: Patients
+icone: user-medical
+menu: Medical
+description: Gestion des patients - Donnees sensibles RGPD
+
+champs:
+  - nom: reference
+    type: text
+    obligatoire: true
+    unique: true
+    description: Reference patient (PAT-XXXX)
+    autocompletion: true
+
+  - nom: civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite
+
+  - nom: first_name
+    type: text
+    obligatoire: true
+    chiffre: true
+    description: Prenom
+    autocompletion: true
+
+  - nom: last_name
+    type: text
+    obligatoire: true
+    chiffre: true
+    description: Nom de famille
+    autocompletion: true
+
+  - nom: maiden_name
+    type: text
+    obligatoire: false
+    chiffre: true
+    description: Nom de naissance
+    autocompletion: true
+
+  - nom: date_of_birth
+    type: date
+    obligatoire: true
+    description: Date de naissance
+
+  - nom: place_of_birth
+    type: text
+    obligatoire: false
+    chiffre: true
+    description: Lieu de naissance
+    autocompletion: true
+
+  - nom: gender
+    type: select
+    obligatoire: false
+    defaut: UNKNOWN
+    options: [MALE, FEMALE, OTHER, UNKNOWN]
+    description: Genre
+
+  - nom: social_security_number
+    type: text
+    obligatoire: false
+    chiffre: true
+    sensible: true
+    description: Numero de securite sociale
+
+  - nom: email
+    type: email
+    obligatoire: false
+    chiffre: true
+    autocompletion: true
+
+  - nom: phone
+    type: tel
+    obligatoire: false
+    chiffre: true
+
+  - nom: mobile_phone
+    type: tel
+    obligatoire: false
+    chiffre: true
+
+  - nom: address_line1
+    type: text
+    obligatoire: false
+    chiffre: true
+    autocompletion: true
+
+  - nom: address_line2
+    type: text
+    obligatoire: false
+    chiffre: true
+    autocompletion: true
+
+  - nom: postal_code
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: city
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: country
+    type: text
+    obligatoire: false
+    defaut: France
+    autocompletion: true
+
+  - nom: emergency_contact_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du contact d'urgence
+
+  - nom: emergency_contact_name
+    type: text
+    obligatoire: false
+    chiffre: true
+    description: Nom du contact d'urgence
+    autocompletion: true
+
+  - nom: emergency_contact_phone
+    type: tel
+    obligatoire: false
+    chiffre: true
+    description: Telephone du contact d'urgence
+
+  - nom: emergency_contact_relationship
+    type: text
+    obligatoire: false
+    description: Lien avec le patient
+    autocompletion: true
+
+  - nom: blood_type
+    type: select
+    obligatoire: false
+    defaut: UNKNOWN
+    options: [A+, A-, B+, B-, AB+, AB-, O+, O-, UNKNOWN]
+    description: Groupe sanguin
+
+  - nom: weight_kg
+    type: number
+    obligatoire: false
+    description: Poids en kg
+
+  - nom: height_cm
+    type: number
+    obligatoire: false
+    description: Taille en cm
+
+  - nom: primary_practitioner_id
+    type: relation
+    obligatoire: false
+    relation: Praticiens
+    description: Medecin traitant
+    autocompletion: true
+
+  - nom: is_active
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Patient actif
+
+  - nom: is_deceased
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Patient decede
+
+  - nom: date_of_death
+    type: date
+    obligatoire: false
+    description: Date de deces
+
+  - nom: consent_data_processing
+    type: boolean
+    obligatoire: true
+    defaut: false
+    description: Consentement traitement des donnees
+
+  - nom: consent_date
+    type: datetime
+    obligatoire: false
+    description: Date du consentement
+
+  - nom: consent_telehealth
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Consentement teleconsultation
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    chiffre: true
+    description: Notes generales
+
+dossier_medical:
+  description: Antecedents et historique medical du patient
+  champs:
+    - nom: allergies
+      type: json
+      obligatoire: false
+      chiffre: true
+      description: Liste des allergies
+
+    - nom: medical_history
+      type: json
+      obligatoire: false
+      chiffre: true
+      description: Antecedents medicaux
+
+    - nom: family_history
+      type: json
+      obligatoire: false
+      chiffre: true
+      description: Antecedents familiaux
+
+    - nom: surgical_history
+      type: json
+      obligatoire: false
+      chiffre: true
+      description: Antecedents chirurgicaux
+
+    - nom: current_medications
+      type: json
+      obligatoire: false
+      chiffre: true
+      description: Traitements en cours
+
+    - nom: vaccinations
+      type: json
+      obligatoire: false
+      chiffre: true
+      description: Historique des vaccinations
+
+    - nom: clinical_notes
+      type: textarea
+      obligatoire: false
+      chiffre: true
+      description: Notes cliniques generales
+
+actions:
+  - creer_rdv
+  - creer_consultation
+  - voir_dossier_medical
+  - voir_historique_rdv
+  - voir_ordonnances
+  - envoyer_message
+  - exporter_dossier
+
+securite:
+  niveau: sensible
+  chiffrement: obligatoire
+  rgpd: true
+  audit_trail: obligatoire
+
+marceau:
+  alertes:
+    - si consent_data_processing = false: "Consentement patient manquant"
+    - si is_active = true et last_medical_update > 365 jours: "Dossier a mettre a jour"

@@ -1,0 +1,199 @@
+# AZALPLUS - Module SLA (Service Level Agreement)
+nom: SLA
+icone: clock
+menu: Parametres
+description: Gestion des accords de niveau de service (SLA)
+
+champs:
+  - nom: code
+    type: text
+    obligatoire: true
+    description: Code unique de la politique SLA
+    autocompletion: true
+
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom de la politique
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description de la politique
+
+  - nom: applies_to_entity_type
+    type: select
+    obligatoire: false
+    defaut: ticket
+    options: [ticket, complaint, intervention, task, project, custom]
+    description: Type d'entite concernee
+
+  - nom: applies_to_categories
+    type: json
+    obligatoire: false
+    description: Categories applicables
+
+  - nom: business_hours_id
+    type: relation
+    obligatoire: false
+    relation: HeuresOuvrees
+    description: Definition des heures ouvrees
+    autocompletion: true
+
+  - nom: use_business_hours
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Utiliser les heures ouvrees
+
+  - nom: escalation_enabled
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Escalade activee
+
+  - nom: auto_escalate
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Escalade automatique
+
+  - nom: penalty_enabled
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Penalites activees
+
+  - nom: penalty_percent_per_breach
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Pourcentage de penalite par violation
+
+  - nom: max_penalty_percent
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Pourcentage maximum de penalite
+
+  - nom: valid_from
+    type: date
+    obligatoire: false
+    description: Date de debut de validite
+
+  - nom: valid_until
+    type: date
+    obligatoire: false
+    description: Date de fin de validite
+
+  - nom: is_active
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Politique active
+
+objectifs:
+  description: Objectifs de la politique SLA
+  champs:
+    - nom: name
+      type: text
+      obligatoire: true
+      description: Nom de l'objectif
+
+    - nom: sla_type
+      type: select
+      obligatoire: false
+      defaut: response_time
+      options: [response_time, resolution_time, availability, performance, quality, custom]
+      description: Type de SLA
+
+    - nom: metric_unit
+      type: select
+      obligatoire: false
+      defaut: hours
+      options: [minutes, hours, days, percent, count]
+      description: Unite de mesure
+
+    - nom: target_value
+      type: number
+      obligatoire: true
+      description: Valeur cible
+
+    - nom: warning_threshold_percent
+      type: number
+      obligatoire: false
+      defaut: 80
+      description: Seuil d'alerte (%)
+
+    - nom: critical_threshold_percent
+      type: number
+      obligatoire: false
+      defaut: 90
+      description: Seuil critique (%)
+
+    - nom: priority
+      type: select
+      obligatoire: false
+      options: [critical, high, medium, low]
+      description: Priorite concernee
+
+    - nom: is_active
+      type: boolean
+      obligatoire: false
+      defaut: true
+
+regles_escalade:
+  description: Regles d'escalade du SLA
+  champs:
+    - nom: level
+      type: select
+      obligatoire: false
+      defaut: level_1
+      options: [level_1, level_2, level_3, management, executive]
+      description: Niveau d'escalade
+
+    - nom: trigger_percent
+      type: number
+      obligatoire: false
+      defaut: 50
+      description: Seuil de declenchement (%)
+
+    - nom: trigger_on_breach
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Declencher sur violation
+
+    - nom: notify_user_ids
+      type: json
+      obligatoire: false
+      description: Utilisateurs a notifier
+
+    - nom: auto_reassign
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Reassignation automatique
+
+    - nom: priority_boost
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Augmenter la priorite
+
+actions:
+  - activer
+  - desactiver
+  - dupliquer
+  - ajouter_objectif
+  - ajouter_escalade
+  - voir_instances
+  - voir_violations
+  - generer_rapport
+
+marceau:
+  alertes:
+    - si is_active=true et objectifs.count=0: "Politique SLA sans objectifs"
+    - si escalation_enabled=true et regles_escalade.count=0: "Escalade activee sans regles"
+    - si valid_until < maintenant: "Politique SLA expiree"

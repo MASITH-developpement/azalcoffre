@@ -1,0 +1,92 @@
+# =============================================================================
+# AZALPLUS - Module Favoris
+# =============================================================================
+# Permet aux utilisateurs de marquer des enregistrements comme favoris
+# pour un acces rapide. Chaque favori est lie a un utilisateur et pointe
+# vers un enregistrement dans n'importe quel module.
+# =============================================================================
+
+Favoris:
+  nom: "Favoris"
+  icone: "star"
+  menu: "Systeme"
+  description: "Enregistrements marques comme favoris par l'utilisateur"
+
+  champs:
+    # Proprietaire du favori (utilisateur)
+    user_id:
+      type: uuid
+      requis: true
+      description: "ID de l'utilisateur proprietaire du favori"
+
+    # Module source de l'enregistrement favori
+    module:
+      type: texte
+      requis: true
+      description: "Nom du module (ex: Clients, Factures, Devis)"
+
+    # ID de l'enregistrement favori
+    record_id:
+      type: uuid
+      requis: true
+      description: "ID de l'enregistrement marque comme favori"
+
+    # Nom d'affichage (cache pour acces rapide)
+    nom:
+      type: texte
+      requis: true
+      description: "Nom d'affichage de l'enregistrement (cache)"
+
+    # Informations supplementaires (cache)
+    sous_titre:
+      type: texte
+      description: "Information secondaire (ex: email, reference)"
+
+    # Statut de l'enregistrement (cache)
+    statut:
+      type: texte
+      description: "Statut actuel de l'enregistrement (cache)"
+
+    # Icone du module
+    module_icone:
+      type: texte
+      description: "Icone du module source"
+
+    # Epingle en haut de la liste
+    epingle:
+      type: oui/non
+      defaut: false
+      description: "Favori epingle en priorite"
+
+    # Ordre personnalise
+    ordre:
+      type: entier
+      defaut: 0
+      description: "Ordre d'affichage personnalise"
+
+    # Notes personnelles
+    notes:
+      type: texte long
+      description: "Notes personnelles sur ce favori"
+
+  actions:
+    - ajouter_favori
+    - retirer_favori
+    - epingler
+    - desepingler
+
+  # Index pour requetes performantes
+  index:
+    - user_id
+    - module
+    - record_id
+    - [user_id, module, record_id]  # Unicite par utilisateur
+
+  # Contrainte d'unicite
+  contraintes:
+    - unique: [user_id, module, record_id]
+
+  marceau:
+    alertes:
+      - si module vide: "Le module source est obligatoire"
+      - si record_id vide: "L'enregistrement cible est obligatoire"

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saisie rapide - Temps - AZALPLUS</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .quick-entry-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .quick-entry-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 24px;
+        }
+
+        .card-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .card-header p {
+            margin: 8px 0 0;
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group label .required {
+            color: #ef4444;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .duration-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .duration-input input {
+            width: 80px;
+            text-align: center;
+        }
+
+        .duration-input span {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .duration-presets {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .preset-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #3b82f6;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-timer {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-timer:hover {
+            background: #16a34a;
+        }
+
+        .context-tabs {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 16px;
+        }
+
+        .context-tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: #6b7280;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .context-tab:hover {
+            color: #374151;
+        }
+
+        .context-tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .recent-entries {
+            margin-top: 32px;
+        }
+
+        .recent-entries h3 {
+            font-size: 1rem;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .entry-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .entry-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .entry-context {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .entry-desc {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .entry-duration {
+            font-weight: 600;
+            color: #3b82f6;
+        }
+
+        .timer-active {
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timer-active .timer-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timer-active .timer-display {
+            font-family: monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ef4444;
+        }
+
+        .timer-active .timer-context {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .timer-active .btn-stop {
+            background: #ef4444;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .timer-active .btn-stop:hover {
+            background: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="quick-entry-container">
+        <div class="quick-entry-card">
+            <div class="card-header">
+                <h1>Saisie de temps</h1>
+                <p>Enregistrez rapidement votre temps de travail</p>
+            </div>
+
+            <div class="card-body">
+                <!-- Active Timer (if any) -->
+                <div class="timer-active" id="timer-active" style="display: none;">
+                    <div class="timer-info">
+                        <div class="timer-display" id="timer-display">00:00:00</div>
+                        <div class="timer-context" id="timer-context-display">INT-2026-0042</div>
+                    </div>
+                    <button class="btn-stop" onclick="stopTimer()">Arreter le timer</button>
+                </div>
+
+                <form id="quick-entry-form">
+                    <!-- Context Selection -->
+                    <div class="form-group">
+                        <label>Type de contexte</label>
+                        <div class="context-tabs">
+                            <div class="context-tab active" data-type="intervention" onclick="setContextType('intervention')">Intervention</div>
+                            <div class="context-tab" data-type="projet" onclick="setContextType('projet')">Projet</div>
+                            <div class="context-tab" data-type="client" onclick="setContextType('client')">Client</div>
+                            <div class="context-tab" data-type="autre" onclick="setContextType('autre')">Autre</div>
+                        </div>
+                    </div>
+
+                    <!-- Context Selector -->
+                    <div class="form-group" id="context-intervention">
+                        <label>Intervention <span class="required">*</span></label>
+                        <select class="form-control" id="intervention_id" required>
+                            <option value="">-- Selectionner une intervention --</option>
+                            <option value="INT-2026-0042">INT-2026-0042 - Maintenance climatisation (ACME Corp)</option>
+                            <option value="INT-2026-0043">INT-2026-0043 - Installation electrique (Tech Solutions)</option>
+                            <option value="INT-2026-0044">INT-2026-0044 - Depannage urgent (Martin SA)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="context-projet" style="display: none;">
+                        <label>Projet <span class="required">*</span></label>
+                        <select class="form-control" id="projet_id">
+                            <option value="">-- Selectionner un projet --</option>
+                            <option value="PRJ-001">Renovation bureaux Paris</option>
+                            <option value="PRJ-002">Installation datacenter</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="context-client" style="display: none;">
+                        <label>Client <span class="required">*</span></label>
+                        <select class="form-control" id="client_id">
+                            <option value="">-- Selectionner un client --</option>
+                            <option value="CLI-0001">ACME Corp</option>
+                            <option value="CLI-0002">Tech Solutions</option>
+                            <option value="CLI-0003">Martin SA</option>
+                        </select>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="form-group">
+                        <label>Date <span class="required">*</span></label>
+                        <input type="date" class="form-control" id="date" required>
+                    </div>
+
+                    <!-- Duration -->
+                    <div class="form-group">
+                        <label>Duree <span class="required">*</span></label>
+                        <div class="duration-input">
+                            <input type="number" class="form-control" id="heures" min="0" max="24" value="0">
+                            <span>heures</span>
+                            <input type="number" class="form-control" id="minutes" min="0" max="59" value="0">
+                            <span>minutes</span>
+                        </div>
+                        <div class="duration-presets">
+                            <button type="button" class="preset-btn" onclick="setDuration(15)">15min</button>
+                            <button type="button" class="preset-btn" onclick="setDuration(30)">30min</button>
+                            <button type="button" class="preset-btn" onclick="setDuration(60)">1h</button>
+                            <button type="button" class="preset-btn" onclick="setDuration(120)">2h</button>
+                            <button type="button" class="preset-btn" onclick="setDuration(240)">4h</button>
+                            <button type="button" class="preset-btn" onclick="setDuration(480)">8h</button>
+                        </div>
+                    </div>
+
+                    <!-- Activity Type -->
+                    <div class="form-group">
+                        <label>Type d'activite</label>
+                        <select class="form-control" id="type_activite">
+                            <option value="TRAVAIL">Travail</option>
+                            <option value="REUNION">Reunion</option>
+                            <option value="DEPLACEMENT">Deplacement</option>
+                            <option value="ADMINISTRATIF">Administratif</option>
+                            <option value="FORMATION">Formation</option>
+                            <option value="AUTRE">Autre</option>
+                        </select>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" id="description" rows="3" placeholder="Decrivez le travail effectue..."></textarea>
+                    </div>
+
+                    <!-- Billable -->
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="facturable" checked>
+                            <label for="facturable">Temps facturable</label>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="cancel()">Annuler</button>
+                        <button type="button" class="btn btn-timer" onclick="startTimer()">Demarrer timer</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+
+                <!-- Recent Entries -->
+                <div class="recent-entries">
+                    <h3>Saisies recentes</h3>
+                    <div class="entry-item">
+                        <div class="entry-info">
+                            <span class="entry-context">INT-2026-0042 - Maintenance climatisation</span>
+                            <span class="entry-desc">Verification des unites exterieures</span>
+                        </div>
+                        <span class="entry-duration">2h 30m</span>
+                    </div>
+                    <div class="entry-item">
+                        <div class="entry-info">
+                            <span class="entry-context">INT-2026-0043 - Installation electrique</span>
+                            <span class="entry-desc">Pose des chemins de cables</span>
+                        </div>
+                        <span class="entry-duration">4h 00m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default date to today
+            document.getElementById('date').valueAsDate = new Date();
+
+            // Check for active timer
+            checkActiveTimer();
+        });
+
+        // Context type selection
+        let currentContextType = 'intervention';
+
+        function setContextType(type) {
+            currentContextType = type;
+
+            // Update tabs
+            document.querySelectorAll('.context-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.type === type);
+            });
+
+            // Show/hide context selectors
+            document.getElementById('context-intervention').style.display = type === 'intervention' ? 'block' : 'none';
+            document.getElementById('context-projet').style.display = type === 'projet' ? 'block' : 'none';
+            document.getElementById('context-client').style.display = type === 'client' ? 'block' : 'none';
+        }
+
+        // Duration presets
+        function setDuration(minutes) {
+            document.getElementById('heures').value = Math.floor(minutes / 60);
+            document.getElementById('minutes').value = minutes % 60;
+
+            // Update active state
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                const btnMinutes = parseInt(btn.textContent);
+                btn.classList.toggle('active', minutes === btnMinutes ||
+                    (btn.textContent === '1h' && minutes === 60) ||
+                    (btn.textContent === '2h' && minutes === 120) ||
+                    (btn.textContent === '4h' && minutes === 240) ||
+                    (btn.textContent === '8h' && minutes === 480));
+            });
+        }
+
+        // Form submission
+        document.getElementById('quick-entry-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const heures = parseInt(document.getElementById('heures').value) || 0;
+            const minutes = parseInt(document.getElementById('minutes').value) || 0;
+            const duree_minutes = heures * 60 + minutes;
+
+            if (duree_minutes === 0) {
+                alert('Veuillez saisir une duree');
+                return;
+            }
+
+            const data = {
+                date: document.getElementById('date').value,
+                duree_minutes: duree_minutes,
+                type_activite: document.getElementById('type_activite').value,
+                description: document.getElementById('description').value,
+                facturable: document.getElementById('facturable').checked
+            };
+
+            // Add context based on type
+            if (currentContextType === 'intervention') {
+                data.intervention_id = document.getElementById('intervention_id').value;
+            } else if (currentContextType === 'projet') {
+                data.projet_id = document.getElementById('projet_id').value;
+            } else if (currentContextType === 'client') {
+                data.client_id = document.getElementById('client_id').value;
+            }
+
+            try {
+                const res = await fetch('/api/temps', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    alert('Temps enregistre avec succes');
+                    // Reset form
+                    document.getElementById('quick-entry-form').reset();
+                    document.getElementById('date').valueAsDate = new Date();
+                    document.getElementById('facturable').checked = true;
+                } else {
+                    alert('Erreur lors de l\'enregistrement');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Temps enregistre (demo)');
+            }
+        });
+
+        // Timer functions
+        let timerInterval = null;
+        let timerStart = null;
+
+        function checkActiveTimer() {
+            const saved = localStorage.getItem('activeTimer');
+            if (saved) {
+                const timer = JSON.parse(saved);
+                timerStart = new Date(timer.start);
+                document.getElementById('timer-context-display').textContent = timer.context || '-';
+                document.getElementById('timer-active').style.display = 'flex';
+                timerInterval = setInterval(updateTimerDisplay, 1000);
+                updateTimerDisplay();
+            }
+        }
+
+        function startTimer() {
+            let context = '';
+            if (currentContextType === 'intervention') {
+                context = document.getElementById('intervention_id').value;
+            } else if (currentContextType === 'projet') {
+                context = document.getElementById('projet_id').value;
+            } else if (currentContextType === 'client') {
+                context = document.getElementById('client_id').value;
+            }
+
+            if (!context && currentContextType !== 'autre') {
+                alert('Veuillez selectionner un contexte');
+                return;
+            }
+
+            timerStart = new Date();
+            localStorage.setItem('activeTimer', JSON.stringify({
+                start: timerStart.toISOString(),
+                context: context || 'Autre'
+            }));
+
+            document.getElementById('timer-context-display').textContent = context || 'Autre';
+            document.getElementById('timer-active').style.display = 'flex';
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const elapsed = Math.floor((new Date() - timerStart) / 1000);
+            const h = Math.floor(elapsed / 3600);
+            const m = Math.floor((elapsed % 3600) / 60);
+            const s = elapsed % 60;
+            document.getElementById('timer-display').textContent =
+                `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        async function stopTimer() {
+            clearInterval(timerInterval);
+            const elapsed = Math.floor((new Date() - timerStart) / 1000 / 60);
+            const saved = JSON.parse(localStorage.getItem('activeTimer'));
+            localStorage.removeItem('activeTimer');
+
+            document.getElementById('timer-active').style.display = 'none';
+
+            if (elapsed > 0) {
+                // Pre-fill the form
+                setDuration(elapsed);
+                if (saved && saved.context) {
+                    // Try to select the context
+                    const select = document.getElementById('intervention_id');
+                    for (let option of select.options) {
+                        if (option.value === saved.context) {
+                            select.value = saved.context;
+                            break;
+                        }
+                    }
+                }
+                alert(`Timer arrete. Duree: ${Math.floor(elapsed/60)}h ${elapsed%60}min\nVeuillez completer et enregistrer la saisie.`);
+            }
+        }
+
+        function cancel() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

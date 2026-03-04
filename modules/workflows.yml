@@ -1,0 +1,87 @@
+# AZALPLUS - Module Workflows (Automatisations)
+nom: Workflows
+icone: settings
+menu: Parametres
+description: Configuration des workflows automatiques
+
+champs:
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom du workflow
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description du workflow
+
+  - nom: module
+    type: text
+    obligatoire: true
+    description: Module concerne
+    autocompletion: true
+
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Workflow actif
+
+  - nom: declencheur
+    type: select
+    obligatoire: true
+    options: [on_create, on_update, on_status_change, scheduled]
+    description: Type de declencheur
+
+  - nom: cron_expression
+    type: text
+    obligatoire: false
+    description: Expression cron pour les workflows planifies
+    autocompletion: true
+
+  - nom: conditions
+    type: json
+    obligatoire: false
+    description: Conditions au format JSON
+
+  - nom: actions
+    type: json
+    obligatoire: false
+    description: Actions a executer au format JSON
+
+  - nom: executions_total
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre total d'executions
+
+  - nom: executions_succes
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre d'executions reussies
+
+  - nom: executions_echec
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre d'executions echouees
+
+  - nom: derniere_execution
+    type: datetime
+    obligatoire: false
+    description: Date de derniere execution
+
+  - nom: dernier_resultat
+    type: text
+    obligatoire: false
+    description: Resultat de la derniere execution
+    autocompletion: true
+
+actions:
+  - tester
+  - activer
+  - desactiver
+  - dupliquer
+  - voir_historique

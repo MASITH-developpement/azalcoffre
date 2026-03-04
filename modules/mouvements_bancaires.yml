@@ -1,0 +1,393 @@
+# =============================================================================
+# AZALPLUS - Module Mouvements Bancaires
+# =============================================================================
+# Mouvements bancaires pour le rapprochement.
+# Supporte l'import automatique et le lettrage avec factures/paiements.
+
+nom: Mouvements Bancaires
+icone: arrow-left-right
+menu: Comptabilite
+description: Mouvements bancaires et rapprochement
+
+champs:
+  # Compte bancaire
+  - nom: compte_id
+    type: relation
+    obligatoire: true
+    relation: ComptesBancaires
+    description: Compte bancaire associe
+    autocompletion: true
+
+  # Reference unique
+  - nom: reference
+    type: text
+    obligatoire: false
+    description: Reference unique du mouvement (auto ou import)
+    autocompletion: true
+
+  - nom: reference_banque
+    type: text
+    obligatoire: false
+    description: Reference fournie par la banque
+    autocompletion: true
+
+  # Dates
+  - nom: date
+    type: date
+    obligatoire: true
+    description: Date de l'operation
+
+  - nom: date_valeur
+    type: date
+    obligatoire: false
+    description: Date de valeur
+
+  # Description
+  - nom: libelle
+    type: text
+    obligatoire: true
+    description: Libelle de l'operation
+    autocompletion: true
+
+  - nom: libelle_original
+    type: text
+    obligatoire: false
+    description: Libelle original (import)
+    autocompletion: true
+
+  - nom: libelle_normalise
+    type: text
+    obligatoire: false
+    readonly: true
+    description: Libelle normalise pour recherche
+    autocompletion: true
+
+  # Montant
+  - nom: montant
+    type: number
+    obligatoire: true
+    precision: 2
+    description: Montant de l'operation (valeur absolue)
+
+  - nom: type
+    type: select
+    obligatoire: true
+    options: [DEBIT, CREDIT]
+    description: Type de mouvement (debit = sortie, credit = entree)
+
+  - nom: montant_signe
+    type: number
+    obligatoire: false
+    readonly: true
+    calcul: "CASE WHEN type = 'CREDIT' THEN montant ELSE -montant END"
+    description: Montant signe (+ credit, - debit)
+
+  - nom: devise
+    type: relation
+    obligatoire: false
+    relation: Devises
+    defaut: EUR
+    description: Devise du mouvement
+    autocompletion: true
+
+  # Categorisation
+  - nom: categorie
+    type: select
+    obligatoire: false
+    options: [
+      VENTES,
+      ACHATS,
+      SALAIRES,
+      CHARGES_SOCIALES,
+      IMPOTS,
+      LOYER,
+      ASSURANCES,
+      FRAIS_BANCAIRES,
+      INTERETS,
+      EMPRUNT,
+      INVESTISSEMENT,
+      VIREMENT_INTERNE,
+      REMBOURSEMENT,
+      DIVERS,
+      A_IDENTIFIER
+    ]
+    defaut: A_IDENTIFIER
+    description: Categorie de depense/recette
+
+  - nom: sous_categorie
+    type: text
+    obligatoire: false
+    description: Sous-categorie
+    autocompletion: true
+
+  # Rapprochement
+  - nom: rapproche
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Mouvement rapproche
+
+  - nom: date_rapprochement
+    type: datetime
+    obligatoire: false
+    description: Date du rapprochement
+
+  - nom: rapproche_par
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Utilisateur ayant fait le rapprochement
+    autocompletion: true
+
+  # Liens avec documents
+  - nom: facture_id
+    type: relation
+    obligatoire: false
+    relation: Factures
+    description: Facture client liee
+    autocompletion: true
+
+  - nom: facture_fournisseur_id
+    type: relation
+    obligatoire: false
+    relation: FacturesFournisseurs
+    description: Facture fournisseur liee
+    autocompletion: true
+
+  - nom: paiement_id
+    type: relation
+    obligatoire: false
+    relation: Paiements
+    description: Paiement lie
+    autocompletion: true
+
+  - nom: note_frais_id
+    type: relation
+    obligatoire: false
+    relation: NotesFrais
+    description: Note de frais liee
+    autocompletion: true
+
+  # Liens multiples (pour eclatement)
+  - nom: documents_lies
+    type: json
+    obligatoire: false
+    description: |
+      Documents lies pour rapprochement multiple.
+      Format: [
+        {"type": "FACTURE", "id": "uuid", "montant": 100.00},
+        {"type": "PAIEMENT", "id": "uuid", "montant": 50.00}
+      ]
+
+  # Lettrage
+  - nom: code_lettrage
+    type: text
+    obligatoire: false
+    description: Code de lettrage comptable
+    autocompletion: true
+
+  - nom: lettre
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Mouvement lettre
+
+  # Comptabilite
+  - nom: compte_comptable
+    type: text
+    obligatoire: false
+    description: Compte comptable de contrepartie
+    autocompletion: true
+
+  - nom: ecriture_id
+    type: relation
+    obligatoire: false
+    relation: EcrituresComptables
+    description: Ecriture comptable generee
+    autocompletion: true
+
+  - nom: comptabilise
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Mouvement comptabilise
+
+  # Import
+  - nom: source
+    type: select
+    obligatoire: false
+    options: [MANUEL, IMPORT_OFX, IMPORT_QIF, IMPORT_CSV, IMPORT_MT940, IMPORT_CAMT053, API_BANQUE]
+    defaut: MANUEL
+    description: Source du mouvement
+
+  - nom: fichier_import_id
+    type: text
+    obligatoire: false
+    description: ID du fichier d'import
+
+  - nom: hash_import
+    type: text
+    obligatoire: false
+    description: Hash pour eviter les doublons
+
+  # Suggestions IA
+  - nom: suggestion_categorie
+    type: select
+    obligatoire: false
+    options: [
+      VENTES,
+      ACHATS,
+      SALAIRES,
+      CHARGES_SOCIALES,
+      IMPOTS,
+      LOYER,
+      ASSURANCES,
+      FRAIS_BANCAIRES,
+      INTERETS,
+      EMPRUNT,
+      INVESTISSEMENT,
+      VIREMENT_INTERNE,
+      REMBOURSEMENT,
+      DIVERS
+    ]
+    description: Categorie suggeree par IA
+
+  - nom: suggestion_document
+    type: json
+    obligatoire: false
+    description: |
+      Document suggere pour rapprochement.
+      Format: {
+        "type": "FACTURE",
+        "id": "uuid",
+        "reference": "FAC-2024-001",
+        "montant": 1200.00,
+        "score": 0.95
+      }
+
+  - nom: confiance_suggestion
+    type: number
+    obligatoire: false
+    min: 0
+    max: 1
+    description: Score de confiance de la suggestion (0-1)
+
+  # Statut
+  - nom: statut
+    type: select
+    obligatoire: false
+    defaut: A_TRAITER
+    options: [A_TRAITER, EN_COURS, RAPPROCHE, EXCLU, ERREUR]
+    description: Statut de traitement
+
+  - nom: exclu
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Mouvement exclu du rapprochement
+
+  - nom: motif_exclusion
+    type: text
+    obligatoire: false
+    description: Motif d'exclusion
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  # Metadonnees
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+workflow:
+  A_TRAITER -> EN_COURS: si categorie != A_IDENTIFIER
+  EN_COURS -> RAPPROCHE: si rapproche = true
+  A_TRAITER -> RAPPROCHE: action rapprocher_automatique
+  A_TRAITER -> EXCLU: action exclure
+  RAPPROCHE -> A_TRAITER: action annuler_rapprochement
+
+actions:
+  - rapprocher
+  - rapprocher_automatique
+  - exclure
+  - annuler_rapprochement
+  - categoriser
+  - lier_facture
+  - lier_paiement
+  - comptabiliser
+  - suggerer_rapprochement
+
+# =============================================================================
+# Regles de rapprochement automatique
+# =============================================================================
+regles_rapprochement:
+  # Correspondance exacte par reference
+  - nom: reference_exacte
+    description: Correspondance exacte par reference de facture
+    priorite: 1
+    conditions:
+      - libelle CONTIENT reference_facture
+      - montant = facture.total OR montant = paiement.montant
+    action: rapprocher_automatique
+
+  # Correspondance par montant et periode
+  - nom: montant_periode
+    description: Correspondance par montant dans une periode
+    priorite: 2
+    conditions:
+      - montant = document.montant
+      - date ENTRE document.date ET document.date + 15j
+    action: suggerer
+
+  # Patterns connus (virements, prelevements)
+  - nom: patterns_banque
+    description: Detection de patterns bancaires
+    priorite: 3
+    patterns:
+      - pattern: "VIR SEPA.*SALAIRE"
+        categorie: SALAIRES
+      - pattern: "PRLV SEPA.*URSSAF"
+        categorie: CHARGES_SOCIALES
+      - pattern: "PRLV SEPA.*IMPOT"
+        categorie: IMPOTS
+      - pattern: "FRAIS.*CARTE"
+        categorie: FRAIS_BANCAIRES
+      - pattern: "AGIOS"
+        categorie: INTERETS
+
+marceau:
+  alertes:
+    - si statut = A_TRAITER et date < maintenant - 7j: "Mouvement ancien non traite"
+    - si statut = ERREUR: "Erreur de rapprochement a verifier"
+    - si montant > 10000 et rapproche = false: "Mouvement important non rapproche"
+  suggestions:
+    - "Traiter les mouvements en attente"
+    - "Verifier les suggestions de rapprochement"
+    - "Categoriser les mouvements non identifies"
+  kpis:
+    - nom: "Mouvements a traiter"
+      calcul: "compte(statut = A_TRAITER)"
+      format: "nombre"
+      alerte_si: "> 100"
+
+    - nom: "Taux de rapprochement"
+      calcul: "compte(rapproche = true) / compte(*) * 100"
+      format: "pourcentage"
+      alerte_si: "< 80"
+
+    - nom: "Mouvements non categorises"
+      calcul: "compte(categorie = A_IDENTIFIER)"
+      format: "nombre"

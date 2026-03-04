@@ -1,0 +1,198 @@
+# =============================================================================
+# AZALPLUS - Module Notes Client
+# =============================================================================
+# Notes et historique des interactions avec les clients.
+# Permet de suivre tous les echanges : appels, emails, reunions, etc.
+# Inclut un systeme de rappels pour les relances.
+# =============================================================================
+
+nom: NotesClient
+nom_affichage: Notes Client
+icone: message-square
+menu: Commercial
+description: Notes et historique des interactions client
+actif: true
+
+champs:
+  # Relation vers le client (OBLIGATOIRE)
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    label: Client
+    description: Client concerne par cette note
+    autocompletion: true
+
+  # Utilisateur ayant cree la note
+  - nom: user_id
+    type: relation
+    obligatoire: true
+    relation: Utilisateurs
+    label: Cree par
+    description: Utilisateur ayant cree la note
+    autocompletion: true
+
+  # Type d'interaction
+  - nom: type
+    type: enum
+    obligatoire: true
+    defaut: note
+    options: [appel, email, reunion, note, visite, autre]
+    label: Type
+    description: Type d'interaction
+
+  # Titre de la note
+  - nom: titre
+    type: texte
+    obligatoire: true
+    label: Titre
+    description: Titre ou objet de la note
+    autocompletion: true
+
+  # Contenu detaille
+  - nom: contenu
+    type: texte long
+    obligatoire: false
+    label: Contenu
+    description: Description detaillee de l'interaction
+
+  # Date de l'interaction (peut etre differente de created_at)
+  - nom: date
+    type: datetime
+    obligatoire: true
+    label: Date
+    description: Date et heure de l'interaction
+
+  # Duree de l'interaction (en minutes)
+  - nom: duree_minutes
+    type: entier
+    obligatoire: false
+    label: Duree (min)
+    description: Duree de l'interaction en minutes
+
+  # Rappel
+  - nom: rappel_date
+    type: datetime
+    obligatoire: false
+    label: Date de rappel
+    description: Date de rappel pour cette note
+
+  - nom: rappel_fait
+    type: oui/non
+    obligatoire: false
+    defaut: false
+    label: Rappel effectue
+    description: Indique si le rappel a ete traite
+
+  # Source automatique (pour les notes generees automatiquement)
+  - nom: source
+    type: enum
+    obligatoire: false
+    options: [manuel, email_envoye, document_cree, paiement_recu, devis_envoye, facture_envoyee, intervention]
+    label: Source
+    description: Source de la note (manuel ou auto-generee)
+
+  # Reference vers un enregistrement source (optionnel)
+  - nom: source_module
+    type: texte
+    obligatoire: false
+    label: Module source
+    description: "Module d'origine si auto-genere (ex: Factures)"
+
+  - nom: source_id
+    type: uuid
+    obligatoire: false
+    label: ID source
+    description: ID de l'enregistrement source
+
+  # Piece jointe
+  - nom: fichier_id
+    type: relation
+    obligatoire: false
+    relation: Documents
+    label: Fichier joint
+    description: Document attache a cette note
+    autocompletion: true
+
+  # Visibilite
+  - nom: confidentiel
+    type: oui/non
+    obligatoire: false
+    defaut: false
+    label: Confidentiel
+    description: Note visible uniquement par son createur
+
+  # Priorite
+  - nom: priorite
+    type: enum
+    obligatoire: false
+    defaut: normale
+    options: [basse, normale, haute, urgente]
+    label: Priorite
+    description: Priorite de la note/rappel
+
+  # Contact concerne (optionnel)
+  - nom: contact_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    label: Civilite contact
+    description: Civilite du contact
+
+  - nom: contact_nom
+    type: texte
+    obligatoire: false
+    label: Contact
+    description: Nom du contact concerne
+    autocompletion: true
+
+  - nom: contact_email
+    type: email
+    obligatoire: false
+    label: Email contact
+    autocompletion: true
+
+  - nom: contact_telephone
+    type: telephone
+    obligatoire: false
+    label: Tel contact
+    autocompletion: true
+
+  # Resultat/Issue de l'interaction
+  - nom: resultat
+    type: enum
+    obligatoire: false
+    options: [positif, neutre, negatif, en_attente]
+    label: Resultat
+    description: Issue de l'interaction
+
+  # Metadonnees standard
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+    label: Cree le
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+    label: Modifie le
+
+# Actions disponibles
+actions:
+  - marquer_rappel_fait
+  - creer_relance
+  - envoyer_email_suite
+  - planifier_reunion
+
+# Integration avec Marceau (IA)
+marceau:
+  alertes:
+    - si rappel_date <= maintenant et rappel_fait=false: "Rappel en attente"
+    - si priorite=urgente et resultat=null: "Interaction urgente sans resultat"
+  suggestions:
+    - "Analyser la frequence des contacts"
+    - "Detecter les clients sans interaction depuis 30 jours"
+
+# Recherche globale - champs indexes
+recherche:
+  champs: [titre, contenu, contact_nom]

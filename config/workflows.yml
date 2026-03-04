@@ -1,0 +1,416 @@
+# =============================================================================
+# AZALPLUS - Workflows (États et Transitions)
+# =============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Devis
+# ─────────────────────────────────────────────────────────────────────────────
+devis:
+  etats:
+    BROUILLON:
+      label: "Brouillon"
+      couleur: "#94A3B8"
+      initial: true
+
+    ENVOYE:
+      label: "Envoyé"
+      couleur: "#3B82F6"
+
+    ACCEPTE:
+      label: "Accepté"
+      couleur: "#22C55E"
+      final: true
+
+    REFUSE:
+      label: "Refusé"
+      couleur: "#EF4444"
+      final: true
+
+    EXPIRE:
+      label: "Expiré"
+      couleur: "#F59E0B"
+      final: true
+
+  transitions:
+    - de: BROUILLON
+      vers: ENVOYE
+      condition: "client existe et lignes.count > 0"
+      action: "envoyer_email si email_client"
+
+    - de: ENVOYE
+      vers: ACCEPTE
+      action: "creer_facture si auto_facturation"
+
+    - de: ENVOYE
+      vers: REFUSE
+
+    - de: ENVOYE
+      vers: EXPIRE
+      condition: "date > validite"
+      auto: true  # Transition automatique
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Facture
+# ─────────────────────────────────────────────────────────────────────────────
+facture:
+  etats:
+    BROUILLON:
+      label: "Brouillon"
+      couleur: "#94A3B8"
+      initial: true
+
+    VALIDEE:
+      label: "Validée"
+      couleur: "#3B82F6"
+
+    ENVOYEE:
+      label: "Envoyée"
+      couleur: "#8B5CF6"
+
+    PAYEE_PARTIELLEMENT:
+      label: "Payée partiellement"
+      couleur: "#F59E0B"
+
+    PAYEE:
+      label: "Payée"
+      couleur: "#22C55E"
+      final: true
+
+    ANNULEE:
+      label: "Annulée"
+      couleur: "#EF4444"
+      final: true
+
+  transitions:
+    - de: BROUILLON
+      vers: VALIDEE
+      condition: "client existe et lignes.count > 0"
+      action: "generer_numero"
+
+    - de: VALIDEE
+      vers: ENVOYEE
+      action: "envoyer_email"
+
+    - de: ENVOYEE
+      vers: PAYEE_PARTIELLEMENT
+      condition: "montant_paye > 0 et montant_paye < total_ttc"
+
+    - de: ENVOYEE
+      vers: PAYEE
+      condition: "montant_paye >= total_ttc"
+
+    - de: PAYEE_PARTIELLEMENT
+      vers: PAYEE
+      condition: "montant_paye >= total_ttc"
+
+    - de: BROUILLON
+      vers: ANNULEE
+
+    - de: VALIDEE
+      vers: ANNULEE
+      action: "creer_avoir si montant_paye > 0"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Intervention
+# ─────────────────────────────────────────────────────────────────────────────
+intervention:
+  etats:
+    BROUILLON:
+      label: "Brouillon"
+      couleur: "#94A3B8"
+      initial: true
+
+    A_PLANIFIER:
+      label: "À planifier"
+      couleur: "#F59E0B"
+
+    PLANIFIEE:
+      label: "Planifiée"
+      couleur: "#3B82F6"
+
+    EN_COURS:
+      label: "En cours"
+      couleur: "#8B5CF6"
+
+    BLOQUEE:
+      label: "Bloquée"
+      couleur: "#EF4444"
+
+    TERMINEE:
+      label: "Terminée"
+      couleur: "#22C55E"
+      final: true
+
+    ANNULEE:
+      label: "Annulée"
+      couleur: "#6B7280"
+      final: true
+
+  transitions:
+    - de: BROUILLON
+      vers: A_PLANIFIER
+
+    - de: A_PLANIFIER
+      vers: PLANIFIEE
+      condition: "technicien assigné et date_debut définie"
+
+    - de: PLANIFIEE
+      vers: EN_COURS
+      condition: "date_debut <= maintenant"
+
+    - de: EN_COURS
+      vers: TERMINEE
+      action: "generer_rapport si rapport_requis"
+
+    - de: EN_COURS
+      vers: BLOQUEE
+
+    - de: BLOQUEE
+      vers: EN_COURS
+      condition: "motif_blocage résolu"
+
+    - de: "*"
+      vers: ANNULEE
+      sauf: [TERMINEE]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Commande fournisseur
+# ─────────────────────────────────────────────────────────────────────────────
+commande_fournisseur:
+  etats:
+    BROUILLON:
+      label: "Brouillon"
+      couleur: "#94A3B8"
+      initial: true
+
+    ENVOYEE:
+      label: "Envoyée"
+      couleur: "#3B82F6"
+
+    CONFIRMEE:
+      label: "Confirmée"
+      couleur: "#8B5CF6"
+
+    LIVREE_PARTIELLEMENT:
+      label: "Livrée partiellement"
+      couleur: "#F59E0B"
+
+    LIVREE:
+      label: "Livrée"
+      couleur: "#22C55E"
+
+    FACTUREE:
+      label: "Facturée"
+      couleur: "#22C55E"
+      final: true
+
+    ANNULEE:
+      label: "Annulée"
+      couleur: "#EF4444"
+      final: true
+
+  transitions:
+    - de: BROUILLON
+      vers: ENVOYEE
+      condition: "fournisseur existe et lignes.count > 0"
+
+    - de: ENVOYEE
+      vers: CONFIRMEE
+
+    - de: CONFIRMEE
+      vers: LIVREE_PARTIELLEMENT
+      condition: "quantite_recue > 0 et quantite_recue < quantite_commandee"
+
+    - de: CONFIRMEE
+      vers: LIVREE
+      condition: "quantite_recue >= quantite_commandee"
+
+    - de: LIVREE_PARTIELLEMENT
+      vers: LIVREE
+
+    - de: LIVREE
+      vers: FACTUREE
+      condition: "facture_fournisseur liée"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Saisie de temps (Time Entry)
+# ─────────────────────────────────────────────────────────────────────────────
+temps:
+  etats:
+    BROUILLON:
+      label: "Brouillon"
+      couleur: "#94A3B8"
+      initial: true
+      description: "Saisie en cours, modifiable"
+
+    SOUMIS:
+      label: "Soumis"
+      couleur: "#3B82F6"
+      description: "En attente d'approbation"
+
+    APPROUVE:
+      label: "Approuvé"
+      couleur: "#22C55E"
+      final: true
+      description: "Validé par le manager"
+
+    REJETE:
+      label: "Rejeté"
+      couleur: "#EF4444"
+      description: "Refusé, à corriger"
+
+  transitions:
+    - de: BROUILLON
+      vers: SOUMIS
+      action: "soumettre"
+      condition: "duree_minutes > 0"
+
+    - de: SOUMIS
+      vers: APPROUVE
+      action: "approuver"
+      permission: "temps.approuver"
+
+    - de: SOUMIS
+      vers: REJETE
+      action: "rejeter"
+      permission: "temps.approuver"
+      champ_requis: "motif_rejet"
+
+    - de: REJETE
+      vers: BROUILLON
+      action: "modifier"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Feuille de temps hebdomadaire
+# ─────────────────────────────────────────────────────────────────────────────
+feuille_temps:
+  etats:
+    EN_COURS:
+      label: "En cours"
+      couleur: "#94A3B8"
+      initial: true
+      description: "Semaine en cours de saisie"
+
+    SOUMISE:
+      label: "Soumise"
+      couleur: "#3B82F6"
+      description: "En attente de validation"
+
+    APPROUVEE:
+      label: "Approuvée"
+      couleur: "#22C55E"
+      final: true
+      description: "Validée par le manager"
+
+    REJETEE:
+      label: "Rejetée"
+      couleur: "#EF4444"
+      description: "Refusée, corrections requises"
+
+  transitions:
+    - de: EN_COURS
+      vers: SOUMISE
+      action: "soumettre_semaine"
+      condition: "toutes les entrées complètes"
+
+    - de: SOUMISE
+      vers: APPROUVEE
+      action: "approuver_semaine"
+      permission: "temps.approuver"
+      cascade: "approuver toutes les entrées de la semaine"
+
+    - de: SOUMISE
+      vers: REJETEE
+      action: "rejeter_semaine"
+      permission: "temps.approuver"
+
+    - de: REJETEE
+      vers: EN_COURS
+      action: "modifier"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Opportunite (Pipeline CRM)
+# ─────────────────────────────────────────────────────────────────────────────
+opportunite:
+  etats:
+    NOUVEAU:
+      label: "Nouveau"
+      couleur: "#94A3B8"
+      initial: true
+      probabilite_defaut: 10
+      description: "Lead nouvellement identifie"
+
+    QUALIFICATION:
+      label: "Qualification"
+      couleur: "#3B82F6"
+      probabilite_defaut: 25
+      description: "Qualification du besoin et du budget"
+
+    PROPOSITION:
+      label: "Proposition"
+      couleur: "#8B5CF6"
+      probabilite_defaut: 50
+      description: "Proposition commerciale envoyee"
+
+    NEGOCIATION:
+      label: "Negociation"
+      couleur: "#F59E0B"
+      probabilite_defaut: 75
+      description: "Negociation en cours"
+
+    GAGNE:
+      label: "Gagne"
+      couleur: "#22C55E"
+      final: true
+      probabilite_defaut: 100
+      description: "Opportunite remportee"
+
+    PERDU:
+      label: "Perdu"
+      couleur: "#EF4444"
+      final: true
+      probabilite_defaut: 0
+      description: "Opportunite perdue"
+
+  transitions:
+    - de: NOUVEAU
+      vers: QUALIFICATION
+      action: "qualifier"
+
+    - de: QUALIFICATION
+      vers: PROPOSITION
+      condition: "devis_principal_id existe"
+      action: "envoyer_proposition"
+
+    - de: QUALIFICATION
+      vers: PERDU
+      champ_requis: "motif_cloture"
+
+    - de: PROPOSITION
+      vers: NEGOCIATION
+
+    - de: PROPOSITION
+      vers: PERDU
+      champ_requis: "motif_cloture"
+
+    - de: NEGOCIATION
+      vers: GAGNE
+      action: "convertir_gagne"
+      champ_requis: "motif_cloture"
+
+    - de: NEGOCIATION
+      vers: PERDU
+      champ_requis: "motif_cloture"
+
+    # Retours possibles
+    - de: QUALIFICATION
+      vers: NOUVEAU
+      action: "requalifier"
+
+    - de: PROPOSITION
+      vers: QUALIFICATION
+      action: "requalifier"
+
+    - de: NEGOCIATION
+      vers: PROPOSITION
+      action: "reviser_proposition"

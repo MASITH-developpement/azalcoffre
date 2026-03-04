@@ -1,0 +1,70 @@
+# AZALPLUS - Module Consentements RGPD
+nom: Consentements
+icone: shield-check
+menu: Parametres
+description: Gestion des consentements clients conformement au RGPD
+
+champs:
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client concerne par le consentement
+    autocompletion: true
+
+  - nom: type_consentement
+    type: select
+    obligatoire: true
+    options: [MARKETING_EMAIL, MARKETING_SMS, MARKETING_TEL, TRAITEMENT_DONNEES, PROFILAGE, NEWSLETTER, COOKIES]
+    description: Type de consentement RGPD
+
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: REFUSE
+    options: [ACCORDE, REFUSE, RETIRE, EXPIRE]
+    description: Statut actuel du consentement
+
+  - nom: date_consentement
+    type: datetime
+    obligatoire: true
+    description: Date et heure de l'action de consentement
+
+  - nom: date_expiration
+    type: datetime
+    obligatoire: false
+    description: Date d'expiration automatique du consentement
+
+  - nom: source
+    type: select
+    obligatoire: true
+    options: [FORMULAIRE_WEB, EMAIL, TELEPHONE, PORTAIL_CLIENT, IMPORT, API]
+    description: Comment le consentement a ete obtenu
+
+  - nom: preuve_url
+    type: text
+    obligatoire: false
+    description: Lien vers le document de preuve
+    autocompletion: true
+
+  - nom: ip_address
+    type: text
+    obligatoire: false
+    description: IP lors du consentement web
+    autocompletion: true
+
+  - nom: version_politique
+    type: text
+    obligatoire: false
+    description: Version de la politique de confidentialite acceptee
+    autocompletion: true
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+actions:
+  - retirer_consentement
+  - renouveler_consentement
+  - exporter_historique

@@ -1,0 +1,91 @@
+# AZALPLUS - Module Webhooks
+nom: Webhooks
+icone: globe
+menu: Parametres
+description: Configuration des webhooks pour integrations externes
+
+champs:
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom du webhook
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description du webhook
+
+  - nom: url
+    type: text
+    obligatoire: true
+    description: URL de destination
+    autocompletion: true
+
+  - nom: secret
+    type: text
+    obligatoire: true
+    description: Cle secrete pour signature
+    autocompletion: true
+
+  - nom: events
+    type: json
+    obligatoire: true
+    description: Liste des evenements declencheurs
+
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Webhook actif
+
+  - nom: headers
+    type: json
+    obligatoire: false
+    description: Headers HTTP personnalises
+
+  - nom: retry_count
+    type: number
+    obligatoire: false
+    defaut: 3
+    description: Nombre de tentatives en cas d'echec
+
+  - nom: timeout_seconds
+    type: number
+    obligatoire: false
+    defaut: 30
+    description: Timeout en secondes
+
+  - nom: derniere_execution
+    type: datetime
+    obligatoire: false
+    description: Date de derniere execution
+
+  - nom: dernier_statut
+    type: number
+    obligatoire: false
+    description: Code HTTP du dernier appel
+
+  - nom: total_envois
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre total d'envois
+
+  - nom: total_succes
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de succes
+
+  - nom: total_echecs
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre d'echecs
+
+actions:
+  - tester
+  - activer
+  - desactiver
+  - voir_historique

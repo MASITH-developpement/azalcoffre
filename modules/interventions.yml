@@ -1,0 +1,529 @@
+# AZALPLUS - Module Interventions
+nom: Interventions
+icone: wrench
+menu: Services
+description: Gestion des interventions terrain
+
+champs:
+  # Reference officielle
+  - nom: reference
+    type: text
+    obligatoire: true
+    description: Reference INT-YYYY-XXXX (auto-generee)
+    autocompletion: true
+
+  # Relations principales
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client
+    autocompletion: true
+
+  - nom: donneur_ordre_id
+    type: relation
+    obligatoire: false
+    relation: DonneursOrdre
+    description: Donneur d'ordre
+    autocompletion: true
+
+  - nom: projet_id
+    type: relation
+    obligatoire: false
+    relation: Projets
+    description: Projet lie
+    autocompletion: true
+
+  - nom: affaire_id
+    type: relation
+    obligatoire: false
+    relation: Affaires
+    description: Affaire liee
+    autocompletion: true
+
+  - nom: devis_id
+    type: relation
+    obligatoire: false
+    relation: Devis
+    description: Devis lie
+    autocompletion: true
+
+  - nom: facture_client_id
+    type: relation
+    obligatoire: false
+    relation: Factures
+    description: Facture client liee
+    autocompletion: true
+
+  # Informations intervention
+  - nom: type_intervention
+    type: select
+    obligatoire: false
+    defaut: AUTRE
+    options: [INSTALLATION, MAINTENANCE, REPARATION, INSPECTION, FORMATION, CONSULTATION, AUTRE]
+    description: Type d'intervention
+
+  - nom: priorite
+    type: select
+    obligatoire: false
+    defaut: NORMAL
+    options: [LOW, NORMAL, HIGH, URGENT]
+    description: Priorite
+
+  - nom: reference_externe
+    type: text
+    obligatoire: false
+    description: Reference externe
+    autocompletion: true
+
+  - nom: canal_demande
+    type: select
+    obligatoire: false
+    options: [TELEPHONE, EMAIL, PORTAIL, DIRECT, CONTRAT, AUTRE]
+    description: Canal de la demande
+
+  - nom: corps_etat
+    type: select
+    obligatoire: false
+    options: [ELECTRICITE, PLOMBERIE, ELECTRICITE_PLOMBERIE]
+    description: Corps d'etat
+
+  # Description
+  - nom: titre
+    type: text
+    obligatoire: false
+    description: Titre de l'intervention
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description detaillee
+
+  - nom: notes_internes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  # Planification
+  - nom: date_prevue_debut
+    type: datetime
+    obligatoire: false
+    description: Date/heure de debut prevue
+
+  - nom: date_prevue_fin
+    type: datetime
+    obligatoire: false
+    description: Date/heure de fin prevue
+
+  - nom: duree_prevue_minutes
+    type: number
+    obligatoire: false
+    description: Duree prevue (minutes)
+
+  - nom: intervenant_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Technicien assigne
+    autocompletion: true
+
+  # Temps automatique
+  - nom: date_arrivee_site
+    type: datetime
+    obligatoire: false
+    description: Horodatage arrivee sur site
+
+  - nom: date_demarrage
+    type: datetime
+    obligatoire: false
+    description: Horodatage demarrage intervention
+
+  - nom: date_fin
+    type: datetime
+    obligatoire: false
+    description: Horodatage fin intervention
+
+  - nom: duree_reelle_minutes
+    type: number
+    obligatoire: false
+    description: Duree reelle (minutes)
+
+  # Geolocalisation arrivee
+  - nom: geoloc_arrivee_lat
+    type: number
+    obligatoire: false
+    description: Latitude arrivee
+
+  - nom: geoloc_arrivee_lng
+    type: number
+    obligatoire: false
+    description: Longitude arrivee
+
+  # Statut
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: DRAFT
+    options: [DRAFT, A_PLANIFIER, PLANIFIEE, EN_COURS, BLOQUEE, TERMINEE, ANNULEE]
+    description: Statut de l'intervention
+
+  # Adresse intervention
+  - nom: adresse_ligne1
+    type: text
+    obligatoire: false
+    description: Adresse ligne 1
+    autocompletion: true
+
+  - nom: adresse_ligne2
+    type: text
+    obligatoire: false
+    description: Adresse ligne 2
+    autocompletion: true
+
+  - nom: ville
+    type: text
+    obligatoire: false
+    description: Ville
+    autocompletion: true
+
+  - nom: code_postal
+    type: text
+    obligatoire: false
+    description: Code postal
+    autocompletion: true
+
+  - nom: pays
+    type: text
+    obligatoire: false
+    defaut: France
+    description: Pays
+    autocompletion: true
+
+  # Blocage
+  - nom: motif_blocage
+    type: textarea
+    obligatoire: false
+    description: Motif du blocage
+    autocompletion: true
+
+  - nom: date_blocage
+    type: datetime
+    obligatoire: false
+    description: Date de blocage
+
+  - nom: date_deblocage
+    type: datetime
+    obligatoire: false
+    description: Date de deblocage
+
+  # Contact sur place
+  - nom: contact_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du contact
+
+  - nom: contact_sur_place
+    type: text
+    obligatoire: false
+    description: Nom du contact sur place
+    autocompletion: true
+
+  - nom: telephone_contact
+    type: tel
+    obligatoire: false
+    description: Telephone du contact
+
+  - nom: email_contact
+    type: email
+    obligatoire: false
+    description: Email du contact
+    autocompletion: true
+
+  # Notes & Materiel
+  - nom: notes_client
+    type: textarea
+    obligatoire: false
+    description: Notes pour le client
+
+  - nom: materiel_necessaire
+    type: textarea
+    obligatoire: false
+    description: Materiel necessaire
+    autocompletion: true
+
+  - nom: materiel_utilise
+    type: textarea
+    obligatoire: false
+    description: Materiel utilise
+    autocompletion: true
+
+  # Facturation
+  - nom: facturable
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Intervention facturable
+
+  - nom: montant_ht
+    type: number
+    obligatoire: false
+    description: Montant HT
+
+  - nom: montant_ttc
+    type: number
+    obligatoire: false
+    description: Montant TTC
+
+  # Classification
+  - nom: tags
+    type: tags
+    obligatoire: false
+    description: Tags
+
+# Rapport d'intervention
+rapport:
+  champs:
+    - nom: reference_intervention
+      type: text
+      obligatoire: true
+      description: Reference intervention
+      autocompletion: true
+
+    - nom: client_id
+      type: relation
+      obligatoire: true
+      relation: Clients
+      autocompletion: true
+
+    - nom: resume_actions
+      type: textarea
+      obligatoire: false
+      description: Resume des actions
+      autocompletion: true
+
+    - nom: anomalies
+      type: textarea
+      obligatoire: false
+      description: Anomalies / observations
+      autocompletion: true
+
+    - nom: recommandations
+      type: textarea
+      obligatoire: false
+      description: Recommandations
+      autocompletion: true
+
+    - nom: pieces_remplacees
+      type: textarea
+      obligatoire: false
+      description: Pieces remplacees
+      autocompletion: true
+
+    - nom: temps_passe_minutes
+      type: number
+      obligatoire: false
+      description: Temps passe (minutes)
+
+    - nom: materiel_utilise
+      type: textarea
+      obligatoire: false
+      description: Materiel utilise
+      autocompletion: true
+
+    - nom: photos
+      type: json
+      obligatoire: false
+      description: Photos
+
+    # Signature client
+    - nom: signataire_civilite
+      type: select
+      obligatoire: false
+      options: [Mr, Mme, Melle]
+      description: Civilite du signataire
+
+    - nom: nom_signataire
+      type: text
+      obligatoire: false
+      autocompletion: true
+
+    - nom: signature_client
+      type: text
+      obligatoire: false
+      description: Signature client (base64)
+
+    - nom: date_signature
+      type: datetime
+      obligatoire: false
+
+    - nom: is_signed
+      type: boolean
+      obligatoire: false
+      defaut: false
+
+    - nom: is_locked
+      type: boolean
+      obligatoire: false
+      defaut: false
+
+# Donneur d'ordre
+donneur_ordre:
+  champs:
+    - nom: code
+      type: text
+      obligatoire: true
+      description: Code donneur d'ordre
+      autocompletion: true
+
+    - nom: nom
+      type: text
+      obligatoire: true
+      description: Nom/Raison sociale
+      autocompletion: true
+
+    - nom: type
+      type: select
+      obligatoire: false
+      options: [CLIENT, FOURNISSEUR, AUTRE]
+
+    - nom: client_id
+      type: relation
+      obligatoire: false
+      relation: Clients
+      autocompletion: true
+
+    - nom: fournisseur_id
+      type: relation
+      obligatoire: false
+      relation: Fournisseurs
+      autocompletion: true
+
+    - nom: email
+      type: email
+      obligatoire: false
+      autocompletion: true
+
+    - nom: telephone
+      type: tel
+      obligatoire: false
+
+    - nom: adresse
+      type: textarea
+      obligatoire: false
+      autocompletion: true
+
+    - nom: adresse_facturation
+      type: textarea
+      obligatoire: false
+      autocompletion: true
+
+    - nom: delai_paiement
+      type: number
+      obligatoire: false
+      defaut: 30
+      description: Delai paiement (jours)
+
+    - nom: email_rapport
+      type: email
+      obligatoire: false
+      description: Email pour envoi rapports
+      autocompletion: true
+
+    # Contact commercial
+    - nom: contact_commercial_civilite
+      type: select
+      obligatoire: false
+      options: [Mr, Mme, Melle]
+
+    - nom: contact_commercial_nom
+      type: text
+      obligatoire: false
+      autocompletion: true
+
+    - nom: contact_commercial_email
+      type: email
+      obligatoire: false
+      autocompletion: true
+
+    - nom: contact_commercial_telephone
+      type: tel
+      obligatoire: false
+
+    # Contact comptabilite
+    - nom: contact_comptabilite_civilite
+      type: select
+      obligatoire: false
+      options: [Mr, Mme, Melle]
+
+    - nom: contact_comptabilite_nom
+      type: text
+      obligatoire: false
+      autocompletion: true
+
+    - nom: contact_comptabilite_email
+      type: email
+      obligatoire: false
+      autocompletion: true
+
+    - nom: contact_comptabilite_telephone
+      type: tel
+      obligatoire: false
+
+    # Contact technique
+    - nom: contact_technique_civilite
+      type: select
+      obligatoire: false
+      options: [Mr, Mme, Melle]
+
+    - nom: contact_technique_nom
+      type: text
+      obligatoire: false
+      autocompletion: true
+
+    - nom: contact_technique_email
+      type: email
+      obligatoire: false
+      autocompletion: true
+
+    - nom: contact_technique_telephone
+      type: tel
+      obligatoire: false
+
+    - nom: is_active
+      type: boolean
+      obligatoire: false
+      defaut: true
+
+workflow:
+  DRAFT -> A_PLANIFIER: auto
+  A_PLANIFIER -> PLANIFIEE: si intervenant_id et date_prevue_debut
+  PLANIFIEE -> EN_COURS: action demarrer
+  EN_COURS -> TERMINEE: action terminer
+  EN_COURS -> BLOQUEE: action bloquer
+  BLOQUEE -> EN_COURS: action debloquer
+  "* -> ANNULEE": sauf TERMINEE
+
+actions:
+  - planifier
+  - assigner_technicien
+  - arrivee_sur_site
+  - demarrer_intervention
+  - terminer_intervention
+  - bloquer
+  - debloquer
+  - generer_rapport
+  - signer_rapport
+  - envoyer_rapport
+  - creer_facture
+  - annuler
+  - ajouter_temps
+  - demarrer_timer
+
+marceau:
+  alertes:
+    - si statut = PLANIFIEE et date_prevue_debut < maintenant: "Intervention en retard"
+    - si statut = BLOQUEE: "Intervention bloquee - action requise"
+    - si statut = EN_COURS et duree_reelle_minutes > duree_prevue_minutes * 1.5: "Intervention depasse le temps prevu"
+    - si priorite = URGENT et statut in [DRAFT, A_PLANIFIER]: "Intervention urgente non planifiee"

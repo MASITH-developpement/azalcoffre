@@ -1,0 +1,53 @@
+# AZALPLUS - Module Modeles Email
+nom: ModelesEmail
+icone: mail
+menu: Parametres
+description: Templates d'emails personnalisables
+
+champs:
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom du modele
+    autocompletion: true
+
+  - nom: type
+    type: select
+    obligatoire: true
+    options: [devis_envoye, facture_envoyee, rappel_paiement, confirmation_paiement, bienvenue_client, relance_devis, intervention_planifiee, autre]
+    description: Type de document pour selection automatique
+
+  - nom: sujet
+    type: text
+    obligatoire: true
+    description: Sujet de l'email avec variables
+    autocompletion: true
+
+  - nom: contenu
+    type: textarea
+    obligatoire: true
+    description: Contenu HTML de l'email avec variables
+
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Template actif
+
+  - nom: par_defaut
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Template par defaut pour ce type
+
+  - nom: ordre
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Ordre d'affichage
+
+actions:
+  - apercu
+  - dupliquer
+  - activer
+  - desactiver

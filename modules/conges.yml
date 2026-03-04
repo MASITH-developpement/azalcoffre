@@ -1,0 +1,129 @@
+# AZALPLUS - Module Conges (Gestion des absences)
+nom: Conges
+icone: calendar-off
+menu: Ressources Humaines
+description: Gestion des demandes de conges et absences
+
+champs:
+  - nom: reference
+    type: text
+    obligatoire: true
+    description: Reference demande
+    autocompletion: true
+
+  - nom: employe_id
+    type: relation
+    obligatoire: true
+    relation: Employes
+    description: Employe demandeur
+    autocompletion: true
+
+  # Type de conge
+  - nom: type_conge
+    type: select
+    obligatoire: true
+    options: [CP, RTT, MALADIE, MATERNITE, PATERNITE, PARENTAL, SANS_SOLDE, FORMATION, EXCEPTIONNEL, RECUPERATION]
+    description: Type de conge
+
+  # Periode
+  - nom: date_debut
+    type: date
+    obligatoire: true
+    description: Date de debut
+
+  - nom: date_fin
+    type: date
+    obligatoire: true
+    description: Date de fin
+
+  - nom: demi_journee_debut
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Debut en demi-journee
+
+  - nom: demi_journee_fin
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Fin en demi-journee
+
+  - nom: nombre_jours
+    type: number
+    obligatoire: false
+    description: Nombre de jours (calcule)
+
+  # Justification
+  - nom: motif
+    type: textarea
+    obligatoire: false
+    description: Motif de la demande
+    autocompletion: true
+
+  - nom: justificatif_url
+    type: text
+    obligatoire: false
+    description: URL du justificatif
+
+  # Remplacement
+  - nom: remplacant_id
+    type: relation
+    obligatoire: false
+    relation: Employes
+    description: Remplacant pendant l'absence
+    autocompletion: true
+
+  # Validation
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: EN_ATTENTE
+    options: [EN_ATTENTE, APPROUVE, REFUSE, ANNULE]
+    description: Statut de la demande
+
+  - nom: valideur_id
+    type: relation
+    obligatoire: false
+    relation: Employes
+    description: Valideur
+    autocompletion: true
+
+  - nom: date_validation
+    type: datetime
+    obligatoire: false
+    description: Date de validation
+
+  - nom: commentaire_validation
+    type: textarea
+    obligatoire: false
+    description: Commentaire du valideur
+    autocompletion: true
+
+  # Metadonnees
+  - nom: date_demande
+    type: datetime
+    obligatoire: false
+    description: Date de la demande
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+workflow:
+  EN_ATTENTE -> APPROUVE: action approuver si valideur
+  EN_ATTENTE -> REFUSE: action refuser si valideur
+  EN_ATTENTE -> ANNULE: action annuler
+  APPROUVE -> ANNULE: si date_debut > maintenant
+
+actions:
+  - approuver
+  - refuser
+  - annuler
+  - voir_planning
+  - exporter_calendrier
+
+marceau:
+  alertes:
+    - si statut = EN_ATTENTE et date_demande < maintenant - 3 jours: "Demande de conge en attente depuis plus de 3 jours"
+    - si statut = APPROUVE et date_debut = aujourd'hui: "Conge demarre aujourd'hui"

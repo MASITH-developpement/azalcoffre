@@ -1,0 +1,205 @@
+# =============================================================================
+# AZALPLUS - Module Attributs Produit
+# =============================================================================
+# Gestion des attributs configurables pour les variantes de produits.
+# Exemples: Taille, Couleur, Matiere, etc.
+# Compatible No-Code et multi-tenant.
+# =============================================================================
+
+AttributsProduit:
+  nom: "AttributsProduit"
+  nom_affichage: "Attributs Produit"
+  icone: "settings"
+  menu: "Inventaire"
+  description: "Attributs configurables pour definir les variantes de produits"
+
+  champs:
+    # Identification
+    - nom: code
+      type: text
+      obligatoire: true
+      unique: true
+      description: "Code unique de l'attribut (ex: TAILLE, COULEUR)"
+      autocompletion: true
+
+    - nom: nom
+      type: text
+      obligatoire: true
+      description: "Nom de l'attribut (ex: Taille, Couleur)"
+      autocompletion: true
+
+    - nom: description
+      type: textarea
+      obligatoire: false
+      description: Description de l'attribut
+
+    # Type d'attribut
+    - nom: type
+      type: select
+      obligatoire: true
+      defaut: select
+      options: [select, color, text, number]
+      description: |
+        Type de saisie:
+        - select: Liste deroulante (ex: S, M, L, XL)
+        - color: Selecteur de couleur avec apercu visuel
+        - text: Saisie libre (ex: Gravure personnalisee)
+        - number: Valeur numerique (ex: Longueur en cm)
+
+    # Valeurs possibles (pour type select ou color)
+    - nom: valeurs
+      type: json
+      obligatoire: false
+      description: |
+        Liste des valeurs possibles.
+        Format: [{"code": "S", "nom": "Small", "ordre": 1}, ...]
+        Pour type color: [{"code": "RED", "nom": "Rouge", "hex": "#FF0000", "ordre": 1}, ...]
+
+    # Configuration
+    - nom: obligatoire_variante
+      type: boolean
+      obligatoire: false
+      defaut: true
+      description: L'attribut doit etre renseigne pour chaque variante
+
+    - nom: visible_client
+      type: boolean
+      obligatoire: false
+      defaut: true
+      description: Attribut visible par le client (devis/facture)
+
+    - nom: filtrable
+      type: boolean
+      obligatoire: false
+      defaut: true
+      description: Utilisable comme filtre dans les recherches
+
+    - nom: impacte_prix
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Cet attribut peut modifier le prix de la variante
+
+    - nom: impacte_sku
+      type: boolean
+      obligatoire: false
+      defaut: true
+      description: Cet attribut est inclus dans la generation du SKU
+
+    # Ordre et affichage
+    - nom: ordre_affichage
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Ordre d'affichage dans la configuration variante
+
+    - nom: prefixe_sku
+      type: text
+      obligatoire: false
+      description: "Prefixe utilise pour generer le SKU (ex: T pour Taille)"
+      autocompletion: true
+
+    # Statut
+    - nom: is_active
+      type: boolean
+      obligatoire: false
+      defaut: true
+      description: Attribut actif
+
+    # Metadonnees
+    - nom: created_by
+      type: relation
+      obligatoire: false
+      relation: Utilisateurs
+      autocompletion: true
+
+    - nom: created_at
+      type: datetime
+      obligatoire: false
+
+    - nom: updated_at
+      type: datetime
+      obligatoire: false
+
+  # Exemples de valeurs predefinies
+  exemples:
+    - code: TAILLE
+      nom: Taille
+      type: select
+      valeurs:
+        - {code: "XS", nom: "Extra Small", ordre: 1}
+        - {code: "S", nom: "Small", ordre: 2}
+        - {code: "M", nom: "Medium", ordre: 3}
+        - {code: "L", nom: "Large", ordre: 4}
+        - {code: "XL", nom: "Extra Large", ordre: 5}
+        - {code: "XXL", nom: "Double Extra Large", ordre: 6}
+
+    - code: COULEUR
+      nom: Couleur
+      type: color
+      valeurs:
+        - {code: "BLK", nom: "Noir", hex: "#000000", ordre: 1}
+        - {code: "WHT", nom: "Blanc", hex: "#FFFFFF", ordre: 2}
+        - {code: "RED", nom: "Rouge", hex: "#FF0000", ordre: 3}
+        - {code: "BLU", nom: "Bleu", hex: "#0000FF", ordre: 4}
+        - {code: "GRN", nom: "Vert", hex: "#00FF00", ordre: 5}
+
+    - code: MATIERE
+      nom: Matiere
+      type: select
+      valeurs:
+        - {code: "COT", nom: "Coton", ordre: 1}
+        - {code: "LIN", nom: "Lin", ordre: 2}
+        - {code: "POL", nom: "Polyester", ordre: 3}
+        - {code: "LAI", nom: "Laine", ordre: 4}
+
+    - code: POINTURE
+      nom: Pointure
+      type: select
+      valeurs:
+        - {code: "36", nom: "36", ordre: 36}
+        - {code: "37", nom: "37", ordre: 37}
+        - {code: "38", nom: "38", ordre: 38}
+        - {code: "39", nom: "39", ordre: 39}
+        - {code: "40", nom: "40", ordre: 40}
+        - {code: "41", nom: "41", ordre: 41}
+        - {code: "42", nom: "42", ordre: 42}
+        - {code: "43", nom: "43", ordre: 43}
+        - {code: "44", nom: "44", ordre: 44}
+        - {code: "45", nom: "45", ordre: 45}
+
+  # Actions disponibles
+  actions:
+    - ajouter_valeur      # Ajouter une valeur a l'attribut
+    - supprimer_valeur    # Supprimer une valeur
+    - reordonner_valeurs  # Changer l'ordre des valeurs
+    - dupliquer           # Dupliquer l'attribut
+    - desactiver          # Desactiver l'attribut
+
+  # Regles de validation
+  regles:
+    - code est unique par tenant
+    - code en majuscules sans espaces
+    - valeurs obligatoire si type in [select, color]
+    - hex obligatoire pour chaque valeur si type = color
+
+  # Marceau (assistant IA)
+  marceau:
+    alertes:
+      - si is_active et valeurs.count = 0 et type in [select, color]: "Attribut sans valeurs definies"
+
+    suggestions:
+      - "Importer des attributs standards"
+      - "Verifier la coherence des attributs"
+
+  # Index pour performance
+  index:
+    - code
+    - type
+    - is_active
+
+  # Permissions
+  permissions:
+    lecture: ["admin", "gestionnaire", "utilisateur"]
+    ecriture: ["admin", "gestionnaire"]
+    suppression: ["admin"]

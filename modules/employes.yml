@@ -1,0 +1,295 @@
+# AZALPLUS - Module Employes (Ressources Humaines)
+nom: Employes
+icone: user-check
+menu: Ressources Humaines
+description: Gestion des employes et collaborateurs
+
+champs:
+  - nom: matricule
+    type: text
+    obligatoire: true
+    description: Matricule employe (auto-genere)
+    autocompletion: true
+
+  - nom: civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom de famille
+    autocompletion: true
+
+  - nom: prenom
+    type: text
+    obligatoire: true
+    description: Prenom
+    autocompletion: true
+
+  - nom: nom_usage
+    type: text
+    obligatoire: false
+    description: Nom d'usage
+    autocompletion: true
+
+  - nom: email
+    type: email
+    obligatoire: true
+    description: Email professionnel
+    autocompletion: true
+
+  - nom: email_personnel
+    type: email
+    obligatoire: false
+    description: Email personnel
+    autocompletion: true
+
+  - nom: telephone
+    type: tel
+    obligatoire: false
+    description: Telephone fixe
+
+  - nom: mobile
+    type: tel
+    obligatoire: false
+    description: Telephone mobile
+
+  # Adresse
+  - nom: adresse
+    type: textarea
+    obligatoire: false
+    description: Adresse complete
+    autocompletion: true
+
+  - nom: code_postal
+    type: text
+    obligatoire: false
+    description: Code postal
+    autocompletion: true
+
+  - nom: ville
+    type: text
+    obligatoire: false
+    description: Ville
+    autocompletion: true
+
+  - nom: pays
+    type: text
+    obligatoire: false
+    defaut: France
+    description: Pays
+    autocompletion: true
+
+  # Informations personnelles
+  - nom: date_naissance
+    type: date
+    obligatoire: false
+    description: Date de naissance
+
+  - nom: lieu_naissance
+    type: text
+    obligatoire: false
+    description: Lieu de naissance
+    autocompletion: true
+
+  - nom: nationalite
+    type: text
+    obligatoire: false
+    defaut: Francaise
+    description: Nationalite
+    autocompletion: true
+
+  - nom: numero_secu
+    type: text
+    obligatoire: false
+    description: Numero de securite sociale
+
+  - nom: genre
+    type: select
+    obligatoire: false
+    options: [M, F, AUTRE]
+    description: Genre
+
+  # Organisation
+  - nom: departement_id
+    type: relation
+    obligatoire: false
+    relation: Departements
+    description: Departement
+    autocompletion: true
+
+  - nom: poste
+    type: text
+    obligatoire: true
+    description: Intitule du poste
+    autocompletion: true
+
+  - nom: categorie
+    type: select
+    obligatoire: false
+    options: [CADRE, NON_CADRE, AGENT_MAITRISE, EMPLOYE, OUVRIER]
+    description: Categorie professionnelle
+
+  - nom: manager_id
+    type: relation
+    obligatoire: false
+    relation: Employes
+    description: Manager direct
+    autocompletion: true
+
+  - nom: lieu_travail
+    type: text
+    obligatoire: false
+    description: Lieu de travail
+    autocompletion: true
+
+  # Contrat
+  - nom: type_contrat
+    type: select
+    obligatoire: true
+    options: [CDI, CDD, INTERIM, STAGE, APPRENTISSAGE, FREELANCE]
+    description: Type de contrat
+
+  - nom: date_embauche
+    type: date
+    obligatoire: true
+    description: Date d'embauche
+
+  - nom: date_debut
+    type: date
+    obligatoire: false
+    description: Date de debut du contrat
+
+  - nom: date_fin
+    type: date
+    obligatoire: false
+    description: Date de fin du contrat (CDD)
+
+  - nom: date_anciennete
+    type: date
+    obligatoire: false
+    description: Date d'anciennete
+
+  - nom: date_fin_essai
+    type: date
+    obligatoire: false
+    description: Date de fin de periode d'essai
+
+  # Remuneration
+  - nom: salaire_brut
+    type: number
+    obligatoire: false
+    description: Salaire brut mensuel
+
+  - nom: devise
+    type: text
+    obligatoire: false
+    defaut: EUR
+    description: Devise
+    autocompletion: true
+
+  - nom: frequence_paie
+    type: select
+    obligatoire: false
+    defaut: MENSUELLE
+    options: [MENSUELLE, HEBDOMADAIRE, BIMENSUELLE]
+    description: Frequence de paie
+
+  # Temps de travail
+  - nom: heures_hebdo
+    type: number
+    obligatoire: false
+    defaut: 35
+    description: Heures hebdomadaires
+
+  - nom: regime
+    type: select
+    obligatoire: false
+    defaut: TEMPS_PLEIN
+    options: [TEMPS_PLEIN, TEMPS_PARTIEL]
+    description: Regime de travail
+
+  # Conges
+  - nom: solde_cp
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Solde conges payes
+
+  - nom: solde_rtt
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Solde RTT
+
+  # Banque
+  - nom: banque
+    type: text
+    obligatoire: false
+    description: Nom de la banque
+    autocompletion: true
+
+  - nom: iban
+    type: text
+    obligatoire: false
+    description: IBAN
+
+  - nom: bic
+    type: text
+    obligatoire: false
+    description: BIC
+    autocompletion: true
+
+  # Statut
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: ACTIF
+    options: [ACTIF, EN_CONGE, SUSPENDU, SORTI, RETRAITE]
+    description: Statut de l'employe
+
+  - nom: date_sortie
+    type: date
+    obligatoire: false
+    description: Date de sortie
+
+  - nom: motif_sortie
+    type: text
+    obligatoire: false
+    description: Motif de sortie
+    autocompletion: true
+
+  # Documents
+  - nom: photo_url
+    type: text
+    obligatoire: false
+    description: URL de la photo
+
+  # Metadonnees
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+  - nom: is_active
+    type: boolean
+    obligatoire: true
+    defaut: true
+    description: Actif
+
+actions:
+  - voir_contrats
+  - voir_conges
+  - voir_bulletins
+  - demander_conge
+  - evaluer
+  - generer_attestation
+
+marceau:
+  alertes:
+    - si date_fin_essai < aujourd'hui + 7 jours et statut = ACTIF: "Fin de periode d'essai proche"
+    - si type_contrat = CDD et date_fin < aujourd'hui + 30 jours: "Fin de CDD proche"
+    - si statut = EN_CONGE: "Employe en conge"

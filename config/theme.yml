@@ -1,0 +1,185 @@
+# =============================================================================
+# AZALPLUS - Thème Style Axonaut
+# =============================================================================
+# Modifier ici = change TOUT le design automatiquement
+
+nom: "Axonaut"
+
+# -----------------------------------------------------------------------------
+# Couleurs
+# -----------------------------------------------------------------------------
+couleurs:
+  # Axonaut utilise un bleu professionnel
+  primaire: "#2563EB"
+  primaire_fonce: "#1D4ED8"
+  primaire_clair: "#DBEAFE"
+
+  # Sidebar sombre style Axonaut
+  sidebar_fond: "#1E293B"
+  sidebar_texte: "#94A3B8"
+  sidebar_texte_actif: "#FFFFFF"
+  sidebar_hover: "#334155"
+
+  # Statuts
+  succes: "#22C55E"
+  succes_clair: "#DCFCE7"
+  attention: "#F59E0B"
+  attention_clair: "#FEF3C7"
+  erreur: "#EF4444"
+  erreur_clair: "#FEE2E2"
+  info: "#3B82F6"
+  info_clair: "#DBEAFE"
+
+  # Neutres
+  blanc: "#FFFFFF"
+  gris_50: "#F8FAFC"
+  gris_100: "#F1F5F9"
+  gris_200: "#E2E8F0"
+  gris_300: "#CBD5E1"
+  gris_400: "#94A3B8"
+  gris_500: "#64748B"
+  gris_600: "#475569"
+  gris_700: "#334155"
+  gris_800: "#1E293B"
+  gris_900: "#0F172A"
+
+# -----------------------------------------------------------------------------
+# Typographie
+# -----------------------------------------------------------------------------
+typographie:
+  police: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+  taille_base: "14px"
+  taille_petite: "13px"
+  taille_grande: "16px"
+  taille_titre: "20px"
+
+# -----------------------------------------------------------------------------
+# Espacement
+# -----------------------------------------------------------------------------
+espacement:
+  xs: "4px"
+  sm: "8px"
+  md: "16px"
+  lg: "24px"
+  xl: "32px"
+
+# -----------------------------------------------------------------------------
+# Bordures
+# -----------------------------------------------------------------------------
+bordures:
+  rayon: "6px"
+  rayon_grand: "8px"
+  couleur: "#E2E8F0"
+
+# -----------------------------------------------------------------------------
+# Ombres
+# -----------------------------------------------------------------------------
+ombres:
+  petite: "0 1px 2px rgba(0,0,0,0.05)"
+  moyenne: "0 1px 3px rgba(0,0,0,0.1)"
+  grande: "0 4px 6px rgba(0,0,0,0.1)"
+
+# -----------------------------------------------------------------------------
+# Layout
+# -----------------------------------------------------------------------------
+layout:
+  sidebar_largeur: "220px"
+  header_hauteur: "50px"
+  contenu_max: "1200px"
+
+# -----------------------------------------------------------------------------
+# Breakpoints (Mobile-First Responsive Design)
+# -----------------------------------------------------------------------------
+breakpoints:
+  mobile: "480px"
+  tablet: "768px"
+  desktop: "1024px"
+  wide: "1440px"
+
+# -----------------------------------------------------------------------------
+# Mobile Settings
+# -----------------------------------------------------------------------------
+mobile:
+  # Touch targets minimum size (WCAG recommends 44px)
+  touch_target_min: "44px"
+  # Sidebar behavior: "hidden" | "overlay" | "mini"
+  sidebar_behavior: "overlay"
+  # Form layout: "stacked" | "inline"
+  form_layout: "stacked"
+  # Table layout: "scroll" | "cards" | "responsive"
+  table_layout: "cards"
+
+# -----------------------------------------------------------------------------
+# Composants
+# -----------------------------------------------------------------------------
+boutons:
+  padding: "8px 16px"
+  rayon: "6px"
+
+inputs:
+  padding: "10px 12px"
+  rayon: "6px"
+
+cartes:
+  rayon: "8px"
+  padding: "24px"
+
+tables:
+  header_fond: "#F8FAFC"
+  ligne_hover: "#F8FAFC"
+  padding: "12px 16px"
+
+badges:
+  padding: "4px 8px"
+  rayon: "4px"
+
+# -----------------------------------------------------------------------------
+# Header
+# -----------------------------------------------------------------------------
+header:
+  fond: "#FFFFFF"
+  recherche_largeur: "300px"
+  bouton_ajouter: true
+  notifications: true
+
+# -----------------------------------------------------------------------------
+# Login
+# -----------------------------------------------------------------------------
+login:
+  fond: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)"
+  carte_largeur: "400px"
+  carte_rayon: "8px"
+
+# -----------------------------------------------------------------------------
+# Style des Documents (Devis/Factures)
+# -----------------------------------------------------------------------------
+documents:
+  # Couleur principale du document
+  couleur: "#2563EB"
+
+  # Structure: "moderne" | "classique" | "minimal"
+  structure: "moderne"
+
+  # Style tableaux: "simple" | "zebra" | "bordure" | "sans_bordure"
+  tableaux: "simple"
+
+  # Angles: "arrondis" | "carres"
+  angles: "arrondis"
+
+  # Lignes séparatrices: "fines" | "epaisses" | "aucune"
+  lignes: "fines"
+
+  # Images produits: "aucune" | "petites" | "moyennes" | "grandes"
+  images_produits: "petites"
+
+  # Police du document
+  police: "Inter"
+
+  # Taille police
+  taille_police: "12px"
+
+  # Afficher logo
+  logo: true
+
+  # Marges (en mm pour PDF)
+  marges: "15mm"

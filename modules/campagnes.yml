@@ -1,0 +1,253 @@
+# AZALPLUS - Module Campagnes Marketing
+nom: Campagnes
+icone: megaphone
+menu: Marketing
+description: Gestion des campagnes marketing multicanal
+
+champs:
+  - nom: code
+    type: text
+    obligatoire: false
+    description: Code auto-genere CAMP-YYYY-XXXX
+    autocompletion: true
+
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom de la campagne
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description de la campagne
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: EMAIL
+    options: [EMAIL, SMS, SOCIAL, EVENT, WEBINAR, DIRECT_MAIL, PHONE, ADVERTISEMENT, REFERRAL, OTHER]
+    description: Type de campagne
+
+  - nom: goal
+    type: select
+    obligatoire: false
+    defaut: LEAD_GENERATION
+    options: [AWARENESS, LEAD_GENERATION, NURTURING, CONVERSION, RETENTION, REACTIVATION, UPSELL, EVENT_PROMOTION, OTHER]
+    description: Objectif principal
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: DRAFT
+    options: [DRAFT, SCHEDULED, RUNNING, PAUSED, COMPLETED, CANCELLED]
+    description: Statut de la campagne
+
+  - nom: start_date
+    type: datetime
+    obligatoire: false
+    description: Date de debut
+
+  - nom: end_date
+    type: datetime
+    obligatoire: false
+    description: Date de fin
+
+  - nom: scheduled_at
+    type: datetime
+    obligatoire: false
+    description: Date d'envoi planifie
+
+  - nom: audience_type
+    type: select
+    obligatoire: false
+    defaut: SEGMENT
+    options: [ALL_CONTACTS, SEGMENT, LIST, DYNAMIC, MANUAL]
+    description: Type de ciblage
+
+  - nom: segment_id
+    type: relation
+    obligatoire: false
+    relation: Segments
+    description: Segment cible
+    autocompletion: true
+
+  - nom: estimated_reach
+    type: number
+    obligatoire: false
+    description: Portee estimee
+
+  - nom: email_subject
+    type: text
+    obligatoire: false
+    description: Sujet de l'email
+    autocompletion: true
+
+  - nom: sender_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite de l'expediteur
+
+  - nom: email_from_name
+    type: text
+    obligatoire: false
+    description: Nom de l'expediteur
+    autocompletion: true
+
+  - nom: email_from_address
+    type: email
+    obligatoire: false
+    description: Adresse email expediteur
+    autocompletion: true
+
+  - nom: email_template_id
+    type: relation
+    obligatoire: false
+    relation: EmailTemplates
+    description: Modele d'email
+    autocompletion: true
+
+  - nom: email_content_html
+    type: textarea
+    obligatoire: false
+    description: Contenu HTML de l'email
+
+  - nom: sms_content
+    type: textarea
+    obligatoire: false
+    description: Contenu du SMS
+
+  - nom: budget_planned
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Budget prevu
+
+  - nom: budget_spent
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Budget depense
+
+  - nom: currency
+    type: text
+    obligatoire: false
+    defaut: EUR
+    autocompletion: true
+
+  - nom: owner_id
+    type: relation
+    obligatoire: true
+    relation: Utilisateurs
+    description: Responsable de la campagne
+    autocompletion: true
+
+  - nom: total_sent
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre total envoye
+
+  - nom: total_delivered
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre delivre
+
+  - nom: total_opened
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre d'ouvertures
+
+  - nom: total_clicked
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de clics
+
+  - nom: total_bounced
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de bounces
+
+  - nom: total_unsubscribed
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de desabonnements
+
+  - nom: total_conversions
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de conversions
+
+  - nom: open_rate
+    type: number
+    obligatoire: false
+    description: Taux d'ouverture (%)
+
+  - nom: click_rate
+    type: number
+    obligatoire: false
+    description: Taux de clic (%)
+
+  - nom: conversion_rate
+    type: number
+    obligatoire: false
+    description: Taux de conversion (%)
+
+  - nom: roi
+    type: number
+    obligatoire: false
+    description: Retour sur investissement (%)
+
+  - nom: tags
+    type: tags
+    obligatoire: false
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  - nom: ab_test_enabled
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Test A/B active
+
+  - nom: sent_at
+    type: datetime
+    obligatoire: false
+    description: Date d'envoi effective
+
+workflow:
+  DRAFT -> SCHEDULED: planification confirmee
+  SCHEDULED -> RUNNING: date atteinte ou envoi manuel
+  RUNNING -> PAUSED: mise en pause
+  PAUSED -> RUNNING: reprise
+  RUNNING -> COMPLETED: tous envois termines
+  "* -> CANCELLED": annulation
+
+actions:
+  - enregistrer_brouillon
+  - planifier
+  - envoyer_maintenant
+  - mettre_en_pause
+  - reprendre
+  - annuler
+  - dupliquer
+  - tester_envoi
+  - previsualiser
+  - exporter_stats
+
+marceau:
+  alertes:
+    - si status = SCHEDULED et scheduled_at < now()+1h: "Campagne qui demarre dans moins d'1h"
+    - si bounce_rate > 10: "Taux de bounce eleve - verifier la liste"
+    - si unsubscribe_rate > 2: "Taux de desabonnement eleve"
+    - si budget_spent > budget_planned: "Budget depasse"

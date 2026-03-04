@@ -1,0 +1,258 @@
+# AZALPLUS - Module Sinistres
+nom: Sinistres
+icone: exclamation-triangle
+menu: Assurance
+description: Declaration et suivi des sinistres
+
+champs:
+  - nom: claim_number
+    type: text
+    obligatoire: false
+    description: Numero de sinistre (attribue par l'assureur)
+
+  - nom: reference
+    type: text
+    obligatoire: true
+    unique: true
+    description: Reference interne
+
+  - nom: provider_claim_ref
+    type: text
+    obligatoire: false
+    description: Reference chez l'assureur
+
+  - nom: policy_type
+    type: select
+    obligatoire: true
+    options: [RC_PRO, DECENNALE, GLI, MRP, PJ, CYBER, FLOTTE, PNO]
+    description: Type de police concernee
+    autocompletion: true
+
+  - nom: policy_id
+    type: relation
+    obligatoire: false
+    relation: PolicesAssurance
+    description: Police concernee
+    autocompletion: true
+
+  - nom: policy_number
+    type: text
+    obligatoire: false
+    description: Numero de police
+    autocompletion: true
+
+  - nom: claim_type
+    type: select
+    obligatoire: true
+    options: [WATER_DAMAGE, FIRE, THEFT, STORM, NATURAL_DISASTER, CIVIL_LIABILITY, GLASS_BREAKAGE, ELECTRICAL, UNPAID_RENT, RENTAL_DAMAGE, PROFESSIONAL_LIABILITY, CONSTRUCTION_DEFECT, CYBER, OTHER]
+    description: Type de sinistre
+
+  - nom: title
+    type: text
+    obligatoire: true
+    description: Titre du sinistre
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: true
+    description: Description detaillee
+
+  - nom: circumstances
+    type: textarea
+    obligatoire: false
+    description: Circonstances du sinistre
+
+  - nom: incident_date
+    type: datetime
+    obligatoire: true
+    description: Date et heure du sinistre
+
+  - nom: incident_location
+    type: textarea
+    obligatoire: false
+    description: Lieu du sinistre
+    autocompletion: true
+
+  - nom: incident_city
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: incident_postal_code
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: declarant_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du declarant
+
+  - nom: declarant_name
+    type: text
+    obligatoire: true
+    description: Nom du declarant
+    autocompletion: true
+
+  - nom: declarant_email
+    type: email
+    obligatoire: false
+    autocompletion: true
+
+  - nom: declarant_phone
+    type: tel
+    obligatoire: false
+
+  - nom: declarant_role
+    type: select
+    obligatoire: false
+    options: [owner, tenant, manager, insured, other]
+    description: Role du declarant
+
+  - nom: third_parties
+    type: json
+    obligatoire: false
+    description: Tiers impliques
+
+  - nom: witnesses
+    type: json
+    obligatoire: false
+    description: Temoins
+
+  - nom: damage_description
+    type: textarea
+    obligatoire: false
+    description: Description des dommages
+
+  - nom: damaged_items
+    type: json
+    obligatoire: false
+    description: Elements endommages
+
+  - nom: estimated_damage_amount
+    type: number
+    obligatoire: false
+    description: Montant estime des dommages
+
+  - nom: has_injuries
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Blessures corporelles
+
+  - nom: injuries_description
+    type: textarea
+    obligatoire: false
+    description: Description des blessures
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: DRAFT
+    options: [DRAFT, SUBMITTED, ACKNOWLEDGED, UNDER_INVESTIGATION, EXPERTISE_REQUIRED, EXPERTISE_SCHEDULED, EXPERTISE_COMPLETED, APPROVED, PARTIALLY_APPROVED, REJECTED, PAYMENT_PENDING, PAID, CLOSED, REOPENED]
+    description: Statut du sinistre
+
+  - nom: priority
+    type: select
+    obligatoire: false
+    defaut: MEDIUM
+    options: [LOW, MEDIUM, HIGH, URGENT]
+    description: Priorite
+
+  - nom: expertise_required
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Expertise necessaire
+
+  - nom: expert_name
+    type: text
+    obligatoire: false
+    description: Nom de l'expert
+    autocompletion: true
+
+  - nom: expert_phone
+    type: tel
+    obligatoire: false
+
+  - nom: expertise_date
+    type: datetime
+    obligatoire: false
+    description: Date du rendez-vous d'expertise
+
+  - nom: expertise_conclusion
+    type: textarea
+    obligatoire: false
+    description: Conclusion de l'expertise
+
+  - nom: decision
+    type: select
+    obligatoire: false
+    options: [APPROVED, REJECTED, PARTIAL]
+    description: Decision finale
+
+  - nom: decision_date
+    type: datetime
+    obligatoire: false
+
+  - nom: decision_reason
+    type: textarea
+    obligatoire: false
+    description: Motif de la decision
+
+  - nom: approved_amount
+    type: number
+    obligatoire: false
+    description: Montant approuve
+
+  - nom: submitted_at
+    type: datetime
+    obligatoire: false
+    description: Date de soumission
+
+  - nom: closed_at
+    type: datetime
+    obligatoire: false
+    description: Date de cloture
+
+  - nom: internal_notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+workflow:
+  DRAFT -> SUBMITTED: soumettre
+  SUBMITTED -> ACKNOWLEDGED: accuser reception
+  ACKNOWLEDGED -> UNDER_INVESTIGATION: investiguer
+  ACKNOWLEDGED -> EXPERTISE_REQUIRED: demander expertise
+  EXPERTISE_REQUIRED -> EXPERTISE_SCHEDULED: planifier expertise
+  EXPERTISE_SCHEDULED -> EXPERTISE_COMPLETED: expertise realisee
+  EXPERTISE_COMPLETED -> APPROVED: approuver
+  EXPERTISE_COMPLETED -> REJECTED: rejeter
+  EXPERTISE_COMPLETED -> PARTIALLY_APPROVED: approuver partiellement
+  APPROVED -> PAYMENT_PENDING: preparer paiement
+  PARTIALLY_APPROVED -> PAYMENT_PENDING: preparer paiement
+  PAYMENT_PENDING -> PAID: payer
+  PAID -> CLOSED: cloturer
+  REJECTED -> CLOSED: cloturer
+  CLOSED -> REOPENED: rouvrir
+
+actions:
+  - soumettre_declaration
+  - ajouter_document
+  - programmer_expertise
+  - approuver_sinistre
+  - rejeter_sinistre
+  - programmer_paiement
+  - cloturer
+  - rouvrir
+
+marceau:
+  alertes:
+    - si status = SUBMITTED et submitted_at > 2 jours: "Sinistre en attente d'accuse de reception"
+    - si status = EXPERTISE_SCHEDULED et expertise_date < aujourd'hui: "Expertise passee - mettre a jour le statut"
+    - si status = PAYMENT_PENDING et decision_date > 15 jours: "Paiement en retard"
+    - si priority = URGENT: "Sinistre urgent a traiter en priorite"
+    - si has_injuries = true: "Sinistre avec blessures - attention particuliere"

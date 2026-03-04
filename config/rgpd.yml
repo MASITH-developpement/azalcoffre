@@ -1,0 +1,292 @@
+# =============================================================================
+# AZALPLUS - Configuration RGPD/GDPR
+# =============================================================================
+# Configuration globale pour la conformite RGPD
+# - Politique de confidentialite
+# - Durees de retention par defaut
+# - Options d'anonymisation
+# =============================================================================
+
+rgpd:
+  # Activation du module RGPD
+  actif: true
+
+  # Version de la politique de confidentialite
+  version_politique: "2.0"
+  date_mise_a_jour: "2026-03-01"
+
+# =============================================================================
+# Politique de confidentialite
+# =============================================================================
+politique_confidentialite:
+  # URL de la politique (peut etre personnalisee par tenant)
+  url_defaut: "/legal/politique-confidentialite"
+
+  # Contenu par defaut (editable dans le backoffice)
+  titre: "Politique de confidentialite"
+
+  sections:
+    - titre: "Responsable du traitement"
+      contenu: |
+        Le responsable du traitement des donnees est [NOM_ENTREPRISE],
+        [ADRESSE], immatriculee sous le numero [SIRET].
+
+        Contact DPO: [EMAIL_DPO]
+
+    - titre: "Donnees collectees"
+      contenu: |
+        Nous collectons les donnees suivantes:
+        - Donnees d'identification (nom, prenom, email, telephone)
+        - Donnees professionnelles (entreprise, fonction)
+        - Donnees de facturation (adresse, coordonnees bancaires)
+        - Donnees de connexion (logs, adresse IP)
+
+    - titre: "Finalites du traitement"
+      contenu: |
+        Vos donnees sont traitees pour:
+        - Gestion de la relation client
+        - Execution des contrats
+        - Facturation et comptabilite
+        - Communication commerciale (avec consentement)
+        - Amelioration de nos services
+
+    - titre: "Base legale"
+      contenu: |
+        Le traitement de vos donnees est fonde sur:
+        - L'execution du contrat (Article 6.1.b RGPD)
+        - Le consentement (Article 6.1.a RGPD)
+        - L'interet legitime (Article 6.1.f RGPD)
+        - L'obligation legale (Article 6.1.c RGPD)
+
+    - titre: "Duree de conservation"
+      contenu: |
+        - Donnees clients actifs: duree de la relation + 3 ans
+        - Donnees de facturation: 10 ans (obligation legale)
+        - Donnees de prospection: 3 ans sans contact
+        - Logs de connexion: 1 an
+
+    - titre: "Vos droits"
+      contenu: |
+        Conformement au RGPD, vous disposez des droits suivants:
+        - Droit d'acces a vos donnees (Article 15)
+        - Droit de rectification (Article 16)
+        - Droit a l'effacement (Article 17)
+        - Droit a la limitation du traitement (Article 18)
+        - Droit a la portabilite (Article 20)
+        - Droit d'opposition (Article 21)
+
+        Pour exercer ces droits, contactez-nous a [EMAIL_RGPD]
+        ou via votre espace client.
+
+    - titre: "Securite"
+      contenu: |
+        Nous mettons en oeuvre des mesures techniques et organisationnelles
+        appropriees pour proteger vos donnees:
+        - Chiffrement des donnees en transit et au repos
+        - Controle d'acces strict
+        - Journalisation des acces
+        - Sauvegardes regulieres
+
+# =============================================================================
+# Durees de retention par defaut
+# =============================================================================
+retention:
+  # Clients et contacts
+  clients:
+    duree_jours: 1095  # 3 ans apres fin de relation
+    action: ANONYMISER
+    champs_a_anonymiser:
+      - nom
+      - prenom
+      - email
+      - telephone
+      - mobile
+      - address_line1
+      - address_line2
+    champs_a_conserver:
+      - id
+      - tenant_id
+      - type
+      - created_at
+      - total_revenue
+      - order_count
+    base_legale: INTERET_LEGITIME
+
+  # Factures (obligation legale)
+  factures:
+    duree_jours: 3650  # 10 ans
+    action: ARCHIVER
+    base_legale: OBLIGATION_LEGALE
+    reference: "Article L123-22 Code de commerce"
+
+  # Devis non transformes
+  devis:
+    duree_jours: 1095  # 3 ans
+    action: SUPPRIMER
+    condition: "statut != 'ACCEPTE'"
+    base_legale: INTERET_LEGITIME
+
+  # Logs d'audit
+  audit_log:
+    duree_jours: 365  # 1 an
+    action: SUPPRIMER
+    base_legale: INTERET_LEGITIME
+
+  # Consentements (historique complet obligatoire)
+  consentements:
+    duree_jours: 3650  # 10 ans (preuve)
+    action: ARCHIVER
+    base_legale: OBLIGATION_LEGALE
+
+  # Documents temporaires
+  documents_temp:
+    duree_jours: 30
+    action: SUPPRIMER
+    base_legale: INTERET_LEGITIME
+
+# =============================================================================
+# Configuration des consentements
+# =============================================================================
+consentements:
+  # Types de consentements disponibles
+  types:
+    MARKETING_EMAIL:
+      label: "Emails marketing"
+      description: "Recevoir nos offres et actualites par email"
+      defaut: false
+      obligatoire: false
+
+    MARKETING_SMS:
+      label: "SMS marketing"
+      description: "Recevoir nos offres par SMS"
+      defaut: false
+      obligatoire: false
+
+    MARKETING_TEL:
+      label: "Appels commerciaux"
+      description: "Etre contacte par telephone pour des offres"
+      defaut: false
+      obligatoire: false
+
+    NEWSLETTER:
+      label: "Newsletter"
+      description: "Recevoir notre newsletter mensuelle"
+      defaut: false
+      obligatoire: false
+
+    TRAITEMENT_DONNEES:
+      label: "Traitement des donnees"
+      description: "Autoriser le traitement de vos donnees personnelles"
+      defaut: false
+      obligatoire: true  # Necessaire pour utiliser le service
+
+    PROFILAGE:
+      label: "Profilage"
+      description: "Permettre l'analyse de vos habitudes pour personnaliser nos services"
+      defaut: false
+      obligatoire: false
+
+    PARTAGE_PARTENAIRES:
+      label: "Partage avec partenaires"
+      description: "Autoriser le partage de vos donnees avec nos partenaires"
+      defaut: false
+      obligatoire: false
+
+  # Duree de validite des consentements
+  duree_validite_jours: 730  # 2 ans
+
+  # Renouvellement automatique
+  rappel_renouvellement_jours: 30  # Rappel 30 jours avant expiration
+
+# =============================================================================
+# Configuration des exports (droit a la portabilite)
+# =============================================================================
+export:
+  # Modules a inclure dans l'export
+  modules_inclus:
+    - clients
+    - contacts
+    - devis
+    - factures
+    - paiements
+    - interventions
+    - documents
+    - consentements
+    - notes_client
+
+  # Champs a exclure des exports
+  champs_exclus:
+    - tenant_id
+    - deleted_at
+    - created_by
+    - updated_by
+    - internal_notes  # Notes internes non exportables
+
+  # Format d'export
+  formats_disponibles:
+    - JSON
+    - CSV
+    - ZIP
+
+  # Compression automatique
+  compression: true
+
+  # Taille max d'export (Mo)
+  taille_max_mo: 100
+
+# =============================================================================
+# Configuration de l'anonymisation
+# =============================================================================
+anonymisation:
+  # Methode d'anonymisation
+  methode: "HASH_PARTIEL"  # HASH_PARTIEL, SUPPRESSION, MASQUAGE
+
+  # Valeurs de remplacement
+  valeurs_remplacement:
+    nom: "ANONYMISE"
+    prenom: "ANONYMISE"
+    email: "anonymise@anonymise.local"
+    telephone: "0000000000"
+    adresse: "Adresse anonymisee"
+    ip_address: "0.0.0.0"
+
+  # Conservation des statistiques
+  conserver_statistiques: true
+
+# =============================================================================
+# Delais RGPD
+# =============================================================================
+delais:
+  # Delai de reponse aux demandes (jours)
+  reponse_standard: 30
+  reponse_prolongee: 60  # Si demande complexe
+
+  # Delai de notification en cas de violation
+  notification_violation: 72  # heures
+
+  # Delai de conservation demandes traitees
+  conservation_demandes: 1095  # 3 ans
+
+# =============================================================================
+# Notifications RGPD
+# =============================================================================
+notifications:
+  # Email de notification RGPD
+  email_dpo: "${DPO_EMAIL}"
+
+  # Alertes
+  alertes:
+    - type: "demande_recue"
+      destinataires: ["dpo"]
+      delai_rappel_heures: 24
+
+    - type: "demande_proche_echeance"
+      destinataires: ["dpo", "admin"]
+      jours_avant: 5
+
+    - type: "consentement_expire"
+      destinataires: ["commercial"]
+
+    - type: "retention_a_executer"
+      destinataires: ["dpo"]
+      jours_avant: 7

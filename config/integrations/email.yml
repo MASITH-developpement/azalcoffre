@@ -1,0 +1,54 @@
+# =============================================================================
+# AZALPLUS - Configuration Email
+# =============================================================================
+
+# Provider par défaut
+provider: smtp  # smtp | resend | sendgrid
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SMTP
+# ─────────────────────────────────────────────────────────────────────────────
+smtp:
+  host: "${SMTP_HOST}"
+  port: "${SMTP_PORT}"
+  username: "${SMTP_USER}"
+  password: "${SMTP_PASSWORD}"
+  use_tls: true
+  use_ssl: false
+  timeout: 30
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Resend
+# ─────────────────────────────────────────────────────────────────────────────
+resend:
+  api_key: "${RESEND_API_KEY}"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SendGrid
+# ─────────────────────────────────────────────────────────────────────────────
+sendgrid:
+  api_key: "${SENDGRID_API_KEY}"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Configuration générale
+# ─────────────────────────────────────────────────────────────────────────────
+defaut:
+  from_email: "${SMTP_FROM}"
+  from_name: "AZALPLUS"
+  reply_to: "support@azalplus.com"
+
+# Templates
+templates:
+  dossier: "templates/email"
+  extension: ".html"
+
+# Rate limiting
+limites:
+  par_minute: 60
+  par_heure: 500
+  par_jour: 5000
+
+# Retry
+retry:
+  max_tentatives: 3
+  delai_secondes: 60

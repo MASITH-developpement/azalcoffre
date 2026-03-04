@@ -1,0 +1,282 @@
+# AZALPLUS - Module Vehicules
+nom: Vehicules
+icone: car
+menu: Flotte
+description: Gestion de la flotte de vehicules
+
+champs:
+  - nom: code
+    type: text
+    obligatoire: true
+    description: Code interne du vehicule
+    autocompletion: true
+
+  - nom: registration_number
+    type: text
+    obligatoire: true
+    description: Numero d'immatriculation
+    autocompletion: true
+
+  - nom: vin
+    type: text
+    obligatoire: false
+    description: Numero de chassis (VIN)
+
+  - nom: internal_number
+    type: text
+    obligatoire: false
+    description: Numero interne
+
+  - nom: make
+    type: text
+    obligatoire: true
+    description: Marque
+    autocompletion: true
+
+  - nom: model
+    type: text
+    obligatoire: true
+    description: Modele
+    autocompletion: true
+
+  - nom: version
+    type: text
+    obligatoire: false
+    description: Version/Finition
+    autocompletion: true
+
+  - nom: year
+    type: number
+    obligatoire: true
+    description: Annee de mise en circulation
+
+  - nom: vehicle_type
+    type: select
+    obligatoire: true
+    defaut: car
+    options: [car, van, truck, motorcycle, utility, bus, electric, hybrid, scooter]
+    description: Type de vehicule
+
+  - nom: fuel_type
+    type: select
+    obligatoire: true
+    defaut: diesel
+    options: [gasoline, diesel, electric, hybrid, plugin_hybrid, lpg, cng, hydrogen, e85]
+    description: Type de carburant
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: available
+    options: [available, assigned, in_use, maintenance, repair, out_of_service, reserved, sold, scrapped]
+    description: Statut du vehicule
+
+  - nom: color
+    type: text
+    obligatoire: false
+    description: Couleur
+    autocompletion: true
+
+  - nom: seats
+    type: number
+    obligatoire: false
+    defaut: 5
+    description: Nombre de places
+
+  - nom: doors
+    type: number
+    obligatoire: false
+    defaut: 4
+    description: Nombre de portes
+
+  - nom: engine_capacity_cc
+    type: number
+    obligatoire: false
+    description: Cylindree (cm3)
+
+  - nom: power_hp
+    type: number
+    obligatoire: false
+    description: Puissance (ch)
+
+  - nom: fiscal_power
+    type: number
+    obligatoire: false
+    description: Puissance fiscale (CV)
+
+  - nom: co2_emissions
+    type: number
+    obligatoire: false
+    description: Emissions CO2 (g/km)
+
+  - nom: transmission
+    type: select
+    obligatoire: false
+    defaut: manual
+    options: [manual, automatic, semi_auto]
+    description: Type de transmission
+
+  - nom: initial_mileage
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Kilometrage initial
+
+  - nom: current_mileage
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Kilometrage actuel
+
+  - nom: annual_mileage_limit
+    type: number
+    obligatoire: false
+    description: Limite kilometrique annuelle
+
+  - nom: fuel_capacity_liters
+    type: number
+    obligatoire: false
+    description: Capacite reservoir (L)
+
+  - nom: average_consumption
+    type: number
+    obligatoire: false
+    description: Consommation moyenne (L/100km)
+
+  - nom: battery_capacity_kwh
+    type: number
+    obligatoire: false
+    description: Capacite batterie (kWh) - electriques
+
+  - nom: purchase_date
+    type: date
+    obligatoire: false
+    description: Date d'achat
+
+  - nom: purchase_price
+    type: number
+    obligatoire: false
+    description: Prix d'achat
+
+  - nom: current_value
+    type: number
+    obligatoire: false
+    description: Valeur actuelle
+
+  - nom: monthly_cost
+    type: number
+    obligatoire: false
+    description: Cout mensuel estime (TCO)
+
+  - nom: assigned_driver_id
+    type: relation
+    obligatoire: false
+    relation: Employes
+    description: Conducteur affecte
+    autocompletion: true
+
+  - nom: department
+    type: text
+    obligatoire: false
+    description: Service/Departement
+    autocompletion: true
+
+  - nom: cost_center
+    type: text
+    obligatoire: false
+    description: Centre de cout
+    autocompletion: true
+
+  - nom: location_lat
+    type: number
+    obligatoire: false
+    description: Latitude
+
+  - nom: location_lng
+    type: number
+    obligatoire: false
+    description: Longitude
+
+  - nom: gps_device_id
+    type: text
+    obligatoire: false
+    description: ID boitier GPS
+
+  - nom: first_registration_date
+    type: date
+    obligatoire: false
+    description: Date premiere immatriculation
+
+  - nom: last_technical_inspection
+    type: date
+    obligatoire: false
+    description: Dernier controle technique
+
+  - nom: next_technical_inspection
+    type: date
+    obligatoire: false
+    description: Prochain controle technique
+
+  - nom: last_service_date
+    type: date
+    obligatoire: false
+    description: Derniere revision
+
+  - nom: next_service_date
+    type: date
+    obligatoire: false
+    description: Prochaine revision
+
+  - nom: next_service_mileage
+    type: number
+    obligatoire: false
+    description: Kilometrage prochaine revision
+
+  - nom: photo_url
+    type: text
+    obligatoire: false
+    description: URL photo
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+  - nom: tags
+    type: json
+    obligatoire: false
+    description: Tags
+
+  - nom: is_active
+    type: boolean
+    obligatoire: true
+    defaut: true
+    description: Actif
+
+workflow:
+  available -> assigned: affecter
+  assigned -> in_use: utiliser
+  in_use -> assigned: retour
+  assigned -> available: liberer
+  available -> maintenance: maintenance
+  maintenance -> available: fin maintenance
+  available -> out_of_service: hors service
+  out_of_service -> available: remise en service
+  available -> sold: vendre
+  available -> scrapped: mettre au rebut
+
+actions:
+  - affecter
+  - liberer
+  - mettre_en_maintenance
+  - mettre_hors_service
+  - relever_kilometrage
+  - planifier_controle_technique
+  - planifier_revision
+
+marceau:
+  alertes:
+    - si next_technical_inspection < aujourd'hui + 30 jours: "Controle technique a planifier"
+    - si next_service_date < aujourd'hui + 30 jours: "Revision a planifier"
+    - si current_mileage > next_service_mileage: "Kilometrage revision depasse"
+    - si status = maintenance et updated_at > 7 jours: "Vehicule en maintenance depuis plus de 7 jours"

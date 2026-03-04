@@ -1,0 +1,1001 @@
+# AZALPLUS - Module Contrats (Contract Management)
+# Gestion des contrats de maintenance, service, location
+# Liens: Factures recurrentes, Interventions, Temps
+
+nom: Contrats
+icone: file-text
+menu: Commercial
+
+champs:
+  # Identification
+  - nom: numero
+    type: text
+    obligatoire: true
+    description: Numero de contrat (auto-genere CTR-YYYY-XXXX)
+    autocompletion: true
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom du contrat
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description du contrat
+
+  # Client
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client titulaire du contrat
+    autocompletion: true
+
+  - nom: client_nom
+    type: text
+    obligatoire: false
+    readonly: true
+    description: Nom du client (cache pour affichage)
+    autocompletion: true
+
+  - nom: contact_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du contact principal
+
+  - nom: contact_id
+    type: relation
+    obligatoire: false
+    relation: Contacts
+    description: Contact principal pour ce contrat
+    autocompletion: true
+
+  # Type de contrat
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: maintenance
+    options: [maintenance, service, location, autre]
+    description: Type de contrat
+
+  - nom: sous_type
+    type: text
+    obligatoire: false
+    description: Sous-type ou categorie specifique
+    autocompletion: true
+
+  # Dates
+  - nom: date_debut
+    type: date
+    obligatoire: true
+    description: Date de debut du contrat
+
+  - nom: date_fin
+    type: date
+    obligatoire: false
+    description: Date de fin du contrat (vide si indefini)
+
+  - nom: duree_mois
+    type: number
+    obligatoire: false
+    description: Duree du contrat en mois (calculee ou saisie)
+
+  # Renouvellement
+  - nom: renouvellement_auto
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Renouvellement automatique a echeance
+
+  - nom: preavis_jours
+    type: number
+    obligatoire: false
+    defaut: 30
+    description: Delai de preavis en jours avant renouvellement
+
+  - nom: date_preavis
+    type: date
+    obligatoire: false
+    readonly: true
+    description: Date limite de preavis (calculee)
+
+  - nom: nb_renouvellements
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de renouvellements effectues
+
+  - nom: date_dernier_renouvellement
+    type: date
+    obligatoire: false
+    description: Date du dernier renouvellement
+
+  # Montants
+  - nom: montant_mensuel
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant mensuel HT
+
+  - nom: montant_annuel
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant annuel HT (calcule ou saisi)
+
+  - nom: taux_tva
+    type: number
+    obligatoire: false
+    defaut: 20.0
+    description: Taux de TVA (%)
+
+  - nom: montant_tva
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Montant TVA (calcule)
+
+  - nom: montant_ttc
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Montant TTC (calcule)
+
+  - nom: currency
+    type: relation
+    obligatoire: false
+    relation: Devises
+    defaut: EUR
+    description: Devise du contrat
+    autocompletion: true
+
+  # Facturation recurrente
+  - nom: frequence_facturation
+    type: select
+    obligatoire: false
+    defaut: mensuel
+    options: [mensuel, trimestriel, semestriel, annuel]
+    description: Frequence de facturation
+
+  - nom: jour_facturation
+    type: number
+    obligatoire: false
+    defaut: 1
+    description: Jour du mois pour la facturation (1-28)
+
+  - nom: prochaine_facture
+    type: date
+    obligatoire: false
+    description: Date de la prochaine facture a generer
+
+  - nom: derniere_facture
+    type: date
+    obligatoire: false
+    description: Date de la derniere facture generee
+
+  - nom: abonnement_id
+    type: relation
+    obligatoire: false
+    relation: Abonnements
+    description: Abonnement lie pour facturation automatique
+    autocompletion: true
+
+  # Statistiques facturation
+  - nom: nb_factures_generees
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de factures generees
+
+  - nom: total_facture
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant total facture depuis le debut
+
+  - nom: total_encaisse
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant total encaisse
+
+  # Statut
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: brouillon
+    options: [brouillon, actif, suspendu, termine, resilie]
+    description: Statut du contrat
+
+  - nom: motif_resiliation
+    type: textarea
+    obligatoire: false
+    description: Motif de resiliation ou suspension
+
+  - nom: date_resiliation
+    type: date
+    obligatoire: false
+    description: Date de resiliation
+
+  # Conditions contractuelles
+  - nom: conditions
+    type: textarea
+    obligatoire: false
+    description: Conditions generales du contrat
+
+  - nom: clauses_particulieres
+    type: textarea
+    obligatoire: false
+    description: Clauses particulieres
+
+  - nom: penalites
+    type: textarea
+    obligatoire: false
+    description: Clauses de penalites
+
+  - nom: garanties
+    type: textarea
+    obligatoire: false
+    description: Garanties incluses
+
+  # Document attache
+  - nom: document_id
+    type: relation
+    obligatoire: false
+    relation: Documents
+    description: Document PDF du contrat signe
+    autocompletion: true
+
+  - nom: document_url
+    type: text
+    obligatoire: false
+    description: URL du document contrat
+    autocompletion: true
+
+  - nom: documents_annexes
+    type: json
+    obligatoire: false
+    description: Liste des documents annexes [{document_id, nom, type}]
+
+  # Signature
+  - nom: signe
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Contrat signe
+
+  - nom: date_signature
+    type: date
+    obligatoire: false
+    description: Date de signature
+
+  - nom: signataire_client_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du signataire client
+
+  - nom: signataire_client
+    type: text
+    obligatoire: false
+    description: Nom du signataire cote client
+    autocompletion: true
+
+  - nom: signataire_interne_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du signataire interne
+
+  - nom: signataire_interne
+    type: text
+    obligatoire: false
+    description: Nom du signataire interne
+    autocompletion: true
+
+  # Services inclus
+  - nom: services_inclus
+    type: json
+    obligatoire: false
+    description: |
+      Services inclus dans le contrat.
+      Format: [{service_id, nom, quantite, frequence, description}]
+
+  - nom: sla
+    type: json
+    obligatoire: false
+    description: |
+      SLA (Service Level Agreement).
+      Format: {temps_reponse_heures, temps_resolution_heures, disponibilite_pct, penalites}
+
+  # Limites et quotas
+  - nom: heures_incluses
+    type: number
+    obligatoire: false
+    description: Heures d'intervention incluses par periode
+
+  - nom: heures_utilisees
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Heures utilisees sur la periode en cours
+
+  - nom: interventions_incluses
+    type: number
+    obligatoire: false
+    description: Nombre d'interventions incluses par periode
+
+  - nom: interventions_utilisees
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Interventions utilisees sur la periode en cours
+
+  - nom: periode_quota_debut
+    type: date
+    obligatoire: false
+    description: Date de debut de la periode de quota courante
+
+  - nom: periode_quota_fin
+    type: date
+    obligatoire: false
+    description: Date de fin de la periode de quota courante
+
+  # Liens interventions
+  - nom: nb_interventions
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre total d'interventions liees
+
+  - nom: derniere_intervention
+    type: date
+    obligatoire: false
+    readonly: true
+    description: Date de la derniere intervention
+
+  # Responsables
+  - nom: responsable_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Commercial responsable du contrat
+    autocompletion: true
+
+  - nom: gestionnaire_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Gestionnaire technique du contrat
+    autocompletion: true
+
+  # Tags et classification
+  - nom: tags
+    type: tags
+    obligatoire: false
+    description: Tags pour organiser les contrats
+
+  - nom: tags_display
+    type: text
+    obligatoire: false
+    readonly: true
+    description: Affichage des noms de tags
+    autocompletion: true
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes visibles
+
+  - nom: notes_internes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  # Metadonnees
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+  - nom: deleted_at
+    type: datetime
+    obligatoire: false
+    description: Soft delete
+
+# Lignes de contrat (services detailles)
+lignes:
+  champs:
+    - nom: line_number
+      type: number
+      obligatoire: true
+      description: Numero de ligne
+
+    - nom: produit_id
+      type: relation
+      obligatoire: false
+      relation: Produits
+      description: Service/Produit reference
+
+    - nom: description
+      type: textarea
+      obligatoire: true
+      description: Description du service
+
+    - nom: quantite
+      type: number
+      obligatoire: true
+      defaut: 1
+      description: Quantite
+
+    - nom: unite
+      type: text
+      obligatoire: false
+      defaut: unite
+      description: Unite (unite, heure, mois, etc.)
+
+    - nom: prix_unitaire
+      type: number
+      obligatoire: true
+      defaut: 0
+      description: Prix unitaire HT
+
+    - nom: frequence
+      type: select
+      obligatoire: false
+      defaut: mensuel
+      options: [ponctuel, mensuel, trimestriel, annuel]
+      description: Frequence de facturation de la ligne
+
+    - nom: montant_ht
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Montant HT (calcule)
+
+    - nom: taux_tva
+      type: number
+      obligatoire: false
+      defaut: 20.0
+      description: Taux TVA (%)
+
+    - nom: notes
+      type: textarea
+      obligatoire: false
+      description: Notes ligne
+
+# Historique des renouvellements
+historique_renouvellements:
+  champs:
+    - nom: date_renouvellement
+      type: date
+      obligatoire: true
+      description: Date du renouvellement
+
+    - nom: date_debut_periode
+      type: date
+      obligatoire: true
+      description: Debut nouvelle periode
+
+    - nom: date_fin_periode
+      type: date
+      obligatoire: true
+      description: Fin nouvelle periode
+
+    - nom: montant_precedent
+      type: number
+      obligatoire: false
+      description: Montant avant renouvellement
+
+    - nom: montant_nouveau
+      type: number
+      obligatoire: false
+      description: Montant apres renouvellement
+
+    - nom: variation_pct
+      type: number
+      obligatoire: false
+      description: Variation en pourcentage
+
+    - nom: notes
+      type: textarea
+      obligatoire: false
+
+    - nom: effectue_par
+      type: relation
+      obligatoire: false
+      relation: Utilisateurs
+
+# Workflow
+workflow:
+  "brouillon -> actif": "action activer (conditions client_id et date_debut et signe=true)"
+  actif -> suspendu: action suspendre
+  suspendu -> actif: action reactiver
+  actif -> termine: action terminer (auto si date_fin <= aujourd'hui et renouvellement_auto=false)
+  actif -> resilie: action resilier
+  suspendu -> resilie: action resilier
+
+# Actions disponibles
+actions:
+  - activer
+  - suspendre
+  - reactiver
+  - terminer
+  - resilier
+  - renouveler
+  - generer_facture
+  - voir_factures
+  - voir_interventions
+  - voir_temps
+  - creer_intervention
+  - telecharger_contrat
+  - envoyer_contrat
+  - dupliquer
+  - imprimer
+
+# Alertes et IA Marceau
+marceau:
+  alertes:
+    # Alertes de renouvellement
+    - si statut=actif et date_fin et date_fin <= aujourd'hui + 90j et renouvellement_auto=false:
+        message: "Contrat expire dans moins de 3 mois"
+        priorite: normal
+        action: "Contacter le client pour renouvellement"
+
+    - si statut=actif et date_fin et date_fin <= aujourd'hui + 30j et renouvellement_auto=false:
+        message: "Contrat expire dans moins de 30 jours"
+        priorite: haute
+        action: "Renouvellement urgent"
+
+    - si statut=actif et date_preavis and date_preavis <= aujourd'hui:
+        message: "Date limite de preavis atteinte"
+        priorite: haute
+        action: "Decider du renouvellement"
+
+    - si statut=actif et renouvellement_auto=true et date_fin and date_fin <= aujourd'hui + preavis_jours:
+        message: "Renouvellement automatique imminent"
+        priorite: normal
+        action: "Verifier les conditions"
+
+    # Alertes facturation
+    - si statut=actif et prochaine_facture and prochaine_facture <= aujourd'hui:
+        message: "Facture a generer"
+        priorite: haute
+        action: "Generer la facture du contrat"
+
+    # Alertes quotas
+    - si statut=actif et heures_incluses and heures_utilisees >= heures_incluses * 0.8:
+        message: "80% du quota d'heures utilise"
+        priorite: normal
+
+    - si statut=actif et heures_incluses and heures_utilisees >= heures_incluses:
+        message: "Quota d'heures depasse"
+        priorite: haute
+        action: "Facturer les heures supplementaires"
+
+    - si statut=actif et interventions_incluses and interventions_utilisees >= interventions_incluses * 0.8:
+        message: "80% du quota d'interventions utilise"
+        priorite: normal
+
+    - si statut=actif et interventions_incluses and interventions_utilisees >= interventions_incluses:
+        message: "Quota d'interventions depasse"
+        priorite: haute
+
+    # Alertes autres
+    - si statut=suspendu:
+        message: "Contrat suspendu"
+        priorite: normale
+        action: "Verifier la raison de la suspension"
+
+    - si signe=false et statut=brouillon et created_at < aujourd'hui - 30j:
+        message: "Contrat en brouillon depuis plus de 30 jours"
+        priorite: normale
+        action: "Relancer le client pour signature"
+
+  # KPIs Dashboard
+  kpis:
+    - nom: "Valeur contrats actifs"
+      calcul: "somme(montant_annuel) pour statut=actif"
+      format: "monnaie"
+      description: "Revenu annuel contractuel (ARR contrats)"
+
+    - nom: "MRR Contrats"
+      calcul: "somme(montant_mensuel) pour statut=actif"
+      format: "monnaie"
+      description: "Revenu mensuel recurrent des contrats"
+
+    - nom: "Contrats actifs"
+      calcul: "compte(statut=actif)"
+      format: "nombre"
+
+    - nom: "Contrats a renouveler (90j)"
+      calcul: "compte(statut=actif et date_fin <= aujourd'hui + 90j)"
+      format: "nombre"
+      alerte_si: "> 0"
+
+    - nom: "Taux de renouvellement"
+      calcul: "(contrats_renouveles / contrats_arrives_a_echeance) * 100"
+      format: "pourcentage"
+      periode: "12 mois glissants"
+      alerte_si: "< 80%"
+
+    - nom: "Valeur moyenne contrat"
+      calcul: "moyenne(montant_annuel) pour statut=actif"
+      format: "monnaie"
+
+    - nom: "Contrats en retard de paiement"
+      calcul: "compte(contrats avec factures impayees)"
+      format: "nombre"
+      alerte_si: "> 0"
+
+  # Suggestions IA
+  suggestions:
+    - "Proposer une augmentation de 3% pour les contrats arrives a echeance"
+    - "Identifier les clients sans contrat qui pourraient en beneficier"
+    - "Analyser les contrats les plus rentables"
+    - "Detecter les contrats sous-utilises (peu d'interventions)"
+
+# Dashboard Widgets
+dashboard:
+  widgets:
+    # Widget: Contrats expirant bientot
+    - nom: "Contrats a echeance"
+      type: liste
+      position: gauche
+      taille: medium
+      filtre: "statut=actif et date_fin <= aujourd'hui + 90j"
+      tri: "date_fin ASC"
+      limite: 10
+      colonnes:
+        - numero
+        - client_nom
+        - nom
+        - date_fin
+        - montant_annuel
+      couleur_ligne:
+        rouge: "date_fin <= aujourd'hui + 30j"
+        orange: "date_fin <= aujourd'hui + 60j"
+        jaune: "date_fin <= aujourd'hui + 90j"
+      actions:
+        - renouveler
+        - contacter_client
+
+    # Widget: Revenus des contrats
+    - nom: "Revenus contractuels"
+      type: kpi_cards
+      position: haut
+      taille: full
+      cartes:
+        - titre: "MRR Contrats"
+          valeur: "somme(montant_mensuel) statut=actif"
+          format: "monnaie"
+          tendance: "vs mois precedent"
+          icone: "trending-up"
+
+        - titre: "ARR Contrats"
+          valeur: "somme(montant_annuel) statut=actif"
+          format: "monnaie"
+          tendance: "vs annee precedente"
+          icone: "calendar"
+
+        - titre: "Contrats actifs"
+          valeur: "compte(statut=actif)"
+          format: "nombre"
+          icone: "file-text"
+
+        - titre: "Valeur moyenne"
+          valeur: "moyenne(montant_annuel) statut=actif"
+          format: "monnaie"
+          icone: "dollar-sign"
+
+    # Widget: Taux de renouvellement
+    - nom: "Taux de renouvellement"
+      type: graphique_jauge
+      position: droite
+      taille: small
+      valeur: "taux_renouvellement_12_mois"
+      seuils:
+        rouge: "< 60%"
+        orange: "< 80%"
+        vert: ">= 80%"
+      objectif: 90
+
+    # Widget: Repartition par type
+    - nom: "Repartition par type"
+      type: graphique_camembert
+      position: droite
+      taille: small
+      grouper_par: type
+      valeur: "compte(statut=actif)"
+      couleurs:
+        maintenance: "#3B82F6"
+        service: "#10B981"
+        location: "#F59E0B"
+        autre: "#6B7280"
+
+    # Widget: Evolution revenus
+    - nom: "Evolution revenus contrats"
+      type: graphique_ligne
+      position: centre
+      taille: large
+      periode: "12 mois"
+      series:
+        - nom: "Revenus factures"
+          valeur: "somme(factures.total) par mois"
+          couleur: "#3B82F6"
+        - nom: "Revenus contractuels theoriques"
+          valeur: "somme(montant_mensuel) par mois"
+          couleur: "#10B981"
+
+    # Widget: Contrats par statut
+    - nom: "Contrats par statut"
+      type: graphique_barres
+      position: gauche
+      taille: small
+      grouper_par: statut
+      valeur: "compte()"
+      couleurs:
+        brouillon: "#9CA3AF"
+        actif: "#10B981"
+        suspendu: "#F59E0B"
+        termine: "#6B7280"
+        resilie: "#EF4444"
+
+    # Widget: Alertes contrats
+    - nom: "Alertes contrats"
+      type: liste_alertes
+      position: droite
+      taille: medium
+      alertes:
+        - type: "echeance_30j"
+          icone: "alert-triangle"
+          couleur: "rouge"
+        - type: "echeance_90j"
+          icone: "clock"
+          couleur: "orange"
+        - type: "quota_depasse"
+          icone: "alert-circle"
+          couleur: "rouge"
+        - type: "facture_a_generer"
+          icone: "file-plus"
+          couleur: "bleu"
+
+# Liens avec autres modules
+liens:
+  # Lien avec factures recurrentes (abonnements)
+  abonnements:
+    description: "Abonnement lie pour facturation automatique"
+    relation: abonnement_id
+    actions:
+      - creer_abonnement: "Creer un abonnement depuis ce contrat"
+      - voir_abonnement: "Voir l'abonnement lie"
+    synchronisation:
+      - "Montant mensuel -> Abonnement.montant_ht"
+      - "Frequence facturation -> Abonnement.frequence"
+      - "Client -> Abonnement.client_id"
+      - "Services inclus -> Abonnement.produits"
+
+  # Lien avec factures
+  factures:
+    description: "Factures generees pour ce contrat"
+    relation: "Factures.contrat_id = Contrats.id"
+    affichage:
+      colonnes:
+        - number
+        - date
+        - total
+        - status
+        - payment_status
+    totaux:
+      - total_facture: "SUM(total)"
+      - total_paye: "SUM(paid_amount)"
+
+  # Lien avec interventions
+  interventions:
+    description: "Interventions realisees dans le cadre de ce contrat"
+    relation: "Interventions.contrat_id = Contrats.id"
+    affichage:
+      colonnes:
+        - reference
+        - date_prevue_debut
+        - statut
+        - intervenant_id
+        - duree_reelle_minutes
+    totaux:
+      - nb_interventions: "COUNT(*)"
+      - heures_totales: "SUM(duree_reelle_minutes) / 60"
+    actions:
+      - creer_intervention: "Creer une intervention"
+
+  # Lien avec temps
+  temps:
+    description: "Temps passe sur ce contrat"
+    relation: "Temps.contrat_id = Contrats.id"
+    affichage:
+      colonnes:
+        - date
+        - user_id
+        - duree_minutes
+        - description
+        - facturable
+    totaux:
+      - heures_totales: "SUM(duree_minutes) / 60"
+      - heures_facturables: "SUM(duree_minutes WHERE facturable=true) / 60"
+      - montant_total: "SUM(montant_ht)"
+
+# Automatisations
+automatisations:
+  # Calcul automatique date preavis
+  - declencheur: "date_fin modifie"
+    action: "date_preavis = date_fin - preavis_jours"
+
+  # Calcul montant annuel
+  - declencheur: "montant_mensuel modifie"
+    action: "montant_annuel = montant_mensuel * 12"
+
+  # Calcul montant mensuel si annuel saisi
+  - declencheur: "montant_annuel modifie et montant_mensuel = 0"
+    action: "montant_mensuel = montant_annuel / 12"
+
+  # Calcul TTC
+  - declencheur: "montant_mensuel ou taux_tva modifie"
+    action: |
+      montant_tva = montant_mensuel * taux_tva / 100
+      montant_ttc = montant_mensuel + montant_tva
+
+  # Renouvellement automatique
+  - declencheur: "date_fin atteinte et renouvellement_auto=true et statut=actif"
+    action: |
+      1. Creer historique_renouvellement
+      2. date_debut = date_fin + 1 jour
+      3. date_fin = date_fin + duree_mois mois
+      4. nb_renouvellements += 1
+      5. date_dernier_renouvellement = aujourd'hui
+      6. Notifier responsable
+
+  # Generation facture automatique
+  - declencheur: "prochaine_facture atteinte et statut=actif"
+    action: |
+      1. Creer facture depuis abonnement_id ou lignes
+      2. derniere_facture = aujourd'hui
+      3. prochaine_facture = calculer_prochaine_date(frequence_facturation)
+      4. nb_factures_generees += 1
+      5. total_facture += montant_facture
+
+  # Mise a jour quotas
+  - declencheur: "intervention terminee avec contrat_id"
+    action: |
+      1. interventions_utilisees += 1
+      2. heures_utilisees += intervention.duree_reelle_minutes / 60
+      3. derniere_intervention = intervention.date_fin
+      4. nb_interventions += 1
+
+  # Reset quotas en debut de periode
+  - declencheur: "periode_quota_fin atteinte"
+    action: |
+      1. heures_utilisees = 0
+      2. interventions_utilisees = 0
+      3. periode_quota_debut = aujourd'hui
+      4. periode_quota_fin = calculer_fin_periode(frequence_facturation)
+
+# Pages personnalisees
+pages:
+  - chemin: "/ui/Contrat/{id}/factures"
+    nom: "Factures du contrat"
+    description: "Historique des factures generees pour ce contrat"
+
+  - chemin: "/ui/Contrat/{id}/interventions"
+    nom: "Interventions du contrat"
+    description: "Liste des interventions realisees dans le cadre du contrat"
+
+  - chemin: "/ui/Contrat/{id}/temps"
+    nom: "Temps passe"
+    description: "Temps passe sur ce contrat avec details"
+
+  - chemin: "/ui/Contrat/{id}/renouvellements"
+    nom: "Historique renouvellements"
+    description: "Historique des renouvellements du contrat"
+
+  - chemin: "/ui/Contrats/tableau-bord"
+    nom: "Tableau de bord contrats"
+    description: "Vue d'ensemble des contrats et KPIs"
+
+  - chemin: "/ui/Contrats/echeances"
+    nom: "Echeances contrats"
+    description: "Calendrier des echeances et renouvellements"
+
+# Rapports
+rapports:
+  contrats_actifs:
+    description: "Liste des contrats actifs avec valorisation"
+    colonnes:
+      - numero
+      - client_nom
+      - nom
+      - type
+      - date_debut
+      - date_fin
+      - montant_mensuel
+      - montant_annuel
+      - responsable_id
+
+  echeances:
+    description: "Contrats arrivant a echeance"
+    filtre: "statut=actif et date_fin <= aujourd'hui + 90j"
+    colonnes:
+      - numero
+      - client_nom
+      - date_fin
+      - montant_annuel
+      - renouvellement_auto
+      - responsable_id
+
+  revenus_par_client:
+    description: "Revenus contractuels par client"
+    grouper_par: client_id
+    colonnes:
+      - client_nom
+      - nb_contrats
+      - montant_annuel_total
+      - pct_total
+
+  revenus_par_type:
+    description: "Revenus par type de contrat"
+    grouper_par: type
+    colonnes:
+      - type
+      - nb_contrats
+      - montant_annuel_total
+      - montant_moyen
+
+  taux_renouvellement:
+    description: "Analyse du taux de renouvellement"
+    periode: "par trimestre"
+    colonnes:
+      - periode
+      - contrats_a_echeance
+      - contrats_renouveles
+      - contrats_resilies
+      - taux_renouvellement
+
+# Export
+export:
+  formats: [xlsx, csv, pdf]
+  champs_defaut:
+    - numero
+    - client_nom
+    - nom
+    - type
+    - statut
+    - date_debut
+    - date_fin
+    - montant_mensuel
+    - montant_annuel
+
+# Import
+import:
+  formats: [xlsx, csv]
+  champs_obligatoires:
+    - nom
+    - client_id (ou client_code)
+    - type
+    - date_debut
+  correspondances:
+    - client_code: "recherche Clients.code"
+    - responsable_email: "recherche Utilisateurs.email"

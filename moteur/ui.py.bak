@@ -1,0 +1,1599 @@
+# =============================================================================
+# AZALPLUS - UI Generator
+# =============================================================================
+"""
+Génère l'interface HTML depuis les définitions YAML.
+Utilise Jinja2 pour le templating.
+"""
+
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import HTMLResponse
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from pathlib import Path
+from typing import Optional, Dict, Any, List
+import structlog
+
+from .parser import ModuleParser, ModuleDefinition, FieldDefinition
+from .auth import get_current_user, require_auth
+from .tenant import get_current_tenant
+from .db import Database
+from .config import settings
+from .reports import ReportEngine
+from datetime import date, timedelta
+
+logger = structlog.get_logger()
+
+# =============================================================================
+# Jinja2 Environment
+# =============================================================================
+templates_dir = Path(__file__).parent.parent / "templates" / "ui"
+templates_dir.mkdir(parents=True, exist_ok=True)
+
+jinja_env = Environment(
+    loader=FileSystemLoader(str(templates_dir)),
+    autoescape=select_autoescape(['html', 'xml']),
+    trim_blocks=True,
+    lstrip_blocks=True
+)
+
+# =============================================================================
+# UI Router
+# =============================================================================
+ui_router = APIRouter()
+
+# =============================================================================
+# Helpers
+# =============================================================================
+def get_field_html(field: FieldDefinition, value: Any = None) -> str:
+    """Génère le HTML d'un champ de formulaire."""
+
+    field_id = f"field_{field.nom}"
+    required = "required" if field.requis else ""
+    label = field.label or field.nom.replace("_", " ").title()
+
+    # Type de champ
+    if field.type == "texte long":
+        return f'''
+        <div class="form-group">
+            <label class="label" for="{field_id}">{label}</label>
+            <textarea class="input" id="{field_id}" name="{field.nom}" rows="4" {required}>{value or ''}</textarea>
+        </div>
+        '''
+
+    elif field.type == "enum" and field.enum_values:
+        options = "".join([
+            f'<option value="{v}" {"selected" if v == value else ""}>{v}</option>'
+            for v in field.enum_values
+        ])
+        return f'''
+        <div class="form-group">
+            <label class="label" for="{field_id}">{label}</label>
+            <select class="input" id="{field_id}" name="{field.nom}" {required}>
+                <option value="">-- Sélectionner --</option>
+                {options}
+            </select>
+        </div>
+        '''
+
+    elif field.type == "oui/non" or field.type == "booleen":
+        checked = "checked" if value else ""
+        return f'''
+        <div class="form-group">
+            <label class="flex items-center gap-2">
+                <input type="checkbox" id="{field_id}" name="{field.nom}" {checked}>
+                <span>{label}</span>
+            </label>
+        </div>
+        '''
+
+    elif field.type == "date":
+        return f'''
+        <div class="form-group">
+            <label class="label" for="{field_id}">{label}</label>
+            <input type="date" class="input" id="{field_id}" name="{field.nom}" value="{value or ''}" {required}>
+        </div>
+        '''
+
+    elif field.type == "datetime":
+        return f'''
+        <div class="form-group">
+            <label class="label" for="{field_id}">{label}</label>
+            <input type="datetime-local" class="input" id="{field_id}" name="{field.nom}" value="{value or ''}" {required}>
+        </div>
+        '''
+
+    elif field.type in ["nombre", "entier", "monnaie", "pourcentage"]:
+        step = "0.01" if field.type in ["nombre", "monnaie", "pourcentage"] else "1"
+        min_attr = f'min="{field.min}"' if field.min is not None else ""
+        max_attr = f'max="{field.max}"' if field.max is not None else ""
+        return f'''
+        <div class="form-group">
+            <label class="label" for="{field_id}">{label}</label>
+            <input type="number" class="input" id="{field_id}" name="{field.nom}"
+                   step="{step}" {min_attr} {max_attr} value="{value or ''}" {required}>
+        </div>
+        '''
+
+    elif field.type == "email":
+        return f'''
+        <div class="form-group">
+            <label class="label" for="{field_id}">{label}</label>
+            <input type="email" class="input" id="{field_id}" name="{field.nom}" value="{value or ''}" {required}>
+        </div>
+        '''
+
+    elif field.type == "lien":
+        # Pour les liens, on génère un select qui sera rempli via API
+        return f'''
+        <div class="form-group">
+            <label class="label" for="{field_id}">{label}</label>
+            <select class="input" id="{field_id}" name="{field.nom}" data-link="{field.lien_vers}" {required}>
+                <option value="">-- Sélectionner --</option>
+            </select>
+        </div>
+        '''
+
+    else:  # texte par défaut
+        return f'''
+        <div class="form-group">
+            <label class="label" for="{field_id}">{label}</label>
+            <input type="text" class="input" id="{field_id}" name="{field.nom}" value="{value or ''}" {required}>
+        </div>
+        '''
+
+
+def get_status_badge(statut: str) -> str:
+    """Génère le badge de statut."""
+    colors = {
+        "BROUILLON": "gray",
+        "ENVOYE": "primary",
+        "ENVOYEE": "primary",
+        "VALIDEE": "primary",
+        "ACCEPTE": "success",
+        "PAYEE": "success",
+        "TERMINEE": "success",
+        "REFUSE": "error",
+        "ANNULEE": "error",
+        "ANNULE": "error",
+        "BLOQUEE": "warning",
+        "EN_COURS": "primary",
+        "PLANIFIEE": "primary",
+        "A_PLANIFIER": "warning",
+    }
+    color = colors.get(statut, "gray")
+    return f'<span class="badge badge-{color}">{statut}</span>'
+
+
+def generate_documents_section(module_name: str, item_id: str) -> str:
+    """Génère la section de gestion des documents attachés."""
+    return f'''
+    <div class="card" style="margin-top: 24px;">
+        <div class="card-header">
+            <h3 class="font-bold">Documents attaches</h3>
+        </div>
+        <div class="card-body">
+            <!-- Upload Zone -->
+            <div class="upload-zone" id="upload-zone">
+                <div class="upload-content">
+                    <div class="upload-icon">📎</div>
+                    <p class="upload-text">Glissez un fichier ici ou</p>
+                    <label class="btn btn-secondary btn-sm" for="file-input">
+                        Parcourir
+                    </label>
+                    <input type="file" id="file-input" style="display: none;" onchange="uploadDocument()">
+                </div>
+            </div>
+
+            <!-- Documents List -->
+            <div id="documents-list" style="margin-top: 16px;">
+                <p class="text-muted">Chargement...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="doc-notification" class="notification hidden"></div>
+
+    <style>
+        .upload-zone {{
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            background: var(--gray-50);
+            transition: all 0.2s;
+        }}
+        .upload-zone:hover, .upload-zone.dragover {{
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }}
+        .upload-icon {{
+            font-size: 32px;
+            margin-bottom: 8px;
+        }}
+        .upload-text {{
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }}
+        .documents-list {{
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }}
+        .document-item {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            background: white;
+        }}
+        .document-item:hover {{
+            background: var(--gray-50);
+        }}
+        .doc-icon {{
+            font-size: 24px;
+        }}
+        .doc-info {{
+            flex: 1;
+        }}
+        .doc-name {{
+            font-weight: 500;
+            color: var(--gray-800);
+        }}
+        .doc-meta {{
+            font-size: 12px;
+            color: var(--gray-500);
+            display: block;
+            margin-top: 2px;
+        }}
+        .doc-actions {{
+            display: flex;
+            gap: 8px;
+        }}
+    </style>
+
+    <script>
+    // Drag and drop support
+    const uploadZone = document.getElementById('upload-zone');
+
+    uploadZone.addEventListener('dragover', (e) => {{
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    }});
+
+    uploadZone.addEventListener('dragleave', () => {{
+        uploadZone.classList.remove('dragover');
+    }});
+
+    uploadZone.addEventListener('drop', async (e) => {{
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {{
+            await uploadFileObject(files[0]);
+        }}
+    }});
+
+    async function uploadFileObject(file) {{
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {{
+            const res = await fetch('/api/{module_name}/{item_id}/documents', {{
+                method: 'POST',
+                body: formData
+            }});
+
+            if (res.ok) {{
+                loadDocuments();
+                showNotification('Document uploade avec succes', 'success');
+            }} else {{
+                const data = await res.json();
+                showNotification(data.detail || 'Erreur upload', 'error');
+            }}
+        }} catch (e) {{
+            showNotification('Erreur de connexion', 'error');
+        }}
+    }}
+    </script>
+    '''
+
+
+# =============================================================================
+# Routes UI
+# =============================================================================
+
+@ui_router.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request, user: dict = Depends(require_auth)):
+    """Page d'accueil / Dashboard."""
+
+    modules = []
+    for name in ModuleParser.list_all():
+        module = ModuleParser.get(name)
+        if module:
+            modules.append({
+                "nom": module.nom,
+                "nom_affichage": module.nom_affichage,
+                "icone": module.icone,
+                "menu": module.menu
+            })
+
+    # Générer les cartes stats
+    stats_html = ""
+    icon_colors = ["blue", "green", "yellow", "red", "blue"]
+    for i, m in enumerate(modules):
+        color = icon_colors[i % len(icon_colors)]
+        stats_html += f'''
+        <a href="/ui/{m["nom"]}" class="stat-card" style="text-decoration: none;">
+            <div class="stat-icon {color}">{get_icon(m["icone"])}</div>
+            <div class="stat-value">0</div>
+            <div class="stat-label">{m["nom_affichage"]}</div>
+        </a>
+        '''
+
+    html = generate_layout(
+        title="Tableau de bord",
+        content=f'''
+        <div class="stats-row">
+            {stats_html}
+        </div>
+        ''',
+        user=user,
+        modules=modules
+    )
+    return HTMLResponse(content=html)
+
+
+@ui_router.get("/parametres/theme", response_class=HTMLResponse)
+async def theme_settings(request: Request, user: dict = Depends(require_auth)):
+    """Page de personnalisation du thème des documents."""
+
+    html = generate_layout(
+        title="Style des documents",
+        content='''
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Personnaliser le style des devis et factures</h2>
+            </div>
+            <div class="card-body">
+                <div class="theme-editor">
+                    <!-- Couleur -->
+                    <div class="theme-option">
+                        <label class="label">Couleur principale</label>
+                        <div class="color-options">
+                            <button class="color-btn active" style="background: #2563EB;" data-color="#2563EB"></button>
+                            <button class="color-btn" style="background: #10B981;" data-color="#10B981"></button>
+                            <button class="color-btn" style="background: #F59E0B;" data-color="#F59E0B"></button>
+                            <button class="color-btn" style="background: #EF4444;" data-color="#EF4444"></button>
+                            <button class="color-btn" style="background: #8B5CF6;" data-color="#8B5CF6"></button>
+                            <button class="color-btn" style="background: #1E293B;" data-color="#1E293B"></button>
+                        </div>
+                    </div>
+
+                    <!-- Structure -->
+                    <div class="theme-option">
+                        <label class="label">Structure</label>
+                        <div class="style-options">
+                            <button class="style-btn active" data-value="moderne">
+                                <div class="style-preview moderne"></div>
+                                <span>Moderne</span>
+                            </button>
+                            <button class="style-btn" data-value="classique">
+                                <div class="style-preview classique"></div>
+                                <span>Classique</span>
+                            </button>
+                            <button class="style-btn" data-value="minimal">
+                                <div class="style-preview minimal"></div>
+                                <span>Minimal</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Style tableaux -->
+                    <div class="theme-option">
+                        <label class="label">Style des tableaux</label>
+                        <div class="style-options">
+                            <button class="style-btn active" data-value="simple">Simple</button>
+                            <button class="style-btn" data-value="zebra">Zebra</button>
+                            <button class="style-btn" data-value="bordure">Bordures</button>
+                            <button class="style-btn" data-value="sans">Sans bordure</button>
+                        </div>
+                    </div>
+
+                    <!-- Angles -->
+                    <div class="theme-option">
+                        <label class="label">Angles</label>
+                        <div class="style-options">
+                            <button class="style-btn active" data-value="arrondis">
+                                <div style="width:30px;height:20px;background:var(--gray-300);border-radius:4px;"></div>
+                            </button>
+                            <button class="style-btn" data-value="carres">
+                                <div style="width:30px;height:20px;background:var(--gray-300);border-radius:0;"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lignes -->
+                    <div class="theme-option">
+                        <label class="label">Lignes</label>
+                        <div class="style-options">
+                            <button class="style-btn" data-value="aucune">Aucune</button>
+                            <button class="style-btn active" data-value="fines">Fines</button>
+                            <button class="style-btn" data-value="epaisses">Épaisses</button>
+                        </div>
+                    </div>
+
+                    <!-- Images produits -->
+                    <div class="theme-option">
+                        <label class="label">Images des produits</label>
+                        <div class="style-options">
+                            <button class="style-btn" data-value="aucune">Aucune</button>
+                            <button class="style-btn active" data-value="petites">Petites</button>
+                            <button class="style-btn" data-value="moyennes">Moyennes</button>
+                            <button class="style-btn" data-value="grandes">Grandes</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200);">
+                    <button class="btn btn-primary" onclick="saveTheme()">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .theme-option { margin-bottom: 24px; }
+            .color-options { display: flex; gap: 8px; margin-top: 8px; }
+            .color-btn {
+                width: 32px; height: 32px;
+                border-radius: 50%;
+                border: 2px solid transparent;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+            .color-btn:hover { transform: scale(1.1); }
+            .color-btn.active { border-color: var(--gray-900); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--gray-400); }
+            .style-options { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+            .style-btn {
+                padding: 8px 16px;
+                border: 1px solid var(--gray-300);
+                background: white;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 6px;
+                transition: all 0.15s;
+            }
+            .style-btn:hover { border-color: var(--gray-400); }
+            .style-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+            .style-preview { width: 60px; height: 40px; background: var(--gray-100); border-radius: 4px; }
+        </style>
+
+        <script>
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                };
+            });
+            document.querySelectorAll('.style-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const parent = btn.closest('.style-options');
+                    parent.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                };
+            });
+            function saveTheme() {
+                alert('Thème enregistré ! (à implémenter avec API)');
+            }
+        </script>
+        ''',
+        user=user,
+        modules=get_all_modules()
+    )
+    return HTMLResponse(content=html)
+
+
+@ui_router.get("/search", response_class=HTMLResponse)
+async def search_page(
+    request: Request,
+    q: str = "",
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Page de recherche globale."""
+
+    results_html = ""
+    total_count = 0
+
+    if q and len(q) >= 2:
+        # Recuperer tous les modules disponibles
+        module_names = ModuleParser.list_all()
+
+        # Effectuer la recherche globale
+        search_results = Database.global_search(
+            tenant_id=tenant_id,
+            query=q,
+            tables=[name.lower() for name in module_names],
+            limit_per_table=10
+        )
+
+        # Generer le HTML des resultats groupes par module
+        for module_name_lower, items in search_results.items():
+            # Trouver le module correspondant
+            module = None
+            for name in module_names:
+                if name.lower() == module_name_lower:
+                    module = ModuleParser.get(name)
+                    break
+
+            if not module:
+                continue
+
+            module_display_name = module.nom_affichage if module else module_name_lower.title()
+            module_icon = get_icon(module.icone) if module else "📁"
+
+            # Compter les resultats
+            total_count += len(items)
+
+            # Generer les lignes de resultats
+            rows_html = ""
+            for item in items:
+                # Determiner le nom a afficher
+                display_name = item.get('nom') or item.get('raison_sociale') or item.get('titre') or item.get('numero') or item.get('reference') or str(item.get('id', ''))[:8]
+                secondary_info = item.get('email') or item.get('description', '')[:50] if item.get('description') else ''
+
+                # Badge de statut si present
+                status_badge = ""
+                if 'statut' in item and item['statut']:
+                    status_badge = get_status_badge(item['statut'])
+
+                rows_html += f'''
+                <tr onclick="window.location='/ui/{module.nom}/{item['id']}'" style="cursor: pointer;">
+                    <td>
+                        <div class="search-result-name">{display_name}</div>
+                        <div class="search-result-secondary">{secondary_info}</div>
+                    </td>
+                    <td class="text-right">{status_badge}</td>
+                </tr>
+                '''
+
+            results_html += f'''
+            <div class="search-results-group">
+                <div class="search-results-header">
+                    <span class="search-results-icon">{module_icon}</span>
+                    <span class="search-results-title">{module_display_name}</span>
+                    <span class="search-results-count">{len(items)} resultat(s)</span>
+                </div>
+                <table class="table">
+                    <tbody>
+                        {rows_html}
+                    </tbody>
+                </table>
+            </div>
+            '''
+
+    # Message si pas de resultats
+    if not results_html and q:
+        results_html = f'''
+        <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-title">Aucun resultat</div>
+            <div class="empty-text">Aucun resultat trouve pour "{q}"</div>
+        </div>
+        '''
+    elif not q:
+        results_html = '''
+        <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-title">Rechercher</div>
+            <div class="empty-text">Entrez au moins 2 caracteres pour rechercher</div>
+        </div>
+        '''
+
+    # Message de resultats
+    results_summary = ""
+    if q and total_count > 0:
+        results_summary = f'<div class="search-summary">{total_count} resultat(s) pour "{q}"</div>'
+
+    html = generate_layout(
+        title="Recherche",
+        content=f'''
+        <div class="search-page">
+            <div class="search-header mb-6">
+                <form action="/ui/search" method="GET" class="search-form-large">
+                    <input type="text" name="q" value="{q}" placeholder="Rechercher clients, factures, devis, interventions..."
+                           class="input search-input-large" autofocus>
+                    <button type="submit" class="btn btn-primary">Rechercher</button>
+                </form>
+            </div>
+
+            {results_summary}
+
+            <div class="search-results">
+                {results_html}
+            </div>
+        </div>
+
+        <style>
+            .search-form-large {{
+                display: flex;
+                gap: 12px;
+                max-width: 600px;
+            }}
+            .search-input-large {{
+                flex: 1;
+                font-size: 16px;
+                padding: 12px 16px;
+            }}
+            .search-summary {{
+                color: var(--gray-600);
+                margin-bottom: 20px;
+                font-size: 14px;
+            }}
+            .search-results-group {{
+                background: var(--white);
+                border-radius: var(--radius-lg);
+                border: 1px solid var(--gray-200);
+                margin-bottom: 16px;
+                overflow: hidden;
+            }}
+            .search-results-header {{
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 14px 16px;
+                background: var(--gray-50);
+                border-bottom: 1px solid var(--gray-200);
+            }}
+            .search-results-icon {{
+                font-size: 18px;
+            }}
+            .search-results-title {{
+                font-weight: 600;
+                color: var(--gray-800);
+                flex: 1;
+            }}
+            .search-results-count {{
+                font-size: 12px;
+                color: var(--gray-500);
+                background: var(--gray-200);
+                padding: 2px 8px;
+                border-radius: 10px;
+            }}
+            .search-result-name {{
+                font-weight: 500;
+                color: var(--gray-800);
+            }}
+            .search-result-secondary {{
+                font-size: 12px;
+                color: var(--gray-500);
+                margin-top: 2px;
+            }}
+            .search-results .table td {{
+                padding: 12px 16px;
+            }}
+            .search-results .table tr:hover {{
+                background: var(--primary-light);
+            }}
+        </style>
+        ''',
+        user=user,
+        modules=get_all_modules()
+    )
+    return HTMLResponse(content=html)
+
+
+@ui_router.get("/calendrier", response_class=HTMLResponse)
+async def calendar_view(
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Vue calendrier des interventions."""
+
+    html = generate_calendar_layout(
+        title="Calendrier des interventions",
+        user=user,
+        modules=get_all_modules()
+    )
+    return HTMLResponse(content=html)
+
+
+@ui_router.get("/{module_name}", response_class=HTMLResponse)
+async def module_list(
+    module_name: str,
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Liste des enregistrements d'un module avec actions groupees."""
+
+    module = ModuleParser.get(module_name)
+    if not module:
+        raise HTTPException(status_code=404, detail="Module non trouvé")
+
+    # Récupérer les données
+    items = Database.query(module_name, tenant_id, limit=50)
+
+    # Colonnes à afficher (max 5)
+    display_fields = list(module.champs.keys())[:5]
+
+    # Vérifier si le module a un champ statut
+    has_status = "statut" in module.champs
+
+    # Récupérer les valeurs de statut possibles pour le module
+    status_values = []
+    if has_status and module.champs.get("statut"):
+        statut_field = module.champs.get("statut")
+        if statut_field.enum_values:
+            status_values = statut_field.enum_values
+
+    # Générer le tableau avec checkbox
+    table_headers = "".join([
+        f'<th>{module.champs[f].label or f.replace("_", " ").title()}</th>'
+        for f in display_fields
+    ])
+
+    table_rows = ""
+    for item in items:
+        cells = ""
+        for f in display_fields:
+            value = item.get(f, "")
+            if f == "statut" and value:
+                value = get_status_badge(value)
+            cells += f"<td>{value}</td>"
+        table_rows += f'''
+        <tr data-id="{item['id']}" onclick="handleRowClick(event, '{item['id']}', '/ui/{module_name}/{item['id']}')" style="cursor:pointer">
+            <td class="checkbox-cell" onclick="event.stopPropagation()">
+                <input type="checkbox" class="row-checkbox" data-id="{item['id']}" onchange="updateBulkSelection()">
+            </td>
+            {cells}
+        </tr>
+        '''
+
+    # Options de statut pour le dropdown
+    status_options = ""
+    if status_values:
+        for status in status_values:
+            status_options += f'<option value="{status}">{status}</option>'
+
+    html = generate_layout(
+        title=module.nom_affichage,
+        content=generate_list_with_bulk_actions(
+            module_name=module_name,
+            module_display_name=module.nom_affichage,
+            table_headers=table_headers,
+            table_rows=table_rows,
+            has_status=has_status,
+            status_options=status_options
+        ),
+        user=user,
+        modules=get_all_modules()
+    )
+    return HTMLResponse(content=html)
+
+
+@ui_router.get("/{module_name}/nouveau", response_class=HTMLResponse)
+async def module_create_form(
+    module_name: str,
+    request: Request,
+    user: dict = Depends(require_auth)
+):
+    """Formulaire de création style Odoo."""
+
+    module = ModuleParser.get(module_name)
+    if not module:
+        raise HTTPException(status_code=404, detail="Module non trouvé")
+
+    # Formulaire spécial pour Devis/Factures
+    if module_name.lower() in ["devis", "facture"]:
+        html = generate_layout(
+            title=f"Nouveau {module.nom_affichage}",
+            content=generate_document_form(module, module_name),
+            user=user,
+            modules=get_all_modules()
+        )
+        return HTMLResponse(content=html)
+
+    # Formulaire standard pour autres modules
+    fields_html = ""
+    for nom, field in module.champs.items():
+        if field.type not in ["auto", "calcul"]:
+            fields_html += get_field_html(field)
+
+    html = generate_layout(
+        title=f"Nouveau {module.nom_affichage}",
+        content=generate_form(module_name, fields_html),
+        user=user,
+        modules=get_all_modules()
+    )
+    return HTMLResponse(content=html)
+
+
+def generate_form(module_name: str, fields_html: str) -> str:
+    """Génère un formulaire standard avec soumission API."""
+
+    return f'''
+    <div class="card">
+        <div class="card-header">
+            <span class="badge badge-gray">Nouveau</span>
+        </div>
+        <form id="create-form" class="card-body">
+            <div class="form-grid">
+                {fields_html}
+            </div>
+        </form>
+        <div class="card-body flex justify-end gap-2" style="border-top: 1px solid var(--gray-200); padding-top: 16px;">
+            <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
+            <button type="button" id="submit-btn" onclick="submitForm()" class="btn btn-primary">Enregistrer</button>
+        </div>
+    </div>
+
+    <!-- Messages de notification -->
+    <div id="notification" class="notification hidden"></div>
+
+    <style>
+        .notification {{
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }}
+        .notification.hidden {{
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }}
+        .notification.success {{
+            background: #10B981;
+            color: white;
+        }}
+        .notification.error {{
+            background: #EF4444;
+            color: white;
+        }}
+        .btn:disabled {{
+            opacity: 0.6;
+            cursor: not-allowed;
+        }}
+        .spinner {{
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }}
+        @keyframes spin {{
+            to {{ transform: rotate(360deg); }}
+        }}
+    </style>
+
+    <script>
+    function showNotification(message, type) {{
+        const notif = document.getElementById('notification');
+        notif.textContent = message;
+        notif.className = 'notification ' + type;
+        setTimeout(() => {{
+            notif.classList.add('hidden');
+        }}, 4000);
+    }}
+
+    function collectFormData() {{
+        const form = document.getElementById('create-form');
+        const formData = new FormData(form);
+        const data = {{}};
+
+        for (const [key, value] of formData.entries()) {{
+            // Gestion des checkbox
+            const input = form.querySelector(`[name="${{key}}"]`);
+            if (input && input.type === 'checkbox') {{
+                data[key] = input.checked;
+            }} else if (input && input.type === 'number') {{
+                data[key] = value ? parseFloat(value) : null;
+            }} else {{
+                data[key] = value || null;
+            }}
+        }}
+
+        // Ajouter les checkbox non cochées
+        form.querySelectorAll('input[type="checkbox"]').forEach(cb => {{
+            if (!data.hasOwnProperty(cb.name)) {{
+                data[cb.name] = cb.checked;
+            }}
+        }});
+
+        return data;
+    }}
+
+    async function submitForm() {{
+        const submitBtn = document.getElementById('submit-btn');
+        const originalText = submitBtn.innerHTML;
+
+        // État de chargement
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner"></span>Enregistrement...';
+
+        try {{
+            const data = collectFormData();
+
+            const response = await fetch('/api/{module_name}', {{
+                method: 'POST',
+                headers: {{
+                    'Content-Type': 'application/json',
+                }},
+                body: JSON.stringify(data)
+            }});
+
+            if (response.ok) {{
+                const result = await response.json();
+                showNotification('Enregistrement créé avec succès !', 'success');
+
+                // Redirection vers la liste après 1.5 secondes
+                setTimeout(() => {{
+                    window.location.href = '/ui/{module_name}';
+                }}, 1500);
+            }} else {{
+                const errorData = await response.json().catch(() => ({{}}));
+                const errorMessage = errorData.detail || errorData.message || 'Erreur lors de l\\'enregistrement';
+                showNotification(errorMessage, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }}
+        }} catch (error) {{
+            console.error('Erreur:', error);
+            showNotification('Erreur de connexion au serveur', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }}
+    }}
+
+    // Charger les données de lien (select avec data-link)
+    document.addEventListener('DOMContentLoaded', function() {{
+        document.querySelectorAll('select[data-link]').forEach(async select => {{
+            const linkedModule = select.dataset.link;
+            try {{
+                const response = await fetch(`/api/${{linkedModule}}`);
+                if (response.ok) {{
+                    const items = await response.json();
+                    items.forEach(item => {{
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.nom || item.titre || item.numero || item.id;
+                        select.appendChild(option);
+                    }});
+                }}
+            }} catch (e) {{
+                console.error('Erreur chargement des liens:', e);
+            }}
+        }});
+    }});
+    </script>
+    '''
+
+
+def generate_document_form(module, module_name: str) -> str:
+    """Génère un formulaire style Odoo pour devis/factures."""
+
+    doc_type = "Devis" if module_name.lower() == "devis" else "Facture"
+
+    return f'''
+    <div class="card">
+        <div class="card-header">
+            <div class="flex items-center gap-2">
+                <span class="badge badge-gray">Nouveau</span>
+            </div>
+            <div class="flex gap-2">
+                <button class="btn btn-secondary">Annuler</button>
+                <button class="btn btn-primary" onclick="saveDocument()">Enregistrer</button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Section Client -->
+            <div class="doc-section">
+                <div class="doc-row">
+                    <div class="doc-field">
+                        <label class="label">Client</label>
+                        <select class="input" id="client_id">
+                            <option value="">Sélectionner un client...</option>
+                        </select>
+                    </div>
+                    <div class="doc-field">
+                        <label class="label">Date d'expiration</label>
+                        <input type="date" class="input" id="date_validite" value="">
+                    </div>
+                </div>
+
+                <div class="doc-row">
+                    <div class="doc-field">
+                        <label class="label">Adresse de facturation</label>
+                        <textarea class="input" id="adresse_facturation" rows="2" placeholder="Adresse..."></textarea>
+                    </div>
+                    <div class="doc-field">
+                        <label class="label">Conditions de paiement</label>
+                        <select class="input" id="conditions">
+                            <option value="immediate">Paiement immédiat</option>
+                            <option value="30j">30 jours</option>
+                            <option value="60j">60 jours</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Lignes -->
+            <div class="doc-section" style="margin-top: 24px;">
+                <div class="doc-tabs">
+                    <button class="doc-tab active">Lignes de commande</button>
+                    <button class="doc-tab">Produits optionnels</button>
+                    <button class="doc-tab">Autres informations</button>
+                </div>
+
+                <table class="table" style="margin-top: 16px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">Produit</th>
+                            <th>Prix unit.</th>
+                            <th>Quantité</th>
+                            <th>Taxes</th>
+                            <th>Montant</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="lignes-table">
+                        <tr class="ligne-vide">
+                            <td colspan="6" style="text-align: center; padding: 32px; color: var(--gray-400);">
+                                Aucune ligne. Ajoutez un produit ci-dessous.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="doc-actions" style="margin-top: 12px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="ajouterLigne()">+ Ajouter un produit</button>
+                    <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une section</button>
+                    <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une note</button>
+                </div>
+            </div>
+
+            <!-- Totaux -->
+            <div class="doc-totals" style="margin-top: 24px; text-align: right;">
+                <div class="doc-total-row">
+                    <span>Total HT</span>
+                    <span id="total-ht">0,00 €</span>
+                </div>
+                <div class="doc-total-row">
+                    <span>TVA 20%</span>
+                    <span id="total-tva">0,00 €</span>
+                </div>
+                <div class="doc-total-row" style="font-weight: 700; font-size: 18px;">
+                    <span>Total TTC</span>
+                    <span id="total-ttc">0,00 €</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let lignes = [];
+    let ligneIndex = 0;
+
+    function ajouterLigne() {{
+        const tbody = document.getElementById('lignes-table');
+        const videRow = tbody.querySelector('.ligne-vide');
+        if (videRow) videRow.remove();
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="input" placeholder="Nom du produit" onchange="calculerTotaux()"></td>
+            <td><input type="number" class="input" value="0" step="0.01" style="width:80px" onchange="calculerTotaux()"></td>
+            <td><input type="number" class="input" value="1" style="width:60px" onchange="calculerTotaux()"></td>
+            <td><select class="input" style="width:100px"><option value="20">20%</option><option value="10">10%</option><option value="0">0%</option></select></td>
+            <td class="montant">0,00 €</td>
+            <td><button class="btn btn-sm" onclick="this.closest('tr').remove(); calculerTotaux();">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+        ligneIndex++;
+    }}
+
+    function calculerTotaux() {{
+        let totalHT = 0;
+        document.querySelectorAll('#lignes-table tr').forEach(tr => {{
+            const inputs = tr.querySelectorAll('input');
+            if (inputs.length >= 3) {{
+                const prix = parseFloat(inputs[1].value) || 0;
+                const qte = parseFloat(inputs[2].value) || 0;
+                const montant = prix * qte;
+                totalHT += montant;
+                tr.querySelector('.montant').textContent = montant.toFixed(2) + ' €';
+            }}
+        }});
+
+        const tva = totalHT * 0.20;
+        const ttc = totalHT + tva;
+
+        document.getElementById('total-ht').textContent = totalHT.toFixed(2) + ' €';
+        document.getElementById('total-tva').textContent = tva.toFixed(2) + ' €';
+        document.getElementById('total-ttc').textContent = ttc.toFixed(2) + ' €';
+    }}
+
+    function collectDocumentData() {{
+        const data = {{
+            client_id: document.getElementById('client_id').value || null,
+            date_validite: document.getElementById('date_validite').value || null,
+            adresse_facturation: document.getElementById('adresse_facturation').value || null,
+            conditions: document.getElementById('conditions').value || 'immediate',
+            lignes: [],
+            total_ht: 0,
+            total_tva: 0,
+            total_ttc: 0
+        }};
+
+        // Collecter les lignes
+        document.querySelectorAll('#lignes-table tr:not(.ligne-vide)').forEach(tr => {{
+            const inputs = tr.querySelectorAll('input');
+            const tvaSelect = tr.querySelector('select');
+            if (inputs.length >= 3) {{
+                const produit = inputs[0].value;
+                const prix = parseFloat(inputs[1].value) || 0;
+                const qte = parseFloat(inputs[2].value) || 0;
+                const tauxTVA = parseFloat(tvaSelect?.value) || 20;
+
+                if (produit || prix > 0) {{
+                    data.lignes.push({{
+                        produit: produit,
+                        prix_unitaire: prix,
+                        quantite: qte,
+                        taux_tva: tauxTVA,
+                        montant_ht: prix * qte,
+                        montant_tva: (prix * qte) * (tauxTVA / 100)
+                    }});
+                }}
+            }}
+        }});
+
+        // Calculer les totaux
+        data.lignes.forEach(ligne => {{
+            data.total_ht += ligne.montant_ht;
+            data.total_tva += ligne.montant_tva;
+        }});
+        data.total_ttc = data.total_ht + data.total_tva;
+
+        return data;
+    }}
+
+    async function saveDocument() {{
+        const saveBtn = document.querySelector('.btn-primary[onclick="saveDocument()"]');
+        if (!saveBtn || saveBtn.disabled) return;
+
+        const originalText = saveBtn.innerHTML;
+
+        // Validation basique
+        const clientId = document.getElementById('client_id').value;
+        const lignes = document.querySelectorAll('#lignes-table tr:not(.ligne-vide)');
+
+        if (!clientId) {{
+            alert('Veuillez selectionner un client');
+            return;
+        }}
+
+        if (lignes.length === 0) {{
+            alert('Veuillez ajouter au moins une ligne');
+            return;
+        }}
+
+        // Etat de chargement
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = 'Enregistrement...';
+
+        try {{
+            const data = collectDocumentData();
+
+            const response = await fetch('/api/{module_name}', {{
+                method: 'POST',
+                headers: {{
+                    'Content-Type': 'application/json',
+                }},
+                body: JSON.stringify(data)
+            }});
+
+            if (response.ok) {{
+                const result = await response.json();
+                alert('{doc_type} cree avec succes !');
+                window.location.href = '/ui/{module_name}';
+            }} else {{
+                const errorData = await response.json().catch(() => ({{}}));
+                const errorMessage = errorData.detail || errorData.message || 'Erreur lors de l\\'enregistrement';
+                alert(errorMessage);
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }}
+        }} catch (error) {{
+            console.error('Erreur:', error);
+            alert('Erreur de connexion au serveur');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }}
+    }}
+
+    // Charger les clients au chargement de la page
+    document.addEventListener('DOMContentLoaded', async function() {{
+        try {{
+            const response = await fetch('/api/Client');
+            if (response.ok) {{
+                const clients = await response.json();
+                const select = document.getElementById('client_id');
+                clients.forEach(client => {{
+                    const option = document.createElement('option');
+                    option.value = client.id;
+                    option.textContent = client.nom || client.raison_sociale || client.id;
+                    select.appendChild(option);
+                }});
+            }}
+        }} catch (e) {{
+            console.error('Erreur chargement clients:', e);
+        }}
+
+        // Date par defaut : aujourd'hui + 30 jours
+        const dateValidite = document.getElementById('date_validite');
+        const today = new Date();
+        today.setDate(today.getDate() + 30);
+        dateValidite.value = today.toISOString().split('T')[0];
+    }});
+
+    // Gestion des onglets
+    document.querySelectorAll('.doc-tab').forEach(tab => {{
+        tab.addEventListener('click', function() {{
+            document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        }});
+    }});
+    </script>
+    '''
+
+
+@ui_router.get("/{module_name}/{item_id}", response_class=HTMLResponse)
+async def module_detail(
+    module_name: str,
+    item_id: str,
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Détail d'un enregistrement."""
+
+    module = ModuleParser.get(module_name)
+    if not module:
+        raise HTTPException(status_code=404, detail="Module non trouvé")
+
+    from uuid import UUID
+    item = Database.get_by_id(module_name, tenant_id, UUID(item_id))
+    if not item:
+        raise HTTPException(status_code=404, detail="Enregistrement non trouvé")
+
+    # Générer les champs avec valeurs
+    fields_html = ""
+    for nom, field in module.champs.items():
+        if field.type not in ["auto", "calcul"]:
+            fields_html += get_field_html(field, item.get(nom))
+
+    # Statut et workflow
+    statut_html = ""
+    if "statut" in item and module.workflow:
+        statut_html = f'''
+        <div class="mb-4">
+            <span class="text-muted">Statut:</span> {get_status_badge(item['statut'])}
+        </div>
+        '''
+
+    # Generate documents section HTML
+    documents_html = generate_documents_section(module_name, item_id)
+
+    html = generate_layout(
+        title=f"{module.nom_affichage} - Détail",
+        content=f'''
+        <div class="mb-6 flex justify-between items-center">
+            <a href="/ui/{module_name}" class="text-muted">← Retour</a>
+            {statut_html}
+        </div>
+
+        <div class="card">
+            <div class="card-header flex justify-between items-center">
+                <h2 class="font-bold">{item.get('nom', item.get('titre', item.get('numero', 'Détail')))}</h2>
+            </div>
+            <form id="edit-form" class="card-body">
+                {fields_html}
+            </form>
+            <div class="card-footer flex justify-between">
+                <button onclick="deleteItem()" class="btn btn-danger">Supprimer</button>
+                <div class="flex gap-3">
+                    <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
+                    <button onclick="saveItem()" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents Section -->
+        {documents_html}
+
+        <script>
+        async function saveItem() {{
+            const form = document.getElementById('edit-form');
+            const data = Object.fromEntries(new FormData(form));
+            const res = await fetch('/api/{module_name}/{item_id}', {{
+                method: 'PUT',
+                headers: {{'Content-Type': 'application/json'}},
+                body: JSON.stringify(data)
+            }});
+            if (res.ok) window.location.reload();
+            else alert('Erreur');
+        }}
+
+        async function deleteItem() {{
+            if (!confirm('Supprimer ?')) return;
+            const res = await fetch('/api/{module_name}/{item_id}', {{method: 'DELETE'}});
+            if (res.ok) window.location = '/ui/{module_name}';
+        }}
+
+        // Document management functions
+        async function loadDocuments() {{
+            try {{
+                const res = await fetch('/api/{module_name}/{item_id}/documents');
+                if (res.ok) {{
+                    const data = await res.json();
+                    renderDocuments(data.documents);
+                }}
+            }} catch (e) {{
+                console.error('Erreur chargement documents:', e);
+            }}
+        }}
+
+        function renderDocuments(documents) {{
+            const container = document.getElementById('documents-list');
+            if (documents.length === 0) {{
+                container.innerHTML = '<p class="text-muted">Aucun document attache</p>';
+                return;
+            }}
+
+            let html = '<ul class="documents-list">';
+            documents.forEach(doc => {{
+                const sizeKB = (doc.taille / 1024).toFixed(1);
+                const icon = getFileIcon(doc.type_mime);
+                html += `
+                    <li class="document-item">
+                        <span class="doc-icon">${{icon}}</span>
+                        <div class="doc-info">
+                            <span class="doc-name">${{doc.nom}}</span>
+                            <span class="doc-meta">${{sizeKB}} KB</span>
+                        </div>
+                        <div class="doc-actions">
+                            <a href="/api/documents/${{doc.id}}/download" class="btn btn-sm btn-secondary" download>Telecharger</a>
+                            <button onclick="deleteDocument('${{doc.id}}')" class="btn btn-sm btn-danger">Supprimer</button>
+                        </div>
+                    </li>
+                `;
+            }});
+            html += '</ul>';
+            container.innerHTML = html;
+        }}
+
+        function getFileIcon(mimeType) {{
+            if (mimeType.startsWith('image/')) return '🖼️';
+            if (mimeType.includes('pdf')) return '📄';
+            if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+            if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
+            if (mimeType.includes('zip') || mimeType.includes('archive')) return '📦';
+            return '📎';
+        }}
+
+        async function uploadDocument() {{
+            const input = document.getElementById('file-input');
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {{
+                const res = await fetch('/api/{module_name}/{item_id}/documents', {{
+                    method: 'POST',
+                    body: formData
+                }});
+
+                if (res.ok) {{
+                    input.value = '';
+                    loadDocuments();
+                    showNotification('Document uploade avec succes', 'success');
+                }} else {{
+                    const data = await res.json();
+                    showNotification(data.detail || 'Erreur upload', 'error');
+                }}
+            }} catch (e) {{
+                showNotification('Erreur de connexion', 'error');
+            }}
+        }}
+
+        async function deleteDocument(docId) {{
+            if (!confirm('Supprimer ce document ?')) return;
+
+            try {{
+                const res = await fetch(`/api/documents/${{docId}}`, {{ method: 'DELETE' }});
+                if (res.ok) {{
+                    loadDocuments();
+                    showNotification('Document supprime', 'success');
+                }} else {{
+                    showNotification('Erreur suppression', 'error');
+                }}
+            }} catch (e) {{
+                showNotification('Erreur de connexion', 'error');
+            }}
+        }}
+
+        function showNotification(message, type) {{
+            const notif = document.getElementById('doc-notification');
+            if (notif) {{
+                notif.textContent = message;
+                notif.className = 'notification ' + type;
+                setTimeout(() => notif.classList.add('hidden'), 3000);
+            }}
+        }}
+
+        // Load documents on page load
+        document.addEventListener('DOMContentLoaded', loadDocuments);
+        </script>
+        ''',
+        user=user,
+        modules=get_all_modules()
+    )
+    return HTMLResponse(content=html)
+
+
+# =============================================================================
+# Layout Generator
+# =============================================================================
+def get_all_modules() -> List[Dict]:
+    """Retourne tous les modules."""
+    modules = []
+    for name in ModuleParser.list_all():
+        module = ModuleParser.get(name)
+        if module:
+            modules.append({
+                "nom": module.nom,
+                "nom_affichage": module.nom_affichage,
+                "icone": module.icone,
+                "menu": module.menu
+            })
+    return modules
+
+
+def get_icon(icon_name: str) -> str:
+    """Retourne un emoji pour l'icône."""
+    icons = {
+        "package": "📦",
+        "users": "👥",
+        "file-text": "📄",
+        "receipt": "🧾",
+        "wrench": "🔧",
+        "wallet": "💰",
+        "landmark": "🏦",
+        "credit-card": "💳",
+        "globe": "🌐",
+        "settings": "⚙️",
+        "home": "🏠",
+        "calendar": "📅",
+    }
+    return icons.get(icon_name, "📁")
+
+
+def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -> str:
+    """Génère le layout HTML complet style Axonaut."""
+
+    # Grouper les modules par menu
+    menus = {}
+    for m in modules:
+        menu = m.get("menu", "Général")
+        if menu not in menus:
+            menus[menu] = []
+        menus[menu].append(m)
+
+    # Sidebar navigation
+    sidebar_html = ""
+    for menu, items in menus.items():
+        sidebar_html += f'<div class="nav-section"><div class="nav-title">{menu}</div>'
+        for m in items:
+            sidebar_html += f'''
+            <a href="/ui/{m['nom']}" class="nav-item">
+                <span class="nav-icon">{get_icon(m['icone'])}</span>
+                <span>{m['nom_affichage']}</span>
+            </a>
+            '''
+        sidebar_html += '</div>'
+
+    # User initials
+    user_name = user.get('nom', user.get('email', 'U'))
+    initials = ''.join([n[0].upper() for n in user_name.split()[:2]]) if user_name else 'U'
+
+    return f'''
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title} - AZALPLUS</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">AZALPLUS</div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <a href="/ui/" class="nav-item">
+                        <span class="nav-icon">🏠</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/ui/calendrier" class="nav-item">
+                        <span class="nav-icon">📅</span>
+                        <span>Calendrier</span>
+                    </a>
+                </div>
+                {sidebar_html}
+            </nav>
+
+            <div class="sidebar-user">
+                <div class="user-box">
+                    <div class="user-avatar">{initials}</div>
+                    <div>
+                        <div class="user-name">{user.get('nom', 'Utilisateur')}</div>
+                        <div class="user-email">{user.get('email', '')}</div>
+                    </div>
+                </div>
+                <a href="/login" onclick="localStorage.clear();" class="nav-item" style="margin-top: 8px; color: var(--gray-500);">
+                    <span class="nav-icon">🚪</span>
+                    <span>Déconnexion</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main-wrapper">
+            <header class="main-header">
+                <form class="header-search" action="/ui/search" method="GET">
+                    <span style="margin-right: 8px; color: var(--gray-400);">🔍</span>
+                    <input type="text" name="q" placeholder="Rechercher clients, factures, devis..." autocomplete="off">
+                </form>
+
+                <div class="header-actions">
+                    <div class="header-notif">
+                        🔔
+                        <span class="notif-badge">3</span>
+                    </div>
+                    <a href="/ui/Devis/nouveau" class="btn btn-primary">+ Ajouter</a>
+                </div>
+            </header>
+
+            <main class="main-content">
+                <h1 class="page-title mb-4">{title}</h1>
+                {content}
+            </main>
+        </div>
+    </div>
+</body>
+</html>
+'''

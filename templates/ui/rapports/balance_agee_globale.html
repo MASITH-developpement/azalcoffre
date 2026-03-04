@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance agee globale - AZALPLUS</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .page-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .date-ref {
+            color: var(--text-secondary, #666);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .summary-card {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .summary-card .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary, #666);
+            margin-bottom: 0.5rem;
+        }
+        .summary-card .montant {
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+        .summary-card .nb-clients {
+            font-size: 0.75rem;
+            color: var(--text-secondary, #666);
+            margin-top: 0.25rem;
+        }
+        .card-non-echu { border-top: 4px solid var(--success, #28a745); }
+        .card-0-30 { border-top: 4px solid var(--info, #17a2b8); }
+        .card-31-60 { border-top: 4px solid var(--warning, #ffc107); }
+        .card-61-90 { border-top: 4px solid var(--orange, #fd7e14); }
+        .card-90plus { border-top: 4px solid var(--danger, #dc3545); }
+        .card-total { border-top: 4px solid var(--primary, #3498db); background: var(--bg-tertiary, #f1f3f5); }
+
+        .progress-bar {
+            display: flex;
+            height: 24px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            background: var(--bg-tertiary, #eee);
+        }
+        .progress-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+        .segment-non-echu { background: var(--success, #28a745); }
+        .segment-0-30 { background: var(--info, #17a2b8); }
+        .segment-31-60 { background: var(--warning, #ffc107); color: var(--text-primary, #333); }
+        .segment-61-90 { background: var(--orange, #fd7e14); }
+        .segment-90plus { background: var(--danger, #dc3545); }
+
+        .filters-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary, #f8f9fa);
+            border-radius: 8px;
+        }
+        .filters-bar label {
+            font-size: 0.875rem;
+            color: var(--text-secondary, #666);
+        }
+        .filters-bar input, .filters-bar select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border, #ddd);
+            border-radius: 4px;
+        }
+
+        .aging-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .aging-table th, .aging-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border, #eee);
+        }
+        .aging-table th {
+            background: var(--bg-tertiary, #f1f3f5);
+            font-weight: 600;
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+        }
+        .aging-table tr:hover {
+            background: var(--bg-hover, #f8f9fa);
+        }
+        .aging-table .montant {
+            text-align: right;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        .aging-table .client-name a {
+            color: var(--primary, #3498db);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .aging-table .client-name a:hover {
+            text-decoration: underline;
+        }
+        .aging-table .has-overdue {
+            color: var(--danger, #dc3545);
+        }
+
+        .totaux-row {
+            background: var(--bg-tertiary, #f1f3f5) !important;
+            font-weight: 600;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: var(--primary, #3498db);
+            color: white;
+        }
+        .btn-secondary {
+            background: var(--bg-secondary, #e9ecef);
+            color: var(--text-primary, #333);
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .pagination button {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border, #ddd);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pagination button.active {
+            background: var(--primary, #3498db);
+            color: white;
+            border-color: var(--primary, #3498db);
+        }
+
+        .tri-header {
+            cursor: pointer;
+            user-select: none;
+        }
+        .tri-header:hover {
+            background: var(--bg-hover, #e9ecef);
+        }
+        .tri-header::after {
+            content: ' \2195';
+            opacity: 0.3;
+        }
+        .tri-header.asc::after {
+            content: ' \2191';
+            opacity: 1;
+        }
+        .tri-header.desc::after {
+            content: ' \2193';
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/ui/">Accueil</a> &gt;
+            <a href="/ui/Rapports">Rapports</a> &gt;
+            <span>Balance agee globale</span>
+        </nav>
+
+        <div class="page-header">
+            <h1>Balance agee globale</h1>
+            <div class="date-ref">
+                Date de reference: <strong>{{ date_reference | format_date }}</strong>
+            </div>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card card-non-echu">
+                <div class="label">Non echu</div>
+                <div class="montant">{{ totaux.non_echu | format_currency }}</div>
+                <div class="nb-clients">{{ totaux.nb_clients_non_echu }} client(s)</div>
+            </div>
+            <div class="summary-card card-0-30">
+                <div class="label">0-30 jours</div>
+                <div class="montant">{{ totaux.echu_0_30 | format_currency }}</div>
+                <div class="nb-clients">{{ totaux.nb_clients_0_30 }} client(s)</div>
+            </div>
+            <div class="summary-card card-31-60">
+                <div class="label">31-60 jours</div>
+                <div class="montant">{{ totaux.echu_31_60 | format_currency }}</div>
+                <div class="nb-clients">{{ totaux.nb_clients_31_60 }} client(s)</div>
+            </div>
+            <div class="summary-card card-61-90">
+                <div class="label">61-90 jours</div>
+                <div class="montant">{{ totaux.echu_61_90 | format_currency }}</div>
+                <div class="nb-clients">{{ totaux.nb_clients_61_90 }} client(s)</div>
+            </div>
+            <div class="summary-card card-90plus">
+                <div class="label">+90 jours</div>
+                <div class="montant">{{ totaux.echu_90_plus | format_currency }}</div>
+                <div class="nb-clients">{{ totaux.nb_clients_90_plus }} client(s)</div>
+            </div>
+            <div class="summary-card card-total">
+                <div class="label">Total creances</div>
+                <div class="montant">{{ totaux.total | format_currency }}</div>
+                <div class="nb-clients">{{ totaux.nb_clients_total }} client(s)</div>
+            </div>
+        </div>
+
+        {% if totaux.total > 0 %}
+        <div class="progress-bar">
+            {% if totaux.pct_non_echu > 0 %}
+            <div class="progress-segment segment-non-echu" style="width: {{ totaux.pct_non_echu }}%"></div>
+            {% endif %}
+            {% if totaux.pct_0_30 > 0 %}
+            <div class="progress-segment segment-0-30" style="width: {{ totaux.pct_0_30 }}%"></div>
+            {% endif %}
+            {% if totaux.pct_31_60 > 0 %}
+            <div class="progress-segment segment-31-60" style="width: {{ totaux.pct_31_60 }}%"></div>
+            {% endif %}
+            {% if totaux.pct_61_90 > 0 %}
+            <div class="progress-segment segment-61-90" style="width: {{ totaux.pct_61_90 }}%"></div>
+            {% endif %}
+            {% if totaux.pct_90_plus > 0 %}
+            <div class="progress-segment segment-90plus" style="width: {{ totaux.pct_90_plus }}%"></div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="filters-bar">
+            <label>Commercial:</label>
+            <select id="commercial-filtre">
+                <option value="">Tous</option>
+                {% for user in commerciaux %}
+                <option value="{{ user.id }}" {{ 'selected' if filtre_commercial == user.id else '' }}>{{ user.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Segment:</label>
+            <select id="segment-filtre">
+                <option value="">Tous</option>
+                {% for seg in segments %}
+                <option value="{{ seg }}" {{ 'selected' if filtre_segment == seg else '' }}>{{ seg }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Montant min:</label>
+            <input type="number" id="montant-min" value="{{ filtre_montant_min }}" placeholder="0">
+
+            <label>
+                <input type="checkbox" id="echus-seulement" {{ 'checked' if filtre_echus_seulement else '' }}>
+                Echus uniquement
+            </label>
+
+            <button class="btn btn-secondary" onclick="filtrer()">Filtrer</button>
+            <button class="btn btn-secondary" onclick="reinitialiser()">Reinitialiser</button>
+        </div>
+
+        <div class="actions-bar">
+            <button class="btn btn-primary" onclick="exporterPDF()">Exporter PDF</button>
+            <button class="btn btn-secondary" onclick="exporterExcel()">Exporter Excel</button>
+        </div>
+
+        {% if clients %}
+        <table class="aging-table">
+            <thead>
+                <tr>
+                    <th class="tri-header" data-col="name">Client</th>
+                    <th class="tri-header montant" data-col="non_echu">Non echu</th>
+                    <th class="tri-header montant" data-col="echu_0_30">0-30j</th>
+                    <th class="tri-header montant" data-col="echu_31_60">31-60j</th>
+                    <th class="tri-header montant" data-col="echu_61_90">61-90j</th>
+                    <th class="tri-header montant" data-col="echu_90_plus">+90j</th>
+                    <th class="tri-header montant" data-col="total">Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td class="client-name">
+                        <a href="/ui/Client/{{ client.id }}">{{ client.name }}</a>
+                        <br><small style="color: var(--text-secondary, #999);">{{ client.code }}</small>
+                    </td>
+                    <td class="montant">{{ client.non_echu | format_currency }}</td>
+                    <td class="montant {{ 'has-overdue' if client.echu_0_30 > 0 else '' }}">
+                        {{ client.echu_0_30 | format_currency }}
+                    </td>
+                    <td class="montant {{ 'has-overdue' if client.echu_31_60 > 0 else '' }}">
+                        {{ client.echu_31_60 | format_currency }}
+                    </td>
+                    <td class="montant {{ 'has-overdue' if client.echu_61_90 > 0 else '' }}">
+                        {{ client.echu_61_90 | format_currency }}
+                    </td>
+                    <td class="montant {{ 'has-overdue' if client.echu_90_plus > 0 else '' }}">
+                        {{ client.echu_90_plus | format_currency }}
+                    </td>
+                    <td class="montant" style="font-weight: 600;">{{ client.total | format_currency }}</td>
+                    <td>
+                        <a href="/ui/Client/{{ client.id }}/balance-agee" class="btn btn-secondary" title="Detail">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                            </svg>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="totaux-row">
+                    <td>Total ({{ clients | length }} clients)</td>
+                    <td class="montant">{{ totaux.non_echu | format_currency }}</td>
+                    <td class="montant">{{ totaux.echu_0_30 | format_currency }}</td>
+                    <td class="montant">{{ totaux.echu_31_60 | format_currency }}</td>
+                    <td class="montant">{{ totaux.echu_61_90 | format_currency }}</td>
+                    <td class="montant">{{ totaux.echu_90_plus | format_currency }}</td>
+                    <td class="montant">{{ totaux.total | format_currency }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="pagination">
+            {% if page > 1 %}
+            <button onclick="changerPage({{ page - 1 }})">Precedent</button>
+            {% endif %}
+            {% for p in range(1, total_pages + 1) %}
+            <button class="{{ 'active' if p == page else '' }}" onclick="changerPage({{ p }})">{{ p }}</button>
+            {% endfor %}
+            {% if page < total_pages %}
+            <button onclick="changerPage({{ page + 1 }})">Suivant</button>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="text-align: center; padding: 3rem; color: var(--text-secondary, #666);">
+            <p>Aucune creance client correspondant aux criteres</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function getFilterParams() {
+            const params = new URLSearchParams();
+            const commercial = document.getElementById('commercial-filtre').value;
+            const segment = document.getElementById('segment-filtre').value;
+            const montantMin = document.getElementById('montant-min').value;
+            const echusSeulement = document.getElementById('echus-seulement').checked;
+
+            if (commercial) params.set('commercial', commercial);
+            if (segment) params.set('segment', segment);
+            if (montantMin) params.set('montant_min', montantMin);
+            if (echusSeulement) params.set('echus_seulement', '1');
+
+            return params;
+        }
+
+        function filtrer() {
+            const params = getFilterParams();
+            window.location = `/ui/Rapports/balance-agee?${params.toString()}`;
+        }
+
+        function reinitialiser() {
+            window.location = '/ui/Rapports/balance-agee';
+        }
+
+        function changerPage(page) {
+            const params = getFilterParams();
+            params.set('page', page);
+            window.location = `/ui/Rapports/balance-agee?${params.toString()}`;
+        }
+
+        function exporterPDF() {
+            const params = getFilterParams();
+            window.open(`/api/rapports/balance-agee/pdf?${params.toString()}`, '_blank');
+        }
+
+        function exporterExcel() {
+            const params = getFilterParams();
+            window.open(`/api/rapports/balance-agee/excel?${params.toString()}`, '_blank');
+        }
+
+        // Tri des colonnes
+        document.querySelectorAll('.tri-header').forEach(th => {
+            th.addEventListener('click', function() {
+                const col = this.dataset.col;
+                const params = getFilterParams();
+                const currentTri = params.get('tri');
+                const currentOrdre = params.get('ordre') || 'asc';
+
+                if (currentTri === col) {
+                    params.set('ordre', currentOrdre === 'asc' ? 'desc' : 'asc');
+                } else {
+                    params.set('tri', col);
+                    params.set('ordre', 'asc');
+                }
+
+                window.location = `/ui/Rapports/balance-agee?${params.toString()}`;
+            });
+        });
+    </script>
+</body>
+</html>

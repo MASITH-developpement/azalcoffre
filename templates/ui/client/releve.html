@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Releve de compte - {{ client.name }} - AZALPLUS</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .releve-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary, #f8f9fa);
+            border-radius: 8px;
+        }
+        .client-info h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+        }
+        .client-info p {
+            margin: 0.25rem 0;
+            color: var(--text-secondary, #666);
+        }
+        .solde-box {
+            text-align: right;
+            padding: 1rem 1.5rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .solde-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary, #666);
+            margin-bottom: 0.25rem;
+        }
+        .solde-montant {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        .solde-positif { color: var(--success, #28a745); }
+        .solde-negatif { color: var(--danger, #dc3545); }
+        .solde-neutre { color: var(--text-primary, #333); }
+
+        .credit-info {
+            display: flex;
+            gap: 2rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .credit-info span {
+            color: var(--text-secondary, #666);
+        }
+
+        .filters-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filters-bar input, .filters-bar select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border, #ddd);
+            border-radius: 4px;
+        }
+
+        .releve-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .releve-table th, .releve-table td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border, #eee);
+        }
+        .releve-table th {
+            background: var(--bg-tertiary, #f1f3f5);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        .releve-table tr:hover {
+            background: var(--bg-hover, #f8f9fa);
+        }
+        .releve-table .montant {
+            text-align: right;
+            font-family: monospace;
+            font-size: 0.9375rem;
+        }
+        .releve-table .debit {
+            color: var(--danger, #dc3545);
+        }
+        .releve-table .credit {
+            color: var(--success, #28a745);
+        }
+        .releve-table .solde {
+            font-weight: 600;
+        }
+        .releve-table .reference a {
+            color: var(--primary, #3498db);
+            text-decoration: none;
+        }
+        .releve-table .reference a:hover {
+            text-decoration: underline;
+        }
+
+        .totaux-row {
+            background: var(--bg-tertiary, #f1f3f5) !important;
+            font-weight: 600;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: var(--primary, #3498db);
+            color: white;
+        }
+        .btn-secondary {
+            background: var(--bg-secondary, #e9ecef);
+            color: var(--text-primary, #333);
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary, #666);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .pagination button {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border, #ddd);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pagination button.active {
+            background: var(--primary, #3498db);
+            color: white;
+            border-color: var(--primary, #3498db);
+        }
+
+        .alerte-depassement {
+            background: var(--danger-light, #fee);
+            border: 1px solid var(--danger, #dc3545);
+            color: var(--danger, #dc3545);
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/ui/">Accueil</a> &gt;
+            <a href="/ui/Clients">Clients</a> &gt;
+            <a href="/ui/Client/{{ client.id }}">{{ client.name }}</a> &gt;
+            <span>Releve de compte</span>
+        </nav>
+
+        <div class="releve-header">
+            <div class="client-info">
+                <h1>{{ client.name }}</h1>
+                <p>{{ client.code }} - {{ client.legal_name }}</p>
+                <p>Conditions: {{ client.conditions_paiement | default('NET_30') }}</p>
+            </div>
+            <div class="solde-box">
+                <div class="solde-label">Solde actuel</div>
+                <div class="solde-montant {{ 'solde-positif' if solde >= 0 else 'solde-negatif' }}">
+                    {{ solde | format_currency }} EUR
+                </div>
+                <div class="credit-info">
+                    <span>Limite: {{ client.credit_limit | format_currency }} EUR</span>
+                    <span>Disponible: {{ disponible | format_currency }} EUR</span>
+                </div>
+            </div>
+        </div>
+
+        {% if depassement %}
+        <div class="alerte-depassement">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L1 21h22L12 2zm0 3.83L19.53 19H4.47L12 5.83zM11 16h2v2h-2v-2zm0-6h2v4h-2v-4z"/>
+            </svg>
+            Attention: La limite de credit est depassee de {{ depassement | format_currency }} EUR
+        </div>
+        {% endif %}
+
+        <div class="actions-bar">
+            <button class="btn btn-primary" onclick="exporterPDF()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                Exporter PDF
+            </button>
+            <button class="btn btn-secondary" onclick="exporterExcel()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                Exporter Excel
+            </button>
+            <button class="btn btn-secondary" onclick="envoyerEmail()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>
+                </svg>
+                Envoyer par email
+            </button>
+        </div>
+
+        <div class="filters-bar">
+            <input type="date" id="date-debut" placeholder="Date debut">
+            <input type="date" id="date-fin" placeholder="Date fin">
+            <select id="type-filtre">
+                <option value="">Tous les mouvements</option>
+                <option value="DEBIT">Debits (factures)</option>
+                <option value="CREDIT">Credits (paiements)</option>
+            </select>
+            <button class="btn btn-secondary" onclick="filtrer()">Filtrer</button>
+            <button class="btn btn-secondary" onclick="reinitialiser()">Reinitialiser</button>
+        </div>
+
+        {% if mouvements %}
+        <table class="releve-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Description</th>
+                    <th class="montant">Debit</th>
+                    <th class="montant">Credit</th>
+                    <th class="montant">Solde</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mvt in mouvements %}
+                <tr>
+                    <td>{{ mvt.date | format_date }}</td>
+                    <td class="reference">
+                        {% if mvt.facture_id %}
+                        <a href="/ui/Facture/{{ mvt.facture_id }}">{{ mvt.reference }}</a>
+                        {% elif mvt.paiement_id %}
+                        <a href="/ui/Paiement/{{ mvt.paiement_id }}">{{ mvt.reference }}</a>
+                        {% else %}
+                        {{ mvt.reference }}
+                        {% endif %}
+                    </td>
+                    <td>{{ mvt.description }}</td>
+                    <td class="montant debit">
+                        {% if mvt.type == 'DEBIT' %}{{ mvt.montant | format_currency }}{% endif %}
+                    </td>
+                    <td class="montant credit">
+                        {% if mvt.type == 'CREDIT' %}{{ mvt.montant | format_currency }}{% endif %}
+                    </td>
+                    <td class="montant solde {{ 'solde-negatif' if mvt.solde_apres < 0 else '' }}">
+                        {{ mvt.solde_apres | format_currency }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="totaux-row">
+                    <td colspan="3">Totaux</td>
+                    <td class="montant debit">{{ total_debits | format_currency }}</td>
+                    <td class="montant credit">{{ total_credits | format_currency }}</td>
+                    <td class="montant solde {{ 'solde-negatif' if solde < 0 else '' }}">{{ solde | format_currency }}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="pagination">
+            {% if page > 1 %}
+            <button onclick="changerPage({{ page - 1 }})">Precedent</button>
+            {% endif %}
+            {% for p in range(1, total_pages + 1) %}
+            <button class="{{ 'active' if p == page else '' }}" onclick="changerPage({{ p }})">{{ p }}</button>
+            {% endfor %}
+            {% if page < total_pages %}
+            <button onclick="changerPage({{ page + 1 }})">Suivant</button>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" style="opacity: 0.3;">
+                <path d="M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V5H19V19Z"/>
+            </svg>
+            <p>Aucun mouvement pour ce client</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const clientId = '{{ client.id }}';
+
+        function filtrer() {
+            const debut = document.getElementById('date-debut').value;
+            const fin = document.getElementById('date-fin').value;
+            const type = document.getElementById('type-filtre').value;
+
+            let url = `/ui/Client/${clientId}/releve?`;
+            if (debut) url += `debut=${debut}&`;
+            if (fin) url += `fin=${fin}&`;
+            if (type) url += `type=${type}&`;
+
+            window.location = url;
+        }
+
+        function reinitialiser() {
+            window.location = `/ui/Client/${clientId}/releve`;
+        }
+
+        function changerPage(page) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('page', page);
+            window.location = `/ui/Client/${clientId}/releve?${params.toString()}`;
+        }
+
+        function exporterPDF() {
+            window.open(`/api/clients/${clientId}/releve/pdf`, '_blank');
+        }
+
+        function exporterExcel() {
+            window.open(`/api/clients/${clientId}/releve/excel`, '_blank');
+        }
+
+        async function envoyerEmail() {
+            if (confirm('Envoyer le releve de compte par email au client ?')) {
+                try {
+                    const res = await fetch(`/api/clients/${clientId}/releve/envoyer`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    if (res.ok) {
+                        alert('Email envoye avec succes');
+                    } else {
+                        alert('Erreur lors de l\'envoi');
+                    }
+                } catch (e) {
+                    alert('Erreur de connexion');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance agee - {{ client.name }} - AZALPLUS</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary, #f8f9fa);
+            border-radius: 8px;
+        }
+        .client-info h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+        }
+        .client-info p {
+            margin: 0.25rem 0;
+            color: var(--text-secondary, #666);
+        }
+        .date-ref {
+            text-align: right;
+            color: var(--text-secondary, #666);
+        }
+        .date-ref .date {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #333);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .summary-card {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .summary-card .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary, #666);
+            margin-bottom: 0.5rem;
+        }
+        .summary-card .montant {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+        .summary-card .pourcentage {
+            font-size: 0.875rem;
+            color: var(--text-secondary, #666);
+            margin-top: 0.25rem;
+        }
+        .card-non-echu { border-top: 4px solid var(--success, #28a745); }
+        .card-0-30 { border-top: 4px solid var(--info, #17a2b8); }
+        .card-31-60 { border-top: 4px solid var(--warning, #ffc107); }
+        .card-61-90 { border-top: 4px solid var(--orange, #fd7e14); }
+        .card-90plus { border-top: 4px solid var(--danger, #dc3545); }
+        .card-total { border-top: 4px solid var(--primary, #3498db); background: var(--bg-tertiary, #f1f3f5); }
+
+        .progress-bar {
+            display: flex;
+            height: 24px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            background: var(--bg-tertiary, #eee);
+        }
+        .progress-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            transition: width 0.3s ease;
+        }
+        .segment-non-echu { background: var(--success, #28a745); }
+        .segment-0-30 { background: var(--info, #17a2b8); }
+        .segment-31-60 { background: var(--warning, #ffc107); color: var(--text-primary, #333); }
+        .segment-61-90 { background: var(--orange, #fd7e14); }
+        .segment-90plus { background: var(--danger, #dc3545); }
+
+        .aging-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .aging-table th, .aging-table td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border, #eee);
+        }
+        .aging-table th {
+            background: var(--bg-tertiary, #f1f3f5);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        .aging-table tr:hover {
+            background: var(--bg-hover, #f8f9fa);
+        }
+        .aging-table .montant {
+            text-align: right;
+            font-family: monospace;
+        }
+        .aging-table .retard {
+            color: var(--danger, #dc3545);
+            font-weight: 600;
+        }
+        .aging-table .reference a {
+            color: var(--primary, #3498db);
+            text-decoration: none;
+        }
+        .aging-table .reference a:hover {
+            text-decoration: underline;
+        }
+        .aging-table .jours-retard {
+            text-align: center;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-success { background: var(--success-light, #d4edda); color: var(--success, #28a745); }
+        .badge-info { background: var(--info-light, #d1ecf1); color: var(--info, #17a2b8); }
+        .badge-warning { background: var(--warning-light, #fff3cd); color: var(--warning-dark, #856404); }
+        .badge-orange { background: #ffe5d0; color: var(--orange, #fd7e14); }
+        .badge-danger { background: var(--danger-light, #f8d7da); color: var(--danger, #dc3545); }
+
+        .totaux-row {
+            background: var(--bg-tertiary, #f1f3f5) !important;
+            font-weight: 600;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: var(--primary, #3498db);
+            color: white;
+        }
+        .btn-secondary {
+            background: var(--bg-secondary, #e9ecef);
+            color: var(--text-primary, #333);
+        }
+        .btn-warning {
+            background: var(--warning, #ffc107);
+            color: var(--text-primary, #333);
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary, #666);
+        }
+
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/ui/">Accueil</a> &gt;
+            <a href="/ui/Clients">Clients</a> &gt;
+            <a href="/ui/Client/{{ client.id }}">{{ client.name }}</a> &gt;
+            <span>Balance agee</span>
+        </nav>
+
+        <div class="balance-header">
+            <div class="client-info">
+                <h1>Balance agee - {{ client.name }}</h1>
+                <p>{{ client.code }} - {{ client.legal_name }}</p>
+                <p>Conditions de paiement: {{ client.conditions_paiement | default('NET_30') }}</p>
+            </div>
+            <div class="date-ref">
+                <div>Date de reference</div>
+                <div class="date">{{ date_reference | format_date }}</div>
+            </div>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card card-non-echu">
+                <div class="label">Non echu</div>
+                <div class="montant">{{ non_echu | format_currency }} EUR</div>
+                <div class="pourcentage">{{ pct_non_echu | round(1) }}%</div>
+            </div>
+            <div class="summary-card card-0-30">
+                <div class="label">0-30 jours</div>
+                <div class="montant">{{ echu_0_30 | format_currency }} EUR</div>
+                <div class="pourcentage">{{ pct_0_30 | round(1) }}%</div>
+            </div>
+            <div class="summary-card card-31-60">
+                <div class="label">31-60 jours</div>
+                <div class="montant">{{ echu_31_60 | format_currency }} EUR</div>
+                <div class="pourcentage">{{ pct_31_60 | round(1) }}%</div>
+            </div>
+            <div class="summary-card card-61-90">
+                <div class="label">61-90 jours</div>
+                <div class="montant">{{ echu_61_90 | format_currency }} EUR</div>
+                <div class="pourcentage">{{ pct_61_90 | round(1) }}%</div>
+            </div>
+            <div class="summary-card card-90plus">
+                <div class="label">+90 jours</div>
+                <div class="montant">{{ echu_90_plus | format_currency }} EUR</div>
+                <div class="pourcentage">{{ pct_90_plus | round(1) }}%</div>
+            </div>
+            <div class="summary-card card-total">
+                <div class="label">Total du</div>
+                <div class="montant">{{ total_du | format_currency }} EUR</div>
+                <div class="pourcentage">100%</div>
+            </div>
+        </div>
+
+        {% if total_du > 0 %}
+        <div class="progress-bar">
+            {% if pct_non_echu > 0 %}
+            <div class="progress-segment segment-non-echu" style="width: {{ pct_non_echu }}%">
+                {% if pct_non_echu > 10 %}{{ pct_non_echu | round(0) }}%{% endif %}
+            </div>
+            {% endif %}
+            {% if pct_0_30 > 0 %}
+            <div class="progress-segment segment-0-30" style="width: {{ pct_0_30 }}%">
+                {% if pct_0_30 > 10 %}{{ pct_0_30 | round(0) }}%{% endif %}
+            </div>
+            {% endif %}
+            {% if pct_31_60 > 0 %}
+            <div class="progress-segment segment-31-60" style="width: {{ pct_31_60 }}%">
+                {% if pct_31_60 > 10 %}{{ pct_31_60 | round(0) }}%{% endif %}
+            </div>
+            {% endif %}
+            {% if pct_61_90 > 0 %}
+            <div class="progress-segment segment-61-90" style="width: {{ pct_61_90 }}%">
+                {% if pct_61_90 > 10 %}{{ pct_61_90 | round(0) }}%{% endif %}
+            </div>
+            {% endif %}
+            {% if pct_90_plus > 0 %}
+            <div class="progress-segment segment-90plus" style="width: {{ pct_90_plus }}%">
+                {% if pct_90_plus > 10 %}{{ pct_90_plus | round(0) }}%{% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--success, #28a745);"></div>
+                <span>Non echu</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--info, #17a2b8);"></div>
+                <span>0-30 jours</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--warning, #ffc107);"></div>
+                <span>31-60 jours</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--orange, #fd7e14);"></div>
+                <span>61-90 jours</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--danger, #dc3545);"></div>
+                <span>+90 jours</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="actions-bar">
+            <button class="btn btn-primary" onclick="exporterPDF()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                Exporter PDF
+            </button>
+            <button class="btn btn-secondary" onclick="exporterExcel()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                Exporter Excel
+            </button>
+            <button class="btn btn-warning" onclick="relancerTous()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>
+                </svg>
+                Relancer toutes les factures echues
+            </button>
+        </div>
+
+        {% if factures_dues %}
+        <table class="aging-table">
+            <thead>
+                <tr>
+                    <th>Facture</th>
+                    <th>Date</th>
+                    <th>Echeance</th>
+                    <th class="jours-retard">Retard</th>
+                    <th class="montant">Montant</th>
+                    <th class="montant">Paye</th>
+                    <th class="montant">Reste du</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for facture in factures_dues %}
+                <tr>
+                    <td class="reference">
+                        <a href="/ui/Facture/{{ facture.id }}">{{ facture.number }}</a>
+                    </td>
+                    <td>{{ facture.date | format_date }}</td>
+                    <td>{{ facture.due_date | format_date }}</td>
+                    <td class="jours-retard">
+                        {% if facture.jours_retard <= 0 %}
+                        <span class="badge badge-success">A jour</span>
+                        {% elif facture.jours_retard <= 30 %}
+                        <span class="badge badge-info">{{ facture.jours_retard }}j</span>
+                        {% elif facture.jours_retard <= 60 %}
+                        <span class="badge badge-warning">{{ facture.jours_retard }}j</span>
+                        {% elif facture.jours_retard <= 90 %}
+                        <span class="badge badge-orange">{{ facture.jours_retard }}j</span>
+                        {% else %}
+                        <span class="badge badge-danger">{{ facture.jours_retard }}j</span>
+                        {% endif %}
+                    </td>
+                    <td class="montant">{{ facture.total | format_currency }}</td>
+                    <td class="montant">{{ facture.paid_amount | format_currency }}</td>
+                    <td class="montant retard">{{ facture.remaining_amount | format_currency }}</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="relancer('{{ facture.id }}')" title="Envoyer relance">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="totaux-row">
+                    <td colspan="4">Total</td>
+                    <td class="montant">{{ total_factures | format_currency }}</td>
+                    <td class="montant">{{ total_paye | format_currency }}</td>
+                    <td class="montant retard">{{ total_du | format_currency }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" style="opacity: 0.3;">
+                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/>
+            </svg>
+            <p>Aucune facture en attente de paiement</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const clientId = '{{ client.id }}';
+
+        function exporterPDF() {
+            window.open(`/api/clients/${clientId}/balance-agee/pdf`, '_blank');
+        }
+
+        function exporterExcel() {
+            window.open(`/api/clients/${clientId}/balance-agee/excel`, '_blank');
+        }
+
+        async function relancer(factureId) {
+            if (confirm('Envoyer une relance pour cette facture ?')) {
+                try {
+                    const res = await fetch(`/api/factures/${factureId}/relancer`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    if (res.ok) {
+                        alert('Relance envoyee avec succes');
+                    } else {
+                        alert('Erreur lors de l\'envoi');
+                    }
+                } catch (e) {
+                    alert('Erreur de connexion');
+                }
+            }
+        }
+
+        async function relancerTous() {
+            if (confirm('Envoyer une relance pour toutes les factures echues ?')) {
+                try {
+                    const res = await fetch(`/api/clients/${clientId}/relancer-toutes`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        alert(`${data.nb_relances} relance(s) envoyee(s)`);
+                    } else {
+                        alert('Erreur lors de l\'envoi');
+                    }
+                } catch (e) {
+                    alert('Erreur de connexion');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

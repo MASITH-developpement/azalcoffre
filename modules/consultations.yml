@@ -1,0 +1,275 @@
+# AZALPLUS - Module Consultations
+nom: Consultations
+icone: stethoscope
+menu: Medical
+description: Actes medicaux et rendez-vous
+
+champs:
+  - nom: reference
+    type: text
+    obligatoire: true
+    unique: true
+    description: Reference consultation (CONS-YYYYMMDD-XXXX)
+    autocompletion: true
+
+  - nom: patient_id
+    type: relation
+    obligatoire: true
+    relation: Patients
+    description: Patient concerne
+    autocompletion: true
+
+  - nom: practitioner_id
+    type: relation
+    obligatoire: true
+    relation: Praticiens
+    description: Praticien realisant la consultation
+    autocompletion: true
+
+  - nom: consultation_date
+    type: datetime
+    obligatoire: true
+    description: Date et heure de la consultation
+
+  - nom: duration_minutes
+    type: number
+    obligatoire: false
+    description: Duree en minutes
+
+  - nom: chief_complaint
+    type: textarea
+    obligatoire: false
+    chiffre: true
+    description: Motif de consultation
+
+  - nom: clinical_examination
+    type: textarea
+    obligatoire: false
+    chiffre: true
+    description: Examen clinique
+
+  - nom: vital_signs
+    type: json
+    obligatoire: false
+    description: Constantes vitales
+
+  - nom: diagnosis
+    type: textarea
+    obligatoire: false
+    chiffre: true
+    description: Diagnostic
+
+  - nom: icd10_codes
+    type: json
+    obligatoire: false
+    description: Codes CIM-10
+
+  - nom: treatment_plan
+    type: textarea
+    obligatoire: false
+    chiffre: true
+    description: Plan de traitement
+
+  - nom: clinical_notes
+    type: textarea
+    obligatoire: false
+    chiffre: true
+    description: Notes cliniques
+
+  - nom: patient_instructions
+    type: textarea
+    obligatoire: false
+    chiffre: true
+    description: Recommandations au patient
+
+  - nom: follow_up_required
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Suivi necessaire
+
+  - nom: follow_up_date
+    type: date
+    obligatoire: false
+    description: Date de suivi prevue
+
+  - nom: is_signed
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Consultation signee
+
+  - nom: signed_at
+    type: datetime
+    obligatoire: false
+    description: Date de signature
+
+  - nom: is_locked
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Consultation verrouillee
+
+rendez_vous:
+  description: Gestion des rendez-vous medicaux
+  champs:
+    - nom: reference
+      type: text
+      obligatoire: true
+      unique: true
+      description: Reference RDV (RDV-YYYYMMDD-XXXX)
+      autocompletion: true
+
+    - nom: patient_id
+      type: relation
+      obligatoire: true
+      relation: Patients
+      autocompletion: true
+
+    - nom: practitioner_id
+      type: relation
+      obligatoire: true
+      relation: Praticiens
+      autocompletion: true
+
+    - nom: appointment_type
+      type: select
+      obligatoire: false
+      defaut: CONSULTATION
+      options: [CONSULTATION, FOLLOW_UP, EMERGENCY, VACCINATION, EXAMINATION, PROCEDURE, TELEHEALTH, OTHER]
+      description: Type de rendez-vous
+
+    - nom: status
+      type: select
+      obligatoire: true
+      defaut: SCHEDULED
+      options: [SCHEDULED, CONFIRMED, WAITING, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW]
+      description: Statut du rendez-vous
+
+    - nom: scheduled_start
+      type: datetime
+      obligatoire: true
+      description: Debut prevu
+
+    - nom: scheduled_end
+      type: datetime
+      obligatoire: true
+      description: Fin prevue
+
+    - nom: reason
+      type: textarea
+      obligatoire: false
+      chiffre: true
+      description: Motif du rendez-vous
+
+    - nom: is_telehealth
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Teleconsultation
+
+    - nom: telehealth_link
+      type: text
+      obligatoire: false
+      description: Lien de teleconsultation
+      autocompletion: true
+
+    - nom: reminder_sent
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Rappel envoye
+
+ordonnances:
+  description: Ordonnances medicales
+  champs:
+    - nom: reference
+      type: text
+      obligatoire: true
+      unique: true
+      description: Reference ordonnance (ORD-YYYYMMDD-XXXX)
+      autocompletion: true
+
+    - nom: patient_id
+      type: relation
+      obligatoire: true
+      relation: Patients
+      autocompletion: true
+
+    - nom: practitioner_id
+      type: relation
+      obligatoire: true
+      relation: Praticiens
+      autocompletion: true
+
+    - nom: consultation_id
+      type: relation
+      obligatoire: false
+      relation: Consultations
+      autocompletion: true
+
+    - nom: status
+      type: select
+      obligatoire: true
+      defaut: DRAFT
+      options: [DRAFT, ACTIVE, DISPENSED, COMPLETED, CANCELLED, EXPIRED]
+      description: Statut de l'ordonnance
+
+    - nom: prescription_date
+      type: date
+      obligatoire: true
+      description: Date de prescription
+
+    - nom: expiry_date
+      type: date
+      obligatoire: false
+      description: Date d'expiration
+
+    - nom: medications
+      type: json
+      obligatoire: true
+      chiffre: true
+      description: Liste des medicaments
+
+    - nom: is_renewable
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Ordonnance renouvelable
+
+    - nom: max_renewals
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Nombre max de renouvellements
+
+    - nom: is_ald
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Affection Longue Duree
+
+    - nom: is_signed
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Ordonnance signee
+
+actions:
+  - signer_consultation
+  - creer_ordonnance
+  - programmer_suivi
+  - envoyer_compte_rendu
+  - telecharger_pdf
+  - voir_historique_patient
+
+securite:
+  niveau: sensible
+  chiffrement: obligatoire
+  rgpd: true
+  audit_trail: obligatoire
+
+marceau:
+  alertes:
+    - si follow_up_required = true et follow_up_date < aujourd'hui: "Suivi en retard"
+    - si status = NO_SHOW: "Patient absent - a recontacter"

@@ -1,0 +1,377 @@
+# =============================================================================
+# AZALPLUS - Traductions Francaises (defaut)
+# =============================================================================
+
+# Metadonnees de la langue
+meta:
+  code: "fr"
+  name: "Francais"
+  native_name: "Francais"
+  direction: "ltr"
+  date_format: "DD/MM/YYYY"
+  datetime_format: "DD/MM/YYYY HH:mm"
+  currency_format: "{amount} EUR"
+  decimal_separator: ","
+  thousands_separator: " "
+
+# Actions communes
+common:
+  save: "Enregistrer"
+  cancel: "Annuler"
+  delete: "Supprimer"
+  edit: "Modifier"
+  create: "Creer"
+  add: "Ajouter"
+  remove: "Retirer"
+  search: "Rechercher"
+  filter: "Filtrer"
+  sort: "Trier"
+  export: "Exporter"
+  import: "Importer"
+  print: "Imprimer"
+  download: "Telecharger"
+  upload: "Telecharger"
+  confirm: "Confirmer"
+  close: "Fermer"
+  back: "Retour"
+  next: "Suivant"
+  previous: "Precedent"
+  refresh: "Actualiser"
+  reset: "Reinitialiser"
+  copy: "Copier"
+  duplicate: "Dupliquer"
+  archive: "Archiver"
+  restore: "Restaurer"
+  view: "Voir"
+  details: "Details"
+  actions: "Actions"
+  yes: "Oui"
+  no: "Non"
+  ok: "OK"
+  loading: "Chargement..."
+  saving: "Enregistrement..."
+  deleting: "Suppression..."
+  processing: "Traitement..."
+  select: "Selectionner"
+  select_all: "Tout selectionner"
+  deselect_all: "Tout deselectionner"
+  none: "Aucun"
+  all: "Tous"
+  new: "Nouveau"
+
+# Messages
+messages:
+  success: "Operation reussie"
+  error: "Une erreur est survenue"
+  warning: "Attention"
+  info: "Information"
+  confirm_delete: "Etes-vous sur de vouloir supprimer cet element ?"
+  confirm_cancel: "Etes-vous sur de vouloir annuler ?"
+  saved_successfully: "Enregistrement reussi"
+  deleted_successfully: "Suppression reussie"
+  created_successfully: "Creation reussie"
+  updated_successfully: "Modification reussie"
+  no_results: "Aucun resultat"
+  no_data: "Aucune donnee"
+  loading_error: "Erreur de chargement"
+  connection_error: "Erreur de connexion"
+  invalid_form: "Veuillez corriger les erreurs du formulaire"
+  required_field: "Ce champ est obligatoire"
+  invalid_email: "Adresse email invalide"
+  invalid_format: "Format invalide"
+  session_expired: "Votre session a expire"
+  unauthorized: "Acces non autorise"
+  forbidden: "Acces interdit"
+  not_found: "Element non trouve"
+
+# Navigation
+navigation:
+  dashboard: "Tableau de bord"
+  calendar: "Calendrier"
+  search: "Recherche"
+  settings: "Parametres"
+  profile: "Profil"
+  logout: "Deconnexion"
+  notifications: "Notifications"
+  help: "Aide"
+
+# Authentification
+auth:
+  login: "Connexion"
+  logout: "Deconnexion"
+  email: "Email"
+  password: "Mot de passe"
+  remember_me: "Se souvenir de moi"
+  forgot_password: "Mot de passe oublie ?"
+  reset_password: "Reinitialiser le mot de passe"
+  new_password: "Nouveau mot de passe"
+  confirm_password: "Confirmer le mot de passe"
+  login_button: "Se connecter"
+  login_subtitle: "Connectez-vous pour continuer"
+  invalid_credentials: "Identifiants incorrects"
+  account_locked: "Compte verrouille"
+  change_password: "Changer le mot de passe"
+
+# Modules metier
+modules:
+  # Produits
+  produits: "Produits"
+  produit: "Produit"
+
+  # Clients
+  clients: "Clients"
+  client: "Client"
+
+  # Devis
+  devis: "Devis"
+  devis_singular: "Devis"
+
+  # Factures
+  factures: "Factures"
+  facture: "Facture"
+
+  # Interventions
+  interventions: "Interventions"
+  intervention: "Intervention"
+
+  # Fournisseurs
+  fournisseurs: "Fournisseurs"
+  fournisseur: "Fournisseur"
+
+  # Achats
+  achats: "Achats"
+  achat: "Achat"
+
+  # Tresorerie
+  tresorerie: "Tresorerie"
+
+  # Comptabilite
+  comptabilite: "Comptabilite"
+
+# Champs communs
+fields:
+  id: "ID"
+  name: "Nom"
+  description: "Description"
+  reference: "Reference"
+  status: "Statut"
+  created_at: "Cree le"
+  updated_at: "Modifie le"
+  created_by: "Cree par"
+  updated_by: "Modifie par"
+  date: "Date"
+  start_date: "Date de debut"
+  end_date: "Date de fin"
+  due_date: "Date d'echeance"
+  validity_date: "Date de validite"
+  amount: "Montant"
+  quantity: "Quantite"
+  unit_price: "Prix unitaire"
+  discount: "Remise"
+  tax: "TVA"
+  total: "Total"
+  total_ht: "Total HT"
+  total_ttc: "Total TTC"
+  notes: "Notes"
+  comments: "Commentaires"
+  address: "Adresse"
+  postal_code: "Code postal"
+  city: "Ville"
+  country: "Pays"
+  phone: "Telephone"
+  mobile: "Mobile"
+  fax: "Fax"
+  email: "Email"
+  website: "Site web"
+  company_name: "Raison sociale"
+  first_name: "Prenom"
+  last_name: "Nom"
+  siret: "SIRET"
+  vat_number: "N° TVA intracommunautaire"
+  payment_terms: "Conditions de paiement"
+  payment_method: "Mode de paiement"
+  bank_account: "Compte bancaire"
+  category: "Categorie"
+  type: "Type"
+  priority: "Priorite"
+  tags: "Tags"
+  attachments: "Pieces jointes"
+  lines: "Lignes"
+  object: "Objet"
+
+# Statuts
+statuses:
+  draft: "Brouillon"
+  sent: "Envoye"
+  accepted: "Accepte"
+  refused: "Refuse"
+  cancelled: "Annule"
+  expired: "Expire"
+  validated: "Validee"
+  paid: "Payee"
+  partially_paid: "Partiellement payee"
+  pending: "En attente"
+  in_progress: "En cours"
+  completed: "Termine"
+  blocked: "Bloque"
+  to_plan: "A planifier"
+  planned: "Planifie"
+  active: "Actif"
+  inactive: "Inactif"
+
+# Documents (PDF)
+documents:
+  quote: "DEVIS"
+  invoice: "FACTURE"
+  document_number: "N"
+  date: "Date"
+  validity: "Validite"
+  due_date: "Echeance"
+  client: "Client"
+  object: "Objet"
+  description: "Description"
+  qty: "Qte"
+  unit_price: "P.U."
+  discount: "Remise"
+  total: "Total"
+  subtotal: "Total HT"
+  tax: "TVA"
+  grand_total: "Total TTC"
+  already_paid: "Deja paye"
+  remaining: "Reste a payer"
+  notes: "Notes"
+  conditions: "Conditions"
+  page: "Page"
+  of: "sur"
+
+  # Conditions de paiement
+  payment_immediate: "Paiement immediat"
+  payment_30_days: "30 jours"
+  payment_60_days: "60 jours"
+  payment_end_of_month: "Fin de mois"
+
+  # Mentions legales
+  vat_mention: "TVA non applicable, art. 293B du CGI"
+  late_payment: "En cas de retard de paiement, penalites de retard au taux de 3 fois le taux d'interet legal"
+  recovery_fee: "Indemnite forfaitaire de recouvrement : 40 EUR"
+
+# Parametres
+settings:
+  title: "Parametres"
+  general: "General"
+  company: "Entreprise"
+  appearance: "Apparence"
+  language: "Langue"
+  theme: "Theme"
+  document_style: "Style des documents"
+  notifications_settings: "Notifications"
+  security: "Securite"
+  users: "Utilisateurs"
+  roles: "Roles"
+  permissions: "Permissions"
+  integrations: "Integrations"
+  api: "API"
+  billing: "Facturation"
+  subscription: "Abonnement"
+
+  # Langue
+  language_select: "Selectionner la langue"
+  language_saved: "Langue enregistree"
+  available_languages: "Langues disponibles"
+
+# Dates et heures
+datetime:
+  today: "Aujourd'hui"
+  yesterday: "Hier"
+  tomorrow: "Demain"
+  this_week: "Cette semaine"
+  last_week: "Semaine derniere"
+  next_week: "Semaine prochaine"
+  this_month: "Ce mois"
+  last_month: "Mois dernier"
+  next_month: "Mois prochain"
+  this_year: "Cette annee"
+  last_year: "Annee derniere"
+  custom: "Personnalise"
+
+  # Jours
+  monday: "Lundi"
+  tuesday: "Mardi"
+  wednesday: "Mercredi"
+  thursday: "Jeudi"
+  friday: "Vendredi"
+  saturday: "Samedi"
+  sunday: "Dimanche"
+
+  # Mois
+  january: "Janvier"
+  february: "Fevrier"
+  march: "Mars"
+  april: "Avril"
+  may: "Mai"
+  june: "Juin"
+  july: "Juillet"
+  august: "Aout"
+  september: "Septembre"
+  october: "Octobre"
+  november: "Novembre"
+  december: "Decembre"
+
+# Formulaires de documents
+document_form:
+  new_quote: "Nouveau devis"
+  new_invoice: "Nouvelle facture"
+  select_client: "Selectionner un client..."
+  billing_address: "Adresse de facturation"
+  order_lines: "Lignes de commande"
+  optional_products: "Produits optionnels"
+  other_info: "Autres informations"
+  add_product: "Ajouter un produit"
+  add_section: "Ajouter une section"
+  add_note: "Ajouter une note"
+  no_lines: "Aucune ligne. Ajoutez un produit ci-dessous."
+  product_name: "Nom du produit"
+
+# Interface utilisateur
+ui:
+  sidebar: "Menu lateral"
+  header: "En-tete"
+  footer: "Pied de page"
+  main_content: "Contenu principal"
+  show_menu: "Afficher le menu"
+  hide_menu: "Masquer le menu"
+  expand: "Developper"
+  collapse: "Reduire"
+  fullscreen: "Plein ecran"
+  exit_fullscreen: "Quitter le plein ecran"
+  dark_mode: "Mode sombre"
+  light_mode: "Mode clair"
+
+# Tableaux
+table:
+  showing: "Affichage"
+  of: "sur"
+  entries: "entrees"
+  first: "Premier"
+  last: "Dernier"
+  empty: "Aucun enregistrement"
+  per_page: "par page"
+  selected: "selectionne(s)"
+  bulk_actions: "Actions groupees"
+  columns: "Colonnes"
+  export_csv: "Exporter CSV"
+  export_excel: "Exporter Excel"
+  export_pdf: "Exporter PDF"
+
+# Erreurs
+errors:
+  generic: "Une erreur est survenue"
+  network: "Erreur reseau"
+  server: "Erreur serveur"
+  validation: "Erreur de validation"
+  permission: "Permission refusee"
+  not_found: "Ressource non trouvee"
+  timeout: "Delai d'attente depasse"
+  file_too_large: "Fichier trop volumineux"
+  invalid_file_type: "Type de fichier non supporte"
+  upload_failed: "Echec du telechargement"

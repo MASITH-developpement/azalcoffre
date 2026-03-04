@@ -1,0 +1,154 @@
+# =============================================================================
+# AZALPLUS - Numerotation Automatique
+# =============================================================================
+# Configuration de reference pour la numerotation automatique des documents.
+#
+# IMPORTANT: Les configurations personnalisees par tenant sont stockees en base.
+# Ce fichier definit les valeurs par defaut utilisees lors de la creation d'un tenant.
+#
+# La configuration complete des sequences est dans: modules/sequences.yml
+# Le service de gestion est dans: moteur/sequences.py
+# L'interface de configuration: /ui/parametres/numerotation
+#
+# Variables disponibles:
+#   {PREFIXE}  - Prefixe de la sequence
+#   {SUFFIXE}  - Suffixe de la sequence (optionnel)
+#   {SEP}      - Separateur configure
+#   {YYYY}     - Annee complete (2026)
+#   {YY}       - Annee courte (26)
+#   {MM}       - Mois (01-12)
+#   {DD}       - Jour (01-31)
+#   {0000}     - Numero incremental (padding = nombre de 0)
+#   {TENANT}   - Code du tenant
+
+# Separateur global (peut etre surcharge par sequence)
+global:
+  separateur: "-"   # Choix: - / _ . espace ou null (aucun)
+
+# Sequences par entite
+sequences:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Commercial
+  # ───────────────────────────────────────────────────────────────────────────
+  client:
+    prefixe: "CLI"
+    format: "{PREFIXE}{SEP}{0000}"
+    exemple: "CLI-0001"
+    separateur: "-"
+    padding: 4
+    reset: jamais
+
+  devis:
+    prefixe: "DEV"
+    format: "{PREFIXE}{SEP}{YYYY}{SEP}{0000}"
+    exemple: "DEV-2026-0001"
+    separateur: "-"
+    padding: 4
+    inclure_annee: true
+    reset: annuel
+
+  facture:
+    prefixe: "FAC"
+    format: "{PREFIXE}{SEP}{YYYY}{SEP}{0000}"
+    exemple: "FAC-2026-0001"
+    separateur: "-"
+    padding: 4
+    inclure_annee: true
+    reset: annuel
+
+  avoir:
+    prefixe: "AV"
+    format: "{PREFIXE}{SEP}{YYYY}{SEP}{0000}"
+    exemple: "AV-2026-0001"
+    separateur: "-"
+    padding: 4
+    inclure_annee: true
+    reset: annuel
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Achats
+  # ───────────────────────────────────────────────────────────────────────────
+  commande_fournisseur:
+    prefixe: "CF"
+    format: "{PREFIXE}{SEP}{YYYY}{SEP}{0000}"
+    exemple: "CF-2026-0001"
+    separateur: "-"
+    padding: 4
+    inclure_annee: true
+    reset: annuel
+
+  fournisseur:
+    prefixe: "FRN"
+    format: "{PREFIXE}{SEP}{0000}"
+    exemple: "FRN-0001"
+    separateur: "-"
+    padding: 4
+    reset: jamais
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Interventions
+  # ───────────────────────────────────────────────────────────────────────────
+  intervention:
+    prefixe: "INT"
+    format: "{PREFIXE}{SEP}{YYYY}{SEP}{0000}"
+    exemple: "INT-2026-0001"
+    separateur: "-"
+    padding: 4
+    inclure_annee: true
+    reset: annuel
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Temps
+  # ───────────────────────────────────────────────────────────────────────────
+  temps:
+    prefixe: "TMP"
+    format: "{PREFIXE}{SEP}{YYYY}{SEP}{00000}"
+    exemple: "TMP-2026-00001"
+    separateur: "-"
+    padding: 5
+    inclure_annee: true
+    reset: annuel
+
+  feuille_temps:
+    prefixe: "FT"
+    format: "{PREFIXE}{SEP}{YYYY}{SEP}W{WW}{SEP}{USER}"
+    exemple: "FT-2026-W09-JDU"
+    separateur: "-"
+    inclure_annee: true
+    inclure_semaine: true
+    inclure_user: true
+    reset: jamais
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Produits
+  # ───────────────────────────────────────────────────────────────────────────
+  produit:
+    prefixe: "PRD"
+    format: "{PREFIXE}{SEP}{0000}"
+    exemple: "PRD-0001"
+    separateur: "-"
+    padding: 4
+    reset: jamais
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Paiements
+  # ───────────────────────────────────────────────────────────────────────────
+  paiement:
+    prefixe: "PAY"
+    format: "{PREFIXE}{SEP}{YYYY}{MM}{SEP}{0000}"
+    exemple: "PAY-202603-0001"
+    separateur: "-"
+    padding: 4
+    inclure_annee: true
+    inclure_mois: true
+    reset: mensuel
+
+# Variables disponibles
+# {PREFIXE}  = Préfixe de la séquence
+# {SEP}      = Séparateur configuré
+# {YYYY}     = Année complète (2026)
+# {YY}       = Année courte (26)
+# {MM}       = Mois (01-12)
+# {DD}       = Jour (01-31)
+# {0000}     = Numéro incrémental (padding = nombre de 0)
+# {TENANT}   = Code du tenant

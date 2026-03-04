@@ -1,0 +1,181 @@
+# =============================================================================
+# AZALPLUS - Textes Français (i18n)
+# =============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Commun
+# ─────────────────────────────────────────────────────────────────────────────
+commun:
+  # Actions
+  enregistrer: "Enregistrer"
+  annuler: "Annuler"
+  supprimer: "Supprimer"
+  modifier: "Modifier"
+  creer: "Créer"
+  ajouter: "Ajouter"
+  rechercher: "Rechercher..."
+  filtrer: "Filtrer"
+  exporter: "Exporter"
+  importer: "Importer"
+  rafraichir: "Rafraîchir"
+  retour: "Retour"
+  suivant: "Suivant"
+  precedent: "Précédent"
+  confirmer: "Confirmer"
+  fermer: "Fermer"
+
+  # États
+  actif: "Actif"
+  inactif: "Inactif"
+  brouillon: "Brouillon"
+  valide: "Validé"
+  en_cours: "En cours"
+  termine: "Terminé"
+  annule: "Annulé"
+
+  # Messages
+  chargement: "Chargement..."
+  aucun_resultat: "Aucun résultat"
+  confirmation_suppression: "Êtes-vous sûr de vouloir supprimer cet élément ?"
+  succes_enregistrement: "Enregistré avec succès"
+  succes_suppression: "Supprimé avec succès"
+  erreur_generale: "Une erreur est survenue"
+
+  # Dates
+  aujourdhui: "Aujourd'hui"
+  hier: "Hier"
+  demain: "Demain"
+  cette_semaine: "Cette semaine"
+  ce_mois: "Ce mois"
+  cette_annee: "Cette année"
+
+  # Pagination
+  elements_par_page: "Éléments par page"
+  page_sur: "Page {current} sur {total}"
+  affichage: "Affichage de {start} à {end} sur {total}"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Authentification
+# ─────────────────────────────────────────────────────────────────────────────
+auth:
+  connexion: "Connexion"
+  deconnexion: "Déconnexion"
+  email: "Email"
+  mot_de_passe: "Mot de passe"
+  mot_de_passe_oublie: "Mot de passe oublié ?"
+  se_connecter: "Se connecter"
+  creer_compte: "Créer un compte"
+  deja_compte: "Déjà un compte ?"
+  erreur_identifiants: "Identifiants incorrects"
+  session_expiree: "Session expirée, veuillez vous reconnecter"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Modules
+# ─────────────────────────────────────────────────────────────────────────────
+modules:
+  clients:
+    nom: "Clients"
+    singulier: "Client"
+    nouveau: "Nouveau client"
+
+  produits:
+    nom: "Produits"
+    singulier: "Produit"
+    nouveau: "Nouveau produit"
+
+  devis:
+    nom: "Devis"
+    singulier: "Devis"
+    nouveau: "Nouveau devis"
+    envoyer: "Envoyer le devis"
+    accepter: "Accepter"
+    refuser: "Refuser"
+
+  factures:
+    nom: "Factures"
+    singulier: "Facture"
+    nouveau: "Nouvelle facture"
+    valider: "Valider"
+    envoyer: "Envoyer"
+
+  interventions:
+    nom: "Interventions"
+    singulier: "Intervention"
+    nouveau: "Nouvelle intervention"
+    planifier: "Planifier"
+    demarrer: "Démarrer"
+    terminer: "Terminer"
+    bloquer: "Bloquer"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Champs
+# ─────────────────────────────────────────────────────────────────────────────
+champs:
+  # Identité
+  nom: "Nom"
+  prenom: "Prénom"
+  email: "Email"
+  telephone: "Téléphone"
+  adresse: "Adresse"
+  code_postal: "Code postal"
+  ville: "Ville"
+  pays: "Pays"
+
+  # Entreprise
+  raison_sociale: "Raison sociale"
+  siret: "SIRET"
+  tva_intra: "N° TVA"
+
+  # Commercial
+  prix: "Prix"
+  prix_ht: "Prix HT"
+  prix_ttc: "Prix TTC"
+  quantite: "Quantité"
+  remise: "Remise"
+  tva: "TVA"
+  total_ht: "Total HT"
+  total_ttc: "Total TTC"
+
+  # Dates
+  date: "Date"
+  date_creation: "Date de création"
+  date_modification: "Date de modification"
+  date_debut: "Date de début"
+  date_fin: "Date de fin"
+  echeance: "Échéance"
+  validite: "Validité"
+
+  # Autres
+  reference: "Référence"
+  description: "Description"
+  notes: "Notes"
+  statut: "Statut"
+  priorite: "Priorité"
+  categorie: "Catégorie"
+  tags: "Tags"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Erreurs de validation
+# ─────────────────────────────────────────────────────────────────────────────
+erreurs:
+  requis: "Ce champ est requis"
+  email_invalide: "Email invalide"
+  telephone_invalide: "Numéro de téléphone invalide"
+  siret_invalide: "SIRET invalide"
+  format_invalide: "Format invalide"
+  min_length: "Minimum {min} caractères"
+  max_length: "Maximum {max} caractères"
+  min_value: "Minimum {min}"
+  max_value: "Maximum {max}"
+  valeur_unique: "Cette valeur est déjà utilisée"
+  date_invalide: "Date invalide"
+  montant_positif: "Le montant doit être positif"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Notifications
+# ─────────────────────────────────────────────────────────────────────────────
+notifications:
+  nouvelle: "Nouvelle notification"
+  marquer_lu: "Marquer comme lu"
+  tout_marquer_lu: "Tout marquer comme lu"
+  aucune: "Aucune notification"

@@ -1,0 +1,449 @@
+# AZALPLUS - Module Temps (Time Tracking)
+# Basé sur azalscore/app/modules/projects/models.py (ProjectTimeEntry)
+# Saisie de temps pour interventions, projets, et travail général
+
+nom: Temps
+icone: clock
+menu: Activite
+
+champs:
+  # Identification
+  - nom: reference
+    type: text
+    obligatoire: false
+    description: Référence auto-générée (TMP-YYYY-XXXX)
+    autocompletion: true
+
+  # Utilisateur qui saisit le temps
+  - nom: user_id
+    type: relation
+    obligatoire: true
+    relation: Utilisateurs
+    description: Utilisateur qui a travaillé
+    autocompletion: true
+
+  - nom: employe_id
+    type: relation
+    obligatoire: false
+    relation: Employes
+    description: Employé RH lié (optionnel)
+    autocompletion: true
+
+  # Relations optionnelles (au moins une recommandée)
+  - nom: intervention_id
+    type: relation
+    obligatoire: false
+    relation: Interventions
+    description: Intervention liée (optionnel)
+    autocompletion: true
+
+  - nom: projet_id
+    type: relation
+    obligatoire: false
+    relation: Projets
+    description: Projet lié (optionnel)
+    autocompletion: true
+
+  - nom: tache_id
+    type: relation
+    obligatoire: false
+    relation: Taches
+    description: Tâche liée (optionnel)
+    autocompletion: true
+
+  - nom: client_id
+    type: relation
+    obligatoire: false
+    relation: Clients
+    description: Client lié (optionnel, hérité si intervention/projet)
+    autocompletion: true
+
+  # Date et durée
+  - nom: date
+    type: date
+    obligatoire: true
+    defaut: aujourd'hui
+    description: Date du travail
+
+  - nom: duree_minutes
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Durée en minutes
+
+  - nom: heure_debut
+    type: time
+    obligatoire: false
+    description: Heure de début (optionnel)
+
+  - nom: heure_fin
+    type: time
+    obligatoire: false
+    description: Heure de fin (optionnel)
+
+  # Timer (pour saisie en temps réel)
+  - nom: timer_start
+    type: datetime
+    obligatoire: false
+    description: Horodatage début timer
+
+  - nom: timer_end
+    type: datetime
+    obligatoire: false
+    description: Horodatage fin timer
+
+  - nom: timer_running
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Timer en cours
+
+  # Description
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description du travail effectué
+
+  - nom: type_activite
+    type: select
+    obligatoire: false
+    defaut: TRAVAIL
+    options: [TRAVAIL, REUNION, DEPLACEMENT, ADMINISTRATIF, FORMATION, PAUSE, AUTRE]
+    description: Type d'activité
+
+  - nom: tags
+    type: json
+    obligatoire: false
+    description: Tags pour catégorisation
+
+  # Statut
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, SOUMIS, APPROUVE, REJETE]
+    description: Statut de la saisie
+
+  # Facturation
+  - nom: facturable
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Temps facturable au client
+
+  - nom: taux_horaire
+    type: number
+    obligatoire: false
+    description: Taux horaire (EUR/h) - hérité user ou défaut
+
+  - nom: montant_ht
+    type: number
+    obligatoire: false
+    description: Montant HT calculé (duree * taux / 60)
+
+  - nom: devise
+    type: text
+    obligatoire: false
+    defaut: EUR
+    description: Devise
+    autocompletion: true
+
+  # Facturation liée
+  - nom: facture_id
+    type: relation
+    obligatoire: false
+    relation: Factures
+    description: Facture liée (si déjà facturé)
+    autocompletion: true
+
+  - nom: ligne_facture_id
+    type: relation
+    obligatoire: false
+    relation: LignesFacture
+    description: Ligne de facture liée
+    autocompletion: true
+
+  - nom: est_facture
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Déjà facturé
+
+  - nom: date_facturation
+    type: date
+    obligatoire: false
+    description: Date de facturation
+
+  # Approbation
+  - nom: approuve_par
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Approuvé par
+    autocompletion: true
+
+  - nom: date_approbation
+    type: datetime
+    obligatoire: false
+    description: Date d'approbation
+
+  - nom: motif_rejet
+    type: textarea
+    obligatoire: false
+    description: Motif de rejet si rejeté
+
+  # Heures supplémentaires
+  - nom: heures_sup
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Heures supplémentaires
+
+  - nom: taux_majoration
+    type: number
+    obligatoire: false
+    defaut: 1.0
+    description: Taux de majoration (1.25 pour 25%, 1.5 pour 50%, etc.)
+
+  # Géolocalisation (pour saisie mobile)
+  - nom: geoloc_lat
+    type: number
+    obligatoire: false
+    description: Latitude de saisie
+
+  - nom: geoloc_lng
+    type: number
+    obligatoire: false
+    description: Longitude de saisie
+
+  # Métadonnées
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+  - nom: deleted_at
+    type: datetime
+    obligatoire: false
+    description: Soft delete
+
+# Taux horaires par défaut (paramètres système)
+taux_horaires:
+  champs:
+    - nom: user_id
+      type: relation
+      obligatoire: true
+      relation: Utilisateurs
+      description: Utilisateur
+
+    - nom: taux_standard
+      type: number
+      obligatoire: true
+      defaut: 50.00
+      description: Taux horaire standard (EUR/h)
+
+    - nom: taux_deplacement
+      type: number
+      obligatoire: false
+      defaut: 35.00
+      description: Taux déplacement
+
+    - nom: taux_weekend
+      type: number
+      obligatoire: false
+      description: Taux weekend
+
+    - nom: taux_nuit
+      type: number
+      obligatoire: false
+      description: Taux nuit
+
+    - nom: date_debut
+      type: date
+      obligatoire: true
+      description: Date de début de validité
+
+    - nom: date_fin
+      type: date
+      obligatoire: false
+      description: Date de fin de validité
+
+# Feuille de temps hebdomadaire (vue agrégée)
+feuille_temps:
+  description: Vue agrégée par semaine et utilisateur
+  champs:
+    - nom: user_id
+      type: relation
+      obligatoire: true
+      relation: Utilisateurs
+
+    - nom: semaine
+      type: text
+      obligatoire: true
+      description: Semaine (format YYYY-WXX)
+
+    - nom: date_debut
+      type: date
+      obligatoire: true
+      description: Lundi de la semaine
+
+    - nom: date_fin
+      type: date
+      obligatoire: true
+      description: Dimanche de la semaine
+
+    - nom: total_minutes
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Total minutes travaillées
+
+    - nom: total_facturable
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Total minutes facturables
+
+    - nom: total_non_facturable
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Total minutes non facturables
+
+    - nom: statut
+      type: select
+      obligatoire: true
+      defaut: EN_COURS
+      options: [EN_COURS, SOUMISE, APPROUVEE, REJETEE]
+      description: Statut de la feuille
+
+    - nom: soumis_le
+      type: datetime
+      obligatoire: false
+
+    - nom: approuve_par
+      type: relation
+      obligatoire: false
+      relation: Utilisateurs
+
+    - nom: approuve_le
+      type: datetime
+      obligatoire: false
+
+workflow:
+  BROUILLON -> SOUMIS: action soumettre
+  SOUMIS -> APPROUVE: action approuver (manager)
+  SOUMIS -> REJETE: action rejeter (manager)
+  REJETE -> BROUILLON: action modifier
+
+actions:
+  - demarrer_timer
+  - arreter_timer
+  - saisir_temps
+  - soumettre
+  - approuver
+  - rejeter
+  - facturer
+  - dupliquer
+  - supprimer
+
+# Rapports temps
+rapports:
+  par_utilisateur:
+    description: Temps par utilisateur sur une période
+    grouper_par: user_id
+    colonnes: [user_id, total_heures, heures_facturables, heures_non_facturables, montant_ht]
+
+  par_client:
+    description: Temps par client sur une période
+    grouper_par: client_id
+    colonnes: [client_id, total_heures, heures_facturables, montant_ht, a_facturer]
+
+  par_projet:
+    description: Temps par projet
+    grouper_par: projet_id
+    colonnes: [projet_id, total_heures, heures_prevues, ecart, progression]
+
+  par_intervention:
+    description: Temps par intervention
+    grouper_par: intervention_id
+    colonnes: [intervention_id, total_heures, heures_prevues, ecart]
+
+  facturable_non_facture:
+    description: Temps facturable non encore facturé
+    filtre: facturable=true et est_facture=false
+    grouper_par: client_id
+    colonnes: [client_id, entrees, total_heures, montant_ht]
+
+marceau:
+  alertes:
+    - si timer_running et timer_start < maintenant - 8h: "Timer actif depuis plus de 8h"
+    - si statut=SOUMIS et date < maintenant - 7j: "Saisie de temps en attente d'approbation"
+    - si duree_minutes > 600: "Saisie de temps exceptionnellement longue (+10h)"
+    - si facturable=true et taux_horaire=null: "Taux horaire non défini"
+  suggestions:
+    - "Saisir le temps quotidiennement"
+    - "Soumettre les feuilles de temps chaque vendredi"
+    - "Vérifier les temps non facturés"
+  automatisations:
+    - "Calcul automatique montant_ht = duree_minutes * taux_horaire / 60"
+    - "Héritage client_id depuis intervention ou projet"
+    - "Héritage taux_horaire depuis paramètres utilisateur"
+
+# UI Components
+ui:
+  timer_widget:
+    description: Widget timer dans le header
+    position: header
+    composants:
+      - bouton_play: "Démarrer le timer"
+      - bouton_stop: "Arrêter le timer"
+      - affichage_duree: "HH:MM:SS"
+      - selection_contexte: "Intervention/Projet/Client"
+
+  feuille_hebdo:
+    description: Vue feuille de temps hebdomadaire
+    route: /temps
+    composants:
+      - grille_semaine: "Lun-Dim avec entrées par jour"
+      - totaux_jour: "Total par jour"
+      - totaux_semaine: "Total semaine"
+      - bouton_soumettre: "Soumettre la semaine"
+
+  saisie_rapide:
+    description: Formulaire saisie rapide
+    composants:
+      - date: "Date (défaut: aujourd'hui)"
+      - duree: "Durée (format HH:MM ou minutes)"
+      - description: "Description"
+      - contexte: "Intervention/Projet/Client"
+      - facturable: "Facturable (checkbox)"
+
+  rapports_temps:
+    description: Dashboard rapports temps
+    route: /temps/rapports
+    composants:
+      - filtre_periode: "Semaine/Mois/Trimestre/Année/Personnalisé"
+      - filtre_utilisateur: "Tous/Moi/Équipe"
+      - filtre_client: "Tous/Sélection"
+      - graphique_heures: "Barres heures par jour/semaine"
+      - tableau_detail: "Détail des entrées"
+
+  facturation_temps:
+    description: Écran de facturation du temps
+    route: /temps/facturer
+    composants:
+      - filtre_client: "Sélectionner client"
+      - liste_entrees: "Entrées facturables non facturées"
+      - selection_multiple: "Cocher les entrées à facturer"
+      - apercu_facture: "Prévisualisation facture"
+      - bouton_generer: "Générer la facture"

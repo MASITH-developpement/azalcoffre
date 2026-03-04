@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - AZALPLUS</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-page">
+    <div class="login-box">
+        <div class="login-header">
+            <div class="login-logo">AZALPLUS</div>
+            <div class="login-subtitle">Connectez-vous pour continuer</div>
+        </div>
+
+        <form id="login-form" class="login-body">
+            <div id="error" class="login-error"></div>
+
+            <div class="form-group">
+                <label class="label" for="email">Email</label>
+                <input type="email" class="input" id="email" name="email" placeholder="votre@email.com" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="label" for="password">Mot de passe</label>
+                <div class="password-field">
+                    <input type="password" class="input" id="password" name="password" placeholder="Mot de passe" required>
+                    <button type="button" id="toggle-password" class="password-toggle">👁️</button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('toggle-password').onclick = function() {
+            const p = document.getElementById('password');
+            p.type = p.type === 'password' ? 'text' : 'password';
+            this.textContent = p.type === 'password' ? '👁️' : '🙈';
+        };
+
+        document.getElementById('login-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const err = document.getElementById('error');
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+
+                if (res.ok) {
+                    window.location = '/ui/';
+                } else {
+                    err.textContent = 'Identifiants incorrects';
+                    err.style.display = 'block';
+                }
+            } catch (e) {
+                err.textContent = 'Erreur de connexion';
+                err.style.display = 'block';
+            }
+        };
+    </script>
+</body>
+</html>

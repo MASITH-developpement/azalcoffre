@@ -1,0 +1,186 @@
+# AZALPLUS - Module Tickets Support (Helpdesk)
+nom: Tickets
+icone: headset
+menu: Support
+description: Gestion des tickets de support client et helpdesk
+
+champs:
+  - nom: ticket_number
+    type: text
+    obligatoire: false
+    description: Numero auto-genere TKT-XXXXXX
+    autocompletion: true
+
+  - nom: subject
+    type: text
+    obligatoire: true
+    description: Sujet du ticket
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description detaillee du probleme
+
+  - nom: category_id
+    type: relation
+    obligatoire: false
+    relation: TicketCategories
+    description: Categorie du ticket
+    autocompletion: true
+
+  - nom: team_id
+    type: relation
+    obligatoire: false
+    relation: HelpdeskTeams
+    description: Equipe support assignee
+    autocompletion: true
+
+  - nom: sla_id
+    type: relation
+    obligatoire: false
+    relation: SLA
+    description: SLA applicable
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: NEW
+    options: [NEW, OPEN, PENDING, ON_HOLD, RESOLVED, CLOSED]
+    description: Statut du ticket
+
+  - nom: priority
+    type: select
+    obligatoire: true
+    defaut: MEDIUM
+    options: [LOW, MEDIUM, HIGH, URGENT, CRITICAL]
+    description: Priorite du ticket
+
+  - nom: source
+    type: select
+    obligatoire: false
+    defaut: WEB
+    options: [WEB, EMAIL, PHONE, CHAT, API, INTERNAL]
+    description: Canal d'origine
+
+  - nom: requester_id
+    type: relation
+    obligatoire: false
+    relation: Contacts
+    description: Contact demandeur
+    autocompletion: true
+
+  - nom: requester_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du demandeur
+
+  - nom: requester_name
+    type: text
+    obligatoire: false
+    description: Nom du demandeur
+    autocompletion: true
+
+  - nom: requester_email
+    type: email
+    obligatoire: false
+    description: Email du demandeur
+    autocompletion: true
+
+  - nom: company_id
+    type: relation
+    obligatoire: false
+    relation: Contacts
+    description: Entreprise cliente
+    autocompletion: true
+
+  - nom: assigned_to_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Agent assigne
+    autocompletion: true
+
+  - nom: first_response_due
+    type: datetime
+    obligatoire: false
+    description: Date limite premiere reponse
+
+  - nom: first_responded_at
+    type: datetime
+    obligatoire: false
+    description: Date premiere reponse effective
+
+  - nom: resolution_due
+    type: datetime
+    obligatoire: false
+    description: Date limite resolution
+
+  - nom: resolved_at
+    type: datetime
+    obligatoire: false
+    description: Date resolution effective
+
+  - nom: sla_breached
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: SLA depasse
+
+  - nom: tags
+    type: tags
+    obligatoire: false
+    description: Tags pour filtrage
+
+  - nom: parent_ticket_id
+    type: relation
+    obligatoire: false
+    relation: Tickets
+    description: Ticket parent
+    autocompletion: true
+
+  - nom: reply_count
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de reponses
+
+  - nom: satisfaction_rating
+    type: number
+    obligatoire: false
+    description: Note de satisfaction (1-5)
+
+  - nom: closed_at
+    type: datetime
+    obligatoire: false
+
+workflow:
+  NEW -> OPEN: premiere reponse agent
+  OPEN -> PENDING: en attente reponse client
+  PENDING -> OPEN: reponse client recue
+  OPEN -> ON_HOLD: mise en pause manuelle
+  ON_HOLD -> OPEN: reprise du ticket
+  OPEN -> RESOLVED: resolution proposee
+  RESOLVED -> CLOSED: confirmation client
+  RESOLVED -> OPEN: client non satisfait
+
+actions:
+  - repondre
+  - ajouter_note_interne
+  - assigner
+  - changer_priorite
+  - escalader
+  - resoudre
+  - fermer
+  - rouvrir
+  - fusionner
+  - envoyer_enquete_satisfaction
+
+marceau:
+  alertes:
+    - si priority = CRITICAL: "Ticket critique a traiter immediatement"
+    - si sla_breached = true: "SLA depasse - escalade necessaire"
+    - si status = NEW et created_at < now()-2h: "Ticket non pris en charge depuis 2h"
+    - si satisfaction_rating < 3: "Client insatisfait"

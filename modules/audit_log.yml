@@ -1,0 +1,68 @@
+# AZALPLUS - Module Audit Log
+# Journal d'audit pour tracer toutes les modifications
+
+AuditLog:
+  nom: "audit_log"
+  nom_affichage: "Journal d'audit"
+  icone: "file-text"
+  menu: "Parametres"
+  description: "Trace toutes les actions CRUD sur les modules"
+  actif: true
+
+  champs:
+    module:
+      type: texte
+      label: "Module"
+      requis: true
+      aide: "Nom du module affecte"
+
+    action:
+      type: enum
+      enum_values: [create, update, delete]
+      label: "Action"
+      requis: true
+      aide: "Type d'action effectuee"
+
+    record_id:
+      type: uuid
+      label: "ID Enregistrement"
+      requis: true
+      aide: "UUID de l'enregistrement affecte"
+
+    user_id:
+      type: uuid
+      label: "ID Utilisateur"
+      requis: true
+      aide: "UUID de l'utilisateur ayant effectue l'action"
+
+    user_email:
+      type: email
+      label: "Email Utilisateur"
+      aide: "Email de l'utilisateur pour affichage"
+
+    changes:
+      type: json
+      label: "Modifications"
+      aide: "JSON contenant les anciennes et nouvelles valeurs"
+
+    ip_address:
+      type: texte
+      label: "Adresse IP"
+      aide: "Adresse IP du client"
+
+    user_agent:
+      type: texte long
+      label: "User Agent"
+      aide: "Navigateur/client utilise"
+
+    timestamp:
+      type: datetime
+      label: "Date/Heure"
+      requis: true
+      aide: "Horodatage de l'action"
+
+  # Pas de workflow - les logs sont en lecture seule
+  workflow: []
+
+  # Pas d'actions modifiables
+  actions: []

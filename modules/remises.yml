@@ -1,0 +1,180 @@
+# =============================================================================
+# AZALPLUS - Module Remises / Codes Promo
+# =============================================================================
+# Gestion des codes de reduction et coupons
+# Types: pourcentage, montant_fixe, livraison_gratuite
+
+nom: Remises
+icone: percent
+menu: Commercial
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    obligatoire: true
+    description: "Code promo unique (ex: PROMO2024)"
+    autocompletion: true
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: "Nom de la remise (ex: Soldes d'ete)"
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description de l'offre
+
+  # Type et valeur
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: pourcentage
+    options: [pourcentage, montant_fixe, livraison_gratuite]
+    description: Type de remise
+
+  - nom: valeur
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Valeur de la remise (% ou montant selon le type)
+
+  # Validite
+  - nom: date_debut
+    type: date
+    obligatoire: true
+    defaut: aujourd'hui
+    description: Date de debut de validite
+
+  - nom: date_fin
+    type: date
+    obligatoire: false
+    description: Date de fin de validite (vide = sans limite)
+
+  # Limites d'utilisation
+  - nom: usage_max
+    type: number
+    obligatoire: false
+    description: Nombre maximum d'utilisations (vide = illimite)
+
+  - nom: usage_actuel
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre d'utilisations actuelles
+
+  - nom: usage_max_par_client
+    type: number
+    obligatoire: false
+    defaut: 1
+    description: Utilisations max par client
+
+  # Conditions d'application (JSON)
+  - nom: conditions
+    type: json
+    obligatoire: false
+    description: |
+      Conditions d'application au format JSON:
+      - montant_minimum: Montant minimum du panier
+      - montant_maximum: Plafond de remise
+      - produits: Liste des IDs produits eligibles
+      - categories: Liste des categories eligibles
+      - clients: Liste des IDs clients eligibles
+      - types_clients: Types de clients eligibles (VIP, CUSTOMER...)
+      - premier_achat: true = uniquement nouveaux clients
+      - cumulable: true = cumulable avec autres remises
+
+  # Statut
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Code actif
+
+  - nom: priorite
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Priorite d'application (0 = normal)
+
+  # Application automatique
+  - nom: application_auto
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Appliquer automatiquement si conditions remplies
+
+  # Restrictions
+  - nom: exclure_promos
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Exclure les produits deja en promotion
+
+  # Statistiques
+  - nom: montant_total_remise
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant total des remises accordees
+
+  - nom: nombre_commandes
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de commandes avec ce code
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  # Metadonnees
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+# Regles de validation
+validations:
+  - champ: code
+    unique: true
+    format: "^[A-Z0-9_-]{3,20}$"
+    message: "Le code doit contenir 3 a 20 caracteres (lettres majuscules, chiffres, tirets)"
+
+  - champ: valeur
+    min: 0
+    max_si_type_pourcentage: 100
+    message: "La valeur doit etre positive (max 100% pour les pourcentages)"
+
+  - champ: date_fin
+    superieur_a: date_debut
+    si_rempli: true
+    message: "La date de fin doit etre posterieure a la date de debut"
+
+# Actions disponibles
+actions:
+  - activer
+  - desactiver
+  - dupliquer
+  - voir_statistiques
+  - exporter_utilisations
+
+# Alertes Marceau (IA)
+marceau:
+  alertes:
+    - si actif et date_fin et date > date_fin: "Code promo expire"
+    - si actif et usage_max et usage_actuel >= usage_max: "Code promo epuise"
+    - si actif et usage_actuel > 0 et usage_actuel / usage_max > 0.9: "Code promo bientot epuise (90%)"

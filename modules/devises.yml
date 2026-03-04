@@ -1,0 +1,105 @@
+# AZALPLUS - Module Devises (Multi-Currency)
+Devise:
+  nom: "Devises"
+  icone: "globe"
+  menu: "Paramètres"
+  description: "Gestion des devises et taux de change"
+
+  champs:
+    code: texte requis unique
+    nom: texte requis
+    symbole: texte requis
+    taux: nombre defaut=1.0 min=0
+    decimales: entier defaut=2 min=0 max=4
+    position_symbole: enum [AVANT, APRES] defaut=APRES
+    separateur_milliers: texte defaut=" "
+    separateur_decimal: texte defaut=","
+    actif: oui/non defaut=oui
+    date_maj_taux: datetime
+
+  # Devises par défaut (injectées automatiquement)
+  donnees_initiales:
+    - code: EUR
+      nom: Euro
+      symbole: "€"
+      taux: 1.0
+      decimales: 2
+      position_symbole: APRES
+      actif: oui
+
+    - code: USD
+      nom: Dollar américain
+      symbole: "$"
+      taux: 1.08
+      decimales: 2
+      position_symbole: AVANT
+      actif: oui
+
+    - code: GBP
+      nom: Livre sterling
+      symbole: "£"
+      taux: 0.86
+      decimales: 2
+      position_symbole: AVANT
+      actif: oui
+
+    - code: CHF
+      nom: Franc suisse
+      symbole: "CHF"
+      taux: 0.97
+      decimales: 2
+      position_symbole: APRES
+      actif: oui
+
+    - code: CAD
+      nom: Dollar canadien
+      symbole: "CA$"
+      taux: 1.47
+      decimales: 2
+      position_symbole: AVANT
+      actif: oui
+
+    - code: JPY
+      nom: Yen japonais
+      symbole: "¥"
+      taux: 162.50
+      decimales: 0
+      position_symbole: AVANT
+      actif: oui
+
+    - code: MAD
+      nom: Dirham marocain
+      symbole: "DH"
+      taux: 10.85
+      decimales: 2
+      position_symbole: APRES
+      actif: oui
+
+    - code: XOF
+      nom: Franc CFA (BCEAO)
+      symbole: "FCFA"
+      taux: 655.957
+      decimales: 0
+      position_symbole: APRES
+      actif: oui
+
+    - code: TND
+      nom: Dinar tunisien
+      symbole: "DT"
+      taux: 3.35
+      decimales: 3
+      position_symbole: APRES
+      actif: oui
+
+    - code: DZD
+      nom: Dinar algérien
+      symbole: "DA"
+      taux: 145.50
+      decimales: 2
+      position_symbole: APRES
+      actif: oui
+
+  actions:
+    - actualiser_taux
+    - activer
+    - desactiver

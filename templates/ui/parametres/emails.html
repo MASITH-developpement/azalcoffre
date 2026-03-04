@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modeles d'email - AZALPLUS</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Quill.js Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <style>
+        /* Email Templates Specific Styles */
+        .templates-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+            height: calc(100vh - 200px);
+        }
+
+        .templates-sidebar {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .templates-sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .templates-sidebar-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .templates-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .template-item {
+            padding: 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: all 0.15s;
+        }
+
+        .template-item:hover {
+            background: var(--gray-50);
+        }
+
+        .template-item.active {
+            background: var(--primary-light);
+            border-left: 3px solid var(--primary);
+        }
+
+        .template-item-name {
+            font-weight: 500;
+            color: var(--gray-800);
+            margin-bottom: 4px;
+        }
+
+        .template-item-type {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .template-item-badges {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .template-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .template-badge.default {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .template-badge.inactive {
+            background: var(--error-light);
+            color: var(--error);
+        }
+
+        .template-editor {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .editor-tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--gray-500);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.15s;
+        }
+
+        .editor-tab:hover {
+            color: var(--gray-700);
+        }
+
+        .editor-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .editor-panel {
+            display: none;
+        }
+
+        .editor-panel.active {
+            display: block;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .quill-wrapper {
+            background: white;
+            border-radius: var(--radius);
+        }
+
+        .ql-container {
+            font-family: inherit;
+            font-size: 14px;
+            min-height: 300px;
+        }
+
+        .ql-editor {
+            min-height: 300px;
+        }
+
+        .variables-panel {
+            background: var(--gray-50);
+            padding: 16px;
+            border-radius: var(--radius);
+            margin-top: 16px;
+        }
+
+        .variables-panel h4 {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--gray-700);
+        }
+
+        .variables-group {
+            margin-bottom: 16px;
+        }
+
+        .variables-group-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .variables-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .variable-tag {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .variable-tag:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .preview-frame {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .preview-subject {
+            padding: 12px 16px;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .preview-subject span {
+            color: var(--gray-500);
+            font-weight: 400;
+            margin-right: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+
+        .notification.success {
+            background: var(--success);
+            color: white;
+        }
+
+        .notification.error {
+            background: var(--error);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar will be injected -->
+        <div id="sidebar-container"></div>
+
+        <div class="main-wrapper">
+            <header class="main-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <a href="/ui/parametres/theme" class="btn btn-secondary btn-sm">Style des documents</a>
+                    <span style="color: var(--gray-300);">|</span>
+                    <span class="btn btn-primary btn-sm">Modeles d'email</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="showNewTemplateModal()">+ Nouveau modele</button>
+                </div>
+            </header>
+
+            <main class="main-content">
+                <h1 class="page-title mb-4">Modeles d'email</h1>
+
+                <div class="templates-container">
+                    <!-- Sidebar: Liste des templates -->
+                    <div class="templates-sidebar">
+                        <div class="templates-sidebar-header">
+                            <h3>Modeles</h3>
+                            <select id="filter-type" class="input" style="width: auto; font-size: 12px; padding: 4px 8px;" onchange="filterTemplates()">
+                                <option value="">Tous les types</option>
+                                <option value="devis_envoye">Devis</option>
+                                <option value="facture_envoyee">Facture</option>
+                                <option value="rappel_paiement">Rappel</option>
+                                <option value="confirmation_paiement">Confirmation</option>
+                                <option value="bienvenue_client">Bienvenue</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="templates-list" id="templates-list">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📧</div>
+                                <p>Chargement...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Editor Panel -->
+                    <div class="template-editor">
+                        <div class="editor-header">
+                            <div>
+                                <h3 id="editor-title" style="margin: 0;">Selectionnez un modele</h3>
+                                <p id="editor-subtitle" style="margin: 4px 0 0 0; font-size: 12px; color: var(--gray-500);"></p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="btn btn-secondary btn-sm" id="btn-delete" onclick="deleteTemplate()" style="display: none;">Supprimer</button>
+                                <button class="btn btn-primary btn-sm" id="btn-save" onclick="saveTemplate()" style="display: none;">Enregistrer</button>
+                            </div>
+                        </div>
+
+                        <div class="editor-tabs">
+                            <button class="editor-tab active" data-tab="edit" onclick="switchTab('edit')">Edition</button>
+                            <button class="editor-tab" data-tab="preview" onclick="switchTab('preview')">Apercu</button>
+                            <button class="editor-tab" data-tab="variables" onclick="switchTab('variables')">Variables</button>
+                        </div>
+
+                        <div class="editor-content">
+                            <!-- Edit Panel -->
+                            <div id="panel-edit" class="editor-panel active">
+                                <div id="no-selection" class="empty-state">
+                                    <div class="empty-state-icon">📧</div>
+                                    <h3>Aucun modele selectionne</h3>
+                                    <p>Selectionnez un modele dans la liste ou creez-en un nouveau.</p>
+                                </div>
+
+                                <div id="edit-form" style="display: none;">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="tpl-nom">Nom du modele</label>
+                                            <input type="text" class="input" id="tpl-nom" placeholder="Ex: Envoi de devis standard">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tpl-type">Type</label>
+                                            <select class="input" id="tpl-type">
+                                                <option value="devis_envoye">Envoi de devis</option>
+                                                <option value="facture_envoyee">Envoi de facture</option>
+                                                <option value="rappel_paiement">Rappel de paiement</option>
+                                                <option value="confirmation_paiement">Confirmation de paiement</option>
+                                                <option value="bienvenue_client">Bienvenue client</option>
+                                                <option value="relance_devis">Relance devis</option>
+                                                <option value="intervention_planifiee">Intervention planifiee</option>
+                                                <option value="intervention_terminee">Intervention terminee</option>
+                                                <option value="autre">Autre</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="tpl-actif" checked> Actif
+                                            </label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="tpl-defaut"> Template par defaut pour ce type
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="tpl-sujet">Sujet de l'email</label>
+                                        <input type="text" class="input" id="tpl-sujet" placeholder="Ex: Votre devis {{document.numero}} - {{entreprise.nom}}">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Contenu de l'email</label>
+                                        <div class="quill-wrapper">
+                                            <div id="quill-editor"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview Panel -->
+                            <div id="panel-preview" class="editor-panel">
+                                <div class="preview-subject">
+                                    <span>Sujet:</span>
+                                    <span id="preview-subject-text">-</span>
+                                </div>
+                                <div class="preview-frame" id="preview-content">
+                                    <div class="empty-state">
+                                        <p>Selectionnez un modele pour voir l'apercu</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Variables Panel -->
+                            <div id="panel-variables" class="editor-panel">
+                                <div class="variables-panel">
+                                    <h4>Variables disponibles</h4>
+                                    <p style="font-size: 13px; color: var(--gray-600); margin-bottom: 16px;">
+                                        Cliquez sur une variable pour l'inserer dans le sujet ou le contenu.
+                                    </p>
+
+                                    <div class="variables-group">
+                                        <div class="variables-group-title">Client</div>
+                                        <div class="variables-list">
+                                            <span class="variable-tag" onclick="insertVariable('client.nom')">{{client.nom}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('client.email')">{{client.email}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('client.telephone')">{{client.telephone}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('client.adresse')">{{client.adresse}}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="variables-group">
+                                        <div class="variables-group-title">Document</div>
+                                        <div class="variables-list">
+                                            <span class="variable-tag" onclick="insertVariable('document.numero')">{{document.numero}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('document.total')">{{document.total}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('document.total_ht')">{{document.total_ht}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('document.date')">{{document.date}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('document.date_validite')">{{document.date_validite}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('document.date_echeance')">{{document.date_echeance}}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="variables-group">
+                                        <div class="variables-group-title">Entreprise</div>
+                                        <div class="variables-list">
+                                            <span class="variable-tag" onclick="insertVariable('entreprise.nom')">{{entreprise.nom}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('entreprise.email')">{{entreprise.email}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('entreprise.telephone')">{{entreprise.telephone}}</span>
+                                            <span class="variable-tag" onclick="insertVariable('entreprise.adresse')">{{entreprise.adresse}}</span>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--gray-200);">
+                                        <h4>Conditions</h4>
+                                        <p style="font-size: 13px; color: var(--gray-600); margin-bottom: 12px;">
+                                            Utilisez les conditions pour afficher du contenu optionnel.
+                                        </p>
+                                        <code style="display: block; background: var(--white); padding: 12px; border-radius: var(--radius); font-size: 12px;">
+                                            {{#document.date_validite}}<br>
+                                            &nbsp;&nbsp;Ce devis est valable jusqu'au {{document.date_validite}}.<br>
+                                            {{/document.date_validite}}
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- New Template Modal -->
+    <div id="new-template-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nouveau modele d'email</h3>
+                <button class="close-btn" onclick="hideNewTemplateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-tpl-nom">Nom du modele</label>
+                    <input type="text" class="input" id="new-tpl-nom" placeholder="Ex: Envoi de devis personnalise">
+                </div>
+                <div class="form-group">
+                    <label for="new-tpl-type">Type</label>
+                    <select class="input" id="new-tpl-type">
+                        <option value="devis_envoye">Envoi de devis</option>
+                        <option value="facture_envoyee">Envoi de facture</option>
+                        <option value="rappel_paiement">Rappel de paiement</option>
+                        <option value="confirmation_paiement">Confirmation de paiement</option>
+                        <option value="bienvenue_client">Bienvenue client</option>
+                        <option value="relance_devis">Relance devis</option>
+                        <option value="intervention_planifiee">Intervention planifiee</option>
+                        <option value="intervention_terminee">Intervention terminee</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideNewTemplateModal()">Annuler</button>
+                <button class="btn btn-primary" onclick="createNewTemplate()">Creer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification hidden"></div>
+
+    <script>
+    // =============================================================================
+    // State
+    // =============================================================================
+    let templates = [];
+    let selectedTemplateId = null;
+    let quillEditor = null;
+
+    // =============================================================================
+    // Initialization
+    // =============================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Quill editor
+        quillEditor = new Quill('#quill-editor', {
+            theme: 'snow',
+            placeholder: 'Redigez le contenu de votre email...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Load templates
+        loadTemplates();
+    });
+
+    // =============================================================================
+    // API Calls
+    // =============================================================================
+    async function loadTemplates() {
+        try {
+            const res = await fetch('/api/ModeleEmail');
+            if (res.ok) {
+                const data = await res.json();
+                templates = data.items || data;
+                renderTemplatesList();
+            } else {
+                showNotification('Erreur lors du chargement des modeles', 'error');
+            }
+        } catch (e) {
+            console.error('Error loading templates:', e);
+            // Show empty state for new installations
+            templates = [];
+            renderTemplatesList();
+        }
+    }
+
+    async function saveTemplate() {
+        if (!selectedTemplateId) return;
+
+        const data = {
+            nom: document.getElementById('tpl-nom').value,
+            type: document.getElementById('tpl-type').value,
+            sujet: document.getElementById('tpl-sujet').value,
+            contenu: quillEditor.root.innerHTML,
+            actif: document.getElementById('tpl-actif').checked,
+            par_defaut: document.getElementById('tpl-defaut').checked
+        };
+
+        try {
+            const res = await fetch(`/api/ModeleEmail/${selectedTemplateId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                showNotification('Modele enregistre avec succes', 'success');
+                loadTemplates();
+            } else {
+                showNotification('Erreur lors de l\'enregistrement', 'error');
+            }
+        } catch (e) {
+            showNotification('Erreur de connexion', 'error');
+        }
+    }
+
+    async function createNewTemplate() {
+        const nom = document.getElementById('new-tpl-nom').value;
+        const type = document.getElementById('new-tpl-type').value;
+
+        if (!nom) {
+            showNotification('Veuillez saisir un nom', 'error');
+            return;
+        }
+
+        const data = {
+            nom: nom,
+            type: type,
+            sujet: `{{entreprise.nom}} - ${getTypeLabel(type)}`,
+            contenu: getDefaultContent(type),
+            actif: true,
+            par_defaut: false
+        };
+
+        try {
+            const res = await fetch('/api/ModeleEmail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                const newTemplate = await res.json();
+                showNotification('Modele cree avec succes', 'success');
+                hideNewTemplateModal();
+                loadTemplates();
+                // Select the new template
+                setTimeout(() => selectTemplate(newTemplate.id), 500);
+            } else {
+                showNotification('Erreur lors de la creation', 'error');
+            }
+        } catch (e) {
+            showNotification('Erreur de connexion', 'error');
+        }
+    }
+
+    async function deleteTemplate() {
+        if (!selectedTemplateId) return;
+
+        if (!confirm('Supprimer ce modele ?')) return;
+
+        try {
+            const res = await fetch(`/api/ModeleEmail/${selectedTemplateId}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                showNotification('Modele supprime', 'success');
+                selectedTemplateId = null;
+                showNoSelection();
+                loadTemplates();
+            } else {
+                showNotification('Erreur lors de la suppression', 'error');
+            }
+        } catch (e) {
+            showNotification('Erreur de connexion', 'error');
+        }
+    }
+
+    async function loadPreview() {
+        if (!selectedTemplateId) return;
+
+        try {
+            const res = await fetch(`/api/ModeleEmail/${selectedTemplateId}/preview`);
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('preview-subject-text').textContent = data.sujet || '-';
+                document.getElementById('preview-content').innerHTML = data.contenu || '<p>Apercu non disponible</p>';
+            }
+        } catch (e) {
+            console.error('Error loading preview:', e);
+        }
+    }
+
+    // =============================================================================
+    // UI Functions
+    // =============================================================================
+    function renderTemplatesList() {
+        const container = document.getElementById('templates-list');
+        const filterType = document.getElementById('filter-type').value;
+
+        let filteredTemplates = templates;
+        if (filterType) {
+            filteredTemplates = templates.filter(t => t.type === filterType);
+        }
+
+        if (filteredTemplates.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📧</div>
+                    <p>Aucun modele${filterType ? ' de ce type' : ''}</p>
+                    <button class="btn btn-primary btn-sm" onclick="showNewTemplateModal()" style="margin-top: 12px;">
+                        Creer un modele
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = filteredTemplates.map(tpl => `
+            <div class="template-item ${tpl.id === selectedTemplateId ? 'active' : ''}"
+                 onclick="selectTemplate('${tpl.id}')">
+                <div class="template-item-name">${escapeHtml(tpl.nom)}</div>
+                <div class="template-item-type">${getTypeLabel(tpl.type)}</div>
+                <div class="template-item-badges">
+                    ${tpl.par_defaut ? '<span class="template-badge default">Par defaut</span>' : ''}
+                    ${!tpl.actif ? '<span class="template-badge inactive">Inactif</span>' : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function selectTemplate(id) {
+        selectedTemplateId = id;
+        const template = templates.find(t => t.id === id);
+
+        if (!template) {
+            showNoSelection();
+            return;
+        }
+
+        // Update sidebar selection
+        document.querySelectorAll('.template-item').forEach(el => {
+            el.classList.remove('active');
+        });
+        event.target.closest('.template-item')?.classList.add('active');
+
+        // Show edit form
+        document.getElementById('no-selection').style.display = 'none';
+        document.getElementById('edit-form').style.display = 'block';
+        document.getElementById('btn-save').style.display = 'inline-flex';
+        document.getElementById('btn-delete').style.display = 'inline-flex';
+
+        // Fill form
+        document.getElementById('editor-title').textContent = template.nom;
+        document.getElementById('editor-subtitle').textContent = getTypeLabel(template.type);
+        document.getElementById('tpl-nom').value = template.nom || '';
+        document.getElementById('tpl-type').value = template.type || 'autre';
+        document.getElementById('tpl-sujet').value = template.sujet || '';
+        document.getElementById('tpl-actif').checked = template.actif !== false;
+        document.getElementById('tpl-defaut').checked = template.par_defaut === true;
+
+        // Set Quill content
+        quillEditor.root.innerHTML = template.contenu || '';
+
+        // Load preview
+        loadPreview();
+    }
+
+    function showNoSelection() {
+        document.getElementById('no-selection').style.display = 'block';
+        document.getElementById('edit-form').style.display = 'none';
+        document.getElementById('btn-save').style.display = 'none';
+        document.getElementById('btn-delete').style.display = 'none';
+        document.getElementById('editor-title').textContent = 'Selectionnez un modele';
+        document.getElementById('editor-subtitle').textContent = '';
+        renderTemplatesList();
+    }
+
+    function switchTab(tab) {
+        // Update tab buttons
+        document.querySelectorAll('.editor-tab').forEach(el => {
+            el.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+        // Show panel
+        document.querySelectorAll('.editor-panel').forEach(el => {
+            el.classList.remove('active');
+        });
+        document.getElementById(`panel-${tab}`).classList.add('active');
+
+        // Load preview if switching to preview tab
+        if (tab === 'preview') {
+            updatePreview();
+        }
+    }
+
+    function updatePreview() {
+        // Use current form values for preview
+        const sujet = document.getElementById('tpl-sujet').value || '';
+        const contenu = quillEditor.root.innerHTML || '';
+
+        // Simple variable replacement for preview
+        const demoData = {
+            'client.nom': 'Jean Dupont',
+            'client.email': 'jean.dupont@example.com',
+            'client.telephone': '06 12 34 56 78',
+            'document.numero': 'DEV-2024-0001',
+            'document.total': '1 234,56',
+            'document.date': '15/03/2024',
+            'document.date_validite': '15/04/2024',
+            'document.date_echeance': '15/04/2024',
+            'entreprise.nom': 'Mon Entreprise',
+            'entreprise.email': 'contact@example.com',
+            'entreprise.telephone': '01 23 45 67 89'
+        };
+
+        let previewSubject = sujet;
+        let previewContent = contenu;
+
+        // Replace variables
+        Object.entries(demoData).forEach(([key, value]) => {
+            const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+            previewSubject = previewSubject.replace(regex, value);
+            previewContent = previewContent.replace(regex, value);
+        });
+
+        // Handle conditionals (simplified)
+        previewContent = previewContent.replace(/\{\{#[^}]+\}\}/g, '');
+        previewContent = previewContent.replace(/\{\{\/[^}]+\}\}/g, '');
+
+        document.getElementById('preview-subject-text').textContent = previewSubject || '-';
+        document.getElementById('preview-content').innerHTML = previewContent || '<p>Aucun contenu</p>';
+    }
+
+    function filterTemplates() {
+        renderTemplatesList();
+    }
+
+    function insertVariable(variable) {
+        const varText = `{{${variable}}}`;
+
+        // Check if subject field is focused
+        const sujetInput = document.getElementById('tpl-sujet');
+        if (document.activeElement === sujetInput) {
+            const start = sujetInput.selectionStart;
+            const end = sujetInput.selectionEnd;
+            const text = sujetInput.value;
+            sujetInput.value = text.substring(0, start) + varText + text.substring(end);
+            sujetInput.selectionStart = sujetInput.selectionEnd = start + varText.length;
+            sujetInput.focus();
+        } else {
+            // Insert into Quill editor
+            const range = quillEditor.getSelection(true);
+            quillEditor.insertText(range.index, varText);
+            quillEditor.setSelection(range.index + varText.length);
+        }
+
+        showNotification(`Variable ${varText} inseree`, 'success');
+    }
+
+    function showNewTemplateModal() {
+        document.getElementById('new-template-modal').classList.add('show');
+        document.getElementById('new-tpl-nom').value = '';
+        document.getElementById('new-tpl-type').value = 'devis_envoye';
+        document.getElementById('new-tpl-nom').focus();
+    }
+
+    function hideNewTemplateModal() {
+        document.getElementById('new-template-modal').classList.remove('show');
+    }
+
+    function showNotification(message, type) {
+        const notif = document.getElementById('notification');
+        notif.textContent = message;
+        notif.className = 'notification ' + type;
+        setTimeout(() => {
+            notif.classList.add('hidden');
+        }, 3000);
+    }
+
+    // =============================================================================
+    // Helpers
+    // =============================================================================
+    function getTypeLabel(type) {
+        const labels = {
+            'devis_envoye': 'Envoi de devis',
+            'facture_envoyee': 'Envoi de facture',
+            'rappel_paiement': 'Rappel de paiement',
+            'confirmation_paiement': 'Confirmation de paiement',
+            'bienvenue_client': 'Bienvenue client',
+            'relance_devis': 'Relance devis',
+            'intervention_planifiee': 'Intervention planifiee',
+            'intervention_terminee': 'Intervention terminee',
+            'autre': 'Autre'
+        };
+        return labels[type] || type;
+    }
+
+    function getDefaultContent(type) {
+        return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <p>Bonjour {{client.nom}},</p>
+            <p>Votre contenu ici...</p>
+            <p>Cordialement,<br>{{entreprise.nom}}</p>
+        </div>`;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Close modal on click outside
+    document.getElementById('new-template-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideNewTemplateModal();
+        }
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideNewTemplateModal();
+        }
+    });
+    </script>
+</body>
+</html>

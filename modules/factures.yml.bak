@@ -1,0 +1,416 @@
+# AZALPLUS - Module Factures
+# Basé sur azalscore/app/modules/commercial/models.py (CommercialDocument type=INVOICE)
+
+nom: Factures
+icone: receipt
+menu: Commercial
+
+champs:
+  # Identification
+  - nom: number
+    type: text
+    obligatoire: true
+    description: Numéro de facture (auto-généré)
+
+  - nom: reference
+    type: text
+    obligatoire: false
+    description: Référence client
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: DRAFT
+    options: [DRAFT, PENDING, VALIDATED, SENT, PAID, CANCELLED]
+    description: Statut de la facture
+
+  # Relations
+  - nom: customer_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client
+
+  - nom: opportunity_id
+    type: relation
+    obligatoire: false
+    relation: Opportunites
+    description: Opportunité liée
+
+  # Dates
+  - nom: date
+    type: date
+    obligatoire: true
+    defaut: aujourd'hui
+    description: Date de facture
+
+  - nom: due_date
+    type: date
+    obligatoire: false
+    description: Date d'échéance
+
+  - nom: delivery_date
+    type: date
+    obligatoire: false
+    description: Date de livraison
+
+  # Adresses (JSON)
+  - nom: billing_address
+    type: textarea
+    obligatoire: false
+    description: Adresse de facturation
+
+  - nom: shipping_address
+    type: textarea
+    obligatoire: false
+    description: Adresse de livraison
+
+  # Montants
+  - nom: subtotal
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total HT
+
+  - nom: discount_amount
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant remise
+
+  - nom: discount_percent
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Remise (%)
+
+  - nom: tax_amount
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant TVA
+
+  - nom: total
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total TTC
+
+  - nom: currency
+    type: relation
+    obligatoire: false
+    relation: Devises
+    defaut: EUR
+    description: Devise du document
+
+  - nom: exchange_rate
+    type: number
+    obligatoire: false
+    defaut: 1.0
+    description: Taux de change au moment de la création
+
+  - nom: subtotal_base
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total HT en devise de base (EUR)
+
+  - nom: total_base
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total TTC en devise de base (EUR)
+
+  # Paiement
+  - nom: payment_terms
+    type: select
+    obligatoire: false
+    options: [IMMEDIATE, NET_15, NET_30, NET_45, NET_60, NET_90, END_OF_MONTH, CUSTOM]
+    description: Conditions de paiement
+
+  - nom: payment_method
+    type: select
+    obligatoire: false
+    options: [BANK_TRANSFER, CHECK, CREDIT_CARD, CASH, DIRECT_DEBIT, PAYPAL, OTHER]
+    description: Méthode de paiement
+
+  - nom: paid_amount
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant payé
+
+  - nom: remaining_amount
+    type: number
+    obligatoire: false
+    description: Reste à payer (calculé)
+
+  # Livraison
+  - nom: shipping_method
+    type: text
+    obligatoire: false
+    description: Mode de livraison
+
+  - nom: shipping_cost
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Frais de livraison
+
+  - nom: tracking_number
+    type: text
+    obligatoire: false
+    description: Numéro de suivi
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes visibles client
+
+  - nom: internal_notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  - nom: terms
+    type: textarea
+    obligatoire: false
+    description: Conditions générales
+
+  # Document parent/lié
+  - nom: parent_id
+    type: relation
+    obligatoire: false
+    relation: Devis
+    description: Devis source
+
+  # PDF
+  - nom: pdf_url
+    type: text
+    obligatoire: false
+    description: URL du PDF généré
+
+  # Portail client
+  - nom: access_token
+    type: text
+    obligatoire: false
+    description: Token d'acces portail client
+
+  # Attribution
+  - nom: assigned_to
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Commercial responsable
+
+  - nom: validated_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Validé par
+
+  - nom: validated_at
+    type: datetime
+    obligatoire: false
+    description: Date de validation
+
+  # Signature electronique
+  - nom: signature_client
+    type: text
+    obligatoire: false
+    description: Image de la signature du client (base64)
+
+  - nom: signature_date
+    type: datetime
+    obligatoire: false
+    description: Date et heure de signature
+
+  - nom: signature_ip
+    type: text
+    obligatoire: false
+    description: Adresse IP du client lors de la signature
+
+  # Métadonnées
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+# Lignes de facture (DocumentLine)
+lignes:
+  champs:
+    - nom: line_number
+      type: number
+      obligatoire: true
+      description: Numéro de ligne
+
+    - nom: product_id
+      type: relation
+      obligatoire: false
+      relation: Produits
+      description: Produit référencé
+
+    - nom: product_code
+      type: text
+      obligatoire: false
+      description: Code produit
+
+    - nom: description
+      type: textarea
+      obligatoire: true
+      description: Description
+
+    - nom: quantity
+      type: number
+      obligatoire: true
+      defaut: 1
+      description: Quantité
+
+    - nom: unit
+      type: text
+      obligatoire: false
+      defaut: pce
+      description: Unité (pce, kg, h, etc.)
+
+    - nom: unit_price
+      type: number
+      obligatoire: true
+      defaut: 0
+      description: Prix unitaire HT
+
+    - nom: discount_percent
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Remise ligne (%)
+
+    - nom: discount_amount
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Montant remise ligne
+
+    - nom: subtotal
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Total ligne HT
+
+    - nom: tax_rate
+      type: number
+      obligatoire: false
+      defaut: 20.0
+      description: Taux TVA (%)
+
+    - nom: tax_amount
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Montant TVA ligne
+
+    - nom: total
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Total ligne TTC
+
+    - nom: notes
+      type: textarea
+      obligatoire: false
+      description: Notes ligne
+
+# Paiements associés (Payment)
+paiements:
+  champs:
+    - nom: reference
+      type: text
+      obligatoire: false
+      description: Référence paiement
+
+    - nom: method
+      type: select
+      obligatoire: true
+      options: [BANK_TRANSFER, CHECK, CREDIT_CARD, CASH, DIRECT_DEBIT, PAYPAL, OTHER]
+      description: Méthode de paiement
+
+    - nom: amount
+      type: number
+      obligatoire: true
+      description: Montant
+
+    - nom: currency
+      type: relation
+      obligatoire: false
+      relation: Devises
+      defaut: EUR
+      description: Devise du paiement
+
+    - nom: exchange_rate
+      type: number
+      obligatoire: false
+      defaut: 1.0
+      description: Taux de change au moment du paiement
+
+    - nom: amount_base
+      type: number
+      obligatoire: false
+      description: Montant en devise de base (EUR)
+
+    - nom: date
+      type: date
+      obligatoire: true
+      defaut: aujourd'hui
+      description: Date du paiement
+
+    - nom: received_date
+      type: date
+      obligatoire: false
+      description: Date de réception
+
+    - nom: bank_account
+      type: text
+      obligatoire: false
+      description: Compte bancaire
+
+    - nom: transaction_id
+      type: text
+      obligatoire: false
+      description: ID transaction
+
+    - nom: notes
+      type: textarea
+      obligatoire: false
+      description: Notes
+
+workflow:
+  DRAFT -> PENDING: si customer_id et lignes.count > 0
+  PENDING -> VALIDATED: action valider
+  VALIDATED -> SENT: action envoyer_email
+  SENT -> PAID: si paid_amount >= total
+  VALIDATED -> PAID: si paid_amount >= total
+  SENT -> CANCELLED: action annuler
+
+actions:
+  - valider
+  - envoyer_email
+  - generer_pdf
+  - enregistrer_paiement
+  - relancer
+  - generer_avoir
+  - dupliquer
+  - annuler
+
+marceau:
+  alertes:
+    - si status=SENT et date > due_date: "Facture en retard de paiement"
+    - si status=SENT et date > due_date - 7j: "Facture bientôt échue"
+    - si status=SENT et remaining_amount > 0 et paid_amount > 0: "Paiement partiel reçu"

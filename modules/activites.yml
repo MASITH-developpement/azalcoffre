@@ -1,0 +1,106 @@
+# =============================================================================
+# AZALPLUS - Module Activites (Activity Feed)
+# =============================================================================
+# Journal d'activites en temps reel pour tracer les actions utilisateurs.
+# Sert de fil d'actualite sur le dashboard et de journal d'audit simplifie.
+# =============================================================================
+
+Activites:
+  nom: "activites"
+  nom_affichage: "Journal d'activites"
+  icone: "file-text"
+  menu: "Systeme"
+  description: "Flux d'activites en temps reel - actions utilisateurs et evenements systeme"
+  actif: true
+
+  champs:
+    # Qui a fait l'action
+    user_id:
+      type: uuid
+      label: "Utilisateur"
+      requis: true
+      aide: "UUID de l'utilisateur ayant effectue l'action"
+
+    user_email:
+      type: email
+      label: "Email utilisateur"
+      aide: "Email pour affichage sans jointure"
+
+    user_nom:
+      type: texte
+      label: "Nom utilisateur"
+      aide: "Nom complet pour affichage"
+
+    # Type d'action
+    type:
+      type: enum
+      enum_values: [create, update, delete, login, logout, view, export, import, send, sign, validate, reject, cancel, other]
+      label: "Type"
+      requis: true
+      aide: "Type d'action effectuee"
+
+    # Module concerne
+    module:
+      type: texte
+      label: "Module"
+      aide: "Nom du module affecte (ex: clients, factures, devis)"
+
+    # Enregistrement concerne
+    record_id:
+      type: uuid
+      label: "ID Enregistrement"
+      aide: "UUID de l'enregistrement concerne"
+
+    record_label:
+      type: texte
+      label: "Label enregistrement"
+      aide: "Label lisible de l'enregistrement (ex: nom client, numero facture)"
+
+    # Description lisible
+    description:
+      type: texte long
+      label: "Description"
+      requis: true
+      aide: "Description lisible de l'action (ex: 'a cree le client Dupont SA')"
+
+    # Donnees supplementaires
+    metadata:
+      type: json
+      label: "Metadonnees"
+      aide: "Donnees JSON supplementaires (ancien/nouveau statut, montant, etc.)"
+
+    # Contexte technique
+    ip_address:
+      type: texte
+      label: "Adresse IP"
+      aide: "IP du client"
+
+    user_agent:
+      type: texte long
+      label: "User Agent"
+      aide: "Navigateur/client utilise"
+
+    # Horodatage (utilise created_at du systeme)
+
+  # Pas de workflow - les activites sont en lecture seule
+  workflow: []
+
+  # Actions disponibles
+  actions:
+    - voir_detail
+    - filtrer_module
+    - filtrer_utilisateur
+    - exporter
+
+  # Permissions (par defaut, lecture seule)
+  permissions:
+    read: ["admin", "manager", "user"]
+    create: ["system"]  # Seul le systeme peut creer
+    update: []  # Jamais modifiable
+    delete: ["admin"]  # Seul admin peut purger
+
+  # Configuration pour Marceau (IA)
+  marceau:
+    alertes:
+      - si type=delete: "Action de suppression detectee"
+      - si type=login et metadata.failed=true: "Tentative de connexion echouee"

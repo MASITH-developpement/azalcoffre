@@ -1,0 +1,436 @@
+# =============================================================================
+# AZALPLUS - Module Taxes / TVA
+# =============================================================================
+# Gestion complete des taxes (TVA et autres) pour les documents commerciaux.
+# Compatible avec la facturation electronique (Factur-X, Chorus Pro).
+
+nom: Taxes
+icone: percent
+menu: Configuration
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    obligatoire: true
+    unique: true
+    description: "Code taxe unique (ex: TVA20, TVA10, TVA55, TVA0)"
+    validation:
+      pattern: "^[A-Z0-9_]{2,20}$"
+      message: "Code en majuscules, chiffres et underscore uniquement"
+    autocompletion: true
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: "Nom d'affichage (ex: TVA 20%, TVA 10% Restauration)"
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description detaillee de l'application de cette taxe
+
+  # Taux et type
+  - nom: taux
+    type: number
+    obligatoire: true
+    defaut: 20
+    min: 0
+    max: 100
+    precision: 2
+    description: Taux de la taxe (en %)
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: pourcentage
+    options: [pourcentage, montant_fixe]
+    description: Type de calcul de la taxe
+
+  - nom: montant_fixe
+    type: number
+    obligatoire: false
+    precision: 2
+    description: Montant fixe (si type = montant_fixe)
+    visible_si: "type == 'montant_fixe'"
+
+  # Comportement
+  - nom: inclus_prix
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Taxe incluse dans le prix de vente (TTC vs HT)
+
+  - nom: deductible
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Taxe deductible (pour les achats)
+
+  - nom: collectee
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Taxe collectee (pour les ventes)
+
+  # Comptabilite
+  - nom: compte_collecte
+    type: text
+    obligatoire: false
+    defaut: "44571"
+    description: Compte comptable TVA collectee (ventes)
+    autocompletion: true
+
+  - nom: compte_deductible
+    type: text
+    obligatoire: false
+    defaut: "44566"
+    description: Compte comptable TVA deductible (achats)
+    autocompletion: true
+
+  - nom: compte_intracommunautaire
+    type: text
+    obligatoire: false
+    defaut: "44572"
+    description: Compte comptable TVA intracommunautaire
+    autocompletion: true
+
+  - nom: compte_importation
+    type: text
+    obligatoire: false
+    defaut: "44562"
+    description: Compte comptable TVA importation
+    autocompletion: true
+
+  # Facturation electronique (Factur-X / Chorus Pro)
+  - nom: code_categorie_tax
+    type: select
+    obligatoire: false
+    defaut: S
+    options: [S, Z, E, AE, K, G, O, L, M]
+    description: |
+      Code categorie TVA (EN16931):
+      S = Standard
+      Z = Zero (TVA applicable mais taux 0)
+      E = Exempt (Exonere)
+      AE = Autoliquidation
+      K = Intracommunautaire
+      G = Export hors UE
+      O = Non soumis TVA
+      L = Taxes Canaries
+      M = Taxes Ceuta/Melilla
+
+  - nom: code_exemption
+    type: text
+    obligatoire: false
+    description: Code d'exoneration (art. 293 B CGI, etc.)
+    autocompletion: true
+
+  - nom: mention_legale
+    type: textarea
+    obligatoire: false
+    description: Mention legale a afficher sur les factures
+
+  # Application
+  - nom: pays
+    type: select
+    obligatoire: false
+    defaut: FR
+    options: [FR, BE, CH, LU, DE, ES, IT, PT, GB, AUTRE]
+    description: Pays d'application
+
+  - nom: zone
+    type: select
+    obligatoire: false
+    defaut: france_metropolitaine
+    options: [france_metropolitaine, dom, corse, monaco, ue, hors_ue]
+    description: Zone geographique d'application
+
+  - nom: applicable_ventes
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Applicable aux ventes
+
+  - nom: applicable_achats
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Applicable aux achats
+
+  # Dates de validite
+  - nom: date_debut
+    type: date
+    obligatoire: false
+    description: Date de debut de validite
+
+  - nom: date_fin
+    type: date
+    obligatoire: false
+    description: Date de fin de validite
+
+  # Statut
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Taxe active et utilisable
+
+  - nom: defaut_vente
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Taxe par defaut pour les ventes
+
+  - nom: defaut_achat
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Taxe par defaut pour les achats
+
+  # Ordre d'affichage
+  - nom: ordre
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Ordre d'affichage dans les listes
+
+  # Metadonnees
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+# Donnees par defaut (France)
+donnees_defaut:
+  - code: TVA20
+    nom: "TVA 20%"
+    description: "Taux normal - Biens et services standard"
+    taux: 20
+    type: pourcentage
+    compte_collecte: "44571"
+    compte_deductible: "44566"
+    code_categorie_tax: S
+    pays: FR
+    zone: france_metropolitaine
+    actif: true
+    defaut_vente: true
+    defaut_achat: true
+    ordre: 1
+
+  - code: TVA10
+    nom: "TVA 10%"
+    description: "Taux intermediaire - Restauration, travaux, transport"
+    taux: 10
+    type: pourcentage
+    compte_collecte: "44571"
+    compte_deductible: "44566"
+    code_categorie_tax: S
+    pays: FR
+    zone: france_metropolitaine
+    actif: true
+    ordre: 2
+
+  - code: TVA55
+    nom: "TVA 5.5%"
+    description: "Taux reduit - Alimentation, livres, energie"
+    taux: 5.5
+    type: pourcentage
+    compte_collecte: "44571"
+    compte_deductible: "44566"
+    code_categorie_tax: S
+    pays: FR
+    zone: france_metropolitaine
+    actif: true
+    ordre: 3
+
+  - code: TVA21
+    nom: "TVA 2.1%"
+    description: "Taux super-reduit - Medicaments rembourses, presse"
+    taux: 2.1
+    type: pourcentage
+    compte_collecte: "44571"
+    compte_deductible: "44566"
+    code_categorie_tax: S
+    pays: FR
+    zone: france_metropolitaine
+    actif: true
+    ordre: 4
+
+  - code: TVA0
+    nom: "TVA 0% (Export)"
+    description: "Exportations hors UE - Article 262 CGI"
+    taux: 0
+    type: pourcentage
+    compte_collecte: "44571"
+    code_categorie_tax: G
+    code_exemption: "VATEX-EU-G"
+    mention_legale: "Exoneration de TVA - Article 262 du CGI"
+    pays: FR
+    zone: hors_ue
+    actif: true
+    ordre: 5
+
+  - code: TVA0_INTRA
+    nom: "TVA 0% (Intracommunautaire)"
+    description: "Livraison intracommunautaire - Article 262 ter CGI"
+    taux: 0
+    type: pourcentage
+    compte_collecte: "44572"
+    code_categorie_tax: K
+    code_exemption: "VATEX-EU-IC"
+    mention_legale: "Exoneration de TVA - Article 262 ter du CGI - Livraison intracommunautaire"
+    pays: FR
+    zone: ue
+    actif: true
+    ordre: 6
+
+  - code: TVA0_EXONERE
+    nom: "Exonere de TVA"
+    description: "Operations exonerees - Formations, sante, etc."
+    taux: 0
+    type: pourcentage
+    compte_collecte: "44571"
+    code_categorie_tax: E
+    code_exemption: "VATEX-EU-O"
+    mention_legale: "TVA non applicable, article 261 du CGI"
+    pays: FR
+    zone: france_metropolitaine
+    actif: true
+    ordre: 7
+
+  - code: TVA0_AUTOLIQ
+    nom: "Autoliquidation TVA"
+    description: "Autoliquidation par le client - BTP sous-traitance"
+    taux: 0
+    type: pourcentage
+    compte_collecte: "44571"
+    code_categorie_tax: AE
+    code_exemption: "VATEX-EU-AE"
+    mention_legale: "Autoliquidation - Article 283-2 nonies du CGI"
+    pays: FR
+    zone: france_metropolitaine
+    actif: true
+    ordre: 8
+
+  - code: TVA_NON_APP
+    nom: "TVA non applicable"
+    description: "Franchise en base - Auto-entrepreneur / Micro-entreprise"
+    taux: 0
+    type: pourcentage
+    code_categorie_tax: O
+    code_exemption: "VATEX-FR-FRANCHISE"
+    mention_legale: "TVA non applicable, article 293 B du CGI"
+    pays: FR
+    zone: france_metropolitaine
+    actif: true
+    ordre: 9
+
+  # DOM-TOM
+  - code: TVA85_DOM
+    nom: "TVA 8.5% (DOM)"
+    description: "Taux normal DOM - Guadeloupe, Martinique, Reunion"
+    taux: 8.5
+    type: pourcentage
+    compte_collecte: "44571"
+    compte_deductible: "44566"
+    code_categorie_tax: S
+    pays: FR
+    zone: dom
+    actif: true
+    ordre: 10
+
+  - code: TVA21_DOM
+    nom: "TVA 2.1% (DOM)"
+    description: "Taux reduit DOM"
+    taux: 2.1
+    type: pourcentage
+    compte_collecte: "44571"
+    compte_deductible: "44566"
+    code_categorie_tax: S
+    pays: FR
+    zone: dom
+    actif: true
+    ordre: 11
+
+  # Corse
+  - code: TVA10_CORSE
+    nom: "TVA 10% (Corse)"
+    description: "Taux normal Corse"
+    taux: 10
+    type: pourcentage
+    compte_collecte: "44571"
+    compte_deductible: "44566"
+    code_categorie_tax: S
+    pays: FR
+    zone: corse
+    actif: true
+    ordre: 12
+
+  - code: TVA21_CORSE
+    nom: "TVA 2.1% (Corse)"
+    description: "Taux reduit Corse"
+    taux: 2.1
+    type: pourcentage
+    compte_collecte: "44571"
+    compte_deductible: "44566"
+    code_categorie_tax: S
+    pays: FR
+    zone: corse
+    actif: true
+    ordre: 13
+
+actions:
+  - voir_produits_associes
+  - dupliquer
+  - desactiver
+  - activer
+
+contraintes:
+  - type: unique
+    champs: [code]
+    message: "Ce code taxe existe deja"
+
+  - type: validation
+    condition: "taux >= 0 AND taux <= 100"
+    message: "Le taux doit etre entre 0 et 100"
+
+  - type: validation
+    condition: "type != 'montant_fixe' OR montant_fixe IS NOT NULL"
+    message: "Le montant fixe est requis pour ce type de taxe"
+
+  - type: coherence
+    condition: "defaut_vente = true IMPLIES actif = true"
+    message: "Une taxe par defaut doit etre active"
+
+marceau:
+  alertes:
+    - si date_fin < aujourd'hui et actif: "Taxe expiree mais toujours active"
+    - si defaut_vente et not actif: "Taxe par defaut desactivee"
+
+  suggestions:
+    - "Verifier les taux de TVA pour le nouvel exercice"
+    - "Mettre a jour les codes d'exemption pour Factur-X"
+
+  kpis:
+    - nom: "Taxes actives"
+      calcul: "compte(actif = true)"
+      format: "nombre"
+
+    - nom: "TVA collectee (mois)"
+      calcul: "somme(factures.tva_montant) WHERE date >= debut_mois"
+      format: "monnaie"
+
+    - nom: "TVA deductible (mois)"
+      calcul: "somme(achats.tva_montant) WHERE date >= debut_mois"
+      format: "monnaie"

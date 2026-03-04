@@ -1,0 +1,354 @@
+# =============================================================================
+# AZALPLUS - Specification Technique Autocompletion IA
+# =============================================================================
+# Document de specification pour l'implementation de l'autocompletion IA
+# =============================================================================
+
+version: "1.0.0"
+date_creation: "2026-03-03"
+
+# -----------------------------------------------------------------------------
+# Architecture
+# -----------------------------------------------------------------------------
+architecture:
+  description: |
+    L'autocompletion IA fonctionne en plusieurs couches:
+    1. Frontend: Capture les saisies et affiche les suggestions
+    2. Backend API: Orchestre les requetes et gere le cache
+    3. Services IA: Communique avec OpenAI et Anthropic
+    4. Cache: Redis pour les suggestions frequentes
+
+  composants:
+    frontend:
+      hook: useAutocompletionIA
+      composant: AutocompleteField
+      debounce: 300ms
+      min_chars: 2
+
+    backend:
+      endpoint: /api/v3/autocompletion/suggest
+      service: AutocompletionIAService
+      cache: Redis
+      rate_limit: 100/min/user
+
+    providers:
+      - OpenAIProvider
+      - AnthropicProvider
+      - LocalProvider (fallback)
+
+# -----------------------------------------------------------------------------
+# API Endpoints
+# -----------------------------------------------------------------------------
+endpoints:
+  suggest:
+    method: POST
+    path: /api/v3/autocompletion/suggest
+    description: Obtenir des suggestions d'autocompletion
+    request:
+      module: string (required)
+      champ: string (required)
+      valeur: string (required)
+      contexte: object (optional)
+      limite: integer (default 5)
+    response:
+      suggestions:
+        - texte: string
+          score: float
+          source: string (ia|historique|api)
+      meta:
+        provider: string
+        model: string
+        cached: boolean
+        latency_ms: integer
+
+  complete:
+    method: POST
+    path: /api/v3/autocompletion/complete
+    description: Completion de texte long (textarea)
+    request:
+      module: string
+      champ: string
+      valeur: string
+      contexte: object
+      max_tokens: integer (default 100)
+    response:
+      completion: string
+      meta:
+        provider: string
+        model: string
+        tokens_used: integer
+
+  feedback:
+    method: POST
+    path: /api/v3/autocompletion/feedback
+    description: Feedback sur une suggestion (pour amelioration)
+    request:
+      suggestion_id: uuid
+      accepted: boolean
+      valeur_finale: string (optional)
+
+# -----------------------------------------------------------------------------
+# Schemas de requete aux providers
+# -----------------------------------------------------------------------------
+providers_schemas:
+  openai:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Authorization: "Bearer {api_key}"
+      Content-Type: application/json
+    body:
+      model: "{model}"
+      messages:
+        - role: system
+          content: "{system_prompt}"
+        - role: user
+          content: "{user_prompt}"
+      temperature: "{temperature}"
+      max_tokens: "{max_tokens}"
+      n: "{n_suggestions}"
+    response_path: choices[].message.content
+
+  anthropic:
+    endpoint: https://api.anthropic.com/v1/messages
+    headers:
+      x-api-key: "{api_key}"
+      anthropic-version: "2023-06-01"
+      Content-Type: application/json
+    body:
+      model: "{model}"
+      max_tokens: "{max_tokens}"
+      system: "{system_prompt}"
+      messages:
+        - role: user
+          content: "{user_prompt}"
+    response_path: content[0].text
+
+# -----------------------------------------------------------------------------
+# Prompts par contexte
+# -----------------------------------------------------------------------------
+prompts_templates:
+  # Prompt systeme de base
+  system_base: |
+    Tu es un assistant d'autocompletion pour l'ERP AZALPLUS.
+    Tu dois proposer des suggestions pertinentes, professionnelles et contextuelles.
+
+    Regles importantes:
+    - Reponds UNIQUEMENT avec les suggestions, une par ligne
+    - Pas de numerotation, pas d'explication
+    - Maximum {n} suggestions
+    - Langue: francais
+    - Contexte metier: {contexte_metier}
+
+  # Prompt utilisateur pour completion simple
+  user_completion: |
+    Module: {module}
+    Champ: {champ} ({type_champ})
+    Description du champ: {description_champ}
+    Valeur actuelle: "{valeur}"
+
+    Historique recent de ce champ:
+    {historique}
+
+    Propose {n} completions possibles.
+
+  # Prompt pour generation de texte long
+  user_generation: |
+    Module: {module}
+    Champ: {champ}
+    Contexte complet de l'enregistrement:
+    {contexte_record}
+
+    Texte a completer: "{valeur}"
+
+    Continue ce texte de maniere professionnelle et coherente.
+    Maximum {max_tokens} tokens.
+
+  # Prompt pour correction/reformulation
+  user_correction: |
+    Texte original: "{valeur}"
+
+    {action}:
+    - Garde le meme sens
+    - Ameliore la clarte et le professionnalisme
+    - Corrige les erreurs eventuelles
+
+# -----------------------------------------------------------------------------
+# Configuration du cache Redis
+# -----------------------------------------------------------------------------
+cache_config:
+  prefix: "azalplus:autocomplete"
+  strategies:
+    # Cache des suggestions par valeur
+    suggestions:
+      key: "{tenant_id}:{module}:{champ}:{valeur_hash}"
+      ttl: 1800  # 30 minutes
+      max_size: 10000
+
+    # Cache de l'historique des valeurs
+    historique:
+      key: "{tenant_id}:{module}:{champ}:history"
+      ttl: 86400  # 24 heures
+      type: sorted_set
+      max_items: 100
+
+    # Cache des resultats API externes
+    api_externe:
+      key: "{tenant_id}:api:{api_name}:{query_hash}"
+      ttl: 3600  # 1 heure
+      max_size: 5000
+
+# -----------------------------------------------------------------------------
+# Rate Limiting
+# -----------------------------------------------------------------------------
+rate_limits:
+  par_utilisateur:
+    requetes_minute: 60
+    requetes_heure: 500
+    tokens_jour: 50000
+
+  par_tenant:
+    requetes_minute: 200
+    requetes_heure: 2000
+    tokens_jour: 500000
+
+  par_ip:
+    requetes_minute: 30
+
+# -----------------------------------------------------------------------------
+# Metriques et monitoring
+# -----------------------------------------------------------------------------
+metriques:
+  prometheus:
+    - name: autocompletion_requests_total
+      type: counter
+      labels: [tenant_id, module, provider, status]
+
+    - name: autocompletion_latency_seconds
+      type: histogram
+      labels: [tenant_id, provider]
+      buckets: [0.1, 0.25, 0.5, 1, 2.5, 5]
+
+    - name: autocompletion_tokens_total
+      type: counter
+      labels: [tenant_id, provider, direction]
+
+    - name: autocompletion_cache_hits_total
+      type: counter
+      labels: [tenant_id, cache_type]
+
+    - name: autocompletion_suggestions_accepted_total
+      type: counter
+      labels: [tenant_id, module, source]
+
+# -----------------------------------------------------------------------------
+# Gestion des erreurs
+# -----------------------------------------------------------------------------
+error_handling:
+  retry_policy:
+    max_retries: 3
+    backoff_ms: [100, 500, 1000]
+    retryable_errors:
+      - timeout
+      - rate_limit
+      - server_error
+
+  fallback_chain:
+    - provider: anthropic
+    - provider: openai
+    - provider: local
+    - action: return_historique
+
+  error_codes:
+    AC001: "Cle API invalide ou expiree"
+    AC002: "Limite de requetes atteinte"
+    AC003: "Limite de tokens atteinte"
+    AC004: "Module non configure pour autocompletion"
+    AC005: "Champ non configure pour autocompletion"
+    AC006: "Provider indisponible"
+    AC007: "Timeout de la requete"
+
+# -----------------------------------------------------------------------------
+# Frontend Implementation
+# -----------------------------------------------------------------------------
+frontend:
+  hook_usage: |
+    // Hook React pour l'autocompletion IA
+    const {
+      suggestions,
+      isLoading,
+      error,
+      fetchSuggestions,
+      acceptSuggestion
+    } = useAutocompletionIA({
+      module: 'Clients',
+      champ: 'nom',
+      debounceMs: 300,
+      minChars: 2,
+      maxSuggestions: 5
+    });
+
+  component_props:
+    AutocompleteField:
+      - name: module (string, required)
+      - name: field (string, required)
+      - name: value (string)
+      - name: onChange (function)
+      - name: placeholder (string)
+      - name: disabled (boolean)
+      - name: iaEnabled (boolean, default true)
+      - name: showSource (boolean, default false)
+      - name: onSuggestionSelect (function)
+
+  keyboard_shortcuts:
+    Tab: Accepter la premiere suggestion
+    Enter: Accepter la suggestion selectionnee
+    Escape: Fermer les suggestions
+    ArrowUp: Suggestion precedente
+    ArrowDown: Suggestion suivante
+
+# -----------------------------------------------------------------------------
+# Securite
+# -----------------------------------------------------------------------------
+securite:
+  api_keys:
+    stockage: chiffre_AES256
+    rotation: recommandee_90_jours
+    acces: admin_only
+
+  donnees:
+    - Ne jamais logger les donnees sensibles
+    - Anonymiser les donnees envoyees aux providers si possible
+    - Respecter le RGPD (pas de stockage externe sans consentement)
+
+  audit:
+    - Logger chaque requete (sans contenu sensible)
+    - Tracker les couts par tenant
+    - Alerter sur usage anormal
+
+# -----------------------------------------------------------------------------
+# Migration et activation progressive
+# -----------------------------------------------------------------------------
+rollout:
+  phases:
+    phase1:
+      description: "Test interne"
+      tenants: [tenant_demo, tenant_test]
+      modules: [Clients, Contacts]
+      duree: 2_semaines
+
+    phase2:
+      description: "Beta utilisateurs"
+      tenants: beta_users
+      modules: [Clients, Contacts, Factures, Devis]
+      duree: 4_semaines
+
+    phase3:
+      description: "General availability"
+      tenants: all
+      modules: all
+
+  feature_flags:
+    autocompletion_ia_enabled: true
+    autocompletion_ia_provider_openai: true
+    autocompletion_ia_provider_anthropic: true
+    autocompletion_ia_local_fallback: true

@@ -1,0 +1,251 @@
+# AZALPLUS - Module Chantiers BTP
+nom: Chantiers
+icone: hard-hat
+menu: BTP
+description: Gestion des chantiers de construction
+
+champs:
+  - nom: reference
+    type: text
+    obligatoire: true
+    description: Reference chantier unique
+    autocompletion: true
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom du chantier
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description detaillee du chantier
+
+  - nom: adresse
+    type: text
+    obligatoire: false
+    description: Adresse du chantier
+    autocompletion: true
+
+  - nom: code_postal
+    type: text
+    obligatoire: false
+    description: Code postal
+    autocompletion: true
+
+  - nom: ville
+    type: text
+    obligatoire: false
+    description: Ville
+    autocompletion: true
+
+  - nom: pays
+    type: text
+    obligatoire: false
+    defaut: FR
+    description: Code pays (ISO 2)
+    autocompletion: true
+
+  - nom: coordonnees_gps
+    type: json
+    obligatoire: false
+    description: Coordonnees GPS
+
+  - nom: maitre_ouvrage_id
+    type: relation
+    obligatoire: false
+    relation: Clients
+    description: Maitre d'ouvrage (client)
+    autocompletion: true
+
+  - nom: maitre_ouvrage_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du maitre d'ouvrage
+
+  - nom: maitre_ouvrage_contact
+    type: text
+    obligatoire: false
+    description: Contact maitre d'ouvrage
+    autocompletion: true
+
+  - nom: maitre_oeuvre_id
+    type: relation
+    obligatoire: false
+    relation: Contacts
+    description: Maitre d'oeuvre
+    autocompletion: true
+
+  - nom: maitre_oeuvre_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du maitre d'oeuvre
+
+  - nom: maitre_oeuvre_contact
+    type: text
+    obligatoire: false
+    description: Contact maitre d'oeuvre
+    autocompletion: true
+
+  - nom: conducteur_travaux_id
+    type: relation
+    obligatoire: false
+    relation: Employes
+    description: Conducteur de travaux
+    autocompletion: true
+
+  - nom: chef_chantier_id
+    type: relation
+    obligatoire: false
+    relation: Employes
+    description: Chef de chantier
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: draft
+    options: [draft, preparation, en_cours, suspendu, reception_prov, reception_def, clos]
+    description: Statut du chantier
+
+  - nom: date_debut_prevue
+    type: date
+    obligatoire: false
+    description: Date de debut prevue
+
+  - nom: date_fin_prevue
+    type: date
+    obligatoire: false
+    description: Date de fin prevue
+
+  - nom: date_debut_reelle
+    type: date
+    obligatoire: false
+    description: Date de debut reelle
+
+  - nom: date_fin_reelle
+    type: date
+    obligatoire: false
+    description: Date de fin reelle
+
+  - nom: date_reception_provisoire
+    type: date
+    obligatoire: false
+    description: Date de reception provisoire des travaux
+
+  - nom: date_reception_definitive
+    type: date
+    obligatoire: false
+    description: Date de reception definitive
+
+  - nom: montant_marche_ht
+    type: number
+    obligatoire: false
+    description: Montant du marche HT (EUR)
+
+  - nom: montant_marche_ttc
+    type: number
+    obligatoire: false
+    description: Montant du marche TTC (EUR)
+
+  - nom: montant_avenants_ht
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant cumule des avenants HT
+
+  - nom: taux_tva
+    type: number
+    obligatoire: false
+    defaut: 20.00
+    description: Taux de TVA applicable
+
+  - nom: taux_retenue_garantie
+    type: number
+    obligatoire: false
+    defaut: 5.00
+    description: Taux de retenue de garantie (max 5%)
+
+  - nom: montant_retenue_totale
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant cumule des retenues de garantie
+
+  - nom: permis_construire
+    type: text
+    obligatoire: false
+    description: Numero du permis de construire
+    autocompletion: true
+
+  - nom: date_permis
+    type: date
+    obligatoire: false
+    description: Date d'obtention du permis
+
+  - nom: assurance_dommages_ouvrage
+    type: text
+    obligatoire: false
+    description: Numero police assurance dommages-ouvrage
+    autocompletion: true
+
+  - nom: assurance_decennale
+    type: text
+    obligatoire: false
+    description: Numero police assurance decennale
+    autocompletion: true
+
+  - nom: montant_facture_cumule
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant cumule facture (EUR HT)
+
+  - nom: montant_paye_cumule
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant cumule paye (EUR HT)
+
+  - nom: pourcentage_avancement
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Pourcentage d'avancement global (0-100)
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+workflow:
+  draft -> preparation: action preparer
+  preparation -> en_cours: action demarrer
+  en_cours -> suspendu: action suspendre
+  suspendu -> en_cours: action reprendre
+  en_cours -> reception_prov: action reception_provisoire
+  reception_prov -> reception_def: action reception_definitive
+  reception_def -> clos: action cloturer
+
+actions:
+  - preparer
+  - demarrer
+  - suspendre
+  - reprendre
+  - reception_provisoire
+  - reception_definitive
+  - cloturer
+  - creer_situation
+  - creer_avenant
+  - ajouter_phase
+  - ajouter_sous_traitant
+  - declarer_incident
+
+marceau:
+  alertes:
+    - si status = en_cours et date_fin_prevue < maintenant: "Chantier en retard"
+    - si status = reception_prov et date_reception_provisoire + 1an < maintenant: "Reception definitive a planifier"
+    - si montant_facture_cumule > montant_marche_ht * 1.1: "Depassement budget > 10%"

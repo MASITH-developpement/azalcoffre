@@ -1,0 +1,182 @@
+# AZALPLUS - Module Opportunites CRM
+nom: Opportunites
+icone: target
+menu: Commercial
+description: Pipeline commercial CRM - Gestion des opportunites de vente
+
+champs:
+  - nom: numero
+    type: text
+    obligatoire: false
+    description: Numero auto-genere OPP-XXXXX
+    autocompletion: true
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom de l'opportunite
+    autocompletion: true
+
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client ou prospect
+    autocompletion: true
+
+  - nom: contact_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du contact principal
+
+  - nom: contact_name
+    type: text
+    obligatoire: false
+    description: Nom du contact principal
+    autocompletion: true
+
+  - nom: responsable_id
+    type: relation
+    obligatoire: true
+    relation: Utilisateurs
+    description: Commercial responsable
+    autocompletion: true
+
+  - nom: montant_estime
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Montant estime HT
+
+  - nom: devise_id
+    type: relation
+    obligatoire: false
+    relation: Devises
+    description: Devise du montant
+    autocompletion: true
+
+  - nom: probabilite
+    type: number
+    obligatoire: true
+    defaut: 10
+    description: Probabilite de gain en pourcentage
+
+  - nom: montant_pondere
+    type: number
+    obligatoire: false
+    description: Montant pondere calcule
+
+  - nom: etape
+    type: select
+    obligatoire: true
+    defaut: NOUVEAU
+    options: [NOUVEAU, QUALIFICATION, PROPOSITION, NEGOCIATION, GAGNE, PERDU]
+    description: Etape du pipeline commercial
+
+  - nom: date_cloture_prevue
+    type: date
+    obligatoire: true
+    description: Date de cloture prevue
+
+  - nom: date_cloture_reelle
+    type: date
+    obligatoire: false
+    description: Date de cloture effective
+
+  - nom: date_premier_contact
+    type: date
+    obligatoire: false
+    description: Date du premier contact
+
+  - nom: source
+    type: select
+    obligatoire: false
+    options: [WEB, REFERRAL, SALON, PUBLICITE, RESEAU, APPEL_ENTRANT, PROSPECTION, PARTENAIRE, AUTRE]
+    description: Origine de l'opportunite
+
+  - nom: concurrent
+    type: text
+    obligatoire: false
+    description: Concurrent principal identifie
+    autocompletion: true
+
+  - nom: motif_cloture
+    type: select
+    obligatoire: false
+    options: [PRIX, FONCTIONNALITES, DELAIS, CONCURRENT, BUDGET_COUPE, PROJET_ABANDONNE, RELATION, AUTRE]
+    description: Motif de gain ou de perte
+
+  - nom: motif_cloture_detail
+    type: textarea
+    obligatoire: false
+    description: Detail du motif de cloture
+    autocompletion: true
+
+  - nom: devis_principal_id
+    type: relation
+    obligatoire: false
+    relation: Devis
+    description: Devis principal de l'opportunite
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description du besoin client
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  - nom: prochaine_action
+    type: text
+    obligatoire: false
+    description: Prochaine action a realiser
+    autocompletion: true
+
+  - nom: date_prochaine_action
+    type: date
+    obligatoire: false
+    description: Date de la prochaine action
+
+  - nom: priorite
+    type: select
+    obligatoire: false
+    defaut: NORMALE
+    options: [BASSE, NORMALE, HAUTE, URGENTE]
+    description: Priorite de l'opportunite
+
+  - nom: temperature
+    type: select
+    obligatoire: false
+    options: [FROID, TIEDE, CHAUD, BRULANT]
+    description: Temperature du lead
+
+  - nom: tags
+    type: tags
+    obligatoire: false
+    description: Tags pour filtrage
+
+actions:
+  - qualifier
+  - creer_devis
+  - envoyer_proposition
+  - marquer_gagne
+  - marquer_perdu
+  - planifier_activite
+  - dupliquer
+
+workflow:
+  "NOUVEAU -> QUALIFICATION": "action qualifier"
+  "QUALIFICATION -> PROPOSITION": "devis cree"
+  "PROPOSITION -> NEGOCIATION": "proposition envoyee"
+  "NEGOCIATION -> GAGNE": "action marquer_gagne"
+  "NEGOCIATION -> PERDU": "action marquer_perdu"
+
+marceau:
+  alertes:
+    - si etape = NOUVEAU et created_at < aujourd'hui - 7 jours: "Opportunite non qualifiee depuis 7 jours"
+    - si date_cloture_prevue < aujourd'hui et etape not in [GAGNE, PERDU]: "Date de cloture depassee"
+    - si temperature = BRULANT et date_prochaine_action = null: "Lead chaud sans prochaine action"

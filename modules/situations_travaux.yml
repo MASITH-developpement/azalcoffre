@@ -1,0 +1,183 @@
+# AZALPLUS - Module Situations de Travaux BTP
+nom: SituationsTravaux
+icone: clipboard-list
+menu: BTP
+description: Situation de travaux mensuelle conforme NF P03-001 et CCAG Travaux
+
+champs:
+  - nom: chantier_id
+    type: relation
+    obligatoire: true
+    relation: Chantiers
+    description: Chantier concerne
+    autocompletion: true
+
+  - nom: numero
+    type: number
+    obligatoire: true
+    description: Numero de situation (1, 2, 3...)
+
+  - nom: reference
+    type: text
+    obligatoire: true
+    description: Reference (ex SIT-CHANTIER-2026-01-001)
+    autocompletion: true
+
+  - nom: date_situation
+    type: date
+    obligatoire: true
+    description: Date de la situation
+
+  - nom: periode_debut
+    type: date
+    obligatoire: true
+    description: Date debut de la periode
+
+  - nom: periode_fin
+    type: date
+    obligatoire: true
+    description: Date fin de la periode
+
+  - nom: montant_cumul_ht
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Montant cumule HT depuis debut chantier
+
+  - nom: montant_cumul_ttc
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Montant cumule TTC depuis debut chantier
+
+  - nom: montant_periode_ht
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Montant HT de la periode (avancement)
+
+  - nom: montant_periode_ttc
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Montant TTC de la periode
+
+  - nom: montant_cumul_precedent_ht
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant cumule HT situation precedente
+
+  - nom: taux_retenue_garantie
+    type: number
+    obligatoire: false
+    defaut: 5.00
+    description: Taux retenue de garantie (max 5%)
+
+  - nom: montant_retenue_periode
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant retenue de garantie de la periode
+
+  - nom: montant_retenue_cumule
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant cumule retenue de garantie
+
+  - nom: taux_tva
+    type: number
+    obligatoire: false
+    defaut: 20.00
+    description: Taux TVA
+
+  - nom: montant_tva_periode
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant TVA de la periode
+
+  - nom: montant_net_ht
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Montant net a payer HT
+
+  - nom: montant_net_ttc
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Montant net a payer TTC
+
+  - nom: pourcentage_avancement
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Pourcentage avancement global du chantier (0-100)
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: draft
+    options: [draft, submitted, validated, contested, invoiced, paid, cancelled]
+    description: Statut de la situation
+
+  - nom: date_soumission
+    type: datetime
+    obligatoire: false
+    description: Date de soumission au MOA
+
+  - nom: date_validation
+    type: datetime
+    obligatoire: false
+    description: Date de validation par le MOA
+
+  - nom: validated_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Valide par
+    autocompletion: true
+
+  - nom: motif_contestation
+    type: textarea
+    obligatoire: false
+    description: Motif de contestation
+
+  - nom: facture_id
+    type: relation
+    obligatoire: false
+    relation: Factures
+    description: Facture generee
+    autocompletion: true
+
+  - nom: observations
+    type: textarea
+    obligatoire: false
+    description: Observations
+
+workflow:
+  draft -> submitted: action soumettre
+  submitted -> validated: action valider
+  submitted -> contested: action contester
+  contested -> submitted: action resoummettre
+  validated -> invoiced: action facturer
+  invoiced -> paid: action marquer_paye
+
+actions:
+  - soumettre
+  - valider
+  - contester
+  - resoummettre
+  - facturer
+  - marquer_paye
+  - ajouter_ligne
+  - calculer_montants
+  - generer_pdf
+
+marceau:
+  alertes:
+    - si status=submitted et date_soumission + 15j < maintenant: "Situation en attente validation > 15 jours"
+    - si status=validated et date_validation + 30j < maintenant: "Delai paiement depasse (30 jours)"
+    - si status=contested: "Situation contestee - action requise"

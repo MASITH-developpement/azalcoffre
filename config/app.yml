@@ -1,0 +1,42 @@
+# =============================================================================
+# AZALPLUS - Configuration Globale
+# =============================================================================
+
+app:
+  nom: "AZALPLUS"
+  version: "1.0.0"
+  description: "ERP No-Code Multi-Tenant"
+  url: "https://azalplus.com"
+
+# Paramètres par défaut
+defauts:
+  langue: "fr"
+  timezone: "Europe/Paris"
+  devise: "EUR"
+  pagination: 25
+  date_format: "DD/MM/YYYY"
+  datetime_format: "DD/MM/YYYY HH:mm"
+
+# Limites
+limites:
+  upload_max_mb: 50
+  export_max_lignes: 10000
+  session_duree_heures: 24
+  tentatives_connexion_max: 5
+  verrouillage_duree_minutes: 30
+
+# Fonctionnalités activées
+fonctionnalites:
+  multi_tenant: true
+  audit_trail: true
+  soft_delete: true
+  mfa: true
+  api_rate_limit: true
+
+# Modules activés par défaut pour nouveaux tenants
+modules_defaut:
+  - produits
+  - clients
+  - devis
+  - factures
+  - interventions

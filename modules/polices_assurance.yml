@@ -1,0 +1,215 @@
+# AZALPLUS - Module Polices Assurance
+nom: PolicesAssurance
+icone: shield
+menu: Assurance
+description: Gestion des polices d'assurance (RC Pro, Decennale, GLI, PNO)
+
+champs:
+  - nom: policy_number
+    type: text
+    obligatoire: false
+    description: Numero de police (attribue par l'assureur)
+
+  - nom: reference
+    type: text
+    obligatoire: true
+    unique: true
+    description: Reference interne
+
+  - nom: policy_type
+    type: select
+    obligatoire: true
+    options: [RC_PRO, DECENNALE, GLI, MRP, PJ, CYBER, FLOTTE, PNO]
+    description: Type de police d'assurance
+    autocompletion: true
+
+  - nom: provider_id
+    type: relation
+    obligatoire: false
+    relation: Fournisseurs
+    description: Compagnie d'assurance
+    autocompletion: true
+
+  - nom: provider_name
+    type: text
+    obligatoire: false
+    description: Nom de l'assureur
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: DRAFT
+    options: [DRAFT, QUOTE_REQUESTED, QUOTED, PENDING_DOCS, UNDER_REVIEW, ACTIVE, SUSPENDED, CANCELLED, EXPIRED]
+    description: Statut de la police
+
+  - nom: insured_company_name
+    type: text
+    obligatoire: true
+    description: Raison sociale de l'assure
+    autocompletion: true
+
+  - nom: insured_siren
+    type: text
+    obligatoire: false
+    description: Numero SIREN
+    autocompletion: true
+
+  - nom: insured_siret
+    type: text
+    obligatoire: false
+    description: Numero SIRET
+    autocompletion: true
+
+  - nom: insured_naf_code
+    type: text
+    obligatoire: false
+    description: Code NAF/APE
+    autocompletion: true
+
+  - nom: insured_activity
+    type: textarea
+    obligatoire: false
+    description: Description de l'activite
+
+  - nom: insured_revenue
+    type: number
+    obligatoire: false
+    description: Chiffre d'affaires annuel
+
+  - nom: insured_employees
+    type: number
+    obligatoire: false
+    description: Nombre d'employes
+
+  - nom: contact_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du contact
+
+  - nom: contact_name
+    type: text
+    obligatoire: false
+    description: Nom du contact
+    autocompletion: true
+
+  - nom: contact_email
+    type: email
+    obligatoire: false
+    autocompletion: true
+
+  - nom: contact_phone
+    type: tel
+    obligatoire: false
+
+  - nom: address_line1
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: address_line2
+    type: text
+    obligatoire: false
+
+  - nom: city
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: postal_code
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: country_code
+    type: text
+    obligatoire: false
+    defaut: FR
+    autocompletion: true
+
+  - nom: coverage_amount
+    type: number
+    obligatoire: false
+    description: Montant de garantie
+
+  - nom: deductible
+    type: number
+    obligatoire: false
+    description: Franchise
+
+  - nom: coverages
+    type: json
+    obligatoire: false
+    description: Liste des garanties
+
+  - nom: exclusions
+    type: json
+    obligatoire: false
+    description: Exclusions
+
+  - nom: effective_date
+    type: date
+    obligatoire: false
+    description: Date d'effet
+
+  - nom: expiry_date
+    type: date
+    obligatoire: false
+    description: Date d'expiration
+
+  - nom: renewal_date
+    type: date
+    obligatoire: false
+    description: Date de renouvellement
+
+  - nom: premium_amount
+    type: number
+    obligatoire: false
+    description: Prime annuelle HT
+
+  - nom: tax_amount
+    type: number
+    obligatoire: false
+    description: Taxes
+
+  - nom: total_premium
+    type: number
+    obligatoire: false
+    description: Prime TTC
+
+  - nom: payment_frequency
+    type: select
+    obligatoire: false
+    defaut: ANNUAL
+    options: [MONTHLY, QUARTERLY, SEMI_ANNUAL, ANNUAL]
+    description: Frequence de paiement
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+
+workflow:
+  DRAFT -> QUOTE_REQUESTED: demande de devis
+  QUOTE_REQUESTED -> QUOTED: devis recu
+  QUOTED -> PENDING_DOCS: documents demandes
+  PENDING_DOCS -> UNDER_REVIEW: documents recus
+  UNDER_REVIEW -> ACTIVE: police validee
+  ACTIVE -> SUSPENDED: suspension
+  ACTIVE -> CANCELLED: resiliation
+  ACTIVE -> EXPIRED: expiration
+
+actions:
+  - demander_devis
+  - comparer_devis
+  - souscrire
+  - renouveler
+  - resilier
+  - telecharger_attestation
+  - declarer_sinistre
+
+marceau:
+  alertes:
+    - si status = ACTIVE et expiry_date < aujourd'hui + 30 jours: "Police expire bientot"
+    - si status = PENDING_DOCS et updated_at > 7 jours: "Documents en attente depuis plus de 7 jours"
+    - si status = EXPIRED: "Police expiree - a renouveler ou resilier"

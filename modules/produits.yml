@@ -1,0 +1,457 @@
+# AZALPLUS - Module Produits
+nom: Produits
+icone: package
+menu: Inventaire
+description: Gestion des produits et articles
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    obligatoire: true
+    description: Code produit unique
+    autocompletion: true
+
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom du produit
+    autocompletion: true
+
+  - nom: trade_name
+    type: text
+    obligatoire: false
+    description: Nom commercial
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description
+
+  # Gestion des variantes
+  - nom: has_variants
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Produit avec variantes
+
+  - nom: attributs
+    type: json
+    obligatoire: false
+    description: Liste des attributs de variantes
+
+  - nom: attributs_config
+    type: json
+    obligatoire: false
+    description: Configuration des attributs
+
+  - nom: variantes_count
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de variantes
+
+  - nom: variantes_stock_total
+    type: number
+    obligatoire: false
+    description: Stock total des variantes
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: STOCKABLE
+    options: [STOCKABLE, CONSUMABLE, SERVICE]
+    description: Type de produit
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: DRAFT
+    options: [DRAFT, ACTIVE, DISCONTINUED, BLOCKED]
+    description: Statut du produit
+
+  # Classification
+  - nom: category_id
+    type: relation
+    obligatoire: false
+    relation: Categories
+    description: Categorie
+    autocompletion: true
+
+  - nom: cpv_code
+    type: text
+    obligatoire: false
+    description: Code CPV (marches publics)
+    autocompletion: true
+
+  # Codes
+  - nom: barcode
+    type: text
+    obligatoire: false
+    description: Code-barres
+    autocompletion: true
+
+  - nom: ean13
+    type: text
+    obligatoire: false
+    description: Code EAN13
+    autocompletion: true
+
+  - nom: sku
+    type: text
+    obligatoire: false
+    description: SKU (Stock Keeping Unit)
+    autocompletion: true
+
+  - nom: manufacturer_code
+    type: text
+    obligatoire: false
+    description: Reference fabricant
+    autocompletion: true
+
+  - nom: supplier_product_code
+    type: text
+    obligatoire: false
+    description: Reference fournisseur
+    autocompletion: true
+
+  - nom: customer_product_code
+    type: text
+    obligatoire: false
+    description: Reference client
+    autocompletion: true
+
+  # Unites
+  - nom: unit
+    type: text
+    obligatoire: false
+    defaut: UNIT
+    description: Unite de base
+    autocompletion: true
+
+  - nom: purchase_unit
+    type: text
+    obligatoire: false
+    description: Unite d'achat
+    autocompletion: true
+
+  - nom: purchase_unit_factor
+    type: number
+    obligatoire: false
+    defaut: 1
+    description: Facteur unite achat
+
+  - nom: sale_unit
+    type: text
+    obligatoire: false
+    description: Unite de vente
+    autocompletion: true
+
+  - nom: sale_unit_factor
+    type: number
+    obligatoire: false
+    defaut: 1
+    description: Facteur unite vente
+
+  # Prix et couts
+  - nom: standard_cost
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Cout standard
+
+  - nom: average_cost
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Cout moyen pondere
+
+  - nom: last_purchase_price
+    type: number
+    obligatoire: false
+    description: Dernier prix d'achat
+
+  - nom: sale_price
+    type: number
+    obligatoire: false
+    description: Prix de vente HT
+
+  - nom: currency
+    type: text
+    obligatoire: false
+    defaut: EUR
+    description: Devise
+    autocompletion: true
+
+  # TVA / Taxes
+  - nom: taxe_id
+    type: relation
+    obligatoire: false
+    relation: Taxes
+    description: Taxe par defaut pour les ventes
+    autocompletion: true
+
+  - nom: tax_rate
+    type: number
+    obligatoire: false
+    description: Taux TVA vente (%)
+
+  - nom: taxe_achat_id
+    type: relation
+    obligatoire: false
+    relation: Taxes
+    description: Taxe par defaut pour les achats
+    autocompletion: true
+
+  - nom: supplier_tax_rate
+    type: number
+    obligatoire: false
+    description: Taux TVA achat (%)
+
+  - nom: eco_taxe
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Eco-contribution
+
+  - nom: eco_taxe_code
+    type: text
+    obligatoire: false
+    description: Code eco-organisme
+    autocompletion: true
+
+  # Valorisation
+  - nom: valuation_method
+    type: select
+    obligatoire: false
+    defaut: AVG
+    options: [FIFO, LIFO, AVG, STANDARD]
+    description: Methode de valorisation
+
+  # Gestion de stock
+  - nom: gestion_stock
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Activer la gestion de stock
+
+  - nom: stock_actuel
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Stock actuel
+
+  - nom: stock_reserve
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Stock reserve
+
+  - nom: stock_disponible
+    type: number
+    obligatoire: false
+    description: Stock disponible
+
+  - nom: stock_minimum
+    type: number
+    obligatoire: false
+    defaut: 5
+    description: Stock minimum
+
+  - nom: stock_maximum
+    type: number
+    obligatoire: false
+    description: Stock maximum
+
+  - nom: seuil_reapprovisionnement
+    type: number
+    obligatoire: false
+    description: Seuil de reapprovisionnement
+
+  - nom: statut_stock
+    type: select
+    obligatoire: false
+    options: [EN_STOCK, STOCK_BAS, RUPTURE, NON_GERE]
+    description: Statut du stock
+
+  - nom: reorder_point
+    type: number
+    obligatoire: false
+    description: Point de reapprovisionnement
+
+  - nom: reorder_quantity
+    type: number
+    obligatoire: false
+    description: Quantite de reapprovisionnement
+
+  - nom: lead_time_days
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Delai d'approvisionnement (jours)
+
+  # Dimensions
+  - nom: weight_kg
+    type: number
+    obligatoire: false
+    description: Poids (kg)
+
+  - nom: volume_m3
+    type: number
+    obligatoire: false
+    description: Volume (m3)
+
+  - nom: length_cm
+    type: number
+    obligatoire: false
+    description: Longueur (cm)
+
+  - nom: width_cm
+    type: number
+    obligatoire: false
+    description: Largeur (cm)
+
+  - nom: height_cm
+    type: number
+    obligatoire: false
+    description: Hauteur (cm)
+
+  # Suivi
+  - nom: track_lot
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Suivi par lot
+
+  - nom: track_serial
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Suivi par numero de serie
+
+  - nom: track_expiry
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Suivi des dates de peremption
+
+  - nom: expiry_warning_days
+    type: number
+    obligatoire: false
+    defaut: 30
+    description: Alerte peremption (jours avant)
+
+  # Entrepot par defaut
+  - nom: default_warehouse_id
+    type: relation
+    obligatoire: false
+    relation: Entrepots
+    description: Entrepot par defaut
+    autocompletion: true
+
+  - nom: default_location_id
+    type: relation
+    obligatoire: false
+    relation: Emplacements
+    description: Emplacement par defaut
+    autocompletion: true
+
+  # Fournisseur principal
+  - nom: default_supplier_id
+    type: relation
+    obligatoire: false
+    relation: Fournisseurs
+    description: Fournisseur principal
+    autocompletion: true
+
+  # Comptabilite
+  - nom: stock_account_id
+    type: relation
+    obligatoire: false
+    relation: ComptesComptables
+    description: Compte de stock
+    autocompletion: true
+
+  - nom: expense_account_id
+    type: relation
+    obligatoire: false
+    relation: ComptesComptables
+    description: Compte de charge
+    autocompletion: true
+
+  - nom: income_account_id
+    type: relation
+    obligatoire: false
+    relation: ComptesComptables
+    description: Compte de produit
+    autocompletion: true
+
+  # Classification
+  - nom: tags
+    type: tags
+    obligatoire: false
+    description: Tags
+
+  - nom: custom_fields
+    type: json
+    obligatoire: false
+    description: Champs personnalises
+
+  - nom: image_url
+    type: text
+    obligatoire: false
+    description: URL de l'image
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+  # Flags
+  - nom: is_sellable
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Peut etre vendu
+
+  - nom: is_purchasable
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Peut etre achete
+
+  - nom: is_active
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Produit actif
+
+workflow:
+  DRAFT -> ACTIVE: action activer
+  ACTIVE -> DISCONTINUED: action discontinuer
+  ACTIVE -> BLOCKED: action bloquer
+  BLOCKED -> ACTIVE: action debloquer
+  DISCONTINUED -> ACTIVE: action reactiver
+
+actions:
+  - activer
+  - discontinuer
+  - bloquer
+  - debloquer
+  - dupliquer
+  - ajuster_stock
+  - voir_mouvements
+  - creer_commande_fournisseur
+  - configurer_variantes
+  - generer_variantes
+  - voir_variantes
+  - importer_variantes
+
+marceau:
+  alertes:
+    - si statut_stock = RUPTURE: "URGENT - Rupture de stock"
+    - si statut_stock = STOCK_BAS: "Stock bas - Reapprovisionner"
+    - si stock_disponible < seuil_reapprovisionnement: "Seuil de reapprovisionnement atteint"
+    - si status = BLOCKED: "Produit bloque"
+    - si has_variants et variantes_count = 0: "Produit avec variantes mais aucune variante creee"

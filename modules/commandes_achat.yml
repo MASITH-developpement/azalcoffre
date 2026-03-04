@@ -1,0 +1,166 @@
+# AZALPLUS - Module Commandes d'Achat
+nom: CommandesAchat
+icone: shopping-cart
+menu: Achats
+description: Gestion des commandes fournisseurs
+
+champs:
+  - nom: numero
+    type: text
+    obligatoire: false
+    description: Numero de commande auto-genere
+    autocompletion: true
+
+  - nom: reference_interne
+    type: text
+    obligatoire: false
+    description: Reference interne ou projet
+    autocompletion: true
+
+  - nom: fournisseur_id
+    type: relation
+    obligatoire: true
+    relation: Fournisseurs
+    description: Fournisseur de la commande
+    autocompletion: true
+
+  - nom: contact_fournisseur_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du contact fournisseur
+
+  - nom: contact_fournisseur
+    type: text
+    obligatoire: false
+    description: Nom du contact chez le fournisseur
+    autocompletion: true
+
+  - nom: email_fournisseur
+    type: email
+    obligatoire: false
+    description: Email pour envoi de la commande
+    autocompletion: true
+
+  - nom: date_commande
+    type: date
+    obligatoire: true
+    description: Date de la commande
+
+  - nom: date_livraison_prevue
+    type: date
+    obligatoire: true
+    description: Date de livraison souhaitee
+
+  - nom: date_livraison_confirmee
+    type: date
+    obligatoire: false
+    description: Date confirmee par le fournisseur
+
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, EN_ATTENTE_VALIDATION, VALIDEE, ENVOYEE, CONFIRMEE, EN_COURS_LIVRAISON, PARTIELLEMENT_LIVREE, LIVREE, ANNULEE]
+    description: Statut de la commande
+
+  - nom: priorite
+    type: select
+    obligatoire: false
+    defaut: NORMALE
+    options: [NORMALE, HAUTE, URGENTE]
+    description: Priorite de la commande
+
+  - nom: lignes
+    type: json
+    obligatoire: false
+    description: Lignes de commande
+
+  - nom: total_ht
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total HT
+
+  - nom: total_tva
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total TVA
+
+  - nom: total_ttc
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total TTC
+
+  - nom: devise_id
+    type: relation
+    obligatoire: false
+    relation: Devises
+    description: Devise de la commande
+    autocompletion: true
+
+  - nom: conditions_paiement
+    type: select
+    obligatoire: false
+    defaut: NET_30
+    options: [COMPTANT, NET_15, NET_30, NET_45, NET_60, NET_90]
+    description: Conditions de paiement
+
+  - nom: adresse_livraison
+    type: textarea
+    obligatoire: false
+    description: Adresse de livraison
+
+  - nom: demandeur_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Personne ayant demande l'achat
+    autocompletion: true
+
+  - nom: valideur_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Valideur de la commande
+    autocompletion: true
+
+  - nom: date_validation
+    type: datetime
+    obligatoire: false
+    description: Date de validation
+
+  - nom: objet
+    type: text
+    obligatoire: false
+    description: Objet de la commande
+    autocompletion: true
+
+  - nom: notes_internes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  - nom: notes_fournisseur
+    type: textarea
+    obligatoire: false
+    description: Instructions pour le fournisseur
+
+actions:
+  - soumettre_validation
+  - valider
+  - rejeter
+  - envoyer_fournisseur
+  - generer_pdf
+  - creer_reception
+  - annuler
+
+workflow:
+  "BROUILLON -> EN_ATTENTE_VALIDATION": "soumettre"
+  "EN_ATTENTE_VALIDATION -> VALIDEE": "action valider"
+  "EN_ATTENTE_VALIDATION -> BROUILLON": "action rejeter"
+  "VALIDEE -> ENVOYEE": "action envoyer"
+  "ENVOYEE -> CONFIRMEE": "confirmation fournisseur"
+  "CONFIRMEE -> LIVREE": "reception complete"

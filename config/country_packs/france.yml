@@ -1,0 +1,168 @@
+# =============================================================================
+# AZALPLUS - Country Pack France
+# =============================================================================
+
+pays:
+  code: "FR"
+  nom: "France"
+  devise: "EUR"
+  langue: "fr"
+  timezone: "Europe/Paris"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TVA
+# ─────────────────────────────────────────────────────────────────────────────
+tva:
+  taux:
+    normal:
+      valeur: 20
+      label: "TVA 20%"
+      defaut: true
+
+    intermediaire:
+      valeur: 10
+      label: "TVA 10%"
+      description: "Restauration, travaux, transport"
+
+    reduit:
+      valeur: 5.5
+      label: "TVA 5.5%"
+      description: "Produits de première nécessité, livres"
+
+    super_reduit:
+      valeur: 2.1
+      label: "TVA 2.1%"
+      description: "Médicaments remboursés, presse"
+
+    exonere:
+      valeur: 0
+      label: "Exonéré"
+      description: "Exportations, formations"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Facture électronique
+# ─────────────────────────────────────────────────────────────────────────────
+factur_x:
+  actif: true
+  profil: "EN16931"  # MINIMUM | BASIC | EN16931 | EXTENDED
+  format: "PDF/A-3"
+
+  # Obligations légales
+  mentions_obligatoires:
+    - siret
+    - tva_intra
+    - numero_facture
+    - date_facture
+    - date_echeance
+    - coordonnees_vendeur
+    - coordonnees_acheteur
+    - lignes_detail
+    - totaux_ht_tva_ttc
+    - conditions_paiement
+    - penalites_retard
+
+# Chorus Pro (facturation État)
+chorus_pro:
+  actif: false
+  identifiant: "${CHORUS_ID}"
+  url_api: "https://chorus-pro.gouv.fr/api"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FEC (Fichier des Écritures Comptables)
+# ─────────────────────────────────────────────────────────────────────────────
+fec:
+  actif: true
+  format: "FEC_{siren}_{date_cloture}.txt"
+  encoding: "ISO-8859-15"
+  separateur: "\t"
+
+  # Colonnes obligatoires
+  colonnes:
+    - JournalCode
+    - JournalLib
+    - EcritureNum
+    - EcritureDate
+    - CompteNum
+    - CompteLib
+    - CompAuxNum
+    - CompAuxLib
+    - PieceRef
+    - PieceDate
+    - EcritureLib
+    - Debit
+    - Credit
+    - EcritureLet
+    - DateLet
+    - ValidDate
+    - Montantdevise
+    - Idevise
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DSN (Déclaration Sociale Nominative)
+# ─────────────────────────────────────────────────────────────────────────────
+dsn:
+  actif: false  # Activer si module paie
+  url_api: "https://www.net-entreprises.fr"
+
+  # Échéances
+  echeances:
+    mensuelle: 5  # Jour du mois (ou 15 pour PME)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Formats légaux
+# ─────────────────────────────────────────────────────────────────────────────
+formats:
+  siret:
+    longueur: 14
+    regex: "^[0-9]{14}$"
+
+  siren:
+    longueur: 9
+    regex: "^[0-9]{9}$"
+
+  tva_intra:
+    prefixe: "FR"
+    longueur: 13
+    regex: "^FR[0-9A-Z]{2}[0-9]{9}$"
+
+  code_postal:
+    longueur: 5
+    regex: "^[0-9]{5}$"
+
+  code_naf:
+    regex: "^[0-9]{4}[A-Z]$"
+
+  iban_fr:
+    prefixe: "FR"
+    longueur: 27
+    regex: "^FR[0-9]{2}[0-9]{10}[A-Z0-9]{11}[0-9]{2}$"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mentions légales
+# ─────────────────────────────────────────────────────────────────────────────
+mentions:
+  facture:
+    penalites_retard: "En cas de retard de paiement, une pénalité égale à 3 fois le taux d'intérêt légal sera exigible (loi 2008-776 du 4 août 2008). Pour tout professionnel, en sus des indemnités de retard, une indemnité forfaitaire de 40€ sera due au titre des frais de recouvrement (Art. 441-6 c. com. et D. 441-5 c. com.)."
+
+    escompte: "Pas d'escompte en cas de paiement anticipé."
+
+    tva_non_applicable: "TVA non applicable, art. 293 B du CGI"
+
+  devis:
+    validite: "Devis valable {duree} jours à compter de sa date d'émission."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API externes
+# ─────────────────────────────────────────────────────────────────────────────
+api:
+  insee:
+    url: "https://api.insee.fr/entreprises/sirene/V3"
+    description: "Recherche SIRET/SIREN"
+
+  adresse:
+    url: "https://api-adresse.data.gouv.fr"
+    description: "Autocomplétion adresses"
+
+  ban:
+    url: "https://api.gouv.fr/les-api/base-adresse-nationale"
+    description: "Base Adresse Nationale"

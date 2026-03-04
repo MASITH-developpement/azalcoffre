@@ -1,0 +1,123 @@
+# =============================================================================
+# AZALPLUS - Configuration des Rapports
+# =============================================================================
+
+rapports:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Rapports Comptables
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  balance_agee_globale:
+    nom: "Balance agee"
+    description: "Repartition des creances clients par anciennete (30/60/90 jours)"
+    icone: "clock"
+    menu: "Comptabilite"
+    route: "/ui/Rapports/balance-agee"
+    template: "ui/rapports/balance_agee_globale.html"
+    permissions:
+      - comptabilite.lire
+      - rapports.balance_agee
+    parametres:
+      - nom: commercial
+        type: relation
+        relation: Utilisateurs
+        description: "Filtrer par commercial"
+      - nom: segment
+        type: text
+        description: "Filtrer par segment client"
+      - nom: montant_min
+        type: number
+        description: "Montant minimum du"
+      - nom: echus_seulement
+        type: boolean
+        defaut: false
+        description: "Afficher uniquement les creances echues"
+    exports:
+      - format: PDF
+        template: "pdf/balance_agee.html"
+      - format: Excel
+        colonnes:
+          - client_code
+          - client_name
+          - non_echu
+          - echu_0_30
+          - echu_31_60
+          - echu_61_90
+          - echu_90_plus
+          - total
+    calculs:
+      non_echu: "factures WHERE due_date > aujourd'hui AND payment_status != PAID"
+      echu_0_30: "factures WHERE due_date <= aujourd'hui AND due_date > aujourd'hui - 30j AND payment_status != PAID"
+      echu_31_60: "factures WHERE due_date <= aujourd'hui - 30j AND due_date > aujourd'hui - 60j AND payment_status != PAID"
+      echu_61_90: "factures WHERE due_date <= aujourd'hui - 60j AND due_date > aujourd'hui - 90j AND payment_status != PAID"
+      echu_90_plus: "factures WHERE due_date <= aujourd'hui - 90j AND payment_status != PAID"
+
+  releve_compte_client:
+    nom: "Releve de compte"
+    description: "Historique des mouvements de credit d'un client"
+    icone: "file-text"
+    menu: "Clients"
+    route: "/ui/Client/{id}/releve"
+    template: "ui/client/releve.html"
+    permissions:
+      - clients.lire
+      - comptabilite.lire
+    parametres:
+      - nom: client_id
+        type: relation
+        relation: Clients
+        obligatoire: true
+      - nom: date_debut
+        type: date
+        description: "Date de debut"
+      - nom: date_fin
+        type: date
+        description: "Date de fin"
+      - nom: type
+        type: select
+        options: [DEBIT, CREDIT]
+        description: "Type de mouvement"
+    exports:
+      - format: PDF
+        template: "pdf/releve_compte.html"
+      - format: Excel
+        colonnes:
+          - date
+          - reference
+          - description
+          - debit
+          - credit
+          - solde
+
+  balance_agee_client:
+    nom: "Balance agee client"
+    description: "Detail des creances echues pour un client"
+    icone: "clock"
+    menu: "Clients"
+    route: "/ui/Client/{id}/balance-agee"
+    template: "ui/client/balance_agee.html"
+    permissions:
+      - clients.lire
+      - comptabilite.lire
+    parametres:
+      - nom: client_id
+        type: relation
+        relation: Clients
+        obligatoire: true
+    exports:
+      - format: PDF
+        template: "pdf/balance_agee_client.html"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Navigation
+  # ─────────────────────────────────────────────────────────────────────────────
+
+navigation:
+  rapports_comptables:
+    nom: "Rapports comptables"
+    icone: "bar-chart-2"
+    sous_menus:
+      - balance_agee_globale
+      - echeancier_fournisseurs
+      - journal_ventes
+      - grand_livre

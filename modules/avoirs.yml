@@ -1,0 +1,819 @@
+# =============================================================================
+# AZALPLUS - Module Avoirs (Credit Notes)
+# =============================================================================
+# Gestion des avoirs clients avec support:
+# - Creation depuis facture (copie lignes)
+# - Avoir partiel (selection de lignes)
+# - Avoir total (toutes les lignes)
+# - Application sur compte client
+# - Suivi d'utilisation sur factures futures
+# - Integration comptable (ecritures automatiques)
+
+nom: Avoirs
+icone: file-minus
+menu: Commercial
+
+champs:
+  # =========================================================================
+  # IDENTIFICATION
+  # =========================================================================
+  - nom: numero
+    type: text
+    obligatoire: true
+    auto: true
+    format: "AV-{YYYY}-{NNNNN}"
+    description: Numero d'avoir (auto-genere)
+    autocompletion: true
+
+  - nom: reference
+    type: text
+    obligatoire: false
+    description: Reference interne ou client
+    autocompletion: true
+
+  # =========================================================================
+  # RELATIONS
+  # =========================================================================
+  - nom: facture_id
+    type: relation
+    obligatoire: true
+    relation: Factures
+    description: Facture d'origine (obligatoire)
+    autocompletion: true
+
+  - nom: facture_numero
+    type: text
+    obligatoire: false
+    readonly: true
+    calcul: "SELECT number FROM factures WHERE id = facture_id"
+    description: Numero de la facture d'origine (affichage)
+    autocompletion: true
+
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    defaut_depuis: facture_id.customer_id
+    description: Client (herite de la facture)
+    autocompletion: true
+
+  - nom: client_nom
+    type: text
+    obligatoire: false
+    readonly: true
+    calcul: "SELECT name FROM clients WHERE id = client_id"
+    description: Nom du client (affichage)
+    autocompletion: true
+
+  # =========================================================================
+  # DATES
+  # =========================================================================
+  - nom: date
+    type: date
+    obligatoire: true
+    defaut: aujourd'hui
+    description: Date de l'avoir
+
+  - nom: date_facture_origine
+    type: date
+    obligatoire: false
+    readonly: true
+    calcul: "SELECT date FROM factures WHERE id = facture_id"
+    description: Date de la facture d'origine
+
+  # =========================================================================
+  # MOTIF ET TYPE
+  # =========================================================================
+  - nom: motif
+    type: select
+    obligatoire: true
+    options: [RETOUR, ERREUR_FACTURATION, REMISE_COMMERCIALE, GESTE_COMMERCIAL, ANNULATION, AUTRE]
+    description: |
+      Motif de l'avoir:
+      - RETOUR: Retour de marchandises
+      - ERREUR_FACTURATION: Erreur sur la facture d'origine
+      - REMISE_COMMERCIALE: Remise accordee apres facturation
+      - GESTE_COMMERCIAL: Geste commercial (satisfaction client)
+      - ANNULATION: Annulation partielle ou totale de la facture
+      - AUTRE: Autre motif (preciser dans notes)
+
+  - nom: motif_detail
+    type: textarea
+    obligatoire: false
+    description: Detail du motif (obligatoire si motif=AUTRE)
+
+  - nom: type_avoir
+    type: select
+    obligatoire: true
+    defaut: PARTIEL
+    options: [TOTAL, PARTIEL]
+    description: |
+      Type d'avoir:
+      - TOTAL: Annule completement la facture (toutes les lignes)
+      - PARTIEL: Concerne une partie de la facture (lignes selectionnees)
+
+  # =========================================================================
+  # LIGNES D'AVOIR
+  # =========================================================================
+  # Les lignes sont copiees depuis la facture d'origine
+  # et peuvent etre modifiees (quantite, prix)
+
+  # =========================================================================
+  # TOTAUX - Calcules automatiquement depuis les lignes
+  # =========================================================================
+  - nom: total_ht
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    calcul: "somme(lignes.subtotal)"
+    description: Total HT de l'avoir (somme des lignes)
+
+  - nom: ventilation_tva
+    type: json
+    obligatoire: false
+    readonly: true
+    description: |
+      Repartition de la TVA par taux (identique structure factures).
+      Format: [
+        {
+          "taxe_id": "uuid",
+          "taxe_code": "TVA20",
+          "taxe_nom": "TVA 20%",
+          "taux": 20,
+          "base_ht": 1000.00,
+          "montant_tva": 200.00,
+          "compte_collecte": "44571"
+        },
+        ...
+      ]
+    calcul: |
+      GROUP BY lignes.taxe_id:
+        - taxe_id: lignes.taxe_id
+        - taxe_code: SELECT code FROM taxes WHERE id = lignes.taxe_id
+        - taxe_nom: SELECT nom FROM taxes WHERE id = lignes.taxe_id
+        - taux: SELECT taux FROM taxes WHERE id = lignes.taxe_id
+        - base_ht: somme(lignes.subtotal)
+        - montant_tva: somme(lignes.tax_amount)
+        - compte_collecte: SELECT compte_collecte FROM taxes WHERE id = lignes.taxe_id
+
+  - nom: total_tva
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    calcul: "somme(lignes.tax_amount)"
+    description: Montant TVA total (somme des lignes)
+
+  - nom: total_ttc
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    calcul: "total_ht + total_tva"
+    description: Total TTC de l'avoir
+
+  # Devise (heritee de la facture d'origine)
+  - nom: devise
+    type: relation
+    obligatoire: false
+    relation: Devises
+    defaut_depuis: facture_id.currency
+    defaut: EUR
+    description: Devise de l'avoir
+    autocompletion: true
+
+  - nom: taux_change
+    type: number
+    obligatoire: false
+    defaut_depuis: facture_id.exchange_rate
+    defaut: 1.0
+    description: Taux de change au moment de la facture d'origine
+
+  - nom: total_ht_base
+    type: number
+    obligatoire: false
+    defaut: 0
+    calcul: "total_ht / taux_change"
+    description: Total HT en devise de base (EUR)
+
+  - nom: total_ttc_base
+    type: number
+    obligatoire: false
+    defaut: 0
+    calcul: "total_ttc / taux_change"
+    description: Total TTC en devise de base (EUR)
+
+  # =========================================================================
+  # STATUT ET WORKFLOW
+  # =========================================================================
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, VALIDE, REMBOURSE, IMPUTE, ANNULE]
+    description: |
+      Statut de l'avoir:
+      - BROUILLON: En cours de creation
+      - VALIDE: Avoir valide, en attente de traitement
+      - REMBOURSE: Avoir rembourse au client
+      - IMPUTE: Avoir impute sur compte client ou facture
+      - ANNULE: Avoir annule
+
+  # =========================================================================
+  # MODE DE REMBOURSEMENT / IMPUTATION
+  # =========================================================================
+  - nom: mode_remboursement
+    type: select
+    obligatoire: false
+    options: [VIREMENT, CHEQUE, AVOIR_COMPTE, IMPUTATION_FACTURE, ESPECES, AUTRE]
+    description: |
+      Mode de remboursement/utilisation:
+      - VIREMENT: Remboursement par virement bancaire
+      - CHEQUE: Remboursement par cheque
+      - AVOIR_COMPTE: Credit sur compte client (pour factures futures)
+      - IMPUTATION_FACTURE: Imputation directe sur une facture existante
+      - ESPECES: Remboursement en especes
+      - AUTRE: Autre mode
+
+  - nom: montant_rembourse
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant effectivement rembourse
+
+  - nom: date_remboursement
+    type: date
+    obligatoire: false
+    description: Date du remboursement
+
+  - nom: reference_remboursement
+    type: text
+    obligatoire: false
+    description: Reference du remboursement (virement, cheque, etc.)
+    autocompletion: true
+
+  # =========================================================================
+  # IMPUTATION SUR COMPTE CLIENT
+  # =========================================================================
+  - nom: montant_impute_compte
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant impute sur le compte client (solde_credit)
+
+  - nom: date_imputation_compte
+    type: date
+    obligatoire: false
+    description: Date d'imputation sur compte
+
+  # =========================================================================
+  # IMPUTATION SUR FACTURES
+  # =========================================================================
+  - nom: montant_impute_factures
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant total impute sur des factures
+
+  - nom: montant_restant
+    type: number
+    obligatoire: false
+    readonly: true
+    calcul: "total_ttc - montant_rembourse - montant_impute_compte - montant_impute_factures"
+    description: Montant restant a utiliser
+
+  - nom: est_entierement_utilise
+    type: boolean
+    obligatoire: false
+    readonly: true
+    calcul: "montant_restant <= 0"
+    description: L'avoir est-il entierement utilise?
+
+  # =========================================================================
+  # COMPTABILISATION
+  # =========================================================================
+  - nom: ecriture_comptable_id
+    type: relation
+    obligatoire: false
+    relation: EcritureComptable
+    description: Ecriture comptable generee
+    autocompletion: true
+
+  - nom: comptabilise
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Avoir comptabilise?
+
+  - nom: date_comptabilisation
+    type: datetime
+    obligatoire: false
+    description: Date de comptabilisation
+
+  # =========================================================================
+  # PDF ET DOCUMENTS
+  # =========================================================================
+  - nom: pdf_url
+    type: text
+    obligatoire: false
+    description: URL du PDF genere
+
+  - nom: access_token
+    type: text
+    obligatoire: false
+    description: Token d'acces portail client
+
+  # =========================================================================
+  # VALIDATION ET ATTRIBUTION
+  # =========================================================================
+  - nom: valide_par
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Valide par
+    autocompletion: true
+
+  - nom: date_validation
+    type: datetime
+    obligatoire: false
+    description: Date de validation
+
+  - nom: assigned_to
+    type: relation
+    obligatoire: false
+    defaut_depuis: facture_id.assigned_to
+    relation: Utilisateurs
+    description: Commercial responsable
+    autocompletion: true
+
+  # =========================================================================
+  # NOTES ET MENTIONS
+  # =========================================================================
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes visibles client
+
+  - nom: internal_notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  - nom: mentions_legales
+    type: textarea
+    obligatoire: false
+    readonly: true
+    defaut: "Avoir etabli conformement aux dispositions de l'article 272 du CGI."
+    description: Mentions legales a faire figurer sur l'avoir
+
+  # =========================================================================
+  # METADONNEES
+  # =========================================================================
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+# =============================================================================
+# LIGNES D'AVOIR
+# =============================================================================
+lignes:
+  champs:
+    - nom: line_number
+      type: number
+      obligatoire: true
+      description: Numero de ligne
+
+    - nom: ligne_facture_id
+      type: text
+      obligatoire: false
+      description: ID de la ligne de facture d'origine
+
+    # Produit
+    - nom: product_id
+      type: relation
+      obligatoire: false
+      relation: Produits
+      description: Produit reference
+
+    - nom: variante_id
+      type: relation
+      obligatoire: false
+      relation: VariantesProduit
+      description: Variante du produit (si applicable)
+
+    - nom: product_code
+      type: text
+      obligatoire: false
+      description: Code produit ou SKU variante
+
+    - nom: attributs_variante
+      type: json
+      obligatoire: false
+      readonly: true
+      description: |
+        Attributs de la variante selectionnee.
+        Format: {"TAILLE": "M", "COULEUR": "Rouge"}
+
+    - nom: description
+      type: textarea
+      obligatoire: true
+      description: Description (copiee de la facture)
+
+    # Quantites
+    - nom: quantite_facturee
+      type: number
+      obligatoire: false
+      readonly: true
+      description: Quantite sur la facture d'origine
+
+    - nom: quantite
+      type: number
+      obligatoire: true
+      defaut: 1
+      min: 0
+      precision: 3
+      description: Quantite a crediter
+
+    - nom: unite
+      type: text
+      obligatoire: false
+      defaut: pce
+      description: Unite (pce, kg, h, etc.)
+
+    # Prix
+    - nom: prix_unitaire
+      type: number
+      obligatoire: true
+      defaut: 0
+      precision: 4
+      description: Prix unitaire HT (identique facture)
+
+    # Remise ligne (copiee de la facture)
+    - nom: remise_percent
+      type: number
+      obligatoire: false
+      defaut: 0
+      min: 0
+      max: 100
+      description: Remise ligne (%)
+
+    - nom: remise_montant
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      calcul: "prix_unitaire * quantite * remise_percent / 100"
+      description: Montant remise ligne (calcule)
+
+    # Sous-total HT
+    - nom: subtotal
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      calcul: "(prix_unitaire * quantite) - remise_montant"
+      description: Total ligne HT (calcule)
+
+    # TVA par ligne
+    - nom: taxe_id
+      type: relation
+      obligatoire: false
+      relation: Taxes
+      description: Taxe applicable a cette ligne
+
+    - nom: tax_code
+      type: text
+      obligatoire: false
+      readonly: true
+      calcul: "SELECT code FROM taxes WHERE id = taxe_id"
+      description: "Code de la taxe (ex: TVA20)"
+
+    - nom: tax_rate
+      type: number
+      obligatoire: false
+      defaut: 20.0
+      readonly: true
+      calcul: "SELECT taux FROM taxes WHERE id = taxe_id"
+      description: Taux TVA (%)
+
+    - nom: tax_amount
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      calcul: "subtotal * tax_rate / 100"
+      description: Montant TVA ligne (calcule)
+
+    - nom: total
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      calcul: "subtotal + tax_amount"
+      description: Total ligne TTC (calcule)
+
+    - nom: notes
+      type: textarea
+      obligatoire: false
+      description: Notes ligne
+
+# =============================================================================
+# IMPUTATIONS SUR FACTURES (sous-entite)
+# =============================================================================
+imputations:
+  description: |
+    Suivi des imputations de cet avoir sur des factures.
+    Permet de tracer l'utilisation de l'avoir.
+  champs:
+    - nom: facture_id
+      type: relation
+      obligatoire: true
+      relation: Factures
+      description: Facture sur laquelle l'avoir est impute
+
+    - nom: facture_numero
+      type: text
+      obligatoire: false
+      readonly: true
+      calcul: "SELECT number FROM factures WHERE id = facture_id"
+      description: Numero de la facture
+
+    - nom: montant
+      type: number
+      obligatoire: true
+      description: Montant impute sur cette facture
+
+    - nom: date_imputation
+      type: date
+      obligatoire: true
+      defaut: aujourd'hui
+      description: Date d'imputation
+
+    - nom: notes
+      type: textarea
+      obligatoire: false
+      description: Notes
+
+    - nom: created_by
+      type: relation
+      obligatoire: false
+      relation: Utilisateurs
+
+    - nom: created_at
+      type: datetime
+      obligatoire: false
+
+# =============================================================================
+# VALIDATIONS
+# =============================================================================
+validations:
+  - champ: total_ttc
+    regle: montant_strictement_positif
+    message: "Le montant de l'avoir doit etre strictement positif"
+
+  - condition: "motif == AUTRE implique motif_detail non vide"
+    message: "Le detail du motif est obligatoire si le motif est 'AUTRE'"
+
+  - condition: "total_ttc <= SELECT total FROM factures WHERE id = facture_id"
+    message: "Le montant de l'avoir ne peut pas depasser le montant de la facture d'origine"
+
+  - condition: "statut == VALIDE implique lignes.count > 0"
+    message: "Un avoir valide doit contenir au moins une ligne"
+
+  - condition: "mode_remboursement == IMPUTATION_FACTURE implique imputations.count > 0"
+    message: "Au moins une imputation sur facture est requise si le mode est 'Imputation facture'"
+
+# =============================================================================
+# WORKFLOW
+# =============================================================================
+workflow:
+  BROUILLON -> VALIDE: si lignes.count > 0 et total_ttc > 0
+  VALIDE -> REMBOURSE: si mode_remboursement in [VIREMENT, CHEQUE, ESPECES] et montant_rembourse >= total_ttc
+  VALIDE -> IMPUTE: si mode_remboursement in [AVOIR_COMPTE, IMPUTATION_FACTURE] et est_entierement_utilise
+  REMBOURSE -> IMPUTE: action imputer_solde
+  BROUILLON -> ANNULE: action annuler
+  VALIDE -> ANNULE: action annuler (avec validation manager)
+
+# =============================================================================
+# ACTIONS
+# =============================================================================
+actions:
+  # Creation et edition
+  - creer_depuis_facture
+  - copier_lignes_facture
+  - selectionner_lignes
+
+  # Validation
+  - valider
+  - annuler
+
+  # Remboursement
+  - enregistrer_remboursement
+  - marquer_rembourse
+
+  # Imputation
+  - imputer_compte_client
+  - imputer_sur_facture
+  - voir_imputations
+
+  # Documents
+  - generer_pdf
+  - envoyer_email
+  - dupliquer
+
+  # Comptabilite
+  - comptabiliser
+  - voir_ecriture_comptable
+
+  # Export
+  - exporter_fec
+
+# =============================================================================
+# HOOKS (Actions automatiques)
+# =============================================================================
+hooks:
+  apres_validation:
+    - action: generer_numero
+      description: "Genere le numero d'avoir definitif"
+
+    - action: creer_mouvement_credit
+      condition: "mode_remboursement == AVOIR_COMPTE"
+      description: |
+        Cree un mouvement de credit sur le compte client.
+        Met a jour solde_credit du client.
+      parametres:
+        type: CREDIT
+        motif: AVOIR
+        montant: total_ttc
+
+    - action: generer_ecriture_comptable
+      description: "Genere l'ecriture comptable de l'avoir"
+
+  apres_imputation_facture:
+    - action: mettre_a_jour_facture
+      description: "Met a jour le paid_amount de la facture imputee"
+
+    - action: recalculer_montant_restant
+      description: "Recalcule le montant restant de l'avoir"
+
+  apres_remboursement:
+    - action: creer_ecriture_remboursement
+      description: "Cree l'ecriture comptable du remboursement"
+
+# =============================================================================
+# COMPTABILISATION
+# =============================================================================
+comptabilisation:
+  description: |
+    Ecritures comptables generees automatiquement lors de la validation.
+    Inverse de la facture d'origine.
+
+  journal: VT  # Journal des Ventes
+
+  ecritures_validation:
+    description: "Ecriture a la validation de l'avoir"
+    lignes:
+      - compte: "709"  # Rabais, remises, ristournes accordes
+        sens: debit
+        montant: total_ht
+        libelle: "Avoir {numero} - {client_nom}"
+
+      - compte: "44571"  # TVA collectee (par taux)
+        sens: debit
+        montant: "ventilation_tva[].montant_tva"
+        libelle: "TVA avoir {numero}"
+        par_taux: true
+
+      - compte: "411"  # Clients
+        sens: credit
+        montant: total_ttc
+        libelle: "Avoir {numero} - {client_nom}"
+        auxiliaire: client_id
+
+  ecritures_remboursement:
+    description: "Ecriture lors du remboursement effectif"
+    condition: "mode_remboursement in [VIREMENT, CHEQUE, ESPECES]"
+    journal: BQ  # Journal de Banque
+    lignes:
+      - compte: "411"  # Clients
+        sens: debit
+        montant: montant_rembourse
+        libelle: "Remboursement avoir {numero}"
+        auxiliaire: client_id
+
+      - compte: "512"  # Banque
+        sens: credit
+        montant: montant_rembourse
+        libelle: "Remboursement avoir {numero} - {client_nom}"
+
+# =============================================================================
+# MARCEAU (IA Assistant)
+# =============================================================================
+marceau:
+  alertes:
+    - si statut=VALIDE et date < maintenant - 30j et montant_restant > 0: "Avoir non utilise depuis plus de 30 jours"
+    - si statut=BROUILLON et date < maintenant - 7j: "Avoir en brouillon depuis plus de 7 jours"
+    - si montant_restant < 0: "Erreur: montant impute superieur a l'avoir"
+    - si type_avoir=TOTAL et total_ttc != SELECT total FROM factures WHERE id = facture_id: "Avoir total avec montant different de la facture"
+    - si lignes.count = 0 et statut != BROUILLON: "Avoir sans lignes"
+    - si mode_remboursement=AVOIR_COMPTE et client.solde_credit < total_ttc: "Verifier le solde credit client"
+
+  suggestions:
+    - "Identifier les avoirs en attente d'utilisation"
+    - "Proposer l'imputation des avoirs sur factures impayees"
+    - "Verifier les avoirs non comptabilises"
+    - "Relancer les clients avec avoirs non utilises"
+
+  kpis:
+    - nom: "Avoirs en attente"
+      calcul: "compte(statut = VALIDE AND montant_restant > 0)"
+      format: "nombre"
+      alerte_si: "> 20"
+
+    - nom: "Montant avoirs non utilises"
+      calcul: "somme(montant_restant) WHERE statut = VALIDE"
+      format: "monnaie"
+      alerte_si: "> 10000"
+
+    - nom: "Avoirs emis (mois)"
+      calcul: "compte(date >= debut_mois)"
+      format: "nombre"
+
+    - nom: "Montant avoirs (mois)"
+      calcul: "somme(total_ttc) WHERE date >= debut_mois AND statut != ANNULE"
+      format: "monnaie"
+
+    - nom: "Taux d'utilisation"
+      calcul: "(somme(total_ttc - montant_restant) / somme(total_ttc)) * 100 WHERE statut != ANNULE"
+      format: "pourcentage"
+
+    - nom: "Delai moyen utilisation"
+      calcul: "moyenne(DATEDIFF(date_imputation_compte, date)) WHERE statut = IMPUTE"
+      format: "jours"
+
+# =============================================================================
+# PDF / TEMPLATE
+# =============================================================================
+pdf:
+  template: avoir
+  nom_fichier: "Avoir_{numero}_{client_nom}.pdf"
+
+  contenu:
+    entete:
+      - logo_entreprise
+      - coordonnees_entreprise
+      - titre: "AVOIR"
+      - numero
+      - date
+
+    reference_facture:
+      titre: "Facture d'origine"
+      champs:
+        - facture_numero
+        - date_facture_origine
+
+    client:
+      - client_nom
+      - adresse_client
+      - numero_tva_client
+
+    motif:
+      - motif
+      - motif_detail
+
+    tableau_lignes:
+      colonnes:
+        - description
+        - quantite
+        - unite
+        - prix_unitaire
+        - remise_percent
+        - subtotal
+        - tax_rate
+        - tax_amount
+        - total
+
+    totaux:
+      - total_ht
+      - ventilation_tva
+      - total_tva
+      - total_ttc
+
+    mentions:
+      - mentions_legales
+      - notes
+
+    pied_page:
+      - coordonnees_bancaires
+      - conditions_utilisation

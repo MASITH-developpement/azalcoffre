@@ -1,0 +1,165 @@
+# =============================================================================
+# AZALPLUS - Champs Personnalises (Custom Fields)
+# =============================================================================
+# Ce module permet aux utilisateurs de definir des champs supplementaires
+# pour etendre les modules sans modifier le code.
+#
+# Chaque champ personnalise est lie a un module specifique et sera
+# automatiquement ajoute aux formulaires et listes de ce module.
+# =============================================================================
+
+nom: ChampPersonnalise
+icone: settings
+menu: Parametres
+
+champs:
+  # Module cible
+  - nom: module
+    type: select
+    obligatoire: true
+    options: [Clients, Fournisseurs, Produits, Factures, Devis, Interventions, Employes, Conges, Stock, Paiements, Documents]
+    description: Module auquel ce champ est rattache
+
+  # Identification technique
+  - nom: nom_technique
+    type: text
+    obligatoire: true
+    description: Nom technique du champ (snake_case, ex custom_field_1)
+    autocompletion: true
+
+  # Label affiche
+  - nom: nom_affichage
+    type: text
+    obligatoire: true
+    description: Label affiche dans les formulaires
+    autocompletion: true
+
+  # Type de donnee
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: text
+    options: [text, number, date, select, checkbox, textarea, email, tel, url]
+    description: Type de donnee du champ
+
+  # Options pour les selects
+  - nom: options
+    type: textarea
+    obligatoire: false
+    description: Options pour type select (une par ligne)
+
+  # Valeur par defaut
+  - nom: valeur_defaut
+    type: text
+    obligatoire: false
+    description: Valeur par defaut du champ
+    autocompletion: true
+
+  # Validation
+  - nom: obligatoire
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Champ obligatoire
+
+  - nom: min
+    type: number
+    obligatoire: false
+    description: Valeur minimale (pour number) ou longueur minimale (pour text)
+
+  - nom: max
+    type: number
+    obligatoire: false
+    description: Valeur maximale (pour number) ou longueur maximale (pour text)
+
+  - nom: regex
+    type: text
+    obligatoire: false
+    description: Expression reguliere de validation
+    autocompletion: true
+
+  - nom: message_erreur
+    type: text
+    obligatoire: false
+    description: Message d'erreur personnalise
+    autocompletion: true
+
+  # Affichage
+  - nom: ordre
+    type: number
+    obligatoire: false
+    defaut: 100
+    description: Ordre d'affichage dans le formulaire
+
+  - nom: groupe
+    type: text
+    obligatoire: false
+    description: Groupe de champs (pour regroupement visuel)
+    autocompletion: true
+
+  - nom: placeholder
+    type: text
+    obligatoire: false
+    description: Texte d'aide dans le champ vide
+    autocompletion: true
+
+  - nom: aide
+    type: text
+    obligatoire: false
+    description: Texte d'aide affiche sous le champ
+    autocompletion: true
+
+  # Options d'affichage
+  - nom: afficher_liste
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Afficher dans la liste (tableau)
+
+  - nom: afficher_recherche
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Inclure dans la recherche
+
+  - nom: afficher_filtre
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Proposer comme filtre
+
+  # Statut
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Champ actif (visible)
+
+  # Metadonnees
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+# Actions disponibles
+actions:
+  - dupliquer
+  - desactiver
+  - activer
+
+marceau:
+  alertes:
+    - si nom_technique contient espace: "Le nom technique ne doit pas contenir d'espaces"
+    - si type=select et options vide: "Un champ select doit avoir des options"
+  suggestions:
+    - "Utilisez des noms techniques en snake_case (ex: date_livraison)"
+    - "Definissez un ordre pour controler l'affichage des champs"

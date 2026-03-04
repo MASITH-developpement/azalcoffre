@@ -1,0 +1,124 @@
+# AZALPLUS - Module RGPD
+nom: DemandesRGPD
+icone: shield
+menu: Parametres
+description: Gestion des demandes relatives aux droits RGPD
+
+champs:
+  - nom: numero
+    type: text
+    obligatoire: true
+    description: Numero unique de la demande RGPD
+    autocompletion: true
+
+  - nom: client_id
+    type: relation
+    obligatoire: false
+    relation: Clients
+    description: Client concerne si dans la base
+    autocompletion: true
+
+  - nom: demandeur_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du demandeur
+
+  - nom: nom_demandeur
+    type: text
+    obligatoire: true
+    description: Nom du demandeur
+    autocompletion: true
+
+  - nom: prenom_demandeur
+    type: text
+    obligatoire: true
+    description: Prenom du demandeur
+    autocompletion: true
+
+  - nom: email_demandeur
+    type: email
+    obligatoire: true
+    description: Email pour verification et envoi des reponses
+    autocompletion: true
+
+  - nom: telephone_demandeur
+    type: text
+    obligatoire: false
+    description: Telephone du demandeur
+    autocompletion: true
+
+  - nom: type_demande
+    type: select
+    obligatoire: true
+    options: [ACCES, PORTABILITE, EFFACEMENT, RECTIFICATION, LIMITATION, OPPOSITION]
+    description: Article RGPD concerne
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Details de la demande
+
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: RECUE
+    options: [RECUE, VERIFICATION_IDENTITE, EN_COURS, COMPLETEE, REFUSEE, EXPIREE]
+    description: Statut de traitement
+
+  - nom: date_reception
+    type: datetime
+    obligatoire: true
+    description: Date de reception
+
+  - nom: date_limite
+    type: datetime
+    obligatoire: false
+    description: Date limite de reponse (30 jours)
+
+  - nom: date_reponse
+    type: datetime
+    obligatoire: false
+    description: Date de reponse effective
+
+  - nom: identite_verifiee
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Identite du demandeur verifiee
+
+  - nom: methode_verification
+    type: select
+    obligatoire: false
+    options: [PIECE_IDENTITE, EMAIL_CONFIRME, TELEPHONE, COURRIER, COMPTE_CLIENT]
+    description: Methode de verification utilisee
+
+  - nom: traite_par
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Utilisateur en charge du traitement
+    autocompletion: true
+
+  - nom: motif_refus
+    type: textarea
+    obligatoire: false
+    description: Justification si demande refusee
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+actions:
+  - verifier_identite
+  - generer_export
+  - anonymiser_donnees
+  - supprimer_donnees
+  - envoyer_reponse
+
+workflow:
+  "RECUE -> VERIFICATION_IDENTITE": "toujours"
+  "VERIFICATION_IDENTITE -> EN_COURS": "si identite_verifiee"
+  "EN_COURS -> COMPLETEE": "traitement termine"
+  "EN_COURS -> REFUSEE": "demande non justifiee"

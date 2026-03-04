@@ -1,0 +1,776 @@
+# =============================================================================
+# AZALPLUS - Module Factures
+# =============================================================================
+# Gestion des factures avec support TVA multi-taux, ventilation par taux,
+# et conformite Factur-X / Chorus Pro.
+
+nom: Factures
+icone: receipt
+menu: Commercial
+
+champs:
+  # Identification
+  - nom: number
+    type: text
+    obligatoire: true
+    description: Numero de facture (auto-genere)
+    autocompletion: true
+
+  - nom: reference
+    type: text
+    obligatoire: false
+    description: Reference client
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: DRAFT
+    options: [DRAFT, PENDING, VALIDATED, SENT, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED]
+    description: Statut de la facture
+
+  # Relations
+  - nom: customer_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client
+    autocompletion: true
+
+  - nom: opportunity_id
+    type: relation
+    obligatoire: false
+    relation: Opportunites
+    description: Opportunite liee
+    autocompletion: true
+
+  # Dates
+  - nom: date
+    type: date
+    obligatoire: true
+    defaut: aujourd'hui
+    description: Date de facture
+
+  - nom: due_date
+    type: date
+    obligatoire: false
+    description: Date d'echeance
+
+  - nom: delivery_date
+    type: date
+    obligatoire: false
+    description: Date de livraison
+
+  # Adresses (JSON)
+  - nom: billing_address
+    type: textarea
+    obligatoire: false
+    description: Adresse de facturation
+
+  - nom: shipping_address
+    type: textarea
+    obligatoire: false
+    description: Adresse de livraison
+
+  # =========================================================================
+  # TOTAUX - Calcules automatiquement depuis les lignes
+  # =========================================================================
+  - nom: subtotal
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    calcul: "somme(lignes.subtotal)"
+    description: Total HT (somme des lignes)
+
+  - nom: discount_amount
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant remise globale
+
+  - nom: discount_percent
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Remise globale (%)
+
+  # Code promo / Coupon
+  - nom: remise_id
+    type: relation
+    obligatoire: false
+    relation: Remises
+    description: Code promo applique
+    autocompletion: true
+
+  - nom: code_promo
+    type: text
+    obligatoire: false
+    description: Code promo saisi
+    autocompletion: true
+
+  - nom: remise_type
+    type: select
+    obligatoire: false
+    options: [pourcentage, montant_fixe, livraison_gratuite]
+    description: Type de remise appliquee
+
+  - nom: remise_valeur
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Valeur de la remise (% ou montant)
+
+  - nom: montant_remise_code
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant de remise du code promo
+
+  - nom: subtotal_avant_remise
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total HT avant application du code promo
+
+  # =========================================================================
+  # VENTILATION TVA - Groupe par taux de TVA
+  # =========================================================================
+  - nom: ventilation_tva
+    type: json
+    obligatoire: false
+    readonly: true
+    description: |
+      Repartition de la TVA par taux.
+      Format: [
+        {
+          "taxe_id": "uuid",
+          "taxe_code": "TVA20",
+          "taxe_nom": "TVA 20%",
+          "taux": 20,
+          "base_ht": 1000.00,
+          "montant_tva": 200.00,
+          "compte_collecte": "44571"
+        },
+        ...
+      ]
+    calcul: |
+      GROUP BY lignes.taxe_id:
+        - taxe_id: lignes.taxe_id
+        - taxe_code: SELECT code FROM taxes WHERE id = lignes.taxe_id
+        - taxe_nom: SELECT nom FROM taxes WHERE id = lignes.taxe_id
+        - taux: SELECT taux FROM taxes WHERE id = lignes.taxe_id
+        - base_ht: somme(lignes.subtotal)
+        - montant_tva: somme(lignes.tax_amount)
+        - compte_collecte: SELECT compte_collecte FROM taxes WHERE id = lignes.taxe_id
+
+  - nom: tax_amount
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    calcul: "somme(lignes.tax_amount)"
+    description: Montant TVA total (somme des lignes)
+
+  - nom: total
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    calcul: "subtotal + tax_amount - discount_amount"
+    description: Total TTC
+
+  - nom: currency
+    type: relation
+    obligatoire: false
+    relation: Devises
+    defaut: EUR
+    description: Devise du document
+    autocompletion: true
+
+  - nom: exchange_rate
+    type: number
+    obligatoire: false
+    defaut: 1.0
+    description: Taux de change au moment de la creation
+
+  - nom: subtotal_base
+    type: number
+    obligatoire: false
+    defaut: 0
+    calcul: "subtotal / exchange_rate"
+    description: Total HT en devise de base (EUR)
+
+  - nom: total_base
+    type: number
+    obligatoire: false
+    defaut: 0
+    calcul: "total / exchange_rate"
+    description: Total TTC en devise de base (EUR)
+
+  # =========================================================================
+  # MENTIONS TVA - Generees automatiquement
+  # =========================================================================
+  - nom: mentions_tva
+    type: textarea
+    obligatoire: false
+    readonly: true
+    description: |
+      Mentions legales de TVA a afficher sur la facture.
+      Concatenation des mentions des differentes taxes utilisees.
+    calcul: "concatener(DISTINCT SELECT mention_legale FROM taxes WHERE id IN (SELECT DISTINCT taxe_id FROM lignes) AND mention_legale IS NOT NULL)"
+
+  # =========================================================================
+  # PAIEMENT
+  # =========================================================================
+  - nom: payment_terms
+    type: select
+    obligatoire: false
+    options: [IMMEDIATE, NET_15, NET_30, NET_45, NET_60, NET_90, END_OF_MONTH, CUSTOM]
+    description: Conditions de paiement
+
+  - nom: payment_method
+    type: select
+    obligatoire: false
+    options: [BANK_TRANSFER, CHECK, CREDIT_CARD, CASH, DIRECT_DEBIT, PAYPAL, OTHER]
+    description: Methode de paiement
+
+  - nom: paid_amount
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant paye
+
+  - nom: remaining_amount
+    type: number
+    obligatoire: false
+    readonly: true
+    calcul: "total - paid_amount"
+    description: Reste a payer (calcule)
+
+  - nom: payment_status
+    type: select
+    obligatoire: false
+    defaut: UNPAID
+    options: [UNPAID, PARTIAL, PAID]
+    readonly: true
+    calcul: |
+      CASE
+        WHEN paid_amount = 0 THEN 'UNPAID'
+        WHEN paid_amount < total THEN 'PARTIAL'
+        ELSE 'PAID'
+      END
+    description: Statut de paiement (non paye, partiel, paye)
+
+  - nom: last_payment_date
+    type: date
+    obligatoire: false
+    description: Date du dernier paiement recu
+
+  - nom: payment_count
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de paiements recus
+
+  # Rappels et relances
+  - nom: reminder_count
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de relances envoyees
+
+  - nom: last_reminder_date
+    type: date
+    obligatoire: false
+    description: Date de la derniere relance
+
+  - nom: days_overdue
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    calcul: "MAX(0, DATEDIFF(aujourd'hui, due_date))"
+    description: Nombre de jours de retard (calcule)
+
+  # Livraison
+  - nom: shipping_method
+    type: text
+    obligatoire: false
+    description: Mode de livraison
+    autocompletion: true
+
+  - nom: shipping_cost
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Frais de livraison HT
+
+  - nom: shipping_tax_id
+    type: relation
+    obligatoire: false
+    relation: Taxes
+    defaut_code: TVA20
+    description: Taxe applicable aux frais de livraison
+    autocompletion: true
+
+  - nom: shipping_tax_amount
+    type: number
+    obligatoire: false
+    defaut: 0
+    calcul: "shipping_cost * (SELECT taux FROM taxes WHERE id = shipping_tax_id) / 100"
+    description: Montant TVA frais de livraison
+
+  - nom: tracking_number
+    type: text
+    obligatoire: false
+    description: Numero de suivi
+    autocompletion: true
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes visibles client
+
+  - nom: internal_notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  - nom: terms
+    type: textarea
+    obligatoire: false
+    description: Conditions generales
+
+  # Document parent/lie
+  - nom: parent_id
+    type: relation
+    obligatoire: false
+    relation: Devis
+    description: Devis source
+    autocompletion: true
+
+  # PDF
+  - nom: pdf_url
+    type: text
+    obligatoire: false
+    description: URL du PDF genere
+
+  # Portail client
+  - nom: access_token
+    type: text
+    obligatoire: false
+    description: Token d'acces portail client
+
+  # Attribution
+  - nom: assigned_to
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Commercial responsable
+    autocompletion: true
+
+  - nom: validated_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Valide par
+    autocompletion: true
+
+  - nom: validated_at
+    type: datetime
+    obligatoire: false
+    description: Date de validation
+
+  # Signature electronique
+  - nom: signature_client
+    type: text
+    obligatoire: false
+    description: Image de la signature du client (base64)
+
+  - nom: signature_date
+    type: datetime
+    obligatoire: false
+    description: Date et heure de signature
+
+  - nom: signature_ip
+    type: text
+    obligatoire: false
+    description: Adresse IP du client lors de la signature
+
+  # Classification - Systeme de tags
+  - nom: tags
+    type: tags
+    obligatoire: false
+    description: |
+      Tags pour organiser et filtrer les factures.
+      Format JSON: liste d'IDs de tags.
+      Ex: ["uuid-tag-urgent", "uuid-tag-relance"]
+
+  - nom: tags_display
+    type: text
+    obligatoire: false
+    readonly: true
+    description: Affichage des noms de tags (calcule pour recherche)
+    autocompletion: true
+
+  # Metadonnees
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+# =============================================================================
+# Lignes de facture (DocumentLine) avec gestion TVA par ligne
+# =============================================================================
+lignes:
+  champs:
+    - nom: line_number
+      type: number
+      obligatoire: true
+      description: Numero de ligne
+
+    - nom: product_id
+      type: relation
+      obligatoire: false
+      relation: Produits
+      description: Produit reference
+
+    - nom: variante_id
+      type: relation
+      obligatoire: false
+      relation: VariantesProduit
+      description: |
+        Variante du produit (si applicable).
+        Si le produit a des variantes (has_variants=true),
+        la variante doit etre selectionnee.
+
+    - nom: product_code
+      type: text
+      obligatoire: false
+      description: Code produit ou SKU variante
+
+    - nom: attributs_variante
+      type: json
+      obligatoire: false
+      readonly: true
+      description: |
+        Attributs de la variante selectionnee.
+        Format: {"TAILLE": "M", "COULEUR": "Rouge"}
+
+    - nom: attributs_display
+      type: text
+      obligatoire: false
+      readonly: true
+      description: |
+        Texte d'affichage des attributs de la variante.
+        Ex: "Taille: M, Couleur: Rouge"
+
+    - nom: description
+      type: textarea
+      obligatoire: true
+      description: Description
+
+    - nom: quantity
+      type: number
+      obligatoire: true
+      defaut: 1
+      min: 0
+      precision: 3
+      description: Quantite
+
+    - nom: unit
+      type: text
+      obligatoire: false
+      defaut: pce
+      description: Unite (pce, kg, h, etc.)
+
+    - nom: unit_price
+      type: number
+      obligatoire: true
+      defaut: 0
+      precision: 4
+      description: Prix unitaire HT
+
+    - nom: discount_percent
+      type: number
+      obligatoire: false
+      defaut: 0
+      min: 0
+      max: 100
+      description: Remise ligne (%)
+
+    - nom: discount_amount
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      calcul: "unit_price * quantity * discount_percent / 100"
+      description: Montant remise ligne (calcule)
+
+    - nom: subtotal
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      calcul: "(unit_price * quantity) - discount_amount"
+      description: Total ligne HT (calcule)
+
+    # =========================================================================
+    # TVA PAR LIGNE - Reference au module Taxes
+    # =========================================================================
+    - nom: taxe_id
+      type: relation
+      obligatoire: false
+      relation: Taxes
+      defaut_depuis: product_id.taxe_id
+      description: |
+        Taxe applicable a cette ligne.
+        Herite du produit par defaut, peut etre modifie.
+
+    - nom: tax_code
+      type: text
+      obligatoire: false
+      readonly: true
+      calcul: "SELECT code FROM taxes WHERE id = taxe_id"
+      description: "Code de la taxe (ex: TVA20)"
+
+    - nom: tax_rate
+      type: number
+      obligatoire: false
+      defaut: 20.0
+      readonly: true
+      calcul: "SELECT taux FROM taxes WHERE id = taxe_id"
+      description: Taux TVA (%) - calcule depuis taxe_id
+
+    - nom: tax_amount
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      calcul: "subtotal * tax_rate / 100"
+      description: Montant TVA ligne (calcule)
+
+    - nom: total
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      calcul: "subtotal + tax_amount"
+      description: Total ligne TTC (calcule)
+
+    - nom: notes
+      type: textarea
+      obligatoire: false
+      description: Notes ligne
+
+# =============================================================================
+# Paiements associes (Payment)
+# =============================================================================
+paiements:
+  champs:
+    - nom: reference
+      type: text
+      obligatoire: false
+      description: Reference paiement
+
+    - nom: method
+      type: select
+      obligatoire: true
+      options: [BANK_TRANSFER, CHECK, CREDIT_CARD, CASH, DIRECT_DEBIT, PAYPAL, OTHER]
+      description: Methode de paiement
+
+    - nom: amount
+      type: number
+      obligatoire: true
+      description: Montant
+
+    - nom: currency
+      type: relation
+      obligatoire: false
+      relation: Devises
+      defaut: EUR
+      description: Devise du paiement
+
+    - nom: exchange_rate
+      type: number
+      obligatoire: false
+      defaut: 1.0
+      description: Taux de change au moment du paiement
+
+    - nom: amount_base
+      type: number
+      obligatoire: false
+      calcul: "amount / exchange_rate"
+      description: Montant en devise de base (EUR)
+
+    - nom: date
+      type: date
+      obligatoire: true
+      defaut: aujourd'hui
+      description: Date du paiement
+
+    - nom: received_date
+      type: date
+      obligatoire: false
+      description: Date de reception
+
+    - nom: bank_account
+      type: text
+      obligatoire: false
+      description: Compte bancaire
+
+    - nom: transaction_id
+      type: text
+      obligatoire: false
+      description: ID transaction
+
+    - nom: notes
+      type: textarea
+      obligatoire: false
+      description: Notes
+
+    - nom: status
+      type: select
+      obligatoire: false
+      defaut: PENDING
+      options: [PENDING, VALIDATED, REJECTED, CANCELLED]
+      description: Statut du paiement
+
+    - nom: rejection_reason
+      type: textarea
+      obligatoire: false
+      description: Motif de rejet
+
+workflow:
+  DRAFT -> PENDING: si customer_id et lignes.count > 0
+  PENDING -> VALIDATED: action valider
+  VALIDATED -> SENT: action envoyer_email
+  SENT -> PARTIALLY_PAID: si paid_amount > 0 et paid_amount < total
+  SENT -> PAID: si paid_amount >= total
+  VALIDATED -> PAID: si paid_amount >= total
+  PARTIALLY_PAID -> PAID: si paid_amount >= total
+  SENT -> OVERDUE: si date > due_date et payment_status != PAID
+  PARTIALLY_PAID -> OVERDUE: si date > due_date
+  OVERDUE -> PAID: si paid_amount >= total
+  SENT -> CANCELLED: action annuler
+
+actions:
+  - valider
+  - envoyer_email
+  - generer_pdf
+  - enregistrer_paiement
+  - marquer_payee
+  - voir_paiements
+  - relancer
+  - generer_avoir
+  - dupliquer
+  - annuler
+  - exporter_fec
+  - verifier_credit_client
+
+# =============================================================================
+# Validations specifiques aux factures
+# =============================================================================
+validations:
+  # Verification de la limite de credit avant validation
+  - nom: verifier_limite_credit
+    declencheur: avant_validation
+    description: |
+      Verifie si le montant de la facture ne depasse pas
+      la limite de credit disponible du client.
+    condition: |
+      client = get(Clients, customer_id)
+      credit_disponible = client.credit_limit + client.solde_credit
+      return total <= credit_disponible
+    mode: dynamique  # warning si bloquer_si_depassement=false, block sinon
+    message_warning: |
+      Attention: Cette facture ({total} EUR) depasse la limite de credit
+      disponible du client ({credit_disponible} EUR).
+      Depassement: {depassement} EUR
+    message_block: |
+      Impossible de valider: limite de credit depassee.
+      Montant facture: {total} EUR
+      Credit disponible: {credit_disponible} EUR
+      Depassement: {depassement} EUR
+    actions_si_depassement:
+      - notifier_commercial: true
+      - notifier_comptabilite: true
+
+# =============================================================================
+# Hooks automatiques pour gestion du credit client
+# =============================================================================
+hooks:
+  apres_validation:
+    - action: creer_mouvement_credit
+      description: "Cree un mouvement de debit sur le compte client"
+      parametres:
+        client_id: customer_id
+        type: DEBIT
+        montant: total
+        motif: FACTURE
+        reference: number
+        facture_id: id
+
+  apres_paiement_enregistre:
+    - action: creer_mouvement_credit
+      description: "Cree un mouvement de credit sur le compte client"
+      parametres:
+        client_id: customer_id
+        type: CREDIT
+        montant: paiement.amount
+        motif: PAIEMENT
+        reference: paiement.reference
+        paiement_id: paiement.id
+
+  apres_annulation:
+    - action: annuler_mouvement_credit
+      description: "Annule le mouvement de debit lie a la facture"
+      parametres:
+        facture_id: id
+
+marceau:
+  alertes:
+    - si status=SENT et date > due_date: "Facture en retard de paiement"
+    - si status=SENT et date > due_date - 7j: "Facture bientot echue"
+    - si status=OVERDUE: "Facture impayee - relance necessaire"
+    - si payment_status=PARTIAL et date > due_date: "Paiement partiel - reste a encaisser"
+    - si status=SENT et remaining_amount > 0 et paid_amount > 0: "Paiement partiel recu"
+    - si lignes.count = 0: "Facture sans lignes"
+
+  suggestions:
+    - "Envoyer une relance pour les factures en retard"
+    - "Verifier les paiements en attente de validation"
+    - "Rapprocher les paiements recus"
+
+  kpis:
+    - nom: "Factures impayees"
+      calcul: "compte(status IN [SENT, OVERDUE] AND payment_status != PAID)"
+      format: "nombre"
+      alerte_si: "> 10"
+
+    - nom: "Montant a encaisser"
+      calcul: "somme(remaining_amount) WHERE status IN [SENT, OVERDUE, PARTIALLY_PAID]"
+      format: "monnaie"
+
+    - nom: "TVA collectee (mois)"
+      calcul: "somme(tax_amount) WHERE date >= debut_mois AND status = PAID"
+      format: "monnaie"
+
+    - nom: "CA HT (mois)"
+      calcul: "somme(subtotal) WHERE date >= debut_mois AND status = PAID"
+      format: "monnaie"
+
+    - nom: "Jours moyen de paiement"
+      calcul: "moyenne(DATEDIFF(last_payment_date, date)) WHERE status = PAID"
+      format: "jours"

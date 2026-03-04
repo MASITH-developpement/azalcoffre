@@ -1,0 +1,92 @@
+# =============================================================================
+# AZALPLUS - Configuration IA
+# =============================================================================
+
+# Provider LLM par défaut
+defaut: claude  # claude | openai
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Anthropic (Claude)
+# ─────────────────────────────────────────────────────────────────────────────
+claude:
+  api_key: "${ANTHROPIC_API_KEY}"
+  model: "claude-sonnet-4-20250514"
+  max_tokens: 4096
+  temperature: 0.7
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OpenAI (GPT)
+# ─────────────────────────────────────────────────────────────────────────────
+openai:
+  api_key: "${OPENAI_API_KEY}"
+  model: "gpt-4-turbo"
+  max_tokens: 4096
+  temperature: 0.7
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ElevenLabs (Text-to-Speech pour Théo)
+# ─────────────────────────────────────────────────────────────────────────────
+elevenlabs:
+  api_key: "${ELEVENLABS_API_KEY}"
+  voice_id: "theo"
+  model: "eleven_multilingual_v2"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Théo (Assistant général)
+# ─────────────────────────────────────────────────────────────────────────────
+theo:
+  actif: true
+  provider: claude
+  temperature: 0.7
+
+  # Capacités
+  acces_donnees: true        # Peut lire les données du tenant
+  peut_executer: true        # Peut exécuter des actions
+  mode_vocal: true           # Support voix via ElevenLabs
+
+  # Contexte système
+  system_prompt: |
+    Tu es Théo, l'assistant IA d'AZALPLUS.
+    Tu aides les utilisateurs à utiliser le logiciel et à accomplir leurs tâches.
+    Tu as accès aux données du tenant et peux exécuter des actions si demandé.
+    Sois concis, professionnel et utile.
+    Réponds toujours en français sauf si l'utilisateur parle une autre langue.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Marceau (Expert module)
+# ─────────────────────────────────────────────────────────────────────────────
+marceau:
+  actif: true
+  provider: claude
+  temperature: 0.3  # Plus précis, moins créatif
+
+  # Capacités
+  proactif: true             # Suggère des actions sans demande
+  analyse_donnees: true      # Analyse les données du module
+  predictions: true          # Prédit les problèmes
+
+  # Contexte par module
+  contexte: module           # Accès limité au module courant
+
+  # System prompt
+  system_prompt: |
+    Tu es Marceau, l'expert IA du module {module} dans AZALPLUS.
+    Tu analyses les données, détectes les anomalies et suggères des actions.
+    Sois proactif : alerte sur les problèmes potentiels.
+    Sois précis : base tes suggestions sur les données réelles.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Rate limiting
+# ─────────────────────────────────────────────────────────────────────────────
+limites:
+  requetes_par_minute: 60
+  requetes_par_heure: 500
+  tokens_par_jour: 1000000
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cache
+# ─────────────────────────────────────────────────────────────────────────────
+cache:
+  actif: true
+  ttl_secondes: 3600  # 1 heure
+  max_entries: 10000

@@ -1,0 +1,126 @@
+# =============================================================================
+# AZALPLUS - Notifications
+# =============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Canaux disponibles
+# ─────────────────────────────────────────────────────────────────────────────
+canaux:
+  email:
+    actif: true
+    provider: smtp  # smtp | resend | sendgrid
+
+  push:
+    actif: true
+
+  in_app:
+    actif: true
+
+  sms:
+    actif: false
+    provider: twilio
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Événements et notifications
+# ─────────────────────────────────────────────────────────────────────────────
+evenements:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Devis
+  # ───────────────────────────────────────────────────────────────────────────
+  devis_cree:
+    titre: "Nouveau devis créé"
+    message: "Le devis {numero} a été créé pour {client}"
+    canaux: [in_app]
+    destinataires: [createur]
+
+  devis_envoye:
+    titre: "Devis envoyé"
+    message: "Le devis {numero} a été envoyé à {client}"
+    canaux: [in_app, email]
+    destinataires: [createur, manager]
+
+  devis_accepte:
+    titre: "Devis accepté !"
+    message: "Le devis {numero} ({montant}) a été accepté par {client}"
+    canaux: [in_app, email, push]
+    destinataires: [createur, manager, commercial]
+
+  devis_expire_bientot:
+    titre: "Devis bientôt expiré"
+    message: "Le devis {numero} expire dans {jours} jours"
+    canaux: [in_app, email]
+    destinataires: [createur]
+    declencheur:
+      condition: "validite - 3 jours"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Factures
+  # ───────────────────────────────────────────────────────────────────────────
+  facture_validee:
+    titre: "Facture validée"
+    message: "La facture {numero} a été validée"
+    canaux: [in_app]
+    destinataires: [createur]
+
+  facture_payee:
+    titre: "Facture payée"
+    message: "La facture {numero} ({montant}) a été payée"
+    canaux: [in_app, email]
+    destinataires: [createur, comptable]
+
+  facture_en_retard:
+    titre: "Facture en retard"
+    message: "La facture {numero} est en retard de {jours} jours"
+    canaux: [in_app, email]
+    destinataires: [createur, comptable, manager]
+    declencheur:
+      condition: "echeance + 7 jours"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Interventions
+  # ───────────────────────────────────────────────────────────────────────────
+  intervention_assignee:
+    titre: "Intervention assignée"
+    message: "L'intervention {numero} vous a été assignée pour le {date}"
+    canaux: [in_app, email, push]
+    destinataires: [technicien]
+
+  intervention_demain:
+    titre: "Intervention demain"
+    message: "Rappel : intervention {numero} chez {client} demain à {heure}"
+    canaux: [push, email]
+    destinataires: [technicien]
+    declencheur:
+      condition: "date_debut - 1 jour"
+
+  intervention_terminee:
+    titre: "Intervention terminée"
+    message: "L'intervention {numero} a été terminée par {technicien}"
+    canaux: [in_app]
+    destinataires: [createur, manager]
+
+  intervention_bloquee:
+    titre: "Intervention bloquée"
+    message: "L'intervention {numero} est bloquée : {motif}"
+    canaux: [in_app, email, push]
+    destinataires: [manager]
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Stock
+  # ───────────────────────────────────────────────────────────────────────────
+  stock_bas:
+    titre: "Stock bas"
+    message: "Le produit {produit} est en stock bas ({quantite} restants)"
+    canaux: [in_app, email]
+    destinataires: [gestionnaire_stock, manager]
+    declencheur:
+      condition: "stock < stock_min"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Templates email
+# ─────────────────────────────────────────────────────────────────────────────
+templates_email:
+  defaut: "templates/email/notification.html"
+  devis_envoye: "templates/email/devis_envoye.html"
+  facture_envoyee: "templates/email/facture_envoyee.html"
+  relance: "templates/email/relance.html"

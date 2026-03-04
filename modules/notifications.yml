@@ -1,0 +1,61 @@
+# =============================================================================
+# AZALPLUS - Module Notifications
+# =============================================================================
+# Centre de notifications in-app pour alerter les utilisateurs des evenements
+# importants : nouveaux devis, paiements recus, interventions planifiees, etc.
+# =============================================================================
+
+Notifications:
+  nom: "Notifications"
+  icone: "bell"
+  menu: "Systeme"
+  description: "Centre de notifications in-app"
+
+  champs:
+    # Destinataire de la notification
+    user_id: uuid requis
+
+    # Type de notification (pour filtrage et style)
+    type: enum [info, warning, success, error] defaut=info
+
+    # Titre court de la notification
+    titre: texte requis
+
+    # Corps du message
+    message: texte long requis
+
+    # Lien optionnel vers la ressource concernee
+    lien: texte
+
+    # Module source de la notification (pour groupement)
+    module_source: texte
+
+    # ID de l'enregistrement source (pour navigation)
+    record_id: uuid
+
+    # Etat de lecture
+    lu: oui/non defaut=false
+
+    # Date de lecture
+    date_lecture: datetime
+
+    # Priorite (pour tri)
+    priorite: enum [basse, normale, haute, urgente] defaut=normale
+
+    # Expiration (notifications temporaires)
+    expire_at: datetime
+
+    # Action associee (pour boutons)
+    action_type: texte
+    action_data: json
+
+  actions:
+    - marquer_lu
+    - marquer_non_lu
+    - supprimer
+    - voir_toutes
+
+  marceau:
+    alertes:
+      - si type=error et lu=false: "Notification d'erreur non lue"
+      - si priorite=urgente et lu=false: "Notification urgente en attente"

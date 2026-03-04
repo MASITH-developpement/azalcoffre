@@ -1,0 +1,298 @@
+# =============================================================================
+# AZALPLUS - Module Tags (Etiquettes)
+# =============================================================================
+# Systeme de tags global pour organiser les entites (clients, produits, etc.)
+# Tags can be global or module-specific
+
+nom: Tags
+icone: tag
+menu: Parametres
+
+description: |
+  Systeme de tags pour organiser les entites.
+  Les tags peuvent etre globaux ou specifiques a un module.
+  Support des couleurs personnalisees pour l'affichage.
+
+champs:
+  # Identification
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: "Nom du tag (ex: VIP, Urgent, A relancer)"
+    autocompletion: true
+
+  - nom: slug
+    type: text
+    obligatoire: false
+    unique: true
+    description: Identifiant URL-friendly (auto-genere depuis nom)
+    autocompletion: true
+
+  # Apparence
+  - nom: couleur
+    type: text
+    obligatoire: false
+    defaut: "#6366F1"
+    description: "Couleur hexadecimale pour l'affichage (ex: #FF5733)"
+    autocompletion: true
+
+  - nom: couleur_texte
+    type: text
+    obligatoire: false
+    defaut: "#FFFFFF"
+    description: "Couleur du texte sur le badge (ex: #FFFFFF)"
+    autocompletion: true
+
+  - nom: icone
+    type: text
+    obligatoire: false
+    description: Icone optionnelle (emoji ou code lucide)
+    autocompletion: true
+
+  # Scope du tag
+  - nom: module
+    type: select
+    obligatoire: false
+    options: [null, Clients, Produits, Devis, Factures, Interventions, Fournisseurs, Employes]
+    description: |
+      Module specifique ou null pour tag global.
+      Si null, le tag peut etre utilise sur toutes les entites.
+
+  - nom: global
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Si true, le tag est utilisable sur tous les modules
+
+  # Organisation
+  - nom: groupe
+    type: text
+    obligatoire: false
+    description: "Groupe de tags (ex: Priorite, Statut, Region)"
+    autocompletion: true
+
+  - nom: ordre
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Ordre d'affichage dans le groupe
+
+  # Statistiques (lecture seule)
+  - nom: usage_count
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre d'entites utilisant ce tag (calcule)
+
+  - nom: last_used_at
+    type: datetime
+    obligatoire: false
+    readonly: true
+    description: Derniere utilisation du tag
+
+  # Auto-suggestion IA
+  - nom: keywords
+    type: json
+    obligatoire: false
+    description: |
+      Mots-cles pour auto-suggestion IA.
+      Format: ["urgent", "prioritaire", "rapide"]
+
+  - nom: auto_apply_rules
+    type: json
+    obligatoire: false
+    description: |
+      Regles d'application automatique.
+      Format: {
+        "field": "montant_ttc",
+        "operator": ">",
+        "value": 10000
+      }
+
+  # Metadata
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Utilisateur ayant cree le tag
+    autocompletion: true
+
+  - nom: is_system
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Tag systeme (non supprimable)
+
+  - nom: is_active
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Tag actif (visible)
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+# Table de liaison tags <-> entites
+# Cette table sera creee automatiquement
+entity_tags:
+  description: |
+    Table de liaison many-to-many entre tags et entites.
+    Permet d'associer plusieurs tags a une entite.
+  champs:
+    - nom: tag_id
+      type: relation
+      obligatoire: true
+      relation: Tags
+      description: Reference au tag
+
+    - nom: entity_type
+      type: text
+      obligatoire: true
+      description: "Type d'entite (ex: Client, Produit, Devis)"
+
+    - nom: entity_id
+      type: uuid
+      obligatoire: true
+      description: ID de l'entite
+
+    - nom: applied_by
+      type: relation
+      obligatoire: false
+      relation: Utilisateurs
+      description: Utilisateur ayant applique le tag
+
+    - nom: applied_at
+      type: datetime
+      obligatoire: false
+      description: Date d'application
+
+    - nom: source
+      type: select
+      obligatoire: false
+      options: [MANUAL, AUTO, IMPORT, API]
+      defaut: MANUAL
+      description: Source de l'application (manuelle, auto, import, API)
+
+# Index composites pour performance
+indexes:
+  - columns: [entity_type, entity_id]
+    name: idx_entity_tags_lookup
+
+  - columns: [tag_id]
+    name: idx_entity_tags_tag
+
+  - columns: [entity_type, tag_id]
+    name: idx_entity_tags_type_tag
+
+actions:
+  - creer
+  - modifier
+  - supprimer
+  - fusionner
+  - exporter
+  - voir_entites
+  - statistiques
+
+# Pages personnalisees
+pages:
+  - chemin: "/ui/parametres/tags"
+    nom: "Gestion des tags"
+    description: "Interface de gestion des tags"
+
+  - chemin: "/ui/parametres/tags/{id}/entites"
+    nom: "Entites du tag"
+    description: "Liste des entites utilisant ce tag"
+
+marceau:
+  alertes:
+    - si usage_count = 0 et created_at < maintenant - 30j: "Tag non utilise depuis 30 jours"
+    - si nom contient espace_double: "Nom de tag avec espaces doubles"
+
+  suggestions:
+    - "Fusionner les tags similaires"
+    - "Nettoyer les tags non utilises"
+    - "Creer des groupes de tags pour organiser"
+
+# Couleurs predefinies suggeres
+couleurs_predefinies:
+  - nom: "Bleu"
+    couleur: "#3B82F6"
+    couleur_texte: "#FFFFFF"
+  - nom: "Vert"
+    couleur: "#22C55E"
+    couleur_texte: "#FFFFFF"
+  - nom: "Jaune"
+    couleur: "#F59E0B"
+    couleur_texte: "#000000"
+  - nom: "Rouge"
+    couleur: "#EF4444"
+    couleur_texte: "#FFFFFF"
+  - nom: "Violet"
+    couleur: "#8B5CF6"
+    couleur_texte: "#FFFFFF"
+  - nom: "Rose"
+    couleur: "#EC4899"
+    couleur_texte: "#FFFFFF"
+  - nom: "Cyan"
+    couleur: "#06B6D4"
+    couleur_texte: "#FFFFFF"
+  - nom: "Orange"
+    couleur: "#F97316"
+    couleur_texte: "#FFFFFF"
+  - nom: "Gris"
+    couleur: "#6B7280"
+    couleur_texte: "#FFFFFF"
+  - nom: "Noir"
+    couleur: "#1F2937"
+    couleur_texte: "#FFFFFF"
+
+# Tags systeme par defaut (crees a l'initialisation)
+tags_defaut:
+  - nom: "VIP"
+    couleur: "#F59E0B"
+    couleur_texte: "#000000"
+    groupe: "Client"
+    global: false
+    module: Clients
+    is_system: true
+
+  - nom: "Urgent"
+    couleur: "#EF4444"
+    couleur_texte: "#FFFFFF"
+    groupe: "Priorite"
+    global: true
+    is_system: true
+
+  - nom: "A relancer"
+    couleur: "#F97316"
+    couleur_texte: "#FFFFFF"
+    groupe: "Suivi"
+    global: true
+    is_system: true
+
+  - nom: "Nouveau"
+    couleur: "#22C55E"
+    couleur_texte: "#FFFFFF"
+    groupe: "Statut"
+    global: true
+    is_system: true
+
+  - nom: "En attente"
+    couleur: "#6B7280"
+    couleur_texte: "#FFFFFF"
+    groupe: "Statut"
+    global: true
+    is_system: true
+
+  - nom: "Important"
+    couleur: "#8B5CF6"
+    couleur_texte: "#FFFFFF"
+    groupe: "Priorite"
+    global: true
+    is_system: true

@@ -1,0 +1,436 @@
+# =============================================================================
+# AZALPLUS - Module Entreprise (Parametres Tenant)
+# =============================================================================
+# Configuration de l'entreprise pour chaque tenant.
+# Une seule entree par tenant (singleton par tenant).
+#
+# Utilise par:
+# - Generation PDF (en-tete, pied de page)
+# - Portail client (informations entreprise)
+# - Nouveaux documents (auto-population)
+# =============================================================================
+
+nom: Entreprise
+nom_affichage: Mon Entreprise
+icone: landmark
+menu: Parametres
+description: Informations et parametres de votre entreprise
+
+champs:
+  # -----------------------------------------------------
+  # Identification legale
+  # -----------------------------------------------------
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom commercial de l'entreprise
+    autocompletion: true
+
+  - nom: raison_sociale
+    type: text
+    obligatoire: false
+    description: Raison sociale (si differente du nom)
+    autocompletion: true
+
+  - nom: forme_juridique
+    type: select
+    obligatoire: false
+    options: [SARL, SAS, SA, EURL, SASU, SCI, SNC, EI, MICRO, ASSOCIATION, AUTRE]
+    description: Forme juridique
+
+  - nom: siret
+    type: text
+    obligatoire: false
+    description: Numero SIRET (14 chiffres)
+    autocompletion: true
+
+  - nom: siren
+    type: text
+    obligatoire: false
+    description: Numero SIREN (9 chiffres)
+    autocompletion: true
+
+  - nom: tva_intracommunautaire
+    type: text
+    obligatoire: false
+    description: Numero de TVA intracommunautaire (ex FR12345678901)
+    autocompletion: true
+
+  - nom: code_naf
+    type: text
+    obligatoire: false
+    description: Code NAF / APE
+    autocompletion: true
+
+  - nom: capital_social
+    type: number
+    obligatoire: false
+    description: Capital social en euros
+
+  - nom: rcs
+    type: text
+    obligatoire: false
+    description: RCS (Registre du Commerce et des Societes)
+    autocompletion: true
+
+  # -----------------------------------------------------
+  # Adresse du siege
+  # -----------------------------------------------------
+  - nom: adresse
+    type: text
+    obligatoire: false
+    description: Adresse complete (rue, numero)
+    autocompletion: true
+
+  - nom: adresse_complement
+    type: text
+    obligatoire: false
+    description: Complement d'adresse (batiment, etage, etc.)
+    autocompletion: true
+
+  - nom: code_postal
+    type: text
+    obligatoire: false
+    description: Code postal
+    autocompletion: true
+
+  - nom: ville
+    type: text
+    obligatoire: false
+    description: Ville
+    autocompletion: true
+
+  - nom: pays
+    type: text
+    obligatoire: false
+    defaut: France
+    description: Pays
+    autocompletion: true
+
+  # -----------------------------------------------------
+  # Contact
+  # -----------------------------------------------------
+  - nom: telephone
+    type: tel
+    obligatoire: false
+    description: Telephone principal
+
+  - nom: telephone_secondaire
+    type: tel
+    obligatoire: false
+    description: Telephone secondaire
+
+  - nom: fax
+    type: tel
+    obligatoire: false
+    description: Numero de fax
+
+  - nom: email
+    type: email
+    obligatoire: false
+    description: Email principal de l'entreprise
+    autocompletion: true
+
+  - nom: email_facturation
+    type: email
+    obligatoire: false
+    description: Email pour les factures
+    autocompletion: true
+
+  - nom: site_web
+    type: text
+    obligatoire: false
+    description: Site web de l'entreprise
+    autocompletion: true
+
+  # -----------------------------------------------------
+  # Reseaux sociaux
+  # -----------------------------------------------------
+  - nom: linkedin
+    type: text
+    obligatoire: false
+    description: URL LinkedIn
+
+  - nom: twitter
+    type: text
+    obligatoire: false
+    description: URL Twitter/X
+
+  - nom: facebook
+    type: text
+    obligatoire: false
+    description: URL Facebook
+
+  - nom: instagram
+    type: text
+    obligatoire: false
+    description: URL Instagram
+
+  # -----------------------------------------------------
+  # Logo et branding
+  # -----------------------------------------------------
+  - nom: logo_url
+    type: text
+    obligatoire: false
+    description: URL du logo de l'entreprise
+
+  - nom: logo_filename
+    type: text
+    obligatoire: false
+    description: Nom du fichier logo (stocke dans uploads/logos/)
+
+  - nom: favicon_url
+    type: text
+    obligatoire: false
+    description: URL du favicon
+
+  - nom: couleur_primaire
+    type: text
+    obligatoire: false
+    defaut: "#2563EB"
+    description: Couleur primaire de la marque (hex)
+
+  - nom: couleur_secondaire
+    type: text
+    obligatoire: false
+    description: Couleur secondaire de la marque (hex)
+
+  # -----------------------------------------------------
+  # Informations bancaires
+  # -----------------------------------------------------
+  - nom: iban
+    type: text
+    obligatoire: false
+    description: IBAN du compte bancaire principal
+    autocompletion: true
+
+  - nom: bic
+    type: text
+    obligatoire: false
+    description: Code BIC/SWIFT
+    autocompletion: true
+
+  - nom: banque
+    type: text
+    obligatoire: false
+    description: Nom de la banque
+    autocompletion: true
+
+  - nom: titulaire_compte
+    type: text
+    obligatoire: false
+    description: Titulaire du compte bancaire
+    autocompletion: true
+
+  # -----------------------------------------------------
+  # Conditions commerciales par defaut
+  # -----------------------------------------------------
+  - nom: conditions_paiement_defaut
+    type: select
+    obligatoire: false
+    defaut: NET_30
+    options: [COMPTANT, NET_15, NET_30, NET_45, NET_60, NET_90, FIN_DE_MOIS]
+    description: Conditions de paiement par defaut
+
+  - nom: devise_defaut
+    type: text
+    obligatoire: false
+    defaut: EUR
+    description: Devise par defaut
+
+  - nom: taux_tva_defaut
+    type: number
+    obligatoire: false
+    defaut: 20.0
+    description: Taux de TVA par defaut (%)
+
+  - nom: regime_tva
+    type: select
+    obligatoire: false
+    defaut: NORMAL
+    options: [NORMAL, FRANCHISE, SIMPLIFIEE, MINI, EXONERE]
+    description: Regime de TVA
+
+  # -----------------------------------------------------
+  # Mentions legales (documents)
+  # -----------------------------------------------------
+  - nom: mentions_legales
+    type: textarea
+    obligatoire: false
+    description: Mentions legales affichees en pied de documents
+
+  - nom: conditions_generales_vente
+    type: textarea
+    obligatoire: false
+    description: Conditions generales de vente
+
+  - nom: mention_devis
+    type: textarea
+    obligatoire: false
+    description: Mentions specifiques aux devis
+
+  - nom: mention_facture
+    type: textarea
+    obligatoire: false
+    description: Mentions specifiques aux factures (ex penalites de retard)
+
+  - nom: texte_pied_facture
+    type: textarea
+    obligatoire: false
+    description: Texte libre en pied de facture
+
+  # -----------------------------------------------------
+  # Parametres de numerotation
+  # -----------------------------------------------------
+  - nom: prefixe_devis
+    type: text
+    obligatoire: false
+    defaut: DEV
+    description: Prefixe des numeros de devis
+
+  - nom: prefixe_facture
+    type: text
+    obligatoire: false
+    defaut: FAC
+    description: Prefixe des numeros de facture
+
+  - nom: prefixe_avoir
+    type: text
+    obligatoire: false
+    defaut: AVO
+    description: Prefixe des numeros d'avoir
+
+  - nom: format_numero
+    type: text
+    obligatoire: false
+    defaut: "{PREFIXE}-{ANNEE}-{NUMERO:05d}"
+    description: Format des numeros de documents
+
+  # -----------------------------------------------------
+  # Representant legal
+  # -----------------------------------------------------
+  - nom: representant_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du representant legal
+
+  - nom: representant_nom
+    type: text
+    obligatoire: false
+    description: Nom du representant legal
+    autocompletion: true
+
+  - nom: representant_fonction
+    type: text
+    obligatoire: false
+    description: Fonction du representant (Gerant, President, etc.)
+    autocompletion: true
+
+  - nom: representant_email
+    type: email
+    obligatoire: false
+    description: Email du representant legal
+    autocompletion: true
+
+  - nom: representant_telephone
+    type: tel
+    obligatoire: false
+    description: Telephone du representant legal
+
+  # -----------------------------------------------------
+  # Assurances et garanties
+  # -----------------------------------------------------
+  - nom: assurance_rc_pro
+    type: text
+    obligatoire: false
+    description: Numero assurance RC professionnelle
+    autocompletion: true
+
+  - nom: assurance_decennale
+    type: text
+    obligatoire: false
+    description: Numero assurance decennale (batiment)
+    autocompletion: true
+
+  - nom: garantie_financiere
+    type: text
+    obligatoire: false
+    description: Garantie financiere (immobilier)
+    autocompletion: true
+
+  # -----------------------------------------------------
+  # Parametres techniques
+  # -----------------------------------------------------
+  - nom: timezone
+    type: text
+    obligatoire: false
+    defaut: Europe/Paris
+    description: Fuseau horaire
+
+  - nom: langue
+    type: select
+    obligatoire: false
+    defaut: fr
+    options: [fr, en, es, de, it, pt]
+    description: Langue par defaut
+
+  - nom: format_date
+    type: text
+    obligatoire: false
+    defaut: DD/MM/YYYY
+    description: Format d'affichage des dates
+
+  - nom: separateur_milliers
+    type: text
+    obligatoire: false
+    defaut: " "
+    description: Separateur des milliers
+
+  - nom: separateur_decimal
+    type: text
+    obligatoire: false
+    defaut: ","
+    description: Separateur decimal
+
+  # -----------------------------------------------------
+  # Metadonnees
+  # -----------------------------------------------------
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Entreprise active
+
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    obligatoire: false
+
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+  - nom: updated_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    autocompletion: true
+
+# Actions disponibles
+actions:
+  - modifier
+  - telecharger_logo
+  - supprimer_logo
+  - previsualiser_pdf
+
+# Page personnalisee
+pages:
+  - chemin: "/ui/parametres/entreprise"
+    nom: "Parametres de l'entreprise"
+    description: "Configurer les informations de votre entreprise"

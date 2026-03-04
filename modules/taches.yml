@@ -1,0 +1,281 @@
+# AZALPLUS - Module Taches (Gestion des Taches Projet)
+nom: Taches
+icone: check-square
+menu: Projets
+description: Gestion des taches de projets
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    obligatoire: false
+    description: Code tache (auto-genere)
+    autocompletion: true
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom de la tache
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description detaillee
+
+  # Relations principales
+  - nom: projet_id
+    type: relation
+    obligatoire: true
+    relation: Projets
+    description: Projet parent
+    autocompletion: true
+
+  - nom: phase_id
+    type: relation
+    obligatoire: false
+    relation: ProjetPhases
+    description: Phase du projet
+    autocompletion: true
+
+  - nom: parent_id
+    type: relation
+    obligatoire: false
+    relation: Taches
+    description: Tache parente
+    autocompletion: true
+
+  # Assignation
+  - nom: assignee_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Personne responsable de la tache
+    autocompletion: true
+
+  - nom: reporter_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Createur de la tache
+    autocompletion: true
+
+  # Statut et priorite (KANBAN)
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: a_faire
+    options: [a_faire, en_cours, en_revue, bloquee, termine, annule]
+    description: Statut de la tache
+
+  - nom: priorite
+    type: select
+    obligatoire: false
+    defaut: moyenne
+    options: [basse, moyenne, haute, urgente]
+    description: Priorite de la tache
+
+  # Classification
+  - nom: type_tache
+    type: select
+    obligatoire: false
+    options: [fonctionnalite, bug, amelioration, documentation, test, autre]
+    description: Type de tache
+
+  - nom: tags
+    type: tags
+    obligatoire: false
+    description: Tags pour filtrage
+
+  # Dates - Planification
+  - nom: date_debut_prevue
+    type: date
+    obligatoire: false
+    description: Date de debut prevue
+
+  - nom: date_fin_prevue
+    type: date
+    obligatoire: false
+    description: Date de fin prevue
+
+  - nom: date_echeance
+    type: date
+    obligatoire: false
+    description: Date d'echeance
+
+  # Dates - Reelles
+  - nom: date_debut_reelle
+    type: date
+    obligatoire: false
+    description: Date de debut reelle
+
+  - nom: date_fin_reelle
+    type: date
+    obligatoire: false
+    description: Date de fin reelle
+
+  # Effort (heures)
+  - nom: estimation_heures
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Estimation en heures
+
+  - nom: heures_reelles
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Heures reellement passees
+
+  - nom: heures_restantes
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Estimation heures restantes
+
+  # Progression
+  - nom: progression
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Pourcentage d'avancement (0-100)
+
+  # Ordre et hierarchie
+  - nom: ordre
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Ordre d'affichage
+
+  - nom: wbs_code
+    type: text
+    obligatoire: false
+    description: Code WBS
+    autocompletion: true
+
+  # Options speciales
+  - nom: est_jalon
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Marquer comme jalon
+
+  - nom: est_critique
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Tache sur le chemin critique
+
+  - nom: facturable
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Temps facturable au client
+
+  # Blocage
+  - nom: motif_blocage
+    type: textarea
+    obligatoire: false
+    description: Raison du blocage
+    autocompletion: true
+
+  - nom: date_blocage
+    type: datetime
+    obligatoire: false
+    description: Date de mise en blocage
+
+# Sous-entite: Dependance entre taches
+dependances:
+  description: Dependances entre taches
+  champs:
+    - nom: predecesseur_id
+      type: relation
+      obligatoire: true
+      relation: Taches
+      description: Tache predecesseur
+      autocompletion: true
+
+    - nom: successeur_id
+      type: relation
+      obligatoire: true
+      relation: Taches
+      description: Tache successeur
+      autocompletion: true
+
+    - nom: type_dependance
+      type: select
+      obligatoire: false
+      defaut: FS
+      options: [FS, FF, SS, SF]
+      description: Type de dependance
+
+    - nom: delai_jours
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Delai en jours
+
+# Sous-entite: Checklist
+checklist:
+  description: Elements de checklist de la tache
+  champs:
+    - nom: titre
+      type: text
+      obligatoire: true
+      description: Element de la checklist
+      autocompletion: true
+
+    - nom: fait
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Element complete
+
+    - nom: ordre
+      type: number
+      obligatoire: false
+      defaut: 0
+
+    - nom: fait_par
+      type: relation
+      obligatoire: false
+      relation: Utilisateurs
+      autocompletion: true
+
+    - nom: fait_le
+      type: datetime
+      obligatoire: false
+
+# Workflow de la tache
+workflow:
+  a_faire -> en_cours: action demarrer
+  en_cours -> en_revue: action soumettre_revue
+  en_cours -> bloquee: action bloquer
+  en_revue -> en_cours: action demander_modifications
+  en_revue -> termine: action valider
+  bloquee -> en_cours: action debloquer
+  "* -> annule": action annuler
+
+actions:
+  - demarrer
+  - soumettre_revue
+  - valider
+  - demander_modifications
+  - bloquer
+  - debloquer
+  - annuler
+  - assigner
+  - changer_priorite
+  - ajouter_sous_tache
+  - ajouter_dependance
+  - ajouter_temps
+  - demarrer_timer
+  - commenter
+
+marceau:
+  alertes:
+    - si date_echeance < maintenant et statut not in [termine, annule]: "Tache en retard"
+    - si statut = bloquee: "Tache bloquee - action requise"
+    - si priorite = urgente et statut = a_faire: "Tache urgente non demarree"
+    - si heures_reelles > estimation_heures * 1.5: "Depassement significatif de l'estimation"
+    - si assignee_id is null et priorite in [haute, urgente]: "Tache prioritaire non assignee"

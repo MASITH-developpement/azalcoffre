@@ -1,0 +1,92 @@
+# =============================================================================
+# AZALPLUS - Module Historique Recent
+# =============================================================================
+# Suivi automatique des enregistrements consultes par chaque utilisateur.
+# Conserve les 50 derniers elements vus pour un acces rapide.
+# =============================================================================
+
+Recent:
+  nom: "Recent"
+  icone: "clock"
+  menu: "Systeme"
+  description: "Historique des enregistrements recemment consultes"
+
+  champs:
+    # Proprietaire de l'historique (utilisateur)
+    user_id:
+      type: uuid
+      requis: true
+      description: "ID de l'utilisateur"
+
+    # Module source de l'enregistrement
+    module:
+      type: texte
+      requis: true
+      description: "Nom du module (ex: Clients, Factures, Devis)"
+
+    # ID de l'enregistrement consulte
+    record_id:
+      type: uuid
+      requis: true
+      description: "ID de l'enregistrement consulte"
+
+    # Nom d'affichage (cache pour acces rapide)
+    nom:
+      type: texte
+      requis: true
+      description: "Nom d'affichage de l'enregistrement (cache)"
+
+    # Informations supplementaires (cache)
+    sous_titre:
+      type: texte
+      description: "Information secondaire (ex: email, reference)"
+
+    # Statut de l'enregistrement (cache)
+    statut:
+      type: texte
+      description: "Statut actuel de l'enregistrement (cache)"
+
+    # Icone du module
+    module_icone:
+      type: texte
+      description: "Icone du module source"
+
+    # Date/heure de la derniere consultation
+    viewed_at:
+      type: datetime
+      requis: true
+      description: "Date et heure de la derniere consultation"
+
+    # Nombre de consultations
+    view_count:
+      type: entier
+      defaut: 1
+      description: "Nombre total de consultations de cet enregistrement"
+
+  actions:
+    - effacer_historique
+    - effacer_element
+
+  # Index pour requetes performantes
+  index:
+    - user_id
+    - module
+    - record_id
+    - viewed_at
+    - [user_id, module, record_id]  # Unicite par utilisateur
+
+  # Contrainte d'unicite (un seul enregistrement par user/module/record)
+  contraintes:
+    - unique: [user_id, module, record_id]
+
+  # Configuration specifique
+  config:
+    # Nombre maximum d'elements a conserver par utilisateur
+    max_items_per_user: 50
+    # Duree de retention en jours
+    retention_days: 30
+
+  marceau:
+    alertes:
+      - si module vide: "Le module source est obligatoire"
+      - si record_id vide: "L'enregistrement cible est obligatoire"

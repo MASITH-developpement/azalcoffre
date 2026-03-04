@@ -1,0 +1,228 @@
+# AZALPLUS - Module Abonnements (Recurring Invoicing)
+nom: Abonnements
+icone: calendar
+menu: Commercial
+description: Gestion des factures recurrentes / abonnements
+
+champs:
+  # Identification
+  - nom: reference
+    type: text
+    obligatoire: false
+    description: Reference unique de l'abonnement
+    autocompletion: true
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom de l'abonnement
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description de l'abonnement
+
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, ACTIF, SUSPENDU, TERMINE, ANNULE]
+    description: Statut de l'abonnement
+
+  # Client
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client abonne
+    autocompletion: true
+
+  - nom: client_nom
+    type: text
+    obligatoire: false
+    description: Nom du client
+    autocompletion: true
+
+  - nom: client_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+    description: Civilite du contact client
+
+  - nom: client_contact
+    type: text
+    obligatoire: false
+    description: Nom du contact client
+    autocompletion: true
+
+  - nom: client_email
+    type: email
+    obligatoire: false
+    description: Email du client
+    autocompletion: true
+
+  # Frequence de facturation
+  - nom: frequence
+    type: select
+    obligatoire: true
+    defaut: mensuel
+    options: [hebdomadaire, mensuel, trimestriel, semestriel, annuel]
+    description: Frequence de facturation
+
+  - nom: jour_facturation
+    type: number
+    obligatoire: true
+    defaut: 1
+    description: Jour du mois/semaine pour la facturation
+
+  # Montants
+  - nom: montant_ht
+    type: number
+    obligatoire: true
+    defaut: 0
+    description: Montant HT recurrent
+
+  - nom: taux_tva
+    type: number
+    obligatoire: false
+    defaut: 20.0
+    description: Taux de TVA (%)
+
+  - nom: montant_tva
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant TVA
+
+  - nom: montant_ttc
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant TTC
+
+  - nom: currency
+    type: relation
+    obligatoire: false
+    relation: Devises
+    defaut: EUR
+    description: Devise
+    autocompletion: true
+
+  # Produits/services inclus
+  - nom: produits
+    type: json
+    obligatoire: false
+    description: Liste des produits/services inclus
+
+  # Dates
+  - nom: date_debut
+    type: date
+    obligatoire: true
+    description: Date de debut de l'abonnement
+
+  - nom: date_fin
+    type: date
+    obligatoire: false
+    description: Date de fin de l'abonnement
+
+  - nom: prochaine_facture
+    type: date
+    obligatoire: false
+    description: Date de la prochaine facture a generer
+
+  - nom: derniere_facture
+    type: date
+    obligatoire: false
+    description: Date de la derniere facture generee
+
+  # Compteurs
+  - nom: nb_factures_generees
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de factures generees
+
+  - nom: total_facture
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Total facture depuis le debut
+
+  # Options
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Abonnement actif
+
+  - nom: envoyer_email
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Envoyer la facture par email automatiquement
+
+  - nom: generer_pdf
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Generer le PDF automatiquement
+
+  # Conditions de paiement
+  - nom: conditions_paiement
+    type: select
+    obligatoire: false
+    defaut: NET_30
+    options: [COMPTANT, NET_15, NET_30, NET_45, NET_60, FIN_DE_MOIS]
+    description: Conditions de paiement
+
+  - nom: mode_paiement
+    type: select
+    obligatoire: false
+    options: [VIREMENT, PRELEVEMENT, CARTE, CHEQUE]
+    description: Mode de paiement prefere
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes visibles sur les factures
+
+  - nom: notes_internes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  # Responsable
+  - nom: responsable_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Commercial responsable
+    autocompletion: true
+
+# Workflow
+workflow:
+  "BROUILLON -> ACTIF": "action activer"
+  "ACTIF -> SUSPENDU": "action suspendre"
+  "SUSPENDU -> ACTIF": "action reactiver"
+  "ACTIF -> TERMINE": "action terminer"
+  "ACTIF -> ANNULE": "action annuler"
+  "SUSPENDU -> ANNULE": "action annuler"
+
+actions:
+  - activer
+  - suspendre
+  - reactiver
+  - terminer
+  - annuler
+  - generer_facture_manuellement
+  - voir_factures
+  - dupliquer
+
+marceau:
+  alertes:
+    - si statut = ACTIF et prochaine_facture <= aujourd'hui: "Facture a generer"
+    - si statut = ACTIF et date_fin et date_fin < aujourd'hui + 30 jours: "Abonnement arrive a echeance"
+    - si statut = SUSPENDU: "Abonnement suspendu"
+    - si nb_factures_generees = 0 et statut = ACTIF: "Aucune facture encore generee"
