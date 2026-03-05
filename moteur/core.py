@@ -179,6 +179,11 @@ async def timing_middleware(request: Request, call_next: Callable):
     return response
 
 # Guardian middleware (sécurité invisible)
+# Paths exemptés du WAF (reçoivent des données qui ressemblent à des attaques)
+GUARDIAN_EXEMPT_PATHS = [
+    "/guardian/frontend-error",  # Reçoit des stack traces, code JS, etc.
+]
+
 @app.middleware("http")
 async def guardian_middleware(request: Request, call_next: Callable):
     """Guardian surveille et protège silencieusement."""
@@ -186,6 +191,10 @@ async def guardian_middleware(request: Request, call_next: Callable):
     import sys
 
     try:
+        # Exempter certains paths du WAF
+        if any(request.url.path.startswith(p) for p in GUARDIAN_EXEMPT_PATHS):
+            return await call_next(request)
+
         # Vérification Guardian AVANT
         check_result = await Guardian.check_request(request)
 
