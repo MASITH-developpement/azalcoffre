@@ -6,6 +6,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import './styles/globals.css';
 
+// Error reporting (Guardian/AutoPilot)
+import { initializeErrorReporter } from './core/errors/ErrorReporter';
+import { ErrorBoundary } from './core/errors/ErrorBoundary';
+
+// Initialize error reporter ASAP
+initializeErrorReporter();
+
 // Configure QueryClient with sensible defaults for mobile
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,11 +49,13 @@ const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
 

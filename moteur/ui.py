@@ -3597,6 +3597,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         }}
     }});
     </script>
+    <!-- Error Reporter (Guardian/AutoPilot) -->
+    <script src="/assets/js/error-reporter.js"></script>
 </head>
 <body>
     <div class="app-layout">

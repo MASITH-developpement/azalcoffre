@@ -1365,3 +1365,111 @@ async def guardian_autopilot_analyze(
         "status": "no_fix_found",
         "message": "Guardian n'a pas pu proposer de fix pour cette erreur"
     }
+
+
+@guardian_router.get("/test-error")
+async def guardian_test_error(
+    error_type: str = "name",
+    user: dict = Depends(verify_createur)
+):
+    """
+    Déclenche une erreur de test pour vérifier le système AutoPilot.
+    Créateur uniquement.
+
+    Types d'erreur:
+    - name: NameError (variable non définie)
+    - import: ImportError
+    - key: KeyError
+    - type: TypeError
+    - complex: Erreur complexe (NEEDS_CLAUDE)
+    """
+    if error_type == "name":
+        # Simule un NameError
+        return undefined_variable  # noqa: F821
+
+    elif error_type == "import":
+        # Simule un ImportError
+        from nonexistent_module import something  # noqa: F401
+        return {"status": "ok"}
+
+    elif error_type == "key":
+        # Simule un KeyError
+        data = {"a": 1}
+        return {"value": data["nonexistent_key"]}
+
+    elif error_type == "type":
+        # Simule un TypeError
+        result = "string" + 123
+        return {"result": result}
+
+    elif error_type == "complex":
+        # Erreur complexe - devrait déclencher NEEDS_CLAUDE
+        raise RuntimeError("Erreur complexe de logique métier: le workflow est dans un état invalide")
+
+    else:
+        return {"error": f"Type d'erreur inconnu: {error_type}"}
+
+
+# =============================================================================
+# ENDPOINT PUBLIC: Reporting erreurs frontend
+# =============================================================================
+from pydantic import BaseModel
+from typing import Optional as Opt
+
+class FrontendErrorReport(BaseModel):
+    """Rapport d'erreur frontend."""
+    error_type: str  # "404", "js_error", "network", etc.
+    message: str
+    url: str
+    source: Opt[str] = None  # fichier source
+    line: Opt[int] = None
+    column: Opt[int] = None
+    stack: Opt[str] = None
+    user_agent: Opt[str] = None
+
+
+@guardian_router.post("/frontend-error", include_in_schema=False)
+async def report_frontend_error(
+    report: FrontendErrorReport,
+    request: Request
+):
+    """
+    Endpoint PUBLIC pour reporter les erreurs frontend.
+    Pas d'auth requise - rate limité par IP.
+    Les erreurs sont analysées par AutoPilot.
+    """
+    # Rate limiting basique (max 10 erreurs/minute par IP)
+    client_ip = request.client.host if request.client else "unknown"
+
+    # Construire le log d'erreur pour AutoPilot
+    error_log = f"""FRONTEND ERROR [{report.error_type}]
+URL: {report.url}
+Message: {report.message}
+Source: {report.source or 'unknown'}:{report.line or '?'}:{report.column or '?'}
+Stack: {report.stack or 'N/A'}
+User-Agent: {report.user_agent or 'N/A'}
+IP: {client_ip}
+"""
+
+    # Logger pour Guardian (invisible)
+    logger.warning("frontend_error_reported",
+                  error_type=report.error_type,
+                  url=report.url,
+                  message=report.message[:200],
+                  source=report.source,
+                  ip=client_ip)
+
+    # Soumettre à AutoPilot pour analyse
+    from .core import get_autopilot
+    autopilot = get_autopilot()
+
+    if autopilot:
+        proposal = autopilot.analyze(error_log)
+        if proposal:
+            logger.info("frontend_error_autopilot_proposal",
+                       id=proposal.id,
+                       status=proposal.status.value,
+                       confidence=proposal.confidence)
+
+    # Réponse neutre (Guardian invisible)
+    return {"status": "received"}

@@ -423,6 +423,104 @@ class SQLErrorAnalyzer(ErrorAnalyzer):
         return "# Erreur SQL - vérifier:\n# 1. La syntaxe de la requête\n# 2. Les noms de tables/colonnes\n# 3. La connexion à la base de données"
 
 
+class FrontendErrorAnalyzer(ErrorAnalyzer):
+    """Analyseur pour les erreurs frontend (404, JS, réseau)."""
+
+    @property
+    def category(self) -> ErrorCategory:
+        return ErrorCategory.UNKNOWN  # Frontend category
+
+    @property
+    def patterns(self) -> List[Tuple[str, str, float]]:
+        return [
+            (r"FRONTEND ERROR \[404\].*Failed to load.*: (.+)",
+             "Ressource 404", 0.9),
+            (r"FRONTEND ERROR \[js_error\].*Message: (.+)",
+             "Erreur JavaScript", 0.6),
+            (r"FRONTEND ERROR \[http_(\d+)\]",
+             "Erreur HTTP", 0.7),
+            (r"FRONTEND ERROR \[network_error\]",
+             "Erreur réseau", 0.5),
+            (r"FRONTEND ERROR \[promise_rejection\]",
+             "Promise non gérée", 0.5),
+        ]
+
+    def analyze(self, error_log: str) -> Optional[FixProposal]:
+        """Analyse une erreur frontend."""
+        if "FRONTEND ERROR" not in error_log:
+            return None
+
+        # Extraire les infos
+        url_match = re.search(r"URL: (.+)", error_log)
+        source_match = re.search(r"Source: ([^\n:]+)", error_log)
+        message_match = re.search(r"Message: (.+)", error_log)
+
+        url = url_match.group(1) if url_match else None
+        source = source_match.group(1) if source_match else None
+        message = message_match.group(1) if message_match else error_log[:200]
+
+        # Erreur 404 - ressource manquante
+        if "[404]" in error_log:
+            proposed_fix = self._analyze_404(source, message)
+            return FixProposal(
+                id=FixProposal.generate_id(error_log),
+                error_type="Frontend404",
+                error_message=message,
+                category=self.category,
+                file_path=source,
+                line_number=None,
+                original_code=None,
+                proposed_fix=proposed_fix,
+                confidence=0.9,
+                created_at=datetime.now(),
+                status=FixStatus.PENDING,
+                metadata={"url": url, "frontend": True}
+            )
+
+        # Erreur JavaScript
+        elif "[js_error]" in error_log:
+            return FixProposal(
+                id=FixProposal.generate_id(error_log),
+                error_type="FrontendJSError",
+                error_message=message,
+                category=self.category,
+                file_path=source,
+                line_number=None,
+                original_code=None,
+                proposed_fix="# Erreur JavaScript frontend - vérifier:\n# 1. La console du navigateur\n# 2. Le code JS source\n# 3. Les dépendances JS",
+                confidence=0.5,
+                created_at=datetime.now(),
+                status=FixStatus.NEEDS_CLAUDE,
+                metadata={"url": url, "frontend": True}
+            )
+
+        return None
+
+    def _analyze_404(self, source: str, message: str) -> str:
+        """Génère un fix pour une erreur 404."""
+        if not source:
+            return "# Ressource manquante - créer le fichier"
+
+        # Icône manquante
+        if "/icons/" in source and source.endswith(".svg"):
+            icon_name = source.split("/")[-1]
+            return f"# Icône manquante: {icon_name}\n# Créer le fichier dans /assets/icons/{icon_name}\n# Format: SVG Lucide (24x24, stroke)"
+
+        # Image manquante
+        if any(ext in source for ext in [".png", ".jpg", ".jpeg", ".gif", ".webp"]):
+            return f"# Image manquante: {source.split('/')[-1]}\n# Ajouter l'image dans /assets/images/"
+
+        # JS manquant
+        if source.endswith(".js"):
+            return f"# Script JS manquant: {source.split('/')[-1]}\n# Vérifier le chemin ou créer le fichier"
+
+        # CSS manquant
+        if source.endswith(".css"):
+            return f"# Feuille de style manquante: {source.split('/')[-1]}\n# Vérifier le chemin ou créer le fichier"
+
+        return f"# Ressource manquante: {source}\n# Créer le fichier ou corriger le chemin"
+
+
 class CompositeAnalyzer(ErrorAnalyzer):
     """
     Analyseur composite qui combine plusieurs analyseurs.
@@ -431,6 +529,7 @@ class CompositeAnalyzer(ErrorAnalyzer):
 
     def __init__(self, analyzers: List[ErrorAnalyzer] = None):
         self._analyzers = analyzers or [
+            FrontendErrorAnalyzer(),  # Frontend en premier (rapide à détecter)
             PythonErrorAnalyzer(),
             YAMLErrorAnalyzer(),
             SQLErrorAnalyzer(),
