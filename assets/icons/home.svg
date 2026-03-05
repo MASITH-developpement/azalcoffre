@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Corps maison (secondaire) -->
+  <path d="M4 12V20C4 20.55 4.45 21 5 21H19C19.55 21 20 20.55 20 20V12L12 5L4 12Z" fill="#93C5FD"/>
+  <!-- Toit (principale) -->
+  <path d="M2 12L12 3L22 12L20.5 13.5L12 6L3.5 13.5L2 12Z" fill="#2563EB"/>
+  <!-- Porte (principale) -->
+  <rect x="9" y="14" width="6" height="7" rx="1" fill="#2563EB"/>
+  <!-- Fenetre porte -->
+  <rect x="11" y="16" width="2" height="2" rx="0.5" fill="#93C5FD"/>
+</svg>

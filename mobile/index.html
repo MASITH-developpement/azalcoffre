@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2563EB" />
+    <meta name="background-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AZALPLUS" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-TileColor" content="#2563EB" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <!-- SEO -->
+    <meta name="description" content="AZALPLUS Mobile - No-Code ERP mobile application for business management" />
+    <meta name="author" content="AZALPLUS" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/masked-icon.svg" color="#2563EB" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Preconnect to API -->
+    <link rel="preconnect" href="https://api.azalplus.com" />
+    <link rel="dns-prefetch" href="https://api.azalplus.com" />
+
+    <title>AZALPLUS Mobile</title>
+
+    <!-- Prevent FOUC -->
+    <style>
+      html {
+        background-color: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        html {
+          background-color: #0F172A;
+        }
+      }
+      #root {
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- No-JS fallback -->
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: system-ui, sans-serif;">
+        <h1>AZALPLUS Mobile</h1>
+        <p>JavaScript est requis pour utiliser cette application.</p>
+        <p>Veuillez activer JavaScript dans les paramètres de votre navigateur.</p>
+      </div>
+    </noscript>
+  </body>
+</html>

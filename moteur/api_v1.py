@@ -28,13 +28,14 @@ from .db import Database
 from .parser import ModuleParser, ModuleDefinition, FieldDefinition
 from .tenant import get_current_tenant, get_current_user_id
 from .auth import require_auth, require_role
+from .icons import IconManager
 
 logger = structlog.get_logger()
 
 # =============================================================================
 # API Router v1
 # =============================================================================
-router_v1 = APIRouter()  # Sans prefix - routes directement à /api/{module}
+router_v1 = APIRouter()  # Routes à /api/{module}
 
 
 # =============================================================================
@@ -84,6 +85,10 @@ def create_pydantic_model_v1(module: ModuleDefinition, mode: str = "create") -> 
 
     Returns:
         Dynamically created Pydantic model class
+
+    Note: Tous les champs sont optionnels côté Pydantic.
+    La validation des champs requis se fait via Validator.validate_record()
+    ce qui permet d'ajouter des valeurs par défaut avant la validation.
     """
 
     fields = {}
@@ -94,10 +99,8 @@ def create_pydantic_model_v1(module: ModuleDefinition, mode: str = "create") -> 
         field_info = _create_field_info(field_def, mode)
 
         if mode == "create":
-            if field_def.requis:
-                fields[nom] = (python_type, field_info)
-            else:
-                fields[nom] = (Optional[python_type], field_info)
+            # Tous les champs optionnels - la validation se fait après
+            fields[nom] = (Optional[python_type], field_info)
 
         elif mode == "update":
             # All fields optional for updates
@@ -748,6 +751,7 @@ async def list_v1_modules(user: dict = Depends(require_auth)):
                 "name": module.nom,
                 "display_name": module.nom_affichage,
                 "icon": module.icone,
+                "icon_url": IconManager.get_icon_url(module.icone),
                 "menu": module.menu,
                 "description": module.description,
                 "fields_count": len(module.champs),

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Secondary: Calendar body -->
+  <path d="M5 6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z" fill="#93C5FD"/>
+  <!-- Secondary: Header bar -->
+  <rect x="5" y="4" width="14" height="5" fill="#93C5FD"/>
+  <!-- Primary: Header accent -->
+  <rect x="5" y="4" width="14" height="5" fill="#2563EB" opacity="0.3"/>
+  <!-- Primary: Calendar pins -->
+  <line x1="8" y1="2" x2="8" y2="6" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+  <line x1="16" y1="2" x2="16" y2="6" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+  <!-- Primary: Border -->
+  <rect x="5" y="4" width="14" height="18" rx="2" stroke="#2563EB" stroke-width="2" fill="none"/>
+  <!-- Primary: Header line -->
+  <line x1="5" y1="9" x2="19" y2="9" stroke="#2563EB" stroke-width="2"/>
+  <!-- Primary: Strike through (off) -->
+  <line x1="4" y1="4" x2="20" y2="20" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Écran -->
+  <rect x="2" y="5" width="14" height="14" rx="2" fill="#93C5FD"/>
+  <!-- Objectif caméra -->
+  <path d="M16 9l5-3v12l-5-3V9z" fill="#2563EB"/>
+  <!-- Bouton rec -->
+  <circle cx="6" cy="9" r="2" fill="#2563EB"/>
+</svg>

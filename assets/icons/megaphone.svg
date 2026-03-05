@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Mégaphone corps -->
+  <path d="M3 11c0-1.1.9-2 2-2h2l10-5v16l-10-5H5c-1.1 0-2-.9-2-2v-2z" fill="#93C5FD"/>
+  <!-- Pavillon -->
+  <path d="M17 4l4-2v20l-4-2V4z" fill="#2563EB"/>
+  <!-- Détail -->
+  <rect x="5" y="10" width="4" height="4" rx="1" fill="#2563EB"/>
+  <!-- Ondes -->
+  <path d="M21 8c1 1.5 1 4.5 0 6" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+</svg>

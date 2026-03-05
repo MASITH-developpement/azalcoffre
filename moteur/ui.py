@@ -314,6 +314,7 @@ def generate_documents_section(module_name: str, item_id: str) -> str:
         try {{
             const res = await fetch('/api/{module_name}/{item_id}/documents', {{
                 method: 'POST',
+                credentials: 'include',
                 body: formData
             }});
 
@@ -338,8 +339,15 @@ def generate_documents_section(module_name: str, item_id: str) -> str:
 
 @ui_router.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, user: dict = Depends(require_auth)):
-    """Page d'accueil / Dashboard."""
+    """Page d'accueil / Dashboard avec indicateurs financiers."""
+    from .db import Database
+    from .tenant import TenantContext
+    from datetime import datetime, timedelta
+    import json
 
+    tenant_id = TenantContext.get_tenant_id()
+
+    # Récupérer les modules pour le menu
     modules = []
     for name in ModuleParser.list_all():
         module = ModuleParser.get(name)
@@ -351,25 +359,468 @@ async def dashboard(request: Request, user: dict = Depends(require_auth)):
                 "menu": module.menu
             })
 
-    # Générer les cartes stats
-    stats_html = ""
-    icon_colors = ["blue", "green", "yellow", "red", "blue"]
-    for i, m in enumerate(modules):
-        color = icon_colors[i % len(icon_colors)]
-        stats_html += f'''
-        <a href="/ui/{m["nom"]}" class="stat-card" style="text-decoration: none;">
-            <div class="stat-icon {color}">{get_icon(m["icone"])}</div>
-            <div class="stat-value">0</div>
-            <div class="stat-label">{m["nom_affichage"]}</div>
-        </a>
-        '''
+    # ===== CALCUL DES INDICATEURS FINANCIERS =====
+    today = datetime.now().date()
+    debut_mois = today.replace(day=1)
+    debut_annee = today.replace(month=1, day=1)
+
+    # Initialiser les valeurs
+    ca_mois = 0
+    ca_annee = 0
+    factures_a_payer = 0
+    nb_factures_impayees = 0
+    impayes_clients = 0
+    nb_impayes_clients = 0
+    impayes_fournisseurs = 0
+    tresorerie = 0
+    tva_a_payer = 0
+    nb_factures_payees = 0
+    nb_factures_en_attente = 0
+    nb_factures_en_retard = 0
+
+    # CA par mois (12 derniers mois)
+    ca_par_mois = {i: 0 for i in range(1, 13)}
+    mois_labels = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"]
+
+    try:
+        # CA du mois (factures validées/payées ce mois)
+        factures = Database.query("factures", tenant_id, filters={}, limit=1000)
+        for f in factures:
+            f_date = f.get("date")
+            if f_date:
+                if isinstance(f_date, str):
+                    f_date = datetime.strptime(f_date[:10], "%Y-%m-%d").date()
+                elif hasattr(f_date, 'date'):
+                    f_date = f_date.date()
+
+                total = float(f.get("total") or f.get("subtotal") or 0)
+                status = f.get("status", "").upper()
+
+                # CA = factures validées ou payées
+                if status in ["VALIDATED", "PAID", "PAYEE", "VALIDEE", "SENT"]:
+                    if f_date >= debut_mois:
+                        ca_mois += total
+                    if f_date >= debut_annee:
+                        ca_annee += total
+                        # Ajouter au mois correspondant
+                        ca_par_mois[f_date.month] += total
+
+                # Comptage par statut
+                if status in ["PAID", "PAYEE"]:
+                    nb_factures_payees += 1
+                elif status in ["OVERDUE", "EN_RETARD"]:
+                    nb_factures_en_retard += 1
+                    impayes_clients += total
+                    nb_impayes_clients += 1
+                elif status in ["VALIDATED", "SENT", "VALIDEE", "ENVOYEE"]:
+                    nb_factures_en_attente += 1
+                    impayes_clients += total
+                    nb_impayes_clients += 1
+
+                # Factures à payer (échéance proche)
+                due_date = f.get("due_date")
+                if due_date and status not in ["PAID", "PAYEE"]:
+                    if isinstance(due_date, str):
+                        due_date = datetime.strptime(due_date[:10], "%Y-%m-%d").date()
+                    elif hasattr(due_date, 'date'):
+                        due_date = due_date.date()
+                    if due_date <= today + timedelta(days=30):
+                        factures_a_payer += total
+                        nb_factures_impayees += 1
+
+                # TVA collectée
+                tva = float(f.get("tax_amount") or 0)
+                if status in ["VALIDATED", "PAID", "PAYEE", "VALIDEE", "SENT"] and f_date >= debut_mois:
+                    tva_a_payer += tva
+
+    except Exception as e:
+        logger.warning("dashboard_factures_error", error=str(e))
+
+    try:
+        # Trésorerie (solde comptes bancaires)
+        comptes = Database.query("comptes_bancaires", tenant_id, filters={}, limit=100)
+        for c in comptes:
+            tresorerie += float(c.get("solde") or c.get("solde_actuel") or 0)
+    except Exception as e:
+        logger.warning("dashboard_tresorerie_error", error=str(e))
+
+    try:
+        # Impayés fournisseurs (commandes d'achat non payées)
+        commandes = Database.query("commandes_achat", tenant_id, filters={}, limit=500)
+        for c in commandes:
+            status = c.get("statut", "").upper()
+            if status in ["RECUE", "VALIDEE", "EN_ATTENTE"]:
+                impayes_fournisseurs += float(c.get("total") or c.get("montant_total") or 0)
+    except Exception as e:
+        logger.warning("dashboard_fournisseurs_error", error=str(e))
+
+    # Données pour les graphiques
+    ca_data = json.dumps([ca_par_mois[i] for i in range(1, 13)])
+    total_factures = nb_factures_payees + nb_factures_en_attente + nb_factures_en_retard
+    if total_factures == 0:
+        total_factures = 1  # Éviter division par zéro
+
+    # Formater les montants
+    def fmt(val):
+        return f"{val:,.2f}".replace(",", " ").replace(".", ",") + " €"
 
     html = generate_layout(
         title="Tableau de bord",
         content=f'''
-        <div class="stats-row">
-            {stats_html}
+        <style>
+            .dashboard-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }}
+            .kpi-card {{
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                border-left: 4px solid var(--primary);
+            }}
+            .kpi-card.success {{ border-left-color: #10B981; }}
+            .kpi-card.warning {{ border-left-color: #F59E0B; }}
+            .kpi-card.danger {{ border-left-color: #EF4444; }}
+            .kpi-card.info {{ border-left-color: #3B82F6; }}
+            .kpi-header {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+            }}
+            .kpi-title {{
+                font-size: 14px;
+                color: #64748B;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }}
+            .kpi-icon {{
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #F1F5F9;
+            }}
+            .kpi-icon svg {{ width: 20px; height: 20px; }}
+            .kpi-value {{
+                font-size: 28px;
+                font-weight: 700;
+                color: #1E293B;
+                margin-bottom: 4px;
+            }}
+            .kpi-subtitle {{
+                font-size: 13px;
+                color: #94A3B8;
+            }}
+            .kpi-badge {{
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 500;
+                margin-left: 8px;
+            }}
+            .kpi-badge.up {{ background: #D1FAE5; color: #059669; }}
+            .kpi-badge.down {{ background: #FEE2E2; color: #DC2626; }}
+            .section-title {{
+                font-size: 18px;
+                font-weight: 600;
+                color: #1E293B;
+                margin: 30px 0 15px 0;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #E2E8F0;
+            }}
+            .quick-links {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 12px;
+            }}
+            .quick-link {{
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 16px;
+                background: white;
+                border-radius: 8px;
+                text-decoration: none;
+                color: #1E293B;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+                transition: all 0.2s;
+            }}
+            .quick-link:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }}
+            .quick-link svg {{ width: 24px; height: 24px; color: var(--primary); }}
+            .charts-row {{
+                display: grid;
+                grid-template-columns: 2fr 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 30px;
+            }}
+            @media (max-width: 1200px) {{
+                .charts-row {{
+                    grid-template-columns: 1fr;
+                }}
+            }}
+            .chart-card {{
+                background: white;
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                position: relative;
+            }}
+            .chart-card.large {{
+                grid-column: span 1;
+            }}
+            .chart-card h3 {{
+                font-size: 16px;
+                font-weight: 600;
+                color: #1E293B;
+                margin: 0 0 15px 0;
+            }}
+            .chart-container {{
+                position: relative;
+                height: 250px;
+                width: 100%;
+            }}
+            .chart-container.large {{
+                height: 300px;
+            }}
+            .chart-legend {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                margin-top: 15px;
+                justify-content: center;
+            }}
+            .legend-item {{
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
+                color: #64748B;
+            }}
+            .dot {{
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+            }}
+            .dot.green {{ background: #10B981; }}
+            .dot.orange {{ background: #F59E0B; }}
+            .dot.red {{ background: #EF4444; }}
+            .dot.blue {{ background: #3B82F6; }}
+        </style>
+
+        <h2 class="section-title">💰 Indicateurs financiers</h2>
+        <div class="dashboard-grid">
+            <div class="kpi-card success">
+                <div class="kpi-header">
+                    <span class="kpi-title">CA du mois</span>
+                    <div class="kpi-icon">{get_icon("trending-up")}</div>
+                </div>
+                <div class="kpi-value">{fmt(ca_mois)}</div>
+                <div class="kpi-subtitle">Année: {fmt(ca_annee)}</div>
+            </div>
+
+            <div class="kpi-card info">
+                <div class="kpi-header">
+                    <span class="kpi-title">Trésorerie</span>
+                    <div class="kpi-icon">{get_icon("credit-card")}</div>
+                </div>
+                <div class="kpi-value">{fmt(tresorerie)}</div>
+                <div class="kpi-subtitle">Solde comptes bancaires</div>
+            </div>
+
+            <div class="kpi-card warning">
+                <div class="kpi-header">
+                    <span class="kpi-title">Factures à encaisser</span>
+                    <div class="kpi-icon">{get_icon("clock")}</div>
+                </div>
+                <div class="kpi-value">{fmt(factures_a_payer)}</div>
+                <div class="kpi-subtitle">{nb_factures_impayees} facture(s) en attente</div>
+            </div>
+
+            <div class="kpi-card {"danger" if impayes_clients > 0 else "success"}">
+                <div class="kpi-header">
+                    <span class="kpi-title">Impayés clients</span>
+                    <div class="kpi-icon">{get_icon("alert-triangle")}</div>
+                </div>
+                <div class="kpi-value">{fmt(impayes_clients)}</div>
+                <div class="kpi-subtitle">{nb_impayes_clients} facture(s) impayée(s)</div>
+            </div>
+
+            <div class="kpi-card {"danger" if impayes_fournisseurs > 0 else "success"}">
+                <div class="kpi-header">
+                    <span class="kpi-title">À payer fournisseurs</span>
+                    <div class="kpi-icon">{get_icon("shopping-cart")}</div>
+                </div>
+                <div class="kpi-value">{fmt(impayes_fournisseurs)}</div>
+                <div class="kpi-subtitle">Commandes à régler</div>
+            </div>
+
+            <div class="kpi-card info">
+                <div class="kpi-header">
+                    <span class="kpi-title">TVA à reverser</span>
+                    <div class="kpi-icon">{get_icon("percent")}</div>
+                </div>
+                <div class="kpi-value">{fmt(tva_a_payer)}</div>
+                <div class="kpi-subtitle">TVA collectée ce mois</div>
+            </div>
         </div>
+
+        <h2 class="section-title">📊 Évolution annuelle</h2>
+        <div class="charts-row">
+            <div class="chart-card large">
+                <h3>Chiffre d'affaires {today.year}</h3>
+                <div class="chart-container large">
+                    <canvas id="caChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Statut des factures</h3>
+                <div class="chart-container">
+                    <canvas id="facturesChart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <span class="legend-item"><span class="dot green"></span> Payées ({nb_factures_payees})</span>
+                    <span class="legend-item"><span class="dot orange"></span> En attente ({nb_factures_en_attente})</span>
+                    <span class="legend-item"><span class="dot red"></span> En retard ({nb_factures_en_retard})</span>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Trésorerie vs Dettes</h3>
+                <div class="chart-container">
+                    <canvas id="tresoChart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <span class="legend-item"><span class="dot blue"></span> Trésorerie</span>
+                    <span class="legend-item"><span class="dot orange"></span> À encaisser</span>
+                    <span class="legend-item"><span class="dot red"></span> À payer</span>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">🚀 Accès rapides</h2>
+        <div class="quick-links">
+            <a href="/ui/factures/nouveau" class="quick-link">
+                {get_icon("file-plus")}
+                <span>Nouvelle facture</span>
+            </a>
+            <a href="/ui/devis/nouveau" class="quick-link">
+                {get_icon("file-text")}
+                <span>Nouveau devis</span>
+            </a>
+            <a href="/ui/interventions/nouveau" class="quick-link">
+                {get_icon("wrench")}
+                <span>Nouvelle intervention</span>
+            </a>
+            <a href="/ui/clients/nouveau" class="quick-link">
+                {get_icon("user-plus")}
+                <span>Nouveau client</span>
+            </a>
+            <a href="/ui/factures" class="quick-link">
+                {get_icon("list")}
+                <span>Voir les factures</span>
+            </a>
+            <a href="/ui/paiements" class="quick-link">
+                {get_icon("dollar-sign")}
+                <span>Enregistrer un paiement</span>
+            </a>
+            <a href="/ui/clients" class="quick-link">
+                {get_icon("users")}
+                <span>Gérer les clients</span>
+            </a>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {{
+                // Graphique CA annuel
+                const caCtx = document.getElementById('caChart').getContext('2d');
+                new Chart(caCtx, {{
+                    type: 'bar',
+                    data: {{
+                        labels: {json.dumps(mois_labels)},
+                        datasets: [{{
+                            label: 'CA (€)',
+                            data: {ca_data},
+                            backgroundColor: 'rgba(37, 99, 235, 0.8)',
+                            borderColor: 'rgba(37, 99, 235, 1)',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }}]
+                    }},
+                    options: {{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {{
+                            legend: {{ display: false }}
+                        }},
+                        scales: {{
+                            y: {{
+                                beginAtZero: true,
+                                ticks: {{
+                                    callback: function(value) {{
+                                        return value.toLocaleString('fr-FR') + ' €';
+                                    }}
+                                }}
+                            }}
+                        }}
+                    }}
+                }});
+
+                // Camembert factures
+                const factCtx = document.getElementById('facturesChart').getContext('2d');
+                new Chart(factCtx, {{
+                    type: 'doughnut',
+                    data: {{
+                        labels: ['Payées', 'En attente', 'En retard'],
+                        datasets: [{{
+                            data: [{nb_factures_payees}, {nb_factures_en_attente}, {nb_factures_en_retard}],
+                            backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+                            borderWidth: 0
+                        }}]
+                    }},
+                    options: {{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {{
+                            legend: {{ display: false }},
+                        }},
+                        cutout: '60%'
+                    }}
+                }});
+
+                // Camembert trésorerie
+                const tresoCtx = document.getElementById('tresoChart').getContext('2d');
+                new Chart(tresoCtx, {{
+                    type: 'doughnut',
+                    data: {{
+                        labels: ['Trésorerie', 'À encaisser', 'À payer'],
+                        datasets: [{{
+                            data: [{tresorerie}, {impayes_clients}, {impayes_fournisseurs}],
+                            backgroundColor: ['#3B82F6', '#F59E0B', '#EF4444'],
+                            borderWidth: 0
+                        }}]
+                    }},
+                    options: {{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {{
+                            legend: {{ display: false }}
+                        }},
+                        cutout: '60%'
+                    }}
+                }});
+            }});
+        </script>
         ''',
         user=user,
         modules=modules
@@ -522,6 +973,187 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
             function saveTheme() {
                 alert('Thème enregistré ! (à implémenter avec API)');
             }
+        </script>
+        ''',
+        user=user,
+        modules=get_all_modules()
+    )
+    return HTMLResponse(content=html)
+
+
+@ui_router.get("/parametres/modules", response_class=HTMLResponse)
+async def modules_settings(request: Request, user: dict = Depends(require_auth)):
+    """Page de configuration des modules actifs pour l'utilisateur."""
+
+    # Get all available modules
+    all_modules = []
+    for name in ModuleParser.list_all():
+        module = ModuleParser.get(name)
+        if module and module.actif:
+            all_modules.append({
+                "name": name,
+                "label": module.nom or name.capitalize(),
+                "icon": module.icone or "file",
+                "menu": module.menu or "Général",
+                "description": module.description or ""
+            })
+
+    # Sort by menu then by name
+    all_modules.sort(key=lambda m: (m["menu"], m["label"]))
+
+    # Get user's enabled modules (from modules_mobile field)
+    user_id = user.get("id")
+    tenant_id = user.get("tenant_id")
+    enabled_modules = None
+
+    with Database.get_session() as session:
+        from sqlalchemy import text
+        result = session.execute(
+            text("""
+                SELECT modules_mobile
+                FROM azalplus.utilisateurs
+                WHERE id = :user_id AND tenant_id = :tenant_id
+            """),
+            {"user_id": str(user_id), "tenant_id": str(tenant_id)}
+        )
+        row = result.fetchone()
+        if row and row[0]:
+            try:
+                import json
+                enabled_modules = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+            except:
+                enabled_modules = None
+
+    # Group modules by menu
+    modules_by_menu = {}
+    for m in all_modules:
+        menu = m["menu"]
+        if menu not in modules_by_menu:
+            modules_by_menu[menu] = []
+        modules_by_menu[menu].append(m)
+
+    # Generate module toggles HTML
+    modules_html = ""
+    for menu, modules in modules_by_menu.items():
+        modules_html += f'''
+        <div class="module-group" style="margin-bottom: 24px;">
+            <h3 class="font-medium mb-3" style="color: var(--gray-600); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{menu}</h3>
+            <div class="module-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+        '''
+        for mod in modules:
+            is_enabled = enabled_modules is None or mod["name"] in enabled_modules
+            checked = "checked" if is_enabled else ""
+            modules_html += f'''
+                <label class="module-card" style="display: flex; align-items: center; padding: 12px 16px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                    <input type="checkbox" name="module" value="{mod['name']}" {checked} class="module-checkbox" style="margin-right: 12px;">
+                    <span style="font-size: 20px; margin-right: 12px;">{get_icon(mod['icon'])}</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 500; color: var(--gray-800);">{mod['label']}</div>
+                        <div style="font-size: 12px; color: var(--gray-500);">{mod['description'][:50] + '...' if len(mod['description']) > 50 else mod['description']}</div>
+                    </div>
+                </label>
+            '''
+        modules_html += '''
+            </div>
+        </div>
+        '''
+
+    html = generate_layout(
+        title="Modules actifs",
+        content=f'''
+        <div class="card">
+            <div class="card-header flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span style="font-size: 24px;">📦</span>
+                    <div>
+                        <h2 class="card-title">Modules actifs</h2>
+                        <p class="text-gray-500 text-sm">Personnalisez les modules visibles dans votre interface</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn btn-secondary" onclick="selectAll(true)">
+                        <span>✓</span> Tout activer
+                    </button>
+                    <button class="btn btn-secondary" onclick="selectAll(false)">
+                        <span>✗</span> Tout désactiver
+                    </button>
+                    <button class="btn btn-primary" onclick="saveModules()">
+                        <span>💾</span> Sauvegarder
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info" style="margin-bottom: 24px;">
+                    <span>ℹ️</span> Les modules désactivés ne seront plus visibles dans le menu. Cette configuration est personnelle.
+                </div>
+
+                <form id="modules-form">
+                    {modules_html}
+                </form>
+            </div>
+        </div>
+
+        <style>
+            .module-card:hover {{
+                border-color: var(--primary);
+                background: var(--primary-50);
+            }}
+            .module-card:has(input:checked) {{
+                border-color: var(--primary);
+                background: var(--primary-50);
+            }}
+            .module-checkbox {{
+                width: 18px;
+                height: 18px;
+                accent-color: var(--primary);
+            }}
+        </style>
+
+        <script>
+            function selectAll(checked) {{
+                document.querySelectorAll('.module-checkbox').forEach(cb => cb.checked = checked);
+            }}
+
+            function showToast(message, type) {{
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 12px 24px; border-radius: 8px; color: white; z-index: 9999; font-weight: 500;';
+                toast.style.background = type === 'success' ? '#22c55e' : '#ef4444';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }}
+
+            async function saveModules() {{
+                const checkboxes = document.querySelectorAll('.module-checkbox:checked');
+                const enabledModules = Array.from(checkboxes).map(cb => cb.value);
+
+                console.log('Saving modules:', enabledModules);
+
+                try {{
+                    const response = await fetch('/api/admin/users/me/modules', {{
+                        method: 'PUT',
+                        headers: {{
+                            'Content-Type': 'application/json'
+                        }},
+                        credentials: 'include',
+                        body: JSON.stringify({{ modules: enabledModules }})
+                    }});
+
+                    console.log('Response status:', response.status);
+
+                    if (response.ok) {{
+                        showToast('Modules mis à jour', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    }} else {{
+                        const data = await response.json();
+                        console.log('Error:', data);
+                        showToast(data.detail || 'Erreur lors de la sauvegarde', 'error');
+                    }}
+                }} catch(e) {{
+                    console.error('Network error:', e);
+                    showToast('Erreur réseau: ' + e.message, 'error');
+                }}
+            }}
         </script>
         ''',
         user=user,
@@ -1157,6 +1789,23 @@ async def calendar_view(
                 <h2 id="current-month" style="margin: 0 20px;"></h2>
                 <button class="btn btn-secondary" id="next-month">Suivant ▶</button>
             </div>
+            <div class="calendar-actions" style="display: flex; gap: 8px;">
+                <button onclick="openOptimizer()" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    Optimiser
+                </button>
+                <a href="/ui/agenda/nouveau" class="btn btn-primary" style="display: flex; align-items: center; gap: 6px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nouveau RDV
+                </a>
+            </div>
             <div class="calendar-views">
                 <button class="btn btn-secondary active" data-view="month">Mois</button>
                 <button class="btn btn-secondary" data-view="week">Semaine</button>
@@ -1187,9 +1836,47 @@ async def calendar_view(
                 <p class="text-muted">Sélectionnez une date pour voir les événements</p>
             </div>
         </div>
+
+        <!-- Bouton flottant pour créer un RDV (mobile) -->
+        <a href="/ui/agenda/nouveau" class="fab-create" title="Nouveau RDV">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </a>
     </div>
 
     <style>
+        /* FAB - Floating Action Button */
+        .fab-create {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-color, #2563EB);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 100;
+        }
+        .fab-create:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+        }
+        .fab-create:active {
+            transform: scale(0.95);
+        }
+        @media (min-width: 768px) {
+            .fab-create {
+                display: none; /* Caché sur desktop, le bouton header suffit */
+            }
+        }
         .calendar-container {
             background: white;
             border-radius: 12px;
@@ -1390,7 +2077,147 @@ async def calendar_view(
         });
 
         renderCalendar();
+
+        // ===========================================
+        // Optimisation Planning
+        // ===========================================
+        function openOptimizer() {
+            document.getElementById('optimizerModal').style.display = 'flex';
+        }
+
+        function closeOptimizer() {
+            document.getElementById('optimizerModal').style.display = 'none';
+            document.getElementById('optimizerResults').innerHTML = '';
+        }
+
+        async function runOptimization() {
+            const duree = document.getElementById('opt-duree').value || 60;
+            const adresse = document.getElementById('opt-adresse').value || '';
+            const date = document.getElementById('opt-date').value || '';
+
+            document.getElementById('optimizerResults').innerHTML = '<p style="text-align:center;"><span class="loading"></span> Recherche des créneaux optimaux...</p>';
+
+            try {
+                const response = await fetch('/api/planning/optimize', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        duree_minutes: parseInt(duree),
+                        adresse_rdv: adresse,
+                        date_souhaitee: date,
+                        type_event: 'RDV'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.slots && data.slots.length > 0) {
+                    let html = '<div class="optimizer-slots">';
+                    html += '<h4 style="margin-bottom:12px;">Créneaux recommandés :</h4>';
+
+                    data.slots.forEach((slot, i) => {
+                        const startDate = new Date(slot.start);
+                        const endDate = new Date(slot.end);
+                        const dateStr = startDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                        const startTime = startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        const endTime = endDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+                        const scoreClass = slot.score >= 80 ? 'score-high' : slot.score >= 50 ? 'score-medium' : 'score-low';
+
+                        html += `
+                            <div class="optimizer-slot" onclick="selectSlot('${slot.start}', '${slot.end}')">
+                                <div class="slot-header">
+                                    <span class="slot-date">${dateStr}</span>
+                                    <span class="slot-score ${scoreClass}">${Math.round(slot.score)}%</span>
+                                </div>
+                                <div class="slot-time">${startTime} - ${endTime}</div>
+                                ${slot.travel_time_before > 0 ? '<div class="slot-travel">🚗 ' + slot.travel_time_before + ' min de trajet</div>' : ''}
+                                <div class="slot-reason">${slot.reason}</div>
+                            </div>
+                        `;
+                    });
+
+                    html += '</div>';
+                    document.getElementById('optimizerResults').innerHTML = html;
+                } else {
+                    document.getElementById('optimizerResults').innerHTML = '<p style="color:var(--orange-500);">Aucun créneau disponible trouvé. Essayez une autre date.</p>';
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('optimizerResults').innerHTML = '<p style="color:var(--red-500);">Erreur lors de l\\'optimisation</p>';
+            }
+        }
+
+        function selectSlot(start, end) {
+            // Rediriger vers le formulaire de création avec les dates pré-remplies
+            const startDate = new Date(start);
+            const formattedStart = startDate.toISOString().slice(0, 16);
+            window.location.href = '/ui/agenda/nouveau?date_debut=' + encodeURIComponent(formattedStart);
+        }
     </script>
+
+    <!-- Modal Optimisation -->
+    <div id="optimizerModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h3>🎯 Optimiser mon planning</h3>
+                <button onclick="closeOptimizer()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="label">Date souhaitée</label>
+                    <input type="date" class="input" id="opt-date" value="">
+                </div>
+                <div class="form-group">
+                    <label class="label">Durée (minutes)</label>
+                    <select class="input" id="opt-duree">
+                        <option value="30">30 min</option>
+                        <option value="60" selected>1 heure</option>
+                        <option value="90">1h30</option>
+                        <option value="120">2 heures</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="label">Adresse du RDV (optionnel)</label>
+                    <input type="text" class="input" id="opt-adresse" placeholder="Pour calculer les temps de trajet">
+                </div>
+                <button onclick="runOptimization()" class="btn btn-primary" style="width:100%;margin-top:12px;">
+                    Trouver les meilleurs créneaux
+                </button>
+                <div id="optimizerResults" style="margin-top:16px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .optimizer-slots { display: flex; flex-direction: column; gap: 10px; }
+        .optimizer-slot {
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .optimizer-slot:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-50, #EFF6FF);
+        }
+        .slot-header { display: flex; justify-content: space-between; align-items: center; }
+        .slot-date { font-weight: 600; text-transform: capitalize; }
+        .slot-score {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .score-high { background: var(--green-100); color: var(--green-700); }
+        .score-medium { background: var(--orange-100); color: var(--orange-700); }
+        .score-low { background: var(--red-100); color: var(--red-700); }
+        .slot-time { font-size: 18px; font-weight: 500; margin: 4px 0; }
+        .slot-travel { font-size: 12px; color: var(--gray-500); }
+        .slot-reason { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+    </style>
     '''
 
     html = generate_layout(
@@ -1629,6 +2456,7 @@ def generate_form(module_name: str, fields_html: str) -> str:
 
             const response = await fetch('/api/{module_name}', {{
                 method: 'POST',
+                credentials: 'include',
                 headers: {{
                     'Content-Type': 'application/json',
                 }},
@@ -1670,9 +2498,10 @@ def generate_form(module_name: str, fields_html: str) -> str:
         try {{
             // Convertir en minuscules pour l'API
             const apiModule = linkedModule.toLowerCase();
-            const response = await fetch(`/api/${{apiModule}}`);
+            const response = await fetch(`/api/${{apiModule}}`, {{ credentials: 'include' }});
             if (response.ok) {{
-                const items = await response.json();
+                const data = await response.json();
+                const items = data.items || data || [];
                 // Garder la première option (-- Sélectionner --)
                 const firstOption = select.options[0];
                 select.innerHTML = '';
@@ -1708,10 +2537,20 @@ def generate_form(module_name: str, fields_html: str) -> str:
     async function loadQuickCreateForm(moduleName) {{
         // Formulaire simplifié avec les champs essentiels
         const commonFields = {{
-            'Clients': ['nom', 'raison_sociale', 'email', 'telephone'],
-            'Fournisseurs': ['nom', 'raison_sociale', 'email', 'telephone'],
+            'Clients': ['code', 'name', 'legal_name', 'email', 'phone'],
+            'clients': ['code', 'name', 'legal_name', 'email', 'phone'],
+            'Fournisseurs': ['reference', 'nom', 'raison_sociale', 'email', 'telephone'],
+            'fournisseurs': ['reference', 'nom', 'raison_sociale', 'email', 'telephone'],
             'Produits': ['nom', 'reference', 'prix_vente'],
+            'produits': ['nom', 'reference', 'prix_vente'],
             'Utilisateurs': ['nom', 'email'],
+            'utilisateurs': ['nom', 'email'],
+            'Employes': ['nom', 'prenom', 'email', 'poste'],
+            'employes': ['nom', 'prenom', 'email', 'poste'],
+            'Projets': ['nom', 'description'],
+            'projets': ['nom', 'description'],
+            'Agenda': ['titre', 'date_debut'],
+            'agenda': ['titre', 'date_debut'],
         }};
 
         const fields = commonFields[moduleName] || ['nom'];
@@ -1736,41 +2575,124 @@ def generate_form(module_name: str, fields_html: str) -> str:
     }}
 
     async function saveQuickCreate() {{
+        console.log('saveQuickCreate called, currentModule:', currentModule);
+
         const form = document.getElementById('quickCreateForm');
+        if (!form) {{
+            console.error('Form not found');
+            showNotification('Erreur: formulaire non trouvé', 'error');
+            return;
+        }}
         const formData = new FormData(form);
         const data = {{}};
         formData.forEach((value, key) => {{
             if (value) data[key] = value;
         }});
+        console.log('Form data collected:', data);
+
+        // Auto-génération des champs obligatoires pour certains modules
+        const moduleDefaults = {{
+            'employes': {{
+                matricule: 'EMP-' + Date.now().toString(36).toUpperCase(),
+                type_contrat: 'CDI',
+                date_embauche: new Date().toISOString().split('T')[0],
+                statut: 'ACTIF',
+                is_active: true
+            }},
+            'produits': {{
+                is_active: true
+            }},
+            'clients': {{
+                code: 'CLI-' + Date.now().toString(36).toUpperCase(),
+                is_active: true
+            }},
+            'fournisseurs': {{
+                reference: 'FRN-' + Date.now().toString(36).toUpperCase(),
+                is_active: true
+            }},
+            'agenda': {{
+                type: 'RDV',
+                statut: 'PLANIFIE',
+                is_active: true
+            }}
+        }};
+
+        const moduleLower = currentModule.toLowerCase();
+        console.log('moduleLower:', moduleLower, 'defaults:', moduleDefaults[moduleLower]);
+        if (moduleDefaults[moduleLower]) {{
+            Object.entries(moduleDefaults[moduleLower]).forEach(([key, value]) => {{
+                if (!(key in data)) {{
+                    data[key] = value;
+                }}
+            }});
+        }}
+        console.log('Final data to send:', data);
 
         try {{
             const apiModule = currentModule.toLowerCase();
             const response = await fetch(`/api/${{apiModule}}`, {{
                 method: 'POST',
+                credentials: 'include',
                 headers: {{
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    'Content-Type': 'application/json'
                 }},
                 body: JSON.stringify(data)
             }});
 
             if (response.ok) {{
                 const newItem = await response.json();
+                console.log('Created item:', newItem);
                 // Ajouter au select et sélectionner
                 const select = document.getElementById(currentSelectId);
-                const option = document.createElement('option');
-                option.value = newItem.id;
-                option.textContent = newItem.nom || newItem.raison_sociale || newItem.titre || newItem.id;
-                option.selected = true;
-                select.appendChild(option);
+                if (select) {{
+                    const option = document.createElement('option');
+                    option.value = newItem.id;
+                    option.textContent = newItem.nom || newItem.raison_sociale || newItem.titre || newItem.id;
+                    option.selected = true;
+                    select.appendChild(option);
+                }}
                 closeCreateModal();
                 showNotification('Créé avec succès', 'success');
             }} else {{
                 const err = await response.json();
-                showNotification(err.detail || 'Erreur', 'error');
+                console.error('Server error:', err);
+                // Afficher les erreurs de validation de manière explicite
+                let errorMsg = 'Erreur';
+                if (err.detail) {{
+                    if (typeof err.detail === 'string') {{
+                        errorMsg = err.detail;
+                    }} else if (err.detail.errors && Array.isArray(err.detail.errors)) {{
+                        // Erreurs de validation avec champs
+                        const fieldErrors = err.detail.errors.map(e => {{
+                            const fieldName = e.field.replace('_', ' ');
+                            return `${{fieldName}}: ${{e.message}}`;
+                        }});
+                        errorMsg = fieldErrors.join(', ');
+                    }} else if (Array.isArray(err.detail)) {{
+                        // Erreurs Pydantic
+                        const fieldErrors = err.detail.map(e => {{
+                            const field = e.loc ? e.loc[e.loc.length - 1] : 'champ';
+                            return `${{field}}: ${{e.msg}}`;
+                        }});
+                        errorMsg = fieldErrors.join(', ');
+                    }} else {{
+                        errorMsg = JSON.stringify(err.detail);
+                    }}
+                }}
+                // Afficher l'erreur dans le modal lui-même
+                const modalBody = document.getElementById('createModalBody');
+                const existingError = modalBody.querySelector('.modal-error');
+                if (existingError) existingError.remove();
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'modal-error';
+                errorDiv.style.cssText = 'background:#fee;border:1px solid #c00;color:#c00;padding:10px;margin-bottom:10px;border-radius:4px;';
+                errorDiv.textContent = errorMsg;
+                modalBody.insertBefore(errorDiv, modalBody.firstChild);
+                showNotification(errorMsg, 'error');
             }}
         }} catch (e) {{
-            showNotification('Erreur de connexion', 'error');
+            console.error('saveQuickCreate error:', e);
+            showNotification('Erreur: ' + e.message, 'error');
         }}
     }}
     </script>
@@ -2090,6 +3012,7 @@ def generate_document_form(module, module_name: str) -> str:
 
             const response = await fetch('/api/{module_name}', {{
                 method: 'POST',
+                credentials: 'include',
                 headers: {{
                     'Content-Type': 'application/json',
                 }},
@@ -2118,7 +3041,7 @@ def generate_document_form(module, module_name: str) -> str:
     // Charger les clients au chargement de la page
     document.addEventListener('DOMContentLoaded', async function() {{
         try {{
-            const response = await fetch('/api/Client');
+            const response = await fetch('/api/Client', {{ credentials: 'include' }});
             if (response.ok) {{
                 const clients = await response.json();
                 const select = document.getElementById('client_id');
@@ -2274,6 +3197,7 @@ async def module_detail(
             const data = Object.fromEntries(new FormData(form));
             const res = await fetch('/api/{module_name}/{item_id}', {{
                 method: 'PUT',
+                credentials: 'include',
                 headers: {{'Content-Type': 'application/json'}},
                 body: JSON.stringify(data)
             }});
@@ -2283,14 +3207,14 @@ async def module_detail(
 
         async function deleteItem() {{
             if (!confirm('Supprimer ?')) return;
-            const res = await fetch('/api/{module_name}/{item_id}', {{method: 'DELETE'}});
+            const res = await fetch('/api/{module_name}/{item_id}', {{method: 'DELETE', credentials: 'include'}});
             if (res.ok) window.location = '/ui/{module_name}';
         }}
 
         // Document management functions
         async function loadDocuments() {{
             try {{
-                const res = await fetch('/api/{module_name}/{item_id}/documents');
+                const res = await fetch('/api/{module_name}/{item_id}/documents', {{credentials: 'include'}});
                 if (res.ok) {{
                     const data = await res.json();
                     renderDocuments(data.documents);
@@ -2349,6 +3273,7 @@ async def module_detail(
             try {{
                 const res = await fetch('/api/{module_name}/{item_id}/documents', {{
                     method: 'POST',
+                    credentials: 'include',
                     body: formData
                 }});
 
@@ -2369,7 +3294,7 @@ async def module_detail(
             if (!confirm('Supprimer ce document ?')) return;
 
             try {{
-                const res = await fetch(`/api/documents/${{docId}}`, {{ method: 'DELETE' }});
+                const res = await fetch(`/api/documents/${{docId}}`, {{ method: 'DELETE', credentials: 'include' }});
                 if (res.ok) {{
                     loadDocuments();
                     showNotification('Document supprime', 'success');
@@ -2432,26 +3357,24 @@ def get_all_modules() -> List[Dict]:
     return modules
 
 
-def get_icon(icon_name: str) -> str:
-    """Retourne un emoji pour l'icône."""
-    icons = {
-        "package": "📦",
-        "users": "👥",
-        "file-text": "📄",
-        "receipt": "🧾",
-        "wrench": "🔧",
-        "wallet": "💰",
-        "landmark": "🏦",
-        "credit-card": "💳",
-        "globe": "🌐",
-        "settings": "⚙️",
-        "home": "🏠",
-        "calendar": "📅",
-        "star": "⭐",
-        "clock": "🕐",
-        "bell": "🔔",
-    }
-    return icons.get(icon_name, "📁")
+def get_icon(icon_name: str, size: int = 20, css_class: str = "icon") -> str:
+    """
+    Retourne une balise img SVG pour l'icône.
+
+    Args:
+        icon_name: Nom de l'icône (sans extension)
+        size: Taille en pixels (défaut: 20)
+        css_class: Classe CSS à appliquer (défaut: "icon")
+
+    Returns:
+        Balise HTML img pointant vers le SVG
+    """
+    return f'<img src="/assets/icons/{icon_name}.svg" alt="{icon_name}" width="{size}" height="{size}" class="{css_class}" onerror="this.src=\'/assets/icons/default.svg\'" />'
+
+
+def get_icon_url(icon_name: str) -> str:
+    """Retourne l'URL de l'icône SVG."""
+    return f"/assets/icons/{icon_name}.svg"
 
 
 def generate_list_with_bulk_actions(
@@ -2542,9 +3465,9 @@ def generate_list_with_bulk_actions(
             try {{
                 const response = await fetch('/api/v1/{module_name}/bulk', {{
                     method: 'PATCH',
+                    credentials: 'include',
                     headers: {{
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        'Content-Type': 'application/json'
                     }},
                     body: JSON.stringify({{ ids, updates: {{ statut: status }} }})
                 }});
@@ -2567,9 +3490,9 @@ def generate_list_with_bulk_actions(
             try {{
                 const response = await fetch('/api/v1/{module_name}/bulk', {{
                     method: 'DELETE',
+                    credentials: 'include',
                     headers: {{
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        'Content-Type': 'application/json'
                     }},
                     body: JSON.stringify({{ ids }})
                 }});
@@ -2588,6 +3511,34 @@ def generate_list_with_bulk_actions(
 
 def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -> str:
     """Génère le layout HTML complet style Axonaut."""
+
+    # Get user's enabled modules from database (modules_mobile field)
+    user_id = user.get("id")
+    tenant_id = user.get("tenant_id")
+    enabled_modules = None
+
+    if user_id and tenant_id:
+        try:
+            with Database.get_session() as session:
+                from sqlalchemy import text
+                import json as json_lib
+                result = session.execute(
+                    text("""
+                        SELECT modules_mobile
+                        FROM azalplus.utilisateurs
+                        WHERE id = :user_id AND tenant_id = :tenant_id
+                    """),
+                    {"user_id": str(user_id), "tenant_id": str(tenant_id)}
+                )
+                row = result.fetchone()
+                if row and row[0]:
+                    enabled_modules = json_lib.loads(row[0]) if isinstance(row[0], str) else row[0]
+        except Exception:
+            pass  # If error, show all modules
+
+    # Filter modules if user has custom enabled modules
+    if enabled_modules is not None and len(enabled_modules) > 0:
+        modules = [m for m in modules if m.get("nom") in enabled_modules]
 
     # Grouper les modules par menu
     menus = {}
@@ -2622,6 +3573,21 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title} - AZALPLUS</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script>
+    // Notification bell - defined early so onclick works
+    var notifPanelOpen = false;
+    function toggleNotifPanel(event) {{
+        if (event) {{ event.preventDefault(); event.stopPropagation(); }}
+        var panel = document.getElementById('notif-panel');
+        if (!panel) {{ console.error('Panel not found'); return; }}
+        notifPanelOpen = !notifPanelOpen;
+        panel.style.display = notifPanelOpen ? 'block' : 'none';
+        console.log('Bell clicked, panel open:', notifPanelOpen);
+        if (notifPanelOpen) {{
+            loadNotifications();
+        }}
+    }}
+    </script>
 </head>
 <body>
     <div class="app-layout">
@@ -2658,6 +3624,10 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                 <!-- Paramètres -->
                 <div class="nav-section">
                     <div class="nav-title">Paramètres</div>
+                    <a href="/ui/parametres/modules" class="nav-item">
+                        <span class="nav-icon">📦</span>
+                        <span>Modules actifs</span>
+                    </a>
                     <a href="/ui/parametres/theme" class="nav-item">
                         <span class="nav-icon">🎨</span>
                         <span>Style documents</span>
@@ -2694,9 +3664,21 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                 </form>
 
                 <div class="header-actions">
-                    <div class="header-notif">
-                        🔔
-                        <span class="notif-badge">3</span>
+                    <a href="javascript:void(0)" class="header-mobile" id="mobile-btn" onclick="openMobileModal(event); return false;" title="Application mobile">
+                        <span class="mobile-icon">📱</span>
+                    </a>
+                    <a href="javascript:void(0)" class="header-notif" id="notif-bell" onclick="toggleNotifPanel(event); return false;">
+                        <span class="notif-icon-bell">🔔</span>
+                        <span class="notif-badge" id="notif-count">0</span>
+                    </a>
+                    <div id="notif-panel" class="notif-panel" style="display: none;">
+                        <div class="notif-panel-header">
+                            <strong>Notifications</strong>
+                            <a href="/ui/notifications">Tout voir</a>
+                        </div>
+                        <div id="notif-list" class="notif-list">
+                            <p class="notif-empty">Chargement...</p>
+                        </div>
                     </div>
                     <a href="/ui/Devis/nouveau" class="btn btn-primary">+ Ajouter</a>
                 </div>
@@ -2769,9 +3751,233 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             width: 40px;
             text-align: center;
         }}
+
+        /* Notification Panel */
+        .header-notif {{
+            position: relative;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.15s;
+            user-select: none;
+            text-decoration: none;
+            display: inline-block;
+            color: inherit;
+        }}
+        .header-notif:hover {{
+            background: var(--gray-100);
+        }}
+        .notif-badge {{
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            min-width: 18px;
+            height: 18px;
+            background: #EF4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }}
+        .notif-icon-bell {{
+            font-size: 20px;
+            display: block;
+        }}
+        .notif-panel {{
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 320px;
+            max-height: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            z-index: 1000;
+            overflow: hidden;
+            margin-top: 8px;
+        }}
+        .notif-panel-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }}
+        .notif-panel-header a {{
+            font-size: 12px;
+            color: var(--primary);
+            text-decoration: none;
+        }}
+        .notif-list {{
+            max-height: 320px;
+            overflow-y: auto;
+        }}
+        .notif-item {{
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            cursor: pointer;
+            transition: background 0.15s;
+        }}
+        .notif-item:hover {{
+            background: var(--gray-50);
+        }}
+        .notif-item.unread {{
+            background: #EFF6FF;
+        }}
+        .notif-icon {{
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }}
+        .notif-content {{
+            flex: 1;
+            min-width: 0;
+        }}
+        .notif-title {{
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-900);
+            margin-bottom: 2px;
+        }}
+        .notif-desc {{
+            font-size: 12px;
+            color: var(--gray-500);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }}
+        .notif-time {{
+            font-size: 11px;
+            color: var(--gray-400);
+            margin-top: 4px;
+        }}
+        .notif-empty {{
+            padding: 24px;
+            text-align: center;
+            color: var(--gray-400);
+            font-size: 13px;
+        }}
     </style>
 
     <script>
+    // ==========================================================================
+    // Notifications - JavaScript
+    // ==========================================================================
+
+    let notifPanelOpen = false;
+
+    function toggleNotifPanel(event) {{
+        if (event) event.stopPropagation();
+        const panel = document.getElementById('notif-panel');
+        notifPanelOpen = !notifPanelOpen;
+        panel.style.display = notifPanelOpen ? 'block' : 'none';
+        if (notifPanelOpen) {{
+            loadNotifications();
+        }}
+    }}
+
+    // Attacher l'événement au clic sur la cloche
+    document.addEventListener('DOMContentLoaded', function() {{
+        const bell = document.getElementById('notif-bell');
+        if (bell) {{
+            bell.addEventListener('click', toggleNotifPanel);
+            console.log('Notification bell listener attached');
+        }}
+    }});
+
+    // Fermer le panel si on clique ailleurs
+    document.addEventListener('click', function(e) {{
+        const panel = document.getElementById('notif-panel');
+        const notifBtn = document.getElementById('notif-bell');
+        if (notifPanelOpen && panel && notifBtn && !panel.contains(e.target) && !notifBtn.contains(e.target)) {{
+            panel.style.display = 'none';
+            notifPanelOpen = false;
+        }}
+    }});
+
+    async function loadNotifications() {{
+        const list = document.getElementById('notif-list');
+        const countBadge = document.getElementById('notif-count');
+
+        try {{
+            const response = await fetch('/api/notifications?limit=10&order_by=created_at&order_dir=desc', {{
+                credentials: 'include'
+            }});
+
+            if (response.ok) {{
+                const data = await response.json();
+                const items = data.items || data || [];
+
+                if (items.length === 0) {{
+                    list.innerHTML = '<p class="notif-empty">Aucune notification</p>';
+                    countBadge.textContent = '0';
+                    countBadge.style.display = 'none';
+                    return;
+                }}
+
+                // Compter les non lues
+                const unreadCount = items.filter(n => !n.read && !n.lu).length;
+                countBadge.textContent = unreadCount;
+                countBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+
+                list.innerHTML = items.map(n => {{
+                    const isUnread = !n.read && !n.lu;
+                    const icon = n.type === 'success' ? '✅' : n.type === 'warning' ? '⚠️' : n.type === 'error' ? '❌' : '📣';
+                    const time = n.created_at ? new Date(n.created_at).toLocaleString('fr-FR', {{day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}}) : '';
+                    return `
+                        <div class="notif-item ${{isUnread ? 'unread' : ''}}" onclick="markNotifRead('${{n.id}}')">
+                            <div class="notif-icon">${{icon}}</div>
+                            <div class="notif-content">
+                                <div class="notif-title">${{n.titre || n.title || 'Notification'}}</div>
+                                <div class="notif-desc">${{n.message || n.contenu || ''}}</div>
+                                <div class="notif-time">${{time}}</div>
+                            </div>
+                        </div>
+                    `;
+                }}).join('');
+
+            }} else {{
+                list.innerHTML = '<p class="notif-empty">Erreur de chargement</p>';
+            }}
+        }} catch (e) {{
+            console.error('Erreur notifications:', e);
+            list.innerHTML = '<p class="notif-empty">Aucune notification</p>';
+            countBadge.textContent = '0';
+            countBadge.style.display = 'none';
+        }}
+    }}
+
+    async function markNotifRead(id) {{
+        try {{
+            await fetch(`/api/notifications/${{id}}`, {{
+                method: 'PUT',
+                credentials: 'include',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{ read: true, lu: true }})
+            }});
+            loadNotifications();
+        }} catch (e) {{
+            console.error('Erreur marquage notification:', e);
+        }}
+    }}
+
+    // Charger le compteur au démarrage
+    document.addEventListener('DOMContentLoaded', function() {{
+        loadNotifications();
+    }});
+
     // ==========================================================================
     // Favoris & Recent - JavaScript
     // ==========================================================================
@@ -2779,7 +3985,9 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     // Charger les favoris dans la sidebar
     async function loadSidebarFavoris() {{
         try {{
-            const res = await fetch('/api/Favoris?limit=10&order_by=epingle DESC, created_at DESC');
+            const res = await fetch('/api/favoris?limit=10&order_by=created_at&order_dir=desc', {{
+                credentials: 'include'
+            }});
             if (res.ok) {{
                 const data = await res.json();
                 const container = document.getElementById('favoris-list');
@@ -2813,20 +4021,26 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         try {{
             if (isActive) {{
                 // Retirer le favori - d'abord trouver l'ID du favori
-                const searchRes = await fetch(`/api/Favoris?module=${{encodeURIComponent(module)}}&record_id=${{recordId}}`);
+                const searchRes = await fetch(`/api/favoris?module=${{encodeURIComponent(module)}}&record_id=${{recordId}}`, {{
+                    credentials: 'include'
+                }});
                 if (searchRes.ok) {{
                     const searchData = await searchRes.json();
                     const favori = searchData.items && searchData.items.find(f =>
                         f.module === module && f.record_id === recordId
                     );
                     if (favori) {{
-                        await fetch(`/api/Favoris/${{favori.id}}`, {{ method: 'DELETE' }});
+                        await fetch(`/api/favoris/${{favori.id}}`, {{
+                            method: 'DELETE',
+                            credentials: 'include'
+                        }});
                     }}
                 }}
             }} else {{
                 // Ajouter le favori
-                await fetch('/api/Favoris', {{
+                await fetch('/api/favoris', {{
                     method: 'POST',
+                    credentials: 'include',
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{
                         module: module,
@@ -2856,7 +4070,9 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     // Verifier si un enregistrement est en favori
     async function checkIsFavori(module, recordId) {{
         try {{
-            const res = await fetch(`/api/Favoris?limit=100`);
+            const res = await fetch(`/api/favoris?limit=100`, {{
+                credentials: 'include'
+            }});
             if (res.ok) {{
                 const data = await res.json();
                 return data.items && data.items.some(f =>
@@ -2875,6 +4091,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             // Envoyer la visite au backend
             await fetch('/api/recent/track', {{
                 method: 'POST',
+                credentials: 'include',
                 headers: {{ 'Content-Type': 'application/json' }},
                 body: JSON.stringify({{
                     module: module,
@@ -3622,7 +4839,222 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         from {{ opacity: 1; }}
         to {{ opacity: 0; }}
     }}
+
+    /* Mobile Modal */
+    .mobile-modal-overlay {{
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }}
+    .mobile-modal-overlay.open {{
+        display: flex;
+    }}
+    .mobile-modal {{
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }}
+    .mobile-modal h2 {{
+        margin: 0 0 8px 0;
+        font-size: 24px;
+        color: var(--gray-900);
+    }}
+    .mobile-modal p {{
+        color: var(--gray-500);
+        margin: 0 0 24px 0;
+        font-size: 14px;
+    }}
+    .qr-container {{
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        display: inline-block;
+        margin-bottom: 24px;
+        border: 2px solid var(--gray-200);
+    }}
+    #qrcode {{
+        width: 200px;
+        height: 200px;
+    }}
+    #qrcode canvas {{
+        width: 200px !important;
+        height: 200px !important;
+    }}
+    .mobile-token {{
+        background: var(--gray-100);
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 14px;
+        margin-bottom: 24px;
+        word-break: break-all;
+        color: var(--gray-700);
+    }}
+    .mobile-buttons {{
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }}
+    .mobile-buttons .btn {{
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        font-size: 14px;
+    }}
+    .mobile-buttons .btn-primary {{
+        background: var(--primary);
+        color: white;
+    }}
+    .mobile-buttons .btn-secondary {{
+        background: var(--gray-200);
+        color: var(--gray-700);
+    }}
+    .header-mobile {{
+        position: relative;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: background 0.15s;
+        text-decoration: none;
+        display: inline-block;
+        color: inherit;
+    }}
+    .header-mobile:hover {{
+        background: var(--gray-100);
+    }}
+    .mobile-icon {{
+        font-size: 20px;
+    }}
+    .mobile-instructions {{
+        text-align: left;
+        background: var(--blue-50);
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        color: var(--gray-700);
+    }}
+    .mobile-instructions ol {{
+        margin: 8px 0 0 0;
+        padding-left: 20px;
+    }}
+    .mobile-instructions li {{
+        margin: 4px 0;
+    }}
     </style>
+
+    <!-- Mobile Connection Modal -->
+    <div id="mobile-modal" class="mobile-modal-overlay" onclick="closeMobileModal(event)">
+        <div class="mobile-modal" onclick="event.stopPropagation()">
+            <h2>📱 Application Mobile</h2>
+            <p>Scannez le QR code avec l'application AZALPLUS</p>
+
+            <div class="mobile-instructions">
+                <strong>Comment se connecter :</strong>
+                <ol>
+                    <li>Téléchargez l'app AZALPLUS sur votre mobile</li>
+                    <li>Ouvrez l'app et appuyez sur "Scanner QR"</li>
+                    <li>Scannez le code ci-dessous</li>
+                </ol>
+            </div>
+
+            <div class="qr-container">
+                <div id="qrcode"></div>
+            </div>
+
+            <p style="font-size: 12px; color: var(--gray-400); margin-bottom: 16px;">
+                Code valide 5 minutes • <a href="javascript:void(0)" onclick="refreshQRCode()" style="color: var(--primary);">Actualiser</a>
+            </p>
+
+            <div class="mobile-buttons">
+                <button class="btn btn-secondary" onclick="closeMobileModal(event)">Fermer</button>
+                <button class="btn btn-primary" onclick="copyMobileLink()">📋 Copier le lien</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    var mobileToken = null;
+    var qrGenerated = false;
+
+    function openMobileModal(event) {{
+        if (event) {{ event.preventDefault(); event.stopPropagation(); }}
+        document.getElementById('mobile-modal').classList.add('open');
+        if (!qrGenerated) {{
+            generateQRCode();
+        }}
+    }}
+
+    function closeMobileModal(event) {{
+        if (event) {{ event.preventDefault(); }}
+        document.getElementById('mobile-modal').classList.remove('open');
+    }}
+
+    async function generateQRCode() {{
+        var qrContainer = document.getElementById('qrcode');
+        qrContainer.innerHTML = '<div style="padding:40px;color:var(--gray-400);">Génération...</div>';
+
+        try {{
+            // Generate a mobile connection token
+            const response = await fetch('/api/auth/mobile-token', {{
+                method: 'POST',
+                credentials: 'include',
+                headers: {{ 'Content-Type': 'application/json' }}
+            }});
+
+            if (response.ok) {{
+                const tokenData = await response.json();
+                mobileToken = tokenData.token;
+            }} else {{
+                // Fallback: use session-based token
+                mobileToken = 'session_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+            }}
+
+            // Mobile app is on port 5174
+            var mobileBaseUrl = window.location.protocol + '//' + window.location.hostname + ':5174';
+            var mobileUrl = mobileBaseUrl + '/connect?token=' + encodeURIComponent(mobileToken) + '&api=' + encodeURIComponent(window.location.origin);
+
+            // Use external QR API (more reliable)
+            var qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&format=svg&data=' + encodeURIComponent(mobileUrl);
+
+            qrContainer.innerHTML = '<img src="' + qrApiUrl + '" alt="QR Code" width="200" height="200" style="border-radius: 8px;" onerror="this.parentElement.innerHTML=\\'<div style=padding:40px;color:#EF4444;>Erreur QR</div>\\';">';
+
+            qrGenerated = true;
+            console.log('QR Code generated for:', mobileUrl);
+        }} catch (e) {{
+            console.error('Error generating QR:', e);
+            qrContainer.innerHTML = '<div style="padding:40px;color:#EF4444;">Erreur: ' + e.message + '</div>';
+        }}
+    }}
+
+    function refreshQRCode() {{
+        qrGenerated = false;
+        generateQRCode();
+    }}
+
+    function copyMobileLink() {{
+        var mobileBaseUrl = window.location.protocol + '//' + window.location.hostname + ':5174';
+        var mobileUrl = mobileBaseUrl + '/connect?token=' + encodeURIComponent(mobileToken || '') + '&api=' + encodeURIComponent(window.location.origin);
+        navigator.clipboard.writeText(mobileUrl).then(function() {{
+            alert('Lien copié !');
+        }}).catch(function() {{
+            prompt('Copiez ce lien:', mobileUrl);
+        }});
+    }}
+    </script>
 </body>
 </html>
 '''

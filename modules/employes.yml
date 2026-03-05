@@ -212,6 +212,53 @@ champs:
     options: [TEMPS_PLEIN, TEMPS_PARTIEL]
     description: Regime de travail
 
+  # Horaires de travail (pour optimisation planning)
+  - nom: heure_debut
+    type: text
+    obligatoire: false
+    defaut: "09:00"
+    description: "Heure de debut de journee (HH:MM)"
+
+  - nom: heure_fin
+    type: text
+    obligatoire: false
+    defaut: "18:00"
+    description: "Heure de fin de journee (HH:MM)"
+
+  - nom: pause_dejeuner_debut
+    type: text
+    obligatoire: false
+    defaut: "12:00"
+    description: "Debut pause dejeuner (HH:MM)"
+
+  - nom: pause_dejeuner_fin
+    type: text
+    obligatoire: false
+    defaut: "14:00"
+    description: "Fin pause dejeuner (HH:MM)"
+
+  - nom: jours_travail
+    type: text
+    obligatoire: false
+    defaut: "1,2,3,4,5"
+    description: Jours travailles (1=Lun, 7=Dim)
+
+  - nom: adresse_depart
+    type: text
+    obligatoire: false
+    description: Adresse de depart pour calcul trajets
+    autocompletion: true
+
+  - nom: latitude_depart
+    type: number
+    obligatoire: false
+    description: Latitude point de depart
+
+  - nom: longitude_depart
+    type: number
+    obligatoire: false
+    description: Longitude point de depart
+
   # Conges
   - nom: solde_cp
     type: number

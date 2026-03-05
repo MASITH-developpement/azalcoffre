@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Document -->
+  <path d="M6 2h8l6 6v14c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2z" fill="#93C5FD"/>
+  <!-- Coin plié -->
+  <path d="M14 2v6h6" fill="#2563EB"/>
+  <!-- Lignes -->
+  <rect x="7" y="12" width="10" height="2" rx="1" fill="#2563EB"/>
+  <rect x="7" y="16" width="6" height="2" rx="1" fill="#2563EB"/>
+</svg>

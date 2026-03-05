@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Globe fond -->
+  <circle cx="12" cy="12" r="10" fill="#93C5FD"/>
+  <!-- Continents stylisés -->
+  <ellipse cx="12" cy="12" rx="4" ry="10" fill="#2563EB"/>
+  <ellipse cx="12" cy="12" rx="10" ry="4" fill="#2563EB" opacity="0.5"/>
+  <!-- Ligne équateur -->
+  <line x1="2" y1="12" x2="22" y2="12" stroke="#2563EB" stroke-width="1.5"/>
+</svg>

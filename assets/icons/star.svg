@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Etoile complete (secondaire) -->
+  <path d="M12 2L14.4 9.2H22L16 13.8L18.4 21L12 16.4L5.6 21L8 13.8L2 9.2H9.6L12 2Z" fill="#93C5FD"/>
+  <!-- Partie superieure etoile (principale) -->
+  <path d="M12 2L14.4 9.2H22L16 13.8L12 11L8 13.8L2 9.2H9.6L12 2Z" fill="#2563EB"/>
+</svg>

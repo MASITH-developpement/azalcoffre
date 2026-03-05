@@ -55,6 +55,9 @@ const RGPDSettings = lazy(() => import('../pages/parametres/RGPDSettings'));
 // Autocomplétion IA - Import direct car déjà créé
 import { ConfigurationPage as AutocompletionIASettings } from '../modules/autocompletion-ia';
 
+// Configuration Mobile
+const MobileConfigPage = lazy(() => import('../modules/mobile-config/MobileConfigPage'));
+
 // -----------------------------------------------------------------------------
 // Wrapper avec Suspense
 // -----------------------------------------------------------------------------
@@ -296,6 +299,14 @@ export const router = createBrowserRouter([
             element: (
               <SuspenseWrapper>
                 <RGPDSettings />
+              </SuspenseWrapper>
+            ),
+          },
+          {
+            path: 'mobile',
+            element: (
+              <SuspenseWrapper>
+                <MobileConfigPage />
               </SuspenseWrapper>
             ),
           },

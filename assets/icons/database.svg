@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Corps cylindre (secondaire) -->
+  <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5" fill="#93C5FD"/>
+  <!-- Ellipse du haut (primaire) -->
+  <ellipse cx="12" cy="5" rx="9" ry="3" fill="#2563EB"/>
+  <!-- Ligne médiane (primaire) -->
+  <path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3" fill="none" stroke="#2563EB" stroke-width="1.5"/>
+  <!-- Base (primaire) -->
+  <ellipse cx="12" cy="19" rx="9" ry="3" fill="#2563EB" opacity="0.5"/>
+</svg>

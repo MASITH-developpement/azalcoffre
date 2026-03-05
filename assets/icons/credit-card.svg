@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Carte fond -->
+  <rect x="2" y="4" width="20" height="16" rx="3" fill="#93C5FD"/>
+  <!-- Bande magnétique -->
+  <rect x="2" y="8" width="20" height="4" fill="#2563EB"/>
+  <!-- Puce -->
+  <rect x="5" y="14" width="4" height="3" rx="1" fill="#2563EB"/>
+  <!-- Numéros -->
+  <circle cx="15" cy="15.5" r="1" fill="#2563EB"/>
+  <circle cx="18" cy="15.5" r="1" fill="#2563EB"/>
+</svg>

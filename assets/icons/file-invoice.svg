@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Secondary: Document body -->
+  <path d="M6 2C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2H6Z" fill="#93C5FD"/>
+  <!-- Primary: Folded corner -->
+  <path d="M14 2V6C14 7.10457 14.8954 8 16 8H20L14 2Z" fill="#2563EB"/>
+  <!-- Primary: Invoice details -->
+  <rect x="7" y="10" width="6" height="2" rx="0.5" fill="#2563EB"/>
+  <rect x="7" y="13" width="10" height="1.5" rx="0.5" fill="#2563EB"/>
+  <rect x="7" y="16" width="10" height="1.5" rx="0.5" fill="#2563EB"/>
+  <!-- Primary: Total/amount indicator -->
+  <rect x="13" y="10" width="4" height="2" rx="0.5" fill="#2563EB"/>
+</svg>

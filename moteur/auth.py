@@ -7,7 +7,7 @@ Authentification JWT avec gestion des sessions.
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, timedelta
 from typing import Optional, List
 from uuid import UUID, uuid4
@@ -15,6 +15,7 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from argon2 import PasswordHasher
 import structlog
+import json
 
 from .config import settings
 from .db import Database
@@ -107,6 +108,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
         """Décode le token JWT et ajoute l'utilisateur à request.state."""
         from .token_blacklist import TokenBlacklist
 
+        # Laisser passer les requêtes OPTIONS (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Essayer de récupérer le token
         token = None
 
@@ -118,6 +123,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # 2. Cookie access_token
         if not token:
             token = request.cookies.get("access_token")
+
+        # 3. Query param token (pour iframe mobile)
+        if not token:
+            token = request.query_params.get("token")
 
         logger.debug("auth_middleware", path=request.url.path, has_token=bool(token))
 
@@ -191,9 +200,18 @@ async def get_current_user(
     if not token:
         token = request.cookies.get("access_token")
 
+    # Sinon essayer le query param (pour iframe mobile)
     if not token:
+        token = request.query_params.get("token")
+        if token:
+            logger.debug("auth_token_from_query_param", token_len=len(token))
+
+    if not token:
+        logger.debug("auth_no_token_found", path=request.url.path)
         return None
+
     payload = decode_token(token)
+    logger.debug("auth_decode_result", has_payload=bool(payload))
 
     if not payload:
         return None
@@ -675,6 +693,41 @@ async def get_me(user: dict = Depends(require_auth)):
         "tenant_id": str(user["tenant_id"])
     }
 
+
+@router.get("/utilisateurs")
+async def list_utilisateurs(
+    request: Request,
+    user: dict = Depends(require_auth)
+):
+    """Liste les utilisateurs du tenant courant (pour les selects)."""
+    tenant_id = user.get("tenant_id")
+
+    with Database.get_session() as session:
+        from sqlalchemy import text
+
+        result = session.execute(
+            text("""
+                SELECT id, email, nom, prenom, role, actif
+                FROM azalplus.utilisateurs
+                WHERE tenant_id = :tenant_id AND actif = true
+                ORDER BY nom, prenom
+            """),
+            {"tenant_id": str(tenant_id)}
+        )
+
+        users = []
+        for row in result:
+            r = dict(row._mapping)
+            users.append({
+                "id": str(r["id"]),
+                "nom": f"{r.get('prenom', '')} {r.get('nom', '')}".strip(),
+                "email": r["email"],
+                "role": r["role"]
+            })
+
+    return {"items": users, "total": len(users)}
+
+
 @router.post("/logout")
 async def logout(request: Request, user: dict = Depends(require_auth)):
     """Déconnexion avec revocation du token."""
@@ -699,6 +752,105 @@ async def logout(request: Request, user: dict = Depends(require_auth)):
     response.delete_cookie("access_token")
 
     return response
+
+
+@router.post("/mobile-token")
+async def create_mobile_token(request: Request, user: dict = Depends(require_auth)):
+    """
+    Génère un token temporaire pour la connexion mobile via QR code.
+    Le token est valide 5 minutes.
+    """
+    import secrets
+    from datetime import datetime, timedelta
+
+    tenant_id = user.get("tenant_id")
+    user_id = user.get("id")
+
+    # Générer un token unique
+    mobile_token = secrets.token_urlsafe(32)
+
+    # Stocker dans Redis avec expiration 5 minutes
+    from .db import Database
+    redis = Database.get_redis()
+    if redis:
+        token_data = {
+            "user_id": str(user_id),
+            "tenant_id": str(tenant_id),
+            "email": user.get("email", ""),
+            "nom": user.get("nom", ""),
+            "created_at": datetime.utcnow().isoformat()
+        }
+        import json
+        redis.setex(
+            f"mobile_token:{mobile_token}",
+            300,  # 5 minutes
+            json.dumps(token_data)
+        )
+
+    logger.info("mobile_token_created", email=user.get("email"))
+
+    return {
+        "token": mobile_token,
+        "expires_in": 300,
+        "url": f"/mobile/connect?token={mobile_token}"
+    }
+
+
+@router.post("/mobile-verify")
+async def verify_mobile_token(request: Request):
+    """
+    Vérifie un token mobile et retourne les credentials de connexion.
+    Utilisé par l'application mobile après scan du QR code.
+    """
+    from pydantic import BaseModel
+
+    class MobileVerifyRequest(BaseModel):
+        token: str
+
+    data = await request.json()
+    mobile_token = data.get("token")
+
+    if not mobile_token:
+        raise HTTPException(status_code=400, detail="Token requis")
+
+    # Récupérer depuis Redis
+    from .db import Database
+    redis = Database.get_redis()
+    if not redis:
+        raise HTTPException(status_code=500, detail="Service indisponible")
+
+    import json
+    token_data = redis.get(f"mobile_token:{mobile_token}")
+
+    if not token_data:
+        raise HTTPException(status_code=401, detail="Token invalide ou expiré")
+
+    token_info = json.loads(token_data)
+
+    # Supprimer le token (usage unique)
+    redis.delete(f"mobile_token:{mobile_token}")
+
+    # Générer un vrai JWT pour le mobile
+    from uuid import UUID
+    access_token = create_access_token({
+        "sub": token_info["user_id"],
+        "tenant_id": token_info["tenant_id"],
+        "email": token_info["email"],
+        "nom": token_info.get("nom", ""),
+        "mobile": True
+    })
+
+    logger.info("mobile_login_success", email=token_info["email"])
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": token_info["user_id"],
+            "email": token_info["email"],
+            "nom": token_info.get("nom", "")
+        }
+    }
 
 
 # =============================================================================
@@ -752,61 +904,168 @@ class UserUpdate(BaseModel):
     prenom: Optional[str] = None
     role: Optional[str] = None
     actif: Optional[bool] = None
+    modules_mobile: Optional[List[str]] = None  # Custom mobile modules for this user
+    reset_modules_mobile: Optional[bool] = None  # Set to true to reset to role-based defaults
 
 class UserPasswordReset(BaseModel):
     new_password: str
 
 
 # =============================================================================
-# User Management Router (Admin only)
+# User Management Router (Créateur cross-tenant OU Admin/tenant)
 # =============================================================================
+from .tenant import TenantContext, CREATEUR_EMAIL
+
 users_router = APIRouter()
+
+def get_user_management_context(user: dict) -> tuple:
+    """Retourne (is_createur, tenant_id_filter)."""
+    user_email = user.get("email", "")
+    is_createur = user_email == CREATEUR_EMAIL
+    tenant_id = None if is_createur else user.get("tenant_id")
+    return is_createur, tenant_id
 
 @users_router.get("/")
 async def list_users(
     request: Request,
-    user: dict = Depends(require_role("admin"))
+    tenant_filter: Optional[str] = None,
+    user: dict = Depends(require_auth)
 ):
-    """Liste tous les utilisateurs du tenant."""
-    tenant_id = user.get("tenant_id")
+    """Liste les utilisateurs (créateur: tous, admin: son tenant)."""
+    is_createur, user_tenant_id = get_user_management_context(user)
+
+    # Admin doit avoir le role admin
+    if not is_createur and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé")
 
     with Database.get_session() as session:
         from sqlalchemy import text
-        result = session.execute(
-            text("""
-                SELECT id, email, nom, prenom, role, actif,
-                       derniere_connexion, tentatives_echouees, created_at
-                FROM azalplus.utilisateurs
-                WHERE tenant_id = :tenant_id
-                ORDER BY created_at DESC
-            """),
-            {"tenant_id": str(tenant_id)}
-        )
+
+        # Créateur peut filtrer par tenant ou voir tous
+        # Admin voit uniquement son tenant
+        if is_createur and tenant_filter:
+            filter_tenant = tenant_filter
+        elif is_createur:
+            filter_tenant = None  # Tous les tenants
+        else:
+            filter_tenant = str(user_tenant_id)  # Son tenant uniquement
+
+        if filter_tenant:
+            result = session.execute(
+                text("""
+                    SELECT u.id, u.email, u.nom, u.prenom, u.role, u.actif,
+                           u.derniere_connexion, u.tentatives_echouees, u.created_at,
+                           u.modules_mobile, u.tenant_id, t.nom as tenant_nom
+                    FROM azalplus.utilisateurs u
+                    LEFT JOIN azalplus.tenants t ON u.tenant_id = t.id
+                    WHERE u.tenant_id = :tenant_id
+                    ORDER BY u.created_at DESC
+                """),
+                {"tenant_id": filter_tenant}
+            )
+        else:
+            result = session.execute(
+                text("""
+                    SELECT u.id, u.email, u.nom, u.prenom, u.role, u.actif,
+                           u.derniere_connexion, u.tentatives_echouees, u.created_at,
+                           u.modules_mobile, u.tenant_id, t.nom as tenant_nom
+                    FROM azalplus.utilisateurs u
+                    LEFT JOIN azalplus.tenants t ON u.tenant_id = t.id
+                    ORDER BY t.nom, u.created_at DESC
+                """)
+            )
+
         users = [dict(row._mapping) for row in result]
 
     return {"users": users}
 
 
+# ============================================================================
+# Routes /me/* (AVANT les routes /{user_id} pour éviter les conflits)
+# ============================================================================
+class UpdateUserModules(BaseModel):
+    """Schema pour mise à jour des modules actifs."""
+    modules: List[str] = Field(..., description="Liste des modules activés")
+
+
+@users_router.put("/me/modules")
+async def update_my_modules(
+    data: UpdateUserModules,
+    request: Request,
+    user: dict = Depends(require_auth)
+):
+    """Met à jour les modules actifs pour l'utilisateur courant."""
+    user_id = user.get("id")
+    tenant_id = user.get("tenant_id")
+
+    if not user_id or not tenant_id:
+        raise HTTPException(status_code=400, detail="Utilisateur invalide")
+
+    with Database.get_session() as session:
+        from sqlalchemy import text
+
+        session.execute(
+            text("""
+                UPDATE azalplus.utilisateurs
+                SET modules_mobile = :modules_mobile, updated_at = NOW()
+                WHERE id = :user_id AND tenant_id = :tenant_id
+            """),
+            {
+                "user_id": str(user_id),
+                "tenant_id": str(tenant_id),
+                "modules_mobile": json.dumps(data.modules)
+            }
+        )
+        session.commit()
+
+    return {"status": "success", "modules": data.modules}
+
+
+# ============================================================================
+# Routes /{user_id}
+# ============================================================================
 @users_router.get("/{user_id}")
 async def get_user(
     user_id: str,
     request: Request,
-    user: dict = Depends(require_role("admin"))
+    user: dict = Depends(require_auth)
 ):
-    """Récupère un utilisateur."""
-    tenant_id = user.get("tenant_id")
+    """Récupère un utilisateur (créateur: tous, admin: son tenant)."""
+    is_createur, user_tenant_id = get_user_management_context(user)
+
+    if not is_createur and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé")
 
     with Database.get_session() as session:
         from sqlalchemy import text
-        result = session.execute(
-            text("""
-                SELECT id, email, nom, prenom, role, actif,
-                       derniere_connexion, tentatives_echouees, created_at
-                FROM azalplus.utilisateurs
-                WHERE id = :user_id AND tenant_id = :tenant_id
-            """),
-            {"user_id": user_id, "tenant_id": str(tenant_id)}
-        )
+
+        if is_createur:
+            # Créateur peut voir n'importe quel utilisateur
+            result = session.execute(
+                text("""
+                    SELECT u.id, u.email, u.nom, u.prenom, u.role, u.actif,
+                           u.derniere_connexion, u.tentatives_echouees, u.created_at,
+                           u.modules_mobile, u.tenant_id, t.nom as tenant_nom
+                    FROM azalplus.utilisateurs u
+                    LEFT JOIN azalplus.tenants t ON u.tenant_id = t.id
+                    WHERE u.id = :user_id
+                """),
+                {"user_id": user_id}
+            )
+        else:
+            # Admin voit uniquement les utilisateurs de son tenant
+            result = session.execute(
+                text("""
+                    SELECT u.id, u.email, u.nom, u.prenom, u.role, u.actif,
+                           u.derniere_connexion, u.tentatives_echouees, u.created_at,
+                           u.modules_mobile, u.tenant_id, t.nom as tenant_nom
+                    FROM azalplus.utilisateurs u
+                    LEFT JOIN azalplus.tenants t ON u.tenant_id = t.id
+                    WHERE u.id = :user_id AND u.tenant_id = :tenant_id
+                """),
+                {"user_id": user_id, "tenant_id": str(user_tenant_id)}
+            )
+
         user_data = result.fetchone()
 
     if not user_data:
@@ -815,14 +1074,29 @@ async def get_user(
     return dict(user_data._mapping)
 
 
+class UserCreateWithTenant(UserCreate):
+    """Schema création utilisateur avec tenant (pour créateur)."""
+    tenant_id: Optional[str] = None  # Requis si créateur
+
 @users_router.post("/", status_code=201)
 async def create_user(
-    data: UserCreate,
+    data: UserCreateWithTenant,
     request: Request,
-    user: dict = Depends(require_role("admin"))
+    user: dict = Depends(require_auth)
 ):
-    """Crée un nouvel utilisateur."""
-    tenant_id = user.get("tenant_id")
+    """Crée un utilisateur (créateur: tout tenant, admin: son tenant)."""
+    is_createur, user_tenant_id = get_user_management_context(user)
+
+    if not is_createur and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé")
+
+    # Déterminer le tenant cible
+    if is_createur:
+        if not data.tenant_id:
+            raise HTTPException(status_code=400, detail="tenant_id requis pour le créateur")
+        target_tenant_id = data.tenant_id
+    else:
+        target_tenant_id = str(user_tenant_id)
 
     # Valider le rôle
     if data.role not in ROLES:
@@ -834,13 +1108,13 @@ async def create_user(
     with Database.get_session() as session:
         from sqlalchemy import text
 
-        # Vérifier que l'email n'existe pas déjà
+        # Vérifier que l'email n'existe pas déjà dans ce tenant
         existing = session.execute(
             text("""
                 SELECT id FROM azalplus.utilisateurs
                 WHERE email = :email AND tenant_id = :tenant_id
             """),
-            {"email": data.email, "tenant_id": str(tenant_id)}
+            {"email": data.email, "tenant_id": target_tenant_id}
         ).fetchone()
 
         if existing:
@@ -859,7 +1133,7 @@ async def create_user(
             """),
             {
                 "id": str(new_user_id),
-                "tenant_id": str(tenant_id),
+                "tenant_id": target_tenant_id,
                 "email": data.email,
                 "password_hash": hash_password(data.password),
                 "nom": data.nom,
@@ -871,6 +1145,7 @@ async def create_user(
 
     return {
         "id": str(new_user_id),
+        "tenant_id": target_tenant_id,
         "email": data.email,
         "nom": data.nom,
         "prenom": data.prenom,
@@ -884,10 +1159,13 @@ async def update_user(
     user_id: str,
     data: UserUpdate,
     request: Request,
-    user: dict = Depends(require_role("admin"))
+    user: dict = Depends(require_auth)
 ):
-    """Met à jour un utilisateur."""
-    tenant_id = user.get("tenant_id")
+    """Met à jour un utilisateur (créateur: tous, admin: son tenant)."""
+    is_createur, user_tenant_id = get_user_management_context(user)
+
+    if not is_createur and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé")
 
     # Valider le rôle si fourni
     if data.role and data.role not in ROLES:
@@ -896,7 +1174,7 @@ async def update_user(
             detail=f"Rôle invalide. Rôles valides: {list(ROLES.keys())}"
         )
 
-    # Empêcher un admin de se désactiver lui-même
+    # Empêcher de se désactiver soi-même
     if str(user.get("id")) == user_id and data.actif is False:
         raise HTTPException(
             status_code=400,
@@ -906,21 +1184,24 @@ async def update_user(
     with Database.get_session() as session:
         from sqlalchemy import text
 
-        # Vérifier que l'utilisateur existe
-        existing = session.execute(
-            text("""
-                SELECT id FROM azalplus.utilisateurs
-                WHERE id = :user_id AND tenant_id = :tenant_id
-            """),
-            {"user_id": user_id, "tenant_id": str(tenant_id)}
-        ).fetchone()
+        # Vérifier que l'utilisateur existe (avec filtre tenant si admin)
+        if is_createur:
+            existing = session.execute(
+                text("SELECT id, tenant_id FROM azalplus.utilisateurs WHERE id = :user_id"),
+                {"user_id": user_id}
+            ).fetchone()
+        else:
+            existing = session.execute(
+                text("SELECT id, tenant_id FROM azalplus.utilisateurs WHERE id = :user_id AND tenant_id = :tenant_id"),
+                {"user_id": user_id, "tenant_id": str(user_tenant_id)}
+            ).fetchone()
 
         if not existing:
             raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
         # Construire la requête de mise à jour
         updates = []
-        params = {"user_id": user_id, "tenant_id": str(tenant_id)}
+        params = {"user_id": user_id}
 
         if data.nom is not None:
             updates.append("nom = :nom")
@@ -934,13 +1215,20 @@ async def update_user(
         if data.actif is not None:
             updates.append("actif = :actif")
             params["actif"] = data.actif
+        if data.reset_modules_mobile:
+            # Reset to NULL (role-based defaults)
+            updates.append("modules_mobile = NULL")
+        elif data.modules_mobile is not None:
+            import json
+            updates.append("modules_mobile = :modules_mobile")
+            params["modules_mobile"] = json.dumps(data.modules_mobile)
 
         if updates:
             query = f"""
                 UPDATE azalplus.utilisateurs
                 SET {", ".join(updates)}, updated_at = NOW()
-                WHERE id = :user_id AND tenant_id = :tenant_id
-                RETURNING id, email, nom, prenom, role, actif
+                WHERE id = :user_id
+                RETURNING id, email, nom, prenom, role, actif, modules_mobile, tenant_id
             """
             result = session.execute(text(query), params)
             session.commit()
@@ -956,10 +1244,13 @@ async def reset_user_password(
     user_id: str,
     data: UserPasswordReset,
     request: Request,
-    user: dict = Depends(require_role("admin"))
+    user: dict = Depends(require_auth)
 ):
-    """Réinitialise le mot de passe d'un utilisateur."""
-    tenant_id = user.get("tenant_id")
+    """Réinitialise le mot de passe (créateur: tous, admin: son tenant)."""
+    is_createur, user_tenant_id = get_user_management_context(user)
+
+    if not is_createur and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé")
 
     if len(data.new_password) < 8:
         raise HTTPException(
@@ -971,13 +1262,16 @@ async def reset_user_password(
         from sqlalchemy import text
 
         # Vérifier que l'utilisateur existe
-        existing = session.execute(
-            text("""
-                SELECT id FROM azalplus.utilisateurs
-                WHERE id = :user_id AND tenant_id = :tenant_id
-            """),
-            {"user_id": user_id, "tenant_id": str(tenant_id)}
-        ).fetchone()
+        if is_createur:
+            existing = session.execute(
+                text("SELECT id FROM azalplus.utilisateurs WHERE id = :user_id"),
+                {"user_id": user_id}
+            ).fetchone()
+        else:
+            existing = session.execute(
+                text("SELECT id FROM azalplus.utilisateurs WHERE id = :user_id AND tenant_id = :tenant_id"),
+                {"user_id": user_id, "tenant_id": str(user_tenant_id)}
+            ).fetchone()
 
         if not existing:
             raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
@@ -989,11 +1283,10 @@ async def reset_user_password(
                 SET password_hash = :password_hash,
                     tentatives_echouees = 0,
                     updated_at = NOW()
-                WHERE id = :user_id AND tenant_id = :tenant_id
+                WHERE id = :user_id
             """),
             {
                 "user_id": user_id,
-                "tenant_id": str(tenant_id),
                 "password_hash": hash_password(data.new_password)
             }
         )
@@ -1006,12 +1299,15 @@ async def reset_user_password(
 async def delete_user(
     user_id: str,
     request: Request,
-    user: dict = Depends(require_role("admin"))
+    user: dict = Depends(require_auth)
 ):
-    """Supprime un utilisateur (soft delete - désactivation)."""
-    tenant_id = user.get("tenant_id")
+    """Supprime un utilisateur (créateur: tous, admin: son tenant)."""
+    is_createur, user_tenant_id = get_user_management_context(user)
 
-    # Empêcher un admin de se supprimer lui-même
+    if not is_createur and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé")
+
+    # Empêcher de se supprimer soi-même
     if str(user.get("id")) == user_id:
         raise HTTPException(
             status_code=400,
@@ -1022,13 +1318,16 @@ async def delete_user(
         from sqlalchemy import text
 
         # Vérifier que l'utilisateur existe
-        existing = session.execute(
-            text("""
-                SELECT id FROM azalplus.utilisateurs
-                WHERE id = :user_id AND tenant_id = :tenant_id
-            """),
-            {"user_id": user_id, "tenant_id": str(tenant_id)}
-        ).fetchone()
+        if is_createur:
+            existing = session.execute(
+                text("SELECT id FROM azalplus.utilisateurs WHERE id = :user_id"),
+                {"user_id": user_id}
+            ).fetchone()
+        else:
+            existing = session.execute(
+                text("SELECT id FROM azalplus.utilisateurs WHERE id = :user_id AND tenant_id = :tenant_id"),
+                {"user_id": user_id, "tenant_id": str(user_tenant_id)}
+            ).fetchone()
 
         if not existing:
             raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
@@ -1038,9 +1337,9 @@ async def delete_user(
             text("""
                 UPDATE azalplus.utilisateurs
                 SET actif = false, updated_at = NOW()
-                WHERE id = :user_id AND tenant_id = :tenant_id
+                WHERE id = :user_id
             """),
-            {"user_id": user_id, "tenant_id": str(tenant_id)}
+            {"user_id": user_id}
         )
         session.commit()
 

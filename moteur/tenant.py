@@ -12,6 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from typing import Optional, Callable
 from uuid import UUID
+from contextvars import ContextVar
 import structlog
 
 from .config import settings
@@ -20,43 +21,48 @@ from .guardian import Guardian, CREATEUR_EMAIL
 logger = structlog.get_logger()
 
 # =============================================================================
-# Contexte Tenant (Thread-safe)
+# Contexte Tenant (Async-safe avec contextvars)
 # =============================================================================
-class TenantContext:
-    """Contexte tenant pour la requête courante."""
+# Tenant systeme pour le createur (UUID fixe)
+SYSTEM_TENANT_ID = UUID("00000000-0000-0000-0000-000000000000")
 
-    _current_tenant_id: Optional[UUID] = None
-    _current_user_id: Optional[UUID] = None
-    _current_user_email: Optional[str] = None
+# Utilisation de contextvars pour l'isolation correcte entre requêtes async
+_tenant_id_var: ContextVar[Optional[UUID]] = ContextVar('tenant_id', default=None)
+_user_id_var: ContextVar[Optional[UUID]] = ContextVar('user_id', default=None)
+_user_email_var: ContextVar[Optional[str]] = ContextVar('user_email', default=None)
+
+
+class TenantContext:
+    """Contexte tenant pour la requête courante (async-safe)."""
 
     @classmethod
     def set(cls, tenant_id: UUID, user_id: Optional[UUID] = None, email: Optional[str] = None):
         """Définit le contexte tenant."""
-        cls._current_tenant_id = tenant_id
-        cls._current_user_id = user_id
-        cls._current_user_email = email
+        _tenant_id_var.set(tenant_id)
+        _user_id_var.set(user_id)
+        _user_email_var.set(email)
 
     @classmethod
     def get_tenant_id(cls) -> Optional[UUID]:
         """Retourne le tenant_id courant."""
-        return cls._current_tenant_id
+        return _tenant_id_var.get()
 
     @classmethod
     def get_user_id(cls) -> Optional[UUID]:
         """Retourne le user_id courant."""
-        return cls._current_user_id
+        return _user_id_var.get()
 
     @classmethod
     def is_createur(cls) -> bool:
         """Vérifie si l'utilisateur courant est le Créateur."""
-        return cls._current_user_email == CREATEUR_EMAIL
+        return _user_email_var.get() == CREATEUR_EMAIL
 
     @classmethod
     def clear(cls):
         """Efface le contexte."""
-        cls._current_tenant_id = None
-        cls._current_user_id = None
-        cls._current_user_email = None
+        _tenant_id_var.set(None)
+        _user_id_var.set(None)
+        _user_email_var.set(None)
 
 # =============================================================================
 # Middleware Multi-Tenant
@@ -69,6 +75,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/",
         "/health",
         "/login",
+        "/favicon.ico",
+        "/assets",
         "/static",
         "/api/docs",
         "/api/redoc",
@@ -91,10 +99,16 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/api/autocompletion-ia/bic",
         # Smart lookup (unifié)
         "/api/autocompletion-ia/smart-lookup",
+        # Icons (public)
+        "/api/icons",
     ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Intercepte chaque requête pour injecter le contexte tenant."""
+
+        # Laisser passer les requêtes OPTIONS (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
 
         # Routes publiques - pas de vérification tenant
         if self._is_public_route(request.url.path):
@@ -149,7 +163,11 @@ class TenantMiddleware(BaseHTTPMiddleware):
         # Définir le contexte tenant
         # user_tenant_id peut être UUID ou string selon la source
         raw_tenant_id = request_tenant_id or user_tenant_id
-        if isinstance(raw_tenant_id, UUID):
+
+        # Createur sans tenant => utiliser le tenant systeme
+        if not raw_tenant_id and user_email == CREATEUR_EMAIL:
+            tenant_id = SYSTEM_TENANT_ID
+        elif isinstance(raw_tenant_id, UUID):
             tenant_id = raw_tenant_id
         else:
             tenant_id = UUID(str(raw_tenant_id))

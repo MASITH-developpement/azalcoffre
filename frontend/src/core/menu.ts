@@ -244,6 +244,12 @@ export const menuConfig: MenuSection[] = [
         icon: 'shield',
         path: '/parametres/rgpd',
       },
+      {
+        id: 'mobile-config',
+        label: 'Application Mobile',
+        icon: 'smartphone',
+        path: '/parametres/mobile',
+      },
     ],
   },
 ];

@@ -1,61 +1,75 @@
-# =============================================================================
 # AZALPLUS - Module Notifications
-# =============================================================================
-# Centre de notifications in-app pour alerter les utilisateurs des evenements
-# importants : nouveaux devis, paiements recus, interventions planifiees, etc.
-# =============================================================================
+nom: Notifications
+icone: bell
+menu: Systeme
+description: Notifications systeme et alertes utilisateur
 
-Notifications:
-  nom: "Notifications"
-  icone: "bell"
-  menu: "Systeme"
-  description: "Centre de notifications in-app"
+champs:
+  - nom: titre
+    type: text
+    obligatoire: true
+    description: Titre de la notification
 
-  champs:
-    # Destinataire de la notification
-    user_id: uuid requis
+  - nom: message
+    type: textarea
+    obligatoire: false
+    description: Contenu de la notification
 
-    # Type de notification (pour filtrage et style)
-    type: enum [info, warning, success, error] defaut=info
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: INFO
+    options:
+      - INFO
+      - SUCCESS
+      - WARNING
+      - ERROR
+      - REMINDER
+    description: Type de notification
 
-    # Titre court de la notification
-    titre: texte requis
+  - nom: priorite
+    type: select
+    obligatoire: false
+    defaut: NORMALE
+    options:
+      - BASSE
+      - NORMALE
+      - HAUTE
+      - URGENTE
+    description: Priorite
 
-    # Corps du message
-    message: texte long requis
+  - nom: destinataire_id
+    type: text
+    obligatoire: false
+    description: ID utilisateur destinataire
 
-    # Lien optionnel vers la ressource concernee
-    lien: texte
+  - nom: lue
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Notification lue
 
-    # Module source de la notification (pour groupement)
-    module_source: texte
+  - nom: date_lecture
+    type: datetime
+    obligatoire: false
+    description: Date de lecture
 
-    # ID de l'enregistrement source (pour navigation)
-    record_id: uuid
+  - nom: lien
+    type: text
+    obligatoire: false
+    description: Lien vers la ressource concernee
 
-    # Etat de lecture
-    lu: oui/non defaut=false
+  - nom: module_source
+    type: text
+    obligatoire: false
+    description: Module source
 
-    # Date de lecture
-    date_lecture: datetime
+  - nom: record_id
+    type: text
+    obligatoire: false
+    description: ID enregistrement concerne
 
-    # Priorite (pour tri)
-    priorite: enum [basse, normale, haute, urgente] defaut=normale
-
-    # Expiration (notifications temporaires)
-    expire_at: datetime
-
-    # Action associee (pour boutons)
-    action_type: texte
-    action_data: json
-
-  actions:
-    - marquer_lu
-    - marquer_non_lu
-    - supprimer
-    - voir_toutes
-
-  marceau:
-    alertes:
-      - si type=error et lu=false: "Notification d'erreur non lue"
-      - si priorite=urgente et lu=false: "Notification urgente en attente"
+  - nom: is_active
+    type: boolean
+    obligatoire: false
+    defaut: true

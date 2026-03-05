@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Utilisateur -->
+  <circle cx="9" cy="7" r="4" fill="#93C5FD"/>
+  <path d="M3 21v-2c0-2.8 2.2-5 5-5h2c2.8 0 5 2.2 5 5v2" fill="#93C5FD"/>
+  <!-- Plus -->
+  <circle cx="18" cy="8" r="5" fill="#2563EB"/>
+  <path d="M18 5v6M15 8h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>

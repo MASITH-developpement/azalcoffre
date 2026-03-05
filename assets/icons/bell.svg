@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Corps cloche (secondaire) -->
+  <path d="M18 8C18 4.69 15.31 2 12 2C8.69 2 6 4.69 6 8C6 12 4 14 3 15V16H21V15C20 14 18 12 18 8Z" fill="#93C5FD"/>
+  <!-- Partie superieure cloche (principale) -->
+  <path d="M12 2C8.69 2 6 4.69 6 8C6 9.5 5.5 11 5 12H19C18.5 11 18 9.5 18 8C18 4.69 15.31 2 12 2Z" fill="#2563EB"/>
+  <!-- Battant cloche (principale) -->
+  <path d="M9 17C9 18.66 10.34 20 12 20C13.66 20 15 18.66 15 17H9Z" fill="#2563EB"/>
+  <!-- Point notification (principale) -->
+  <circle cx="17" cy="5" r="3" fill="#2563EB"/>
+</svg>

@@ -309,6 +309,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         """Intercepte chaque requete pour appliquer le rate limiting."""
 
+        # Laisser passer les requêtes OPTIONS (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Routes exemptees
         if is_route_exempt(request.url.path):
             return await call_next(request)

@@ -6,7 +6,7 @@ Point d'entrée principal du moteur AZALPLUS.
 Orchestre tous les composants : DB, API, UI, Guardian, etc.
 """
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -21,12 +21,13 @@ from .db import Database
 from .parser import ModuleParser
 from .guardian import Guardian
 from .tenant import TenantMiddleware
-from .auth import AuthManager, AuthMiddleware
+from .auth import AuthManager, AuthMiddleware, users_router
 from .ratelimit import RateLimitMiddleware
 from .csrf import CSRFMiddleware
 from .waf import WAF
 from .encryption import verify_encryption_setup
 from .i18n import preload_translations, get_language_from_request, set_language
+from .icons import IconManager
 
 # =============================================================================
 # Logging
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI):
 
     # Startup
     await Database.connect()
+    # Recharger les modules pour créer les tables DB (modules déjà chargés pour les routes)
     ModuleParser.load_all_modules()
     Guardian.initialize()
 
@@ -55,6 +57,9 @@ async def lifespan(app: FastAPI):
     # Initialize workflow engine
     from .workflows import WorkflowEngine
     WorkflowEngine.initialize()
+
+    # Initialize icons manager
+    IconManager.initialize()
 
     # Routes already registered at import time (before include_router)
 
@@ -161,23 +166,31 @@ async def timing_middleware(request: Request, call_next: Callable):
 @app.middleware("http")
 async def guardian_middleware(request: Request, call_next: Callable):
     """Guardian surveille et protège silencieusement."""
-    # Vérification Guardian AVANT
-    check_result = await Guardian.check_request(request)
+    import traceback
+    import sys
 
-    if check_result.blocked:
-        # Message neutre - Guardian reste invisible
-        return JSONResponse(
-            status_code=400,
-            content={"detail": check_result.neutral_message}
-        )
+    try:
+        # Vérification Guardian AVANT
+        check_result = await Guardian.check_request(request)
 
-    # Exécution normale
-    response = await call_next(request)
+        if check_result.blocked:
+            # Message neutre - Guardian reste invisible
+            return JSONResponse(
+                status_code=400,
+                content={"detail": check_result.neutral_message}
+            )
 
-    # Log Guardian APRÈS (silencieux)
-    await Guardian.log_request(request, response)
+        # Exécution normale
+        response = await call_next(request)
 
-    return response
+        # Log Guardian APRÈS (silencieux)
+        await Guardian.log_request(request, response)
+
+        return response
+    except Exception as e:
+        print(f"MIDDLEWARE EXCEPTION on {request.url.path}: {e}", file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
+        raise
 
 # =============================================================================
 # Routes de base
@@ -212,30 +225,54 @@ from .backup import backup_router, BackupService
 from .email_router import email_router
 from .docs import docs_router, custom_openapi
 from .api_v1 import router_v1, register_v1_modules
+from .icons import router as icons_router
 from .stock_router import stock_router
 from .workflows_api import workflows_router
+from .mobile_api import router_mobile
+from .sync_api import router_sync
+from .planning_optimizer import router as planning_router
+
+# IMPORTANT: Charger les modules YAML AVANT d'enregistrer les routes
+# Le parsing YAML ne nécessite pas la connexion DB
+from .parser import ModuleParser
+ModuleParser.load_all_modules(validate_first=True)
+logger.info("yaml_modules_preloaded", count=ModuleParser.count())
 
 # IMPORTANT: Enregistrer les routes AVANT include_router()
 register_all_modules()
 register_v1_modules()
 
-# Import du module Autocompletion IA
+# =============================================================================
+# Auto-discovery des modules Python custom (app/modules/*)
+# =============================================================================
+from .module_loader import discover_and_register, get_loaded_modules
+
+# Notification router (moteur component)
 try:
-    from app.modules.autocompletion_ia.router import router as autocompletion_ia_router
-    from app.modules.autocompletion_ia.router import public_router as entreprise_public_router
+    from .notification_api import notification_router
 except ImportError:
-    autocompletion_ia_router = None
-    entreprise_public_router = None
-from .notification_api import notification_router
+    notification_router = None
+
+# Push notification router
+try:
+    from .push_api import push_router
+except ImportError:
+    push_router = None
 
 # Authentication
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+
+# Admin - Users Management
+app.include_router(users_router, prefix="/api/admin/users", tags=["Admin - Users"])
 
 # Legacy API (backwards compatibility)
 app.include_router(api_router, prefix="/api", tags=["API (Legacy)"])
 
 # API v1 (versioned, fully documented)
 app.include_router(router_v1, prefix="/api", tags=["API v1"])
+
+# Icons API (public, no auth required)
+app.include_router(icons_router, prefix="/api/icons", tags=["Icons"])
 
 # Documentation
 app.include_router(docs_router, prefix="/api", tags=["Documentation"])
@@ -247,13 +284,62 @@ app.include_router(email_router, tags=["Email"])
 app.include_router(stock_router, prefix="/api", tags=["Stock"])
 app.include_router(workflows_router, prefix="/api", tags=["Workflows"])
 
-# Autocompletion IA
-if autocompletion_ia_router:
-    app.include_router(autocompletion_ia_router, prefix="/api/autocompletion-ia", tags=["Autocompletion IA"])
+# Mobile API
+app.include_router(router_mobile, prefix="/api", tags=["Mobile"])
 
-# Recherche entreprise (public - données gov.fr)
-if entreprise_public_router:
-    app.include_router(entreprise_public_router, prefix="/api/autocompletion-ia", tags=["Recherche Entreprise"])
+# Planning Optimizer
+app.include_router(planning_router, tags=["Planning"])
+
+# Sync API (offline support)
+app.include_router(router_sync, prefix="/api", tags=["Sync"])
+
+# Notifications
+if notification_router:
+    app.include_router(notification_router, prefix="/api", tags=["Notifications"])
+
+# Push Notifications
+if push_router:
+    app.include_router(push_router, prefix="/api", tags=["Push Notifications"])
+
+# =============================================================================
+# Route /api/utilisateurs (alias pour les selects UI)
+# =============================================================================
+from .auth import require_auth
+from .db import Database
+
+@app.get("/api/utilisateurs", tags=["Users"])
+async def api_utilisateurs(user: dict = Depends(require_auth)):
+    """Liste les utilisateurs du tenant (pour les selects)."""
+    tenant_id = user.get("tenant_id")
+    with Database.get_session() as session:
+        from sqlalchemy import text
+        result = session.execute(
+            text("""
+                SELECT id, email, nom, prenom, role
+                FROM azalplus.utilisateurs
+                WHERE tenant_id = :tenant_id AND actif = true
+                ORDER BY nom, prenom
+            """),
+            {"tenant_id": str(tenant_id)}
+        )
+        users = []
+        for row in result:
+            r = dict(row._mapping)
+            users.append({
+                "id": str(r["id"]),
+                "nom": f"{r.get('prenom', '')} {r.get('nom', '')}".strip() or r["email"],
+                "email": r["email"],
+                "role": r["role"]
+            })
+    return {"items": users, "total": len(users)}
+
+# =============================================================================
+# Auto-discovery des modules Python custom (app/modules/*)
+# =============================================================================
+# Charge automatiquement tous les routers des modules dans app/modules/
+# Chaque module peut avoir un meta.py pour configurer prefix, tags, etc.
+custom_modules_count = discover_and_register(app)
+logger.info("custom_modules_loaded", count=custom_modules_count, modules=list(get_loaded_modules().keys()))
 
 # Apply custom OpenAPI schema
 app.openapi = lambda: custom_openapi(app)
@@ -282,6 +368,12 @@ app.include_router(theme_router, prefix="/static", tags=["Theme"])
 from .portal import portal_router
 app.include_router(portal_router, prefix="/portail", tags=["Portal"])
 
+# =============================================================================
+# Router Portal API (mobile client portal with auth)
+# =============================================================================
+from .portal_api import portal_api_router
+app.include_router(portal_api_router, tags=["Portal Client API"])
+
 # Charger le thème au démarrage
 ThemeManager.load()
 
@@ -303,6 +395,19 @@ async def login_page():
         return HTMLResponse(content=template_path.read_text())
     return HTMLResponse(content="<h1>Login</h1>")
 
+@app.get("/favicon.ico")
+async def favicon():
+    """Favicon."""
+    favicon_path = Path(__file__).parent.parent / "assets" / "favicon.ico"
+    if favicon_path.exists():
+        return FileResponse(favicon_path, media_type="image/x-icon")
+    # Fallback: favicon SVG
+    svg_path = Path(__file__).parent.parent / "assets" / "favicon.svg"
+    if svg_path.exists():
+        return FileResponse(svg_path, media_type="image/svg+xml")
+    # Retourner 204 No Content si pas de favicon
+    return JSONResponse(status_code=204, content=None)
+
 # =============================================================================
 # Exception handlers
 # =============================================================================
@@ -319,6 +424,11 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 async def general_exception_handler(request: Request, exc: Exception):
     """Gestion des erreurs générales."""
     # Log l'erreur (Guardian voit tout)
+    import traceback
+    import sys
+    print(f"EXCEPTION on {request.url.path}: {exc}", file=sys.stderr)
+    print(traceback.format_exc(), file=sys.stderr)
+    logger.error("exception_traceback", path=request.url.path, error=str(exc), traceback=traceback.format_exc())
     await Guardian.log_error(request, exc)
 
     # Message neutre pour l'utilisateur

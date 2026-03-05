@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Face gauche -->
+  <path d="M2 8l10-5 10 5v8l-10 5-10-5V8z" fill="#93C5FD"/>
+  <!-- Face avant -->
+  <path d="M12 13l10-5v8l-10 5v-8z" fill="#2563EB"/>
+  <!-- Ligne centrale -->
+  <path d="M12 3v10" stroke="#2563EB" stroke-width="2"/>
+  <path d="M2 8l10 5" stroke="#2563EB" stroke-width="1.5"/>
+</svg>

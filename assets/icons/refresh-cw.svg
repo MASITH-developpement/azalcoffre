@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Secondary: Circle arcs -->
+  <path d="M12 4C7.58172 4 4 7.58172 4 12C4 14.1217 4.84285 16.0566 6.22183 17.4645" stroke="#93C5FD" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M12 20C16.4183 20 20 16.4183 20 12C20 9.87827 19.1571 7.94339 17.7782 6.53553" stroke="#93C5FD" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- Primary: Arrows -->
+  <path d="M12 2L15 5L12 8" fill="#2563EB"/>
+  <path d="M12 2L15 5L12 8" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12 22L9 19L12 16" fill="#2563EB"/>
+  <path d="M12 22L9 19L12 16" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

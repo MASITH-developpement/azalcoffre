@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Calendrier fond -->
+  <rect x="3" y="4" width="18" height="18" rx="2" fill="#93C5FD"/>
+  <!-- Header -->
+  <rect x="3" y="4" width="18" height="6" rx="2" fill="#2563EB"/>
+  <!-- Anneaux -->
+  <rect x="7" y="2" width="2" height="4" rx="1" fill="#2563EB"/>
+  <rect x="15" y="2" width="2" height="4" rx="1" fill="#2563EB"/>
+  <!-- Jours -->
+  <circle cx="8" cy="14" r="1.5" fill="#2563EB"/>
+  <circle cx="12" cy="14" r="1.5" fill="#2563EB"/>
+  <circle cx="16" cy="14" r="1.5" fill="#2563EB"/>
+  <circle cx="8" cy="18" r="1.5" fill="#2563EB"/>
+</svg>
