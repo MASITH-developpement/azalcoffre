@@ -103,6 +103,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/api/icons",
         # Mobile connect (QR code auth)
         "/api/mobile/connect",
+        # Guardian - Error reporting (public, rate-limited)
+        "/guardian/frontend-error",
     ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
