@@ -457,5 +457,25 @@ class CompositeAnalyzer(ErrorAnalyzer):
         for analyzer in self._analyzers:
             proposal = analyzer.analyze(error_log)
             if proposal:
+                # Si confiance trop basse, escalader à Claude
+                if proposal.confidence < 0.5:
+                    proposal.status = FixStatus.NEEDS_CLAUDE
+                    proposal.metadata["reason"] = "Confiance trop basse, Claude doit analyser"
                 return proposal
-        return None
+
+        # Aucun analyseur n'a pu traiter l'erreur -> Claude doit prendre la main
+        file_path, line_num = self._extract_file_info(error_log)
+        return FixProposal(
+            id=FixProposal.generate_id(error_log),
+            error_type="ComplexError",
+            error_message=error_log[:500],
+            category=ErrorCategory.UNKNOWN,
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix=None,  # Pas de fix proposé
+            confidence=0.0,
+            created_at=datetime.now(),
+            status=FixStatus.NEEDS_CLAUDE,
+            metadata={"reason": "Erreur non reconnue, Claude doit analyser et corriger"}
+        )

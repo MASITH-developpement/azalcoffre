@@ -14,12 +14,13 @@ import hashlib
 
 class FixStatus(str, Enum):
     """Statut d'un fix proposé."""
-    PENDING = "pending"           # En attente de validation
+    PENDING = "pending"           # En attente de validation simple
     APPROVED = "approved"         # Validé par Claude
     REJECTED = "rejected"         # Rejeté par Claude
     APPLIED = "applied"           # Appliqué avec succès
     FAILED = "failed"             # Échec de l'application
     AUTO_VALIDATED = "auto_validated"  # Validé automatiquement (pattern connu)
+    NEEDS_CLAUDE = "needs_claude"      # Bug complexe - Claude doit prendre la main et coder
 
 
 class ErrorCategory(str, Enum):

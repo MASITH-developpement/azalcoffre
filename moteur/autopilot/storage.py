@@ -278,12 +278,17 @@ class PostgresStorage(StorageBackend):
                 result = session.execute(
                     text("""
                         SELECT * FROM azalplus.guardian_fix_proposals
-                        WHERE status = 'pending'
-                        ORDER BY created_at DESC
+                        WHERE status IN ('pending', 'needs_claude')
+                        ORDER BY
+                            CASE WHEN status = 'needs_claude' THEN 0 ELSE 1 END,
+                            created_at DESC
                     """)
                 )
                 for row in result:
                     r = dict(row._mapping)
+                    metadata = r.get("metadata", {})
+                    if isinstance(metadata, str):
+                        metadata = json.loads(metadata) if metadata else {}
                     proposals.append(FixProposal(
                         id=r["id"],
                         error_type=r["error_type"],
@@ -294,7 +299,8 @@ class PostgresStorage(StorageBackend):
                         proposed_fix=r["proposed_fix"],
                         confidence=r["confidence"],
                         status=FixStatus(r["status"]),
-                        created_at=r["created_at"]
+                        created_at=r["created_at"],
+                        metadata=metadata
                     ))
         except Exception as e:
             logger.error("autopilot_get_pending_failed", error=str(e))
