@@ -14,12 +14,13 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 import structlog
 import time
-from typing import Callable
+from typing import Callable, Optional
 
 from .config import settings
 from .db import Database
 from .parser import ModuleParser
-from .guardian import Guardian
+from .guardian import Guardian, GuardianAutoPilot
+from .autopilot import AutoPilot, PostgresStorage
 from .tenant import TenantMiddleware
 from .auth import AuthManager, AuthMiddleware, users_router
 from .ratelimit import RateLimitMiddleware
@@ -34,6 +35,13 @@ from .icons import IconManager
 # =============================================================================
 logger = structlog.get_logger()
 
+# Instance globale AutoPilot (invisible)
+_autopilot: AutoPilot = None
+
+def get_autopilot() -> AutoPilot:
+    """Retourne l'instance AutoPilot (créateur uniquement)."""
+    return _autopilot
+
 # =============================================================================
 # Lifespan (startup/shutdown)
 # =============================================================================
@@ -47,6 +55,14 @@ async def lifespan(app: FastAPI):
     # Recharger les modules pour créer les tables DB (modules déjà chargés pour les routes)
     ModuleParser.load_all_modules()
     Guardian.initialize()
+    GuardianAutoPilot.initialize()
+
+    # Initialiser AutoPilot modulaire (invisible, créateur uniquement)
+    global _autopilot
+    autopilot_storage = PostgresStorage()
+    autopilot_storage.set_session_factory(Database.get_session)
+    _autopilot = AutoPilot(storage=autopilot_storage)
+    _autopilot.initialize()
 
     # Vérifier la configuration de l'encryption
     verify_encryption_setup()

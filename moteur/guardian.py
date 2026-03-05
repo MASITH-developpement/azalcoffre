@@ -12,7 +12,7 @@ CRÉATEUR: contact@stephane-moreau.fr (hardcodé)
 
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from typing import Optional, List
+from typing import Optional, List, Dict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import UUID
@@ -22,6 +22,9 @@ import hashlib
 
 from .config import settings
 from .db import Database
+
+# AutoPilot - Système d'auto-correction (invisible)
+from .autopilot import AutoPilot, PostgresStorage
 
 logger = structlog.get_logger()
 
@@ -795,3 +798,570 @@ async def guardian_apply_correction(
             "status": "no_data",
             "message": "Pas de données à corriger"
         }
+
+
+# =============================================================================
+# GUARDIAN AUTOPILOT - Système d'auto-correction avec apprentissage
+# =============================================================================
+
+@dataclass
+class FixProposal:
+    """Proposition de correction par Guardian."""
+    id: str
+    error_type: str
+    error_message: str
+    file_path: str
+    line_number: Optional[int]
+    original_code: Optional[str]
+    proposed_fix: Optional[str]
+    confidence: float  # 0.0 à 1.0
+    created_at: datetime
+    status: str = "pending"  # pending, approved, rejected, applied
+
+
+class GuardianAutoPilot:
+    """
+    Système d'auto-correction autonome avec apprentissage.
+
+    Flux:
+    1. Détecte erreur dans les logs
+    2. Analyse et propose un fix
+    3. Claude valide ou rejette avec explication
+    4. Si validé: applique le fix
+    5. Si rejeté: apprend de l'explication
+    """
+
+    _learnings: Dict[str, List[str]] = {}  # error_pattern -> [explanations]
+    _fix_patterns: Dict[str, str] = {}  # error_pattern -> validated_fix
+    _pending_fixes: Dict[str, FixProposal] = {}
+
+    @classmethod
+    def initialize(cls):
+        """Charge les apprentissages depuis la base."""
+        try:
+            with Database.get_session() as session:
+                from sqlalchemy import text
+
+                # Charger les patterns validés
+                result = session.execute(text("""
+                    SELECT error_pattern, fix_template, explanation
+                    FROM azalplus.guardian_learnings
+                    WHERE status = 'validated'
+                """))
+                for row in result:
+                    r = dict(row._mapping)
+                    cls._fix_patterns[r["error_pattern"]] = r["fix_template"]
+
+                # Charger les explications de rejet
+                result = session.execute(text("""
+                    SELECT error_pattern, explanation
+                    FROM azalplus.guardian_learnings
+                    WHERE status = 'rejected'
+                """))
+                for row in result:
+                    r = dict(row._mapping)
+                    if r["error_pattern"] not in cls._learnings:
+                        cls._learnings[r["error_pattern"]] = []
+                    cls._learnings[r["error_pattern"]].append(r["explanation"])
+
+                logger.info("guardian_autopilot_initialized",
+                           patterns=len(cls._fix_patterns),
+                           learnings=len(cls._learnings))
+        except Exception as e:
+            logger.warning("guardian_autopilot_init_failed", error=str(e))
+
+    @classmethod
+    def analyze_error(cls, error_log: str) -> Optional[FixProposal]:
+        """
+        Analyse une erreur et propose un fix.
+
+        Args:
+            error_log: Le message d'erreur complet
+
+        Returns:
+            FixProposal ou None si pas de fix possible
+        """
+        import re
+        import traceback
+        from datetime import datetime
+
+        proposal = None
+
+        # Patterns d'erreurs Python courants
+        patterns = {
+            # ImportError
+            r"ImportError: cannot import name '(\w+)' from '([^']+)'": cls._fix_import_error,
+            # NameError
+            r"NameError: name '(\w+)' is not defined": cls._fix_name_error,
+            # AttributeError
+            r"AttributeError: '(\w+)' object has no attribute '(\w+)'": cls._fix_attribute_error,
+            # TypeError
+            r"TypeError: (\w+)\(\) missing (\d+) required positional argument": cls._fix_missing_arg,
+            # KeyError
+            r"KeyError: '(\w+)'": cls._fix_key_error,
+            # SyntaxError
+            r"SyntaxError: (.+)": cls._fix_syntax_error,
+            # IndentationError
+            r"IndentationError: (.+)": cls._fix_indentation_error,
+            # YAML errors
+            r"yaml\.scanner\.ScannerError: (.+)": cls._fix_yaml_error,
+            # SQLAlchemy errors
+            r"sqlalchemy\.exc\.(\w+): (.+)": cls._fix_sql_error,
+        }
+
+        for pattern, fix_func in patterns.items():
+            match = re.search(pattern, error_log, re.IGNORECASE)
+            if match:
+                # Extraire le fichier et la ligne
+                file_match = re.search(r'File "([^"]+)", line (\d+)', error_log)
+                file_path = file_match.group(1) if file_match else None
+                line_num = int(file_match.group(2)) if file_match else None
+
+                # Vérifier si on a déjà un pattern validé
+                error_key = f"{pattern}:{match.groups()}"
+                if error_key in cls._fix_patterns:
+                    # Utiliser le fix validé
+                    proposal = FixProposal(
+                        id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+                        error_type=pattern.split(":")[0].replace("\\", ""),
+                        error_message=error_log[:500],
+                        file_path=file_path,
+                        line_number=line_num,
+                        original_code=None,
+                        proposed_fix=cls._fix_patterns[error_key],
+                        confidence=0.95,  # Haute confiance car validé
+                        created_at=datetime.now(),
+                        status="auto_validated"
+                    )
+                else:
+                    # Générer un nouveau fix
+                    proposal = fix_func(match, error_log, file_path, line_num)
+
+                    # Réduire la confiance si on a eu des rejets sur ce pattern
+                    if error_key in cls._learnings:
+                        rejections = len(cls._learnings[error_key])
+                        proposal.confidence *= (0.8 ** rejections)
+
+                break
+
+        if proposal:
+            cls._pending_fixes[proposal.id] = proposal
+
+        return proposal
+
+    @classmethod
+    def _fix_import_error(cls, match, error_log: str, file_path: str, line_num: int) -> FixProposal:
+        """Fix pour ImportError."""
+        name = match.group(1)
+        module = match.group(2)
+
+        # Proposer d'ajouter l'import manquant
+        proposed = f"# Ajouter en haut du fichier:\nfrom {module} import {name}"
+
+        return FixProposal(
+            id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+            error_type="ImportError",
+            error_message=error_log[:500],
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix=proposed,
+            confidence=0.7,
+            created_at=datetime.now()
+        )
+
+    @classmethod
+    def _fix_name_error(cls, match, error_log: str, file_path: str, line_num: int) -> FixProposal:
+        """Fix pour NameError."""
+        name = match.group(1)
+
+        # Suggestions basées sur le nom
+        suggestions = []
+        if name in ["Optional", "List", "Dict", "Union", "Any", "Callable"]:
+            suggestions.append(f"from typing import {name}")
+        elif name == "UUID":
+            suggestions.append("from uuid import UUID")
+        elif name == "datetime":
+            suggestions.append("from datetime import datetime")
+        elif name == "Depends":
+            suggestions.append("from fastapi import Depends")
+        elif name == "HTTPException":
+            suggestions.append("from fastapi import HTTPException")
+        elif name == "Request":
+            suggestions.append("from fastapi import Request")
+        elif name == "Query":
+            suggestions.append("from fastapi import Query")
+        elif name == "Path":
+            suggestions.append("from fastapi import Path")
+
+        proposed = "\n".join(suggestions) if suggestions else f"# Définir ou importer: {name}"
+
+        return FixProposal(
+            id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+            error_type="NameError",
+            error_message=error_log[:500],
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix=proposed,
+            confidence=0.8 if suggestions else 0.4,
+            created_at=datetime.now()
+        )
+
+    @classmethod
+    def _fix_attribute_error(cls, match, error_log: str, file_path: str, line_num: int) -> FixProposal:
+        """Fix pour AttributeError."""
+        obj_type = match.group(1)
+        attr = match.group(2)
+
+        proposed = f"# Vérifier que '{attr}' existe sur {obj_type} ou utiliser getattr(obj, '{attr}', default)"
+
+        return FixProposal(
+            id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+            error_type="AttributeError",
+            error_message=error_log[:500],
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix=proposed,
+            confidence=0.5,
+            created_at=datetime.now()
+        )
+
+    @classmethod
+    def _fix_missing_arg(cls, match, error_log: str, file_path: str, line_num: int) -> FixProposal:
+        """Fix pour TypeError (argument manquant)."""
+        func = match.group(1)
+        count = match.group(2)
+
+        proposed = f"# Ajouter les {count} argument(s) manquant(s) à l'appel de {func}()"
+
+        return FixProposal(
+            id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+            error_type="TypeError",
+            error_message=error_log[:500],
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix=proposed,
+            confidence=0.6,
+            created_at=datetime.now()
+        )
+
+    @classmethod
+    def _fix_key_error(cls, match, error_log: str, file_path: str, line_num: int) -> FixProposal:
+        """Fix pour KeyError."""
+        key = match.group(1)
+
+        proposed = f"# Utiliser .get('{key}', default) au lieu de ['{key}']"
+
+        return FixProposal(
+            id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+            error_type="KeyError",
+            error_message=error_log[:500],
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix=proposed,
+            confidence=0.75,
+            created_at=datetime.now()
+        )
+
+    @classmethod
+    def _fix_syntax_error(cls, match, error_log: str, file_path: str, line_num: int) -> FixProposal:
+        """Fix pour SyntaxError."""
+        return FixProposal(
+            id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+            error_type="SyntaxError",
+            error_message=error_log[:500],
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix="# Erreur de syntaxe - vérifier parenthèses, virgules, deux-points",
+            confidence=0.3,
+            created_at=datetime.now()
+        )
+
+    @classmethod
+    def _fix_indentation_error(cls, match, error_log: str, file_path: str, line_num: int) -> FixProposal:
+        """Fix pour IndentationError."""
+        return FixProposal(
+            id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+            error_type="IndentationError",
+            error_message=error_log[:500],
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix="# Corriger l'indentation - utiliser 4 espaces par niveau",
+            confidence=0.6,
+            created_at=datetime.now()
+        )
+
+    @classmethod
+    def _fix_yaml_error(cls, match, error_log: str, file_path: str, line_num: int) -> FixProposal:
+        """Fix pour erreurs YAML."""
+        return FixProposal(
+            id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+            error_type="YAMLError",
+            error_message=error_log[:500],
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix="# Erreur YAML - vérifier indentation et guillemets pour valeurs avec ':'",
+            confidence=0.5,
+            created_at=datetime.now()
+        )
+
+    @classmethod
+    def _fix_sql_error(cls, match, error_log: str, file_path: str, line_num: int) -> FixProposal:
+        """Fix pour erreurs SQL/SQLAlchemy."""
+        error_type = match.group(1)
+
+        proposed = "# Erreur SQL"
+        if "IntegrityError" in error_type:
+            proposed = "# Violation de contrainte - vérifier unicité ou foreign key"
+        elif "OperationalError" in error_type:
+            proposed = "# Erreur opérationnelle - vérifier connexion DB ou syntaxe SQL"
+        elif "ProgrammingError" in error_type:
+            proposed = "# Erreur de programmation - vérifier noms de tables/colonnes"
+
+        return FixProposal(
+            id=hashlib.md5(f"{error_log}{datetime.now()}".encode()).hexdigest()[:12],
+            error_type=f"SQLAlchemy.{error_type}",
+            error_message=error_log[:500],
+            file_path=file_path,
+            line_number=line_num,
+            original_code=None,
+            proposed_fix=proposed,
+            confidence=0.4,
+            created_at=datetime.now()
+        )
+
+    @classmethod
+    def get_pending_fixes(cls) -> List[FixProposal]:
+        """Retourne les fixes en attente de validation."""
+        return [f for f in cls._pending_fixes.values() if f.status == "pending"]
+
+    @classmethod
+    def validate_fix(cls, fix_id: str, approved: bool, explanation: str = "") -> dict:
+        """
+        Valide ou rejette un fix proposé.
+
+        Args:
+            fix_id: ID du fix
+            approved: True si validé, False si rejeté
+            explanation: Explication (obligatoire si rejeté)
+
+        Returns:
+            Résultat de l'opération
+        """
+        if fix_id not in cls._pending_fixes:
+            return {"status": "error", "message": "Fix non trouvé"}
+
+        fix = cls._pending_fixes[fix_id]
+
+        if approved:
+            # Appliquer le fix
+            result = cls._apply_fix(fix)
+            fix.status = "applied" if result["success"] else "failed"
+
+            # Sauvegarder le pattern validé
+            cls._save_learning(fix, "validated", explanation)
+
+            return {
+                "status": "applied" if result["success"] else "failed",
+                "fix": fix,
+                "result": result
+            }
+        else:
+            # Rejeté - apprendre de l'explication
+            fix.status = "rejected"
+            cls._save_learning(fix, "rejected", explanation)
+
+            # Stocker l'explication pour apprentissage
+            error_key = f"{fix.error_type}:{fix.error_message[:100]}"
+            if error_key not in cls._learnings:
+                cls._learnings[error_key] = []
+            cls._learnings[error_key].append(explanation)
+
+            return {
+                "status": "rejected",
+                "fix": fix,
+                "lesson_learned": explanation
+            }
+
+    @classmethod
+    def _apply_fix(cls, fix: FixProposal) -> dict:
+        """Applique un fix au fichier."""
+        if not fix.file_path or not fix.proposed_fix:
+            return {"success": False, "message": "Pas de fichier ou fix à appliquer"}
+
+        try:
+            # Lire le fichier
+            with open(fix.file_path, 'r') as f:
+                lines = f.readlines()
+
+            # Backup
+            backup_path = f"{fix.file_path}.guardian_backup"
+            with open(backup_path, 'w') as f:
+                f.writelines(lines)
+
+            # Si c'est un import manquant, l'ajouter en haut
+            if fix.error_type in ["ImportError", "NameError"] and "import" in fix.proposed_fix:
+                # Trouver la dernière ligne d'import
+                last_import_line = 0
+                for i, line in enumerate(lines):
+                    if line.strip().startswith(("import ", "from ")):
+                        last_import_line = i
+
+                # Insérer après le dernier import
+                import_line = fix.proposed_fix.replace("# Ajouter en haut du fichier:\n", "")
+                lines.insert(last_import_line + 1, import_line + "\n")
+
+                # Écrire le fichier modifié
+                with open(fix.file_path, 'w') as f:
+                    f.writelines(lines)
+
+                return {"success": True, "message": f"Import ajouté ligne {last_import_line + 2}"}
+
+            return {"success": False, "message": "Type de fix non supporté pour application auto"}
+
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
+    @classmethod
+    def _save_learning(cls, fix: FixProposal, status: str, explanation: str):
+        """Sauvegarde un apprentissage en base."""
+        try:
+            with Database.get_session() as session:
+                from sqlalchemy import text
+                session.execute(
+                    text("""
+                        INSERT INTO azalplus.guardian_learnings
+                        (error_pattern, error_message, fix_template, status, explanation, file_path)
+                        VALUES (:pattern, :message, :fix, :status, :explanation, :file)
+                    """),
+                    {
+                        "pattern": fix.error_type,
+                        "message": fix.error_message[:500],
+                        "fix": fix.proposed_fix,
+                        "status": status,
+                        "explanation": explanation,
+                        "file": fix.file_path
+                    }
+                )
+                session.commit()
+        except Exception as e:
+            logger.error("guardian_save_learning_failed", error=str(e))
+
+
+# =============================================================================
+# API Endpoints pour AutoPilot
+# =============================================================================
+
+@guardian_router.get("/autopilot/pending")
+async def guardian_autopilot_pending(user: dict = Depends(verify_createur)):
+    """Liste les fixes en attente de validation (Créateur uniquement)."""
+    fixes = GuardianAutoPilot.get_pending_fixes()
+    return {
+        "pending": [
+            {
+                "id": f.id,
+                "error_type": f.error_type,
+                "error_message": f.error_message[:200],
+                "file_path": f.file_path,
+                "line_number": f.line_number,
+                "proposed_fix": f.proposed_fix,
+                "confidence": f.confidence,
+                "created_at": f.created_at.isoformat()
+            }
+            for f in fixes
+        ],
+        "count": len(fixes)
+    }
+
+
+@guardian_router.post("/autopilot/validate/{fix_id}")
+async def guardian_autopilot_validate(
+    fix_id: str,
+    approved: bool,
+    explanation: str = "",
+    user: dict = Depends(verify_createur)
+):
+    """
+    Valider ou rejeter un fix proposé (Créateur uniquement).
+
+    - approved=true: Applique le fix
+    - approved=false + explanation: Rejette et enseigne à Guardian
+    """
+    if not approved and not explanation:
+        raise HTTPException(
+            status_code=400,
+            detail="Explication obligatoire pour un rejet (Guardian doit apprendre)"
+        )
+
+    result = GuardianAutoPilot.validate_fix(fix_id, approved, explanation)
+    return result
+
+
+@guardian_router.get("/autopilot/learnings")
+async def guardian_autopilot_learnings(user: dict = Depends(verify_createur)):
+    """Liste les apprentissages de Guardian (Créateur uniquement)."""
+    with Database.get_session() as session:
+        from sqlalchemy import text
+        result = session.execute(text("""
+            SELECT error_pattern, status, explanation, fix_template,
+                   file_path, created_at
+            FROM azalplus.guardian_learnings
+            ORDER BY created_at DESC
+            LIMIT 100
+        """))
+
+        learnings = []
+        for row in result:
+            r = dict(row._mapping)
+            learnings.append({
+                "error_pattern": r["error_pattern"],
+                "status": r["status"],
+                "explanation": r["explanation"],
+                "fix_template": r["fix_template"],
+                "file_path": r["file_path"],
+                "created_at": r["created_at"].isoformat() if r["created_at"] else None
+            })
+
+        return {
+            "learnings": learnings,
+            "validated_patterns": len(GuardianAutoPilot._fix_patterns),
+            "rejection_lessons": sum(len(v) for v in GuardianAutoPilot._learnings.values())
+        }
+
+
+@guardian_router.post("/autopilot/analyze")
+async def guardian_autopilot_analyze(
+    error_log: str,
+    user: dict = Depends(verify_createur)
+):
+    """
+    Analyser une erreur et proposer un fix (Créateur uniquement).
+
+    Utilisé pour tester le système ou soumettre manuellement une erreur.
+    """
+    proposal = GuardianAutoPilot.analyze_error(error_log)
+
+    if proposal:
+        return {
+            "status": "proposal_created",
+            "proposal": {
+                "id": proposal.id,
+                "error_type": proposal.error_type,
+                "file_path": proposal.file_path,
+                "line_number": proposal.line_number,
+                "proposed_fix": proposal.proposed_fix,
+                "confidence": proposal.confidence
+            }
+        }
+
+    return {
+        "status": "no_fix_found",
+        "message": "Guardian n'a pas pu proposer de fix pour cette erreur"
+    }
