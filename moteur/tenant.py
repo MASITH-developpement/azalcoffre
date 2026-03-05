@@ -101,6 +101,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/api/autocompletion-ia/smart-lookup",
         # Icons (public)
         "/api/icons",
+        # Mobile connect (QR code auth)
+        "/api/mobile/connect",
     ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
