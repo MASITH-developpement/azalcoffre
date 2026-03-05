@@ -180,6 +180,14 @@ async def guardian_middleware(request: Request, call_next: Callable):
                 content={"detail": check_result.neutral_message}
             )
 
+        # Si données nettoyées (XSS), on bloque aussi car on ne peut pas
+        # modifier le body en vol facilement - mieux vaut bloquer
+        if check_result.cleaned:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Requête invalide"}
+            )
+
         # Exécution normale
         response = await call_next(request)
 

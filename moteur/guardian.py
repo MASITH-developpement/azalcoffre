@@ -93,6 +93,8 @@ class GuardianLog:
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
     action_prise: str = ""
+    requete_originale: Optional[str] = None
+    requete_nettoyee: Optional[str] = None
 
 # =============================================================================
 # Guardian Class
@@ -159,28 +161,43 @@ class Guardian:
                 result.blocked = True
                 result.reason = waf_result.threat_type.value if waf_result.threat_type else "WAF_BLOCKED"
                 result.neutral_message = "Requête invalide"
+
+                # Pour XSS, générer aussi la version nettoyée pour référence
+                cleaned_version = None
+                if waf_result.threat_type == ThreatType.XSS:
+                    cleaned_version = WAF.sanitize_xss(body)
+                    result.original_data = body
+                    result.cleaned_data = cleaned_version
+
                 await cls._log(GuardianLog(
                     niveau="CRITICAL" if waf_result.severity == "critical" else "BLOCK",
                     action=waf_result.threat_type.value if waf_result.threat_type else "WAF_THREAT",
                     ip_address=ip,
                     description=f"WAF: {waf_result.description} (pattern: {waf_result.pattern_matched[:50] if waf_result.pattern_matched else 'N/A'}...)",
-                    action_prise="BLOCKED"
+                    action_prise="BLOCKED",
+                    requete_originale=data_to_check,
+                    requete_nettoyee=cleaned_version  # Version nettoyée pour XSS
                 ))
                 cls._increment_failed(ip)
                 return result
             elif waf_result.threat_type == ThreatType.XSS:
-                # XSS: on nettoie au lieu de bloquer
+                # XSS: on bloque et on enregistre la version nettoyée pour référence
+                cleaned_body = WAF.sanitize_xss(body)
                 result.cleaned = True
-                result.reason = "XSS_CLEANED"
+                result.reason = "XSS_BLOCKED"
                 result.original_data = body
-                result.cleaned_data = WAF.sanitize_xss(body)
+                result.cleaned_data = cleaned_body
+                result.neutral_message = "Requête invalide"
                 await cls._log(GuardianLog(
-                    niveau="WARNING",
-                    action="XSS_CLEANED",
+                    niveau="BLOCK",
+                    action="XSS_BLOCKED",
                     ip_address=ip,
                     description=f"WAF: {waf_result.description}",
-                    action_prise="CLEANED"
+                    action_prise="BLOCKED",
+                    requete_originale=body,
+                    requete_nettoyee=cleaned_body
                 ))
+                cls._increment_failed(ip)
             else:
                 # Medium/Low: on log mais on laisse passer avec warning
                 await cls._log(GuardianLog(
@@ -188,7 +205,9 @@ class Guardian:
                     action=waf_result.threat_type.value if waf_result.threat_type else "WAF_WARNING",
                     ip_address=ip,
                     description=f"WAF: {waf_result.description}",
-                    action_prise="LOGGED"
+                    action_prise="LOGGED",
+                    requete_originale=data_to_check,
+                    requete_nettoyee=None
                 ))
 
         # 4. Legacy checks (fallback si WAF n'a rien trouvé)
@@ -203,23 +222,30 @@ class Guardian:
                     action="SQL_INJECTION",
                     ip_address=ip,
                     description="Tentative injection SQL détectée (legacy)",
-                    action_prise="BLOCKED"
+                    action_prise="BLOCKED",
+                    requete_originale=body,
+                    requete_nettoyee=None
                 ))
                 cls._increment_failed(ip)
                 return result
 
             # XSS (legacy patterns)
             if cls._detect_xss(body):
+                cleaned_body = cls._clean_xss(body)
                 result.cleaned = True
-                result.reason = "XSS_CLEANED"
+                result.reason = "XSS_BLOCKED"
                 result.original_data = body
-                result.cleaned_data = cls._clean_xss(body)
+                result.cleaned_data = cleaned_body
+                result.neutral_message = "Requête invalide"
                 await cls._log(GuardianLog(
-                    niveau="WARNING",
-                    action="XSS_CLEANED",
+                    niveau="BLOCK",
+                    action="XSS_BLOCKED",
                     ip_address=ip,
-                    action_prise="CLEANED"
+                    action_prise="BLOCKED",
+                    requete_originale=body,
+                    requete_nettoyee=cleaned_body
                 ))
+                cls._increment_failed(ip)
 
         # 5. Tentative d'accès autre tenant
         # (vérifié plus tard dans le middleware tenant)
@@ -352,9 +378,11 @@ class Guardian:
                     text("""
                         INSERT INTO azalplus.guardian_log
                         (niveau, action, tenant_id, utilisateur_id, utilisateur_email,
-                         description, ip_address, user_agent, action_prise)
+                         description, ip_address, user_agent, action_prise,
+                         requete_originale, requete_nettoyee)
                         VALUES (:niveau, :action, :tenant_id, :utilisateur_id, :utilisateur_email,
-                                :description, :ip_address, :user_agent, :action_prise)
+                                :description, :ip_address, :user_agent, :action_prise,
+                                :requete_originale, :requete_nettoyee)
                     """),
                     {
                         "niveau": log.niveau,
@@ -365,7 +393,9 @@ class Guardian:
                         "description": log.description,
                         "ip_address": log.ip_address,
                         "user_agent": log.user_agent,
-                        "action_prise": log.action_prise
+                        "action_prise": log.action_prise,
+                        "requete_originale": log.requete_originale[:2000] if log.requete_originale else None,
+                        "requete_nettoyee": log.requete_nettoyee[:2000] if log.requete_nettoyee else None
                     }
                 )
                 session.commit()
@@ -487,3 +517,281 @@ async def guardian_waf_test(
         "description": result.description,
         "pattern_matched": result.pattern_matched
     }
+
+
+@guardian_router.get("/corrections")
+async def guardian_corrections(
+    limit: int = 50,
+    user: dict = Depends(verify_createur)
+):
+    """Liste les corrections automatiques effectuées (Créateur uniquement)."""
+    with Database.get_session() as session:
+        from sqlalchemy import text
+        result = session.execute(
+            text("""
+                SELECT id, action, description, requete_originale, requete_nettoyee,
+                       ip_address, created_at
+                FROM azalplus.guardian_log
+                WHERE requete_nettoyee IS NOT NULL
+                ORDER BY created_at DESC
+                LIMIT :limit
+            """),
+            {"limit": limit}
+        )
+        corrections = []
+        for row in result:
+            r = dict(row._mapping)
+            corrections.append({
+                "id": str(r["id"]),
+                "action": r["action"],
+                "description": r["description"],
+                "original": r["requete_originale"][:500] if r["requete_originale"] else None,
+                "cleaned": r["requete_nettoyee"][:500] if r["requete_nettoyee"] else None,
+                "ip": str(r["ip_address"]) if r["ip_address"] else None,
+                "date": r["created_at"].isoformat() if r["created_at"] else None
+            })
+        return {"corrections": corrections, "total": len(corrections)}
+
+
+@guardian_router.get("/analysis")
+async def guardian_analysis(
+    days: int = 7,
+    user: dict = Depends(verify_createur)
+):
+    """Analyse des logs Guardian avec statistiques (Créateur uniquement)."""
+    with Database.get_session() as session:
+        from sqlalchemy import text
+
+        # Stats par type d'action
+        action_stats = session.execute(
+            text("""
+                SELECT action, action_prise, COUNT(*) as count
+                FROM azalplus.guardian_log
+                WHERE created_at > NOW() - INTERVAL ':days days'
+                GROUP BY action, action_prise
+                ORDER BY count DESC
+            """.replace(":days", str(days)))
+        ).fetchall()
+
+        # Top IPs bloquées
+        top_ips = session.execute(
+            text("""
+                SELECT ip_address, COUNT(*) as count,
+                       MAX(created_at) as last_seen
+                FROM azalplus.guardian_log
+                WHERE action_prise IN ('BLOCKED', 'CLEANED')
+                  AND created_at > NOW() - INTERVAL ':days days'
+                  AND ip_address IS NOT NULL
+                GROUP BY ip_address
+                ORDER BY count DESC
+                LIMIT 10
+            """.replace(":days", str(days)))
+        ).fetchall()
+
+        # Évolution par jour
+        daily_stats = session.execute(
+            text("""
+                SELECT DATE(created_at) as date,
+                       COUNT(*) FILTER (WHERE action_prise = 'BLOCKED') as blocked,
+                       COUNT(*) FILTER (WHERE action_prise = 'CLEANED') as cleaned,
+                       COUNT(*) FILTER (WHERE action_prise = 'LOGGED') as logged
+                FROM azalplus.guardian_log
+                WHERE created_at > NOW() - INTERVAL ':days days'
+                GROUP BY DATE(created_at)
+                ORDER BY date DESC
+            """.replace(":days", str(days)))
+        ).fetchall()
+
+        # Patterns les plus fréquents
+        patterns = session.execute(
+            text("""
+                SELECT action, description, COUNT(*) as count
+                FROM azalplus.guardian_log
+                WHERE created_at > NOW() - INTERVAL ':days days'
+                  AND description IS NOT NULL
+                GROUP BY action, description
+                ORDER BY count DESC
+                LIMIT 15
+            """.replace(":days", str(days)))
+        ).fetchall()
+
+        return {
+            "period_days": days,
+            "action_stats": [
+                {"action": r[0], "action_prise": r[1], "count": r[2]}
+                for r in action_stats
+            ],
+            "top_ips": [
+                {
+                    "ip": str(r[0]) if r[0] else None,
+                    "count": r[1],
+                    "last_seen": r[2].isoformat() if r[2] else None
+                }
+                for r in top_ips
+            ],
+            "daily_stats": [
+                {
+                    "date": r[0].isoformat() if r[0] else None,
+                    "blocked": r[1],
+                    "cleaned": r[2],
+                    "logged": r[3]
+                }
+                for r in daily_stats
+            ],
+            "frequent_patterns": [
+                {"action": r[0], "description": r[1], "count": r[2]}
+                for r in patterns
+            ],
+            "blocked_ips_memory": list(Guardian._blocked_ips),
+            "failed_attempts": dict(Guardian._failed_attempts)
+        }
+
+
+@guardian_router.get("/recommendations")
+async def guardian_recommendations(
+    user: dict = Depends(verify_createur)
+):
+    """Recommandations basées sur l'analyse des logs (Créateur uniquement)."""
+    with Database.get_session() as session:
+        from sqlalchemy import text
+
+        recommendations = []
+
+        # IPs à bloquer définitivement (>50 incidents)
+        repeat_offenders = session.execute(
+            text("""
+                SELECT ip_address, COUNT(*) as count
+                FROM azalplus.guardian_log
+                WHERE action_prise = 'BLOCKED'
+                  AND ip_address IS NOT NULL
+                  AND created_at > NOW() - INTERVAL '30 days'
+                GROUP BY ip_address
+                HAVING COUNT(*) > 50
+                ORDER BY count DESC
+            """)
+        ).fetchall()
+
+        if repeat_offenders:
+            recommendations.append({
+                "type": "BLOCK_IPS",
+                "priority": "high",
+                "message": f"{len(repeat_offenders)} IP(s) avec plus de 50 incidents en 30 jours",
+                "ips": [{"ip": str(r[0]), "count": r[1]} for r in repeat_offenders],
+                "action": "Ajouter ces IPs au pare-feu externe"
+            })
+
+        # Patterns récurrents à surveiller
+        recurring = session.execute(
+            text("""
+                SELECT action, COUNT(*) as count
+                FROM azalplus.guardian_log
+                WHERE created_at > NOW() - INTERVAL '24 hours'
+                GROUP BY action
+                HAVING COUNT(*) > 100
+                ORDER BY count DESC
+            """)
+        ).fetchall()
+
+        if recurring:
+            recommendations.append({
+                "type": "HIGH_VOLUME",
+                "priority": "medium",
+                "message": f"{len(recurring)} type(s) d'attaque avec >100 incidents en 24h",
+                "attacks": [{"type": r[0], "count": r[1]} for r in recurring],
+                "action": "Vérifier si attaque coordonnée en cours"
+            })
+
+        # Vérifier les corrections appliquées
+        cleaning_rate = session.execute(
+            text("""
+                SELECT
+                    COUNT(*) FILTER (WHERE action_prise = 'CLEANED') as cleaned,
+                    COUNT(*) FILTER (WHERE action_prise = 'BLOCKED') as blocked,
+                    COUNT(*) as total
+                FROM azalplus.guardian_log
+                WHERE created_at > NOW() - INTERVAL '7 days'
+            """)
+        ).fetchone()
+
+        if cleaning_rate and cleaning_rate[2] > 0:
+            clean_pct = (cleaning_rate[0] / cleaning_rate[2]) * 100
+            recommendations.append({
+                "type": "STATS",
+                "priority": "info",
+                "message": f"Taux de correction automatique: {clean_pct:.1f}%",
+                "stats": {
+                    "cleaned": cleaning_rate[0],
+                    "blocked": cleaning_rate[1],
+                    "total": cleaning_rate[2]
+                },
+                "action": "Aucune action requise" if clean_pct < 30 else "Envisager des règles plus strictes"
+            })
+
+        return {
+            "recommendations": recommendations,
+            "guardian_status": {
+                "auto_block_enabled": settings.GUARDIAN_AUTO_BLOCK,
+                "blocked_ips_count": len(Guardian._blocked_ips),
+                "waf_patterns": WAF.get_total_patterns()
+            }
+        }
+
+
+@guardian_router.post("/apply-correction")
+async def guardian_apply_correction(
+    log_id: str,
+    user: dict = Depends(verify_createur)
+):
+    """Appliquer manuellement une correction à partir d'un log (Créateur uniquement)."""
+    with Database.get_session() as session:
+        from sqlalchemy import text
+
+        # Récupérer le log
+        result = session.execute(
+            text("""
+                SELECT id, action, requete_originale, requete_nettoyee
+                FROM azalplus.guardian_log
+                WHERE id = :log_id
+            """),
+            {"log_id": log_id}
+        ).fetchone()
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Log non trouvé")
+
+        row = dict(result._mapping)
+
+        # Si déjà nettoyé, retourner le résultat
+        if row["requete_nettoyee"]:
+            return {
+                "status": "already_corrected",
+                "original": row["requete_originale"],
+                "corrected": row["requete_nettoyee"]
+            }
+
+        # Sinon, essayer de corriger
+        if row["requete_originale"]:
+            cleaned = WAF.sanitize_xss(row["requete_originale"])
+
+            # Mettre à jour le log avec la correction
+            session.execute(
+                text("""
+                    UPDATE azalplus.guardian_log
+                    SET requete_nettoyee = :cleaned,
+                        action_prise = 'CLEANED'
+                    WHERE id = :log_id
+                """),
+                {"log_id": log_id, "cleaned": cleaned}
+            )
+            session.commit()
+
+            return {
+                "status": "corrected",
+                "original": row["requete_originale"],
+                "corrected": cleaned
+            }
+
+        return {
+            "status": "no_data",
+            "message": "Pas de données à corriger"
+        }
