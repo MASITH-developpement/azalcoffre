@@ -449,47 +449,53 @@ async def general_exception_handler(request: Request, exc: Exception):
     """Gestion des erreurs générales avec auto-correction Guardian."""
     import traceback
     import sys
+    import asyncio
 
     # Capturer le traceback complet
     tb = traceback.format_exc()
     error_log = f"{type(exc).__name__}: {exc}\n{tb}"
 
-    # Log l'erreur (Guardian voit tout)
+    # Log l'erreur (Guardian voit tout) - rapide
     print(f"EXCEPTION on {request.url.path}: {exc}", file=sys.stderr)
-    print(tb, file=sys.stderr)
-    logger.error("exception_traceback", path=request.url.path, error=str(exc), traceback=tb)
-    await Guardian.log_error(request, exc)
+    logger.error("exception_traceback", path=request.url.path, error=str(exc))
 
-    # === AUTOPILOT: Analyse et correction automatique ===
-    if _autopilot:
+    # === AUTOPILOT: Analyse ASYNCHRONE (ne bloque pas la réponse) ===
+    async def analyze_in_background():
+        """Analyse l'erreur en arrière-plan - invisible pour le client."""
         try:
-            # Analyser l'erreur
-            proposal = _autopilot.analyze(error_log)
+            await Guardian.log_error(request, exc)
 
-            if proposal:
-                # Si confiance très haute (pattern déjà validé), auto-appliquer
-                if proposal.confidence >= 0.95:
-                    result = _autopilot.validate(
-                        proposal.id,
-                        approved=True,
-                        explanation="Auto-validated (high confidence pattern)"
-                    )
-                    if result.success:
-                        logger.info("autopilot_auto_fix_applied",
+            if _autopilot:
+                # Analyser l'erreur
+                proposal = _autopilot.analyze(error_log)
+
+                if proposal:
+                    # Si confiance très haute (pattern déjà validé), auto-appliquer
+                    if proposal.confidence >= 0.95:
+                        result = _autopilot.validate(
+                            proposal.id,
+                            approved=True,
+                            explanation="Auto-validated (high confidence pattern)"
+                        )
+                        if result.success:
+                            logger.info("autopilot_auto_fix_applied",
+                                       error_type=proposal.error_type,
+                                       file=proposal.file_path,
+                                       confidence=proposal.confidence)
+                    else:
+                        # En attente de validation Claude
+                        logger.info("autopilot_fix_pending",
+                                   id=proposal.id,
                                    error_type=proposal.error_type,
-                                   file=proposal.file_path,
                                    confidence=proposal.confidence)
-                else:
-                    # Sinon, en attente de validation Claude
-                    logger.info("autopilot_fix_pending",
-                               id=proposal.id,
-                               error_type=proposal.error_type,
-                               confidence=proposal.confidence)
         except Exception as autopilot_error:
             # AutoPilot ne doit jamais faire planter l'app
             logger.warning("autopilot_analysis_failed", error=str(autopilot_error))
 
-    # Message neutre pour l'utilisateur (Guardian invisible)
+    # Lancer l'analyse en arrière-plan (fire-and-forget)
+    asyncio.create_task(analyze_in_background())
+
+    # Message neutre IMMÉDIAT pour l'utilisateur (Guardian invisible)
     return JSONResponse(
         status_code=500,
         content={"detail": "Une erreur est survenue"}

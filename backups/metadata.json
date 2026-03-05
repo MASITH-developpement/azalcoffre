@@ -1,0 +1,26 @@
+{
+  "backups": {
+    "c360c9e0-0a86-47e5-9168-10a8d289ba60": {
+      "id": "c360c9e0-0a86-47e5-9168-10a8d289ba60",
+      "filename": "backup_daily_20260304_020000_full.sql.gz",
+      "backup_type": "daily",
+      "status": "failed",
+      "size_bytes": 0,
+      "created_at": "2026-03-04T02:00:00.004281",
+      "tenant_id": null,
+      "description": null,
+      "error_message": "[Errno 2] No such file or directory"
+    },
+    "64ba4af7-3e51-4593-8421-b2ab54199224": {
+      "id": "64ba4af7-3e51-4593-8421-b2ab54199224",
+      "filename": "backup_daily_20260305_020000_full.sql.gz",
+      "backup_type": "daily",
+      "status": "failed",
+      "size_bytes": 0,
+      "created_at": "2026-03-05T02:00:00.005714",
+      "tenant_id": null,
+      "description": null,
+      "error_message": "[Errno 2] No such file or directory"
+    }
+  }
+}
