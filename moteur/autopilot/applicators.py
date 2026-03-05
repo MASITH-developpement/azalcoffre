@@ -180,6 +180,24 @@ class PythonFixApplicator(FixApplicator):
                 )
 
             if result.success:
+                # Vérifier les normes AVANT d'appliquer
+                from .norms import check_against_norms
+                new_code = "".join(result.changes.get("new_lines", lines))
+                violations = check_against_norms(new_code, proposal.file_path)
+
+                critical_violations = [v for v in violations if v["level"] == "critical"]
+                if critical_violations:
+                    # Violation critique = ne pas appliquer
+                    violation_msg = "; ".join([v["norm"] for v in critical_violations])
+                    logger.warning("autopilot_fix_violates_norms",
+                                  violations=violation_msg,
+                                  file=proposal.file_path)
+                    return ApplyResult(
+                        success=False,
+                        message=f"Fix viole les normes critiques: {violation_msg}",
+                        backup_path=backup_path
+                    )
+
                 # Écrire le fichier modifié
                 with open(proposal.file_path, 'w', encoding='utf-8') as f:
                     f.writelines(result.changes.get("new_lines", lines))

@@ -36,6 +36,7 @@ from .analyzers import ErrorAnalyzer, PythonErrorAnalyzer, YAMLErrorAnalyzer, SQ
 from .storage import StorageBackend, MemoryStorage, PostgresStorage
 from .applicators import FixApplicator, PythonFixApplicator
 from .models import FixProposal, Learning, FixStatus
+from .norms import Norm, NormsChecker, AZALPLUS_NORMS, check_against_norms
 
 __all__ = [
     "AutoPilot",
@@ -51,6 +52,10 @@ __all__ = [
     "FixProposal",
     "Learning",
     "FixStatus",
+    "Norm",
+    "NormsChecker",
+    "AZALPLUS_NORMS",
+    "check_against_norms",
 ]
 
 __version__ = "1.0.0"
