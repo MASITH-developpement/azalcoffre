@@ -19,7 +19,7 @@ champs:
     description: Type d'entite (Particulier ou Societe)
 
   - nom: relation_types
-    type: multiselect
+    type: tags
     obligatoire: true
     options: [CUSTOMER, SUPPLIER]
     description: Types de relation (Client et/ou Fournisseur)

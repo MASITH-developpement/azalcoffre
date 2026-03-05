@@ -50,7 +50,12 @@ class Settings(BaseSettings):
     # =========================================================================
     # CORS
     # =========================================================================
-    CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000"])
+    CORS_ORIGINS: List[str] = Field(default=[
+        "http://localhost:3000",
+        "http://localhost:5174",
+        "http://57.128.7.20:5174",
+        "http://127.0.0.1:5174",
+    ])
 
     # =========================================================================
     # Créateur (HARDCODÉ - NE PAS MODIFIER)
@@ -125,6 +130,19 @@ class Settings(BaseSettings):
     # =========================================================================
     MODULES_DIR: str = Field(default="modules")
     CONFIG_DIR: str = Field(default="config")
+
+    # =========================================================================
+    # Firebase (Push Notifications)
+    # =========================================================================
+    FIREBASE_CREDENTIALS_PATH: str = Field(
+        default="",
+        description="Chemin vers le fichier JSON des credentials Firebase"
+    )
+    FIREBASE_PROJECT_ID: str = Field(default="")
+    FIREBASE_VAPID_KEY: str = Field(
+        default="",
+        description="Cle VAPID publique pour les notifications web push"
+    )
 
     class Config:
         env_file = ".env"

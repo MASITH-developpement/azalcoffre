@@ -527,3 +527,203 @@ marceau:
     - si statut = BLOQUEE: "Intervention bloquee - action requise"
     - si statut = EN_COURS et duree_reelle_minutes > duree_prevue_minutes * 1.5: "Intervention depasse le temps prevu"
     - si priorite = URGENT et statut in [DRAFT, A_PLANIFIER]: "Intervention urgente non planifiee"
+
+# =============================================================================
+# Configuration Mobile
+# =============================================================================
+# =============================================================================
+# Configuration Mobile - Déroulement Intervention
+# =============================================================================
+mobile:
+  enabled: true
+  
+  # Champs visibles dans la liste mobile
+  liste_champs:
+    - reference
+    - client_id
+    - statut
+    - date_prevue_debut
+    - adresse_intervention
+  
+  # ==========================================================================
+  # DÉROULEMENT INTERVENTION (workflow étape par étape)
+  # ==========================================================================
+  deroulement:
+    
+    # -------------------------------------------------------------------------
+    # ÉTAPE 1: Arrivée sur site
+    # -------------------------------------------------------------------------
+    - etape: 1
+      id: arrivee_site
+      titre: "📍 Arrivée sur site"
+      bouton: "Arrivé sur site"
+      statut_cible: SUR_SITE
+      enregistrements:
+        - heure_arrivee: auto
+        - coordonnees_gps: auto
+      champs_affiches:
+        - reference
+        - client_id
+        - adresse_intervention
+        - ville
+        - code_postal
+    
+    # -------------------------------------------------------------------------
+    # ÉTAPE 2: Démarrage intervention
+    # -------------------------------------------------------------------------
+    - etape: 2
+      id: demarrage
+      titre: "🔧 Démarrage intervention"
+      bouton: "Démarrer"
+      statut_cible: EN_COURS
+      enregistrements:
+        - heure_demarrage: auto
+      champs_obligatoires:
+        - nom: photos_avant
+          label: "Photos avant intervention"
+          type: photos
+          source: camera_ou_galerie
+          minimum: 2
+          description: "Prenez ou importez au minimum 2 photos de l'état initial"
+        - nom: constat_arrivee
+          label: "Constat en arrivant"
+          type: textarea
+          placeholder: "Décrivez l'état initial et le problème constaté..."
+    
+    # -------------------------------------------------------------------------
+    # ÉTAPE 3: Fin d'intervention
+    # -------------------------------------------------------------------------
+    - etape: 3
+      id: fin_intervention
+      titre: "✅ Fin d'intervention"
+      bouton: "Terminé"
+      statut_cible: TRAVAUX_TERMINES
+      enregistrements:
+        - heure_fin: auto
+        - duree_intervention: calculee
+      champs_obligatoires:
+        - nom: photos_apres
+          label: "Photos après intervention"
+          type: photos
+          source: camera_ou_galerie
+          minimum: 2
+          description: "Prenez au minimum 2 photos du travail terminé"
+        - nom: travaux_realises
+          label: "Travaux réalisés"
+          type: textarea
+          placeholder: "Décrivez les travaux effectués..."
+    
+    # -------------------------------------------------------------------------
+    # ÉTAPE 4: Matériel utilisé
+    # -------------------------------------------------------------------------
+    - etape: 4
+      id: materiel
+      titre: "🔩 Matériel utilisé"
+      bouton: "Suivant"
+      champs_obligatoires:
+        - nom: materiel_utilise
+          label: "Matériel utilisé"
+          type: textarea
+          placeholder: "Listez le matériel utilisé (sera ajouté à la facture)..."
+          ajouter_facture: true
+      options:
+        - peut_passer: true  # Peut passer si pas de matériel
+    
+    # -------------------------------------------------------------------------
+    # ÉTAPE 5: Validation client
+    # -------------------------------------------------------------------------
+    - etape: 5
+      id: validation_client
+      titre: "✍️ Validation client"
+      bouton: "Faire signer"
+      statut_cible: A_VALIDER
+      affichage_recap:
+        - nom: reference
+          label: "N° Intervention"
+        - nom: travaux_realises
+          label: "Travaux réalisés"
+      champs_obligatoires:
+        - nom: avis_client
+          label: "Avis du client"
+          type: rating
+          max: 5
+          description: "Note de satisfaction (1 à 5 étoiles)"
+        - nom: appreciation_client
+          label: "Appréciation"
+          type: textarea
+          placeholder: "Commentaire du client (optionnel)..."
+          obligatoire: false
+        - nom: signature_client
+          label: "Signature du client"
+          type: signature
+          description: "Faites signer le client sur l'écran"
+    
+    # -------------------------------------------------------------------------
+    # ÉTAPE 6: Envoi du rapport
+    # -------------------------------------------------------------------------
+    - etape: 6
+      id: rapport
+      titre: "📄 Rapport d'intervention"
+      bouton: "Envoyer le rapport"
+      statut_cible: TERMINEE
+      destinataire:
+        choix: true
+        options:
+          - donneur_ordre
+          - client
+        defaut: donneur_ordre
+      contenu_rapport:
+        - reference_donneur_ordre
+        - numero_intervention
+        - heure_arrivee
+        - duree_presence
+        - nom_client
+        - adresse_intervention
+        - constat_arrivee
+        - travaux_realises
+        - materiel_utilise
+        - photos_avant
+        - photos_apres
+        - signature_client
+        - avis_client
+        - appreciation_client
+      format:
+        - pdf: true
+        - email: true
+      message_fin: "Intervention terminée ! Le rapport a été envoyé."
+
+  # Configuration des fonctionnalités
+  features:
+    geolocalisation: true
+    camera: true
+    signature: true
+    timer: true
+
+  # Mode hors-ligne complet
+  offline:
+    enabled: true
+    # Données à synchroniser pour usage offline
+    sync_data:
+      - interventions_assignees
+      - clients
+      - adresses
+    # Stocker les photos localement
+    photos_local: true
+    # Stocker les signatures localement
+    signatures_local: true
+    # File d'attente pour synchronisation
+    queue_actions: true
+    # Synchroniser automatiquement au retour connexion
+    auto_sync: true
+    # Indicateur visuel mode offline
+    show_offline_badge: true
+
+  # Notifications push
+  notifications:
+    - event: nouvelle_intervention
+      titre: "Nouvelle intervention"
+      message: "Intervention {reference} assignée"
+    - event: rappel
+      titre: "Rappel intervention"
+      message: "Intervention {reference} prévue dans 1h"
+      delai_avant: 60

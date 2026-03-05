@@ -41,16 +41,8 @@ CSRF_PROTECTED_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
 
 # Routes exemptees de CSRF (API avec JWT, webhooks, etc.)
 CSRF_EXEMPT_PATHS = [
-    "/api/auth/login",
-    "/api/auth/register",
-    "/api/auth/refresh",
-    "/api/auth/login/2fa",
-    "/api/v1/",  # API REST avec JWT
-    "/api/webhooks/",
-    "/api/autocompletion-ia/",
+    "/api/",  # Toutes les API REST utilisent JWT, pas besoin de CSRF
     "/health",
-    "/api/docs",
-    "/api/openapi.json",
 ]
 
 
@@ -215,7 +207,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             key=CSRF_COOKIE_NAME,
             value=csrf_cookie,
             httponly=False,  # JS doit pouvoir le lire
-            secure=settings.ENVIRONMENT == "production",
+            secure=settings.AZALPLUS_ENV == "production",
             samesite="lax",  # Protection CSRF supplementaire
             max_age=CSRF_TOKEN_TTL
         )

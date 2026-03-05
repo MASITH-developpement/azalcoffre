@@ -1,0 +1,463 @@
+# =============================================================================
+# AZALPLUS - Configuration Visioconference
+# =============================================================================
+# Configuration du module de reunions et visioconferences
+# Variables d'environnement: ${VAR_NAME} ou ${VAR_NAME:default}
+# =============================================================================
+
+videoconf:
+  # ===========================================================================
+  # LiveKit - Serveur WebRTC SFU
+  # ===========================================================================
+  livekit:
+    # URL du serveur LiveKit (WebSocket)
+    url: "${LIVEKIT_URL:ws://localhost:7880}"
+
+    # URL HTTP pour l'API LiveKit
+    api_url: "${LIVEKIT_API_URL:http://localhost:7880}"
+
+    # Credentials API
+    api_key: "${LIVEKIT_API_KEY:devkey}"
+    api_secret: "${LIVEKIT_API_SECRET:secret}"
+
+    # Configuration des rooms
+    room:
+      # Prefixe des noms de room (tenant isolation)
+      prefix: "azalplus"
+
+      # Timeout room vide avant fermeture (secondes)
+      empty_timeout: 300
+
+      # Duree max d'une room (secondes) - 8h
+      max_duration: 28800
+
+  # ===========================================================================
+  # Limites et quotas
+  # ===========================================================================
+  limits:
+    # Participants
+    max_participants_per_meeting: 500
+    max_participants_default: 50
+
+    # Duree
+    max_duration_hours: 8
+    min_duration_minutes: 5
+
+    # Enregistrement
+    max_recording_size_gb: 5
+    max_recordings_per_meeting: 10
+
+    # Concurrent meetings par tenant
+    max_concurrent_meetings_per_tenant: 10
+
+    # Chat
+    max_message_length: 4000
+    max_file_size_mb: 50
+
+    # Whiteboard
+    max_whiteboard_objects: 1000
+
+  # ===========================================================================
+  # Enregistrement
+  # ===========================================================================
+  recording:
+    enabled: true
+
+    # Backend de stockage: "local", "s3", "minio"
+    storage_backend: "${RECORDING_STORAGE:minio}"
+
+    # Configuration S3/MinIO
+    s3:
+      endpoint: "${MINIO_ENDPOINT:localhost:9000}"
+      access_key: "${MINIO_ACCESS_KEY:minioadmin}"
+      secret_key: "${MINIO_SECRET_KEY:minioadmin}"
+      bucket: "${RECORDINGS_BUCKET:azalplus-recordings}"
+      region: "${MINIO_REGION:us-east-1}"
+      use_ssl: false
+
+    # Configuration locale (fallback)
+    local:
+      path: "/home/ubuntu/azalplus/uploads/recordings"
+
+    # Retention
+    retention_days: 90
+    auto_delete_after_retention: false
+
+    # Formats de sortie
+    formats:
+      video:
+        - webm
+        - mp4
+      audio:
+        - wav
+        - mp3
+
+    # Codec video par defaut
+    video_codec: "vp8"  # vp8, h264
+
+    # Qualite video
+    video_quality:
+      width: 1920
+      height: 1080
+      framerate: 30
+      bitrate: 3000000  # 3 Mbps
+
+    # Qualite audio
+    audio_quality:
+      sample_rate: 48000
+      channels: 2
+      bitrate: 128000  # 128 kbps
+
+  # ===========================================================================
+  # Transcription IA (Whisper)
+  # ===========================================================================
+  transcription:
+    enabled: true
+
+    # Provider: "whisper_local", "whisper_api", "google"
+    provider: "${TRANSCRIPTION_PROVIDER:whisper_local}"
+
+    # Configuration Whisper local
+    whisper:
+      # Modele: tiny, base, small, medium, large
+      model: "${WHISPER_MODEL:medium}"
+
+      # Device: cpu, cuda
+      device: "${WHISPER_DEVICE:cpu}"
+
+      # Langue par defaut
+      default_language: "fr"
+
+      # Threads CPU (si device=cpu)
+      threads: 4
+
+      # Chemin modeles
+      model_path: "/home/ubuntu/azalplus/models/whisper"
+
+    # Configuration Whisper API (OpenAI)
+    whisper_api:
+      api_key: "${OPENAI_API_KEY:}"
+      model: "whisper-1"
+
+    # Options de transcription
+    options:
+      # Inclure timestamps
+      timestamps: true
+
+      # Detection du locuteur (speaker diarization)
+      speaker_detection: true
+
+      # Filtrer les silences
+      filter_silence: true
+
+      # Ponctuation automatique
+      auto_punctuation: true
+
+  # ===========================================================================
+  # Generation de compte-rendu IA
+  # ===========================================================================
+  minutes:
+    enabled: true
+
+    # Provider: "claude", "openai"
+    provider: "${MINUTES_PROVIDER:claude}"
+
+    # Configuration Claude
+    claude:
+      api_key: "${ANTHROPIC_API_KEY:}"
+      model: "${CLAUDE_MODEL:claude-sonnet-4-20250514}"
+      max_tokens: 4000
+      temperature: 0.3
+
+    # Configuration OpenAI
+    openai:
+      api_key: "${OPENAI_API_KEY:}"
+      model: "gpt-4o"
+      max_tokens: 4000
+      temperature: 0.3
+
+    # Template du prompt systeme
+    system_prompt: |
+      Tu es un assistant expert en redaction de comptes-rendus de reunions professionnelles.
+      A partir de la transcription fournie, genere un compte-rendu structure comprenant:
+
+      1. RESUME EXECUTIF (3-5 points cles)
+      2. PARTICIPANTS (liste des intervenants identifies)
+      3. POINTS ABORDES (resume de chaque sujet discute)
+      4. DECISIONS PRISES (avec responsable si mentionne)
+      5. ACTIONS A SUIVRE (avec responsable et deadline si mentionnes)
+      6. POINTS REPORTES (sujets a traiter lors d'une prochaine reunion)
+
+      Utilise un ton professionnel et concis. Structure le document avec des titres clairs.
+      Si des informations manquent, indique-le clairement.
+
+    # Delai avant generation auto apres fin reunion (secondes)
+    auto_generate_delay: 300
+
+    # Envoyer notification a l'organisateur
+    notify_organizer: true
+
+  # ===========================================================================
+  # Tableau blanc (Whiteboard)
+  # ===========================================================================
+  whiteboard:
+    enabled: true
+
+    # Backend de synchronisation: "memory", "redis", "y-websocket"
+    sync_backend: "redis"
+
+    # Limite d'objets par whiteboard
+    max_objects: 1000
+
+    # Formats d'export disponibles
+    export_formats:
+      - png
+      - svg
+      - pdf
+
+    # Couleurs predefinies
+    preset_colors:
+      - "#000000"  # Noir
+      - "#FFFFFF"  # Blanc
+      - "#FF0000"  # Rouge
+      - "#00FF00"  # Vert
+      - "#0000FF"  # Bleu
+      - "#FFFF00"  # Jaune
+      - "#FF00FF"  # Magenta
+      - "#00FFFF"  # Cyan
+
+  # ===========================================================================
+  # Fonds virtuels
+  # ===========================================================================
+  backgrounds:
+    # Activer le flou d'arriere-plan
+    blur_enabled: true
+    blur_strength: 10  # 1-20
+
+    # Activer les fonds virtuels
+    virtual_backgrounds_enabled: true
+
+    # Images de fond predefinies
+    preset_images:
+      - nom: "Bureau moderne"
+        url: "/assets/backgrounds/office-modern.jpg"
+      - nom: "Nature"
+        url: "/assets/backgrounds/nature.jpg"
+      - nom: "Abstrait bleu"
+        url: "/assets/backgrounds/abstract-blue.jpg"
+      - nom: "Bibliotheque"
+        url: "/assets/backgrounds/library.jpg"
+      - nom: "Espace"
+        url: "/assets/backgrounds/space.jpg"
+
+    # Autoriser upload de fonds personnalises
+    custom_upload_enabled: true
+    max_custom_backgrounds_per_user: 5
+    max_image_size_mb: 5
+    allowed_formats:
+      - jpg
+      - jpeg
+      - png
+      - webp
+
+  # ===========================================================================
+  # Chat en reunion
+  # ===========================================================================
+  chat:
+    enabled: true
+
+    # Historique
+    persist_history: true
+    history_retention_days: 90
+
+    # Fichiers partages
+    file_sharing_enabled: true
+    max_file_size_mb: 50
+    allowed_file_types:
+      - pdf
+      - doc
+      - docx
+      - xls
+      - xlsx
+      - ppt
+      - pptx
+      - txt
+      - jpg
+      - jpeg
+      - png
+      - gif
+
+    # Reactions
+    reactions_enabled: true
+    available_reactions:
+      - "👍"
+      - "👎"
+      - "❤️"
+      - "😀"
+      - "😮"
+      - "🎉"
+      - "🤔"
+      - "👏"
+
+    # Mentions
+    mentions_enabled: true
+
+    # Messages systeme
+    system_messages:
+      participant_joined: "{name} a rejoint la reunion"
+      participant_left: "{name} a quitte la reunion"
+      recording_started: "L'enregistrement a commence"
+      recording_stopped: "L'enregistrement est termine"
+
+  # ===========================================================================
+  # Notifications et emails
+  # ===========================================================================
+  notifications:
+    # Email d'invitation
+    invitation:
+      enabled: true
+      template: "reunion_invitation"
+      include_calendar_ics: true
+      include_join_link: true
+
+    # Rappels
+    reminders:
+      enabled: true
+      times:
+        - 1440  # 24h avant
+        - 60    # 1h avant
+        - 15    # 15min avant
+
+    # Notification compte-rendu
+    minutes_ready:
+      enabled: true
+      template: "reunion_compte_rendu"
+
+    # Notification enregistrement disponible
+    recording_ready:
+      enabled: true
+      template: "reunion_enregistrement"
+
+  # ===========================================================================
+  # Securite
+  # ===========================================================================
+  security:
+    # Mot de passe obligatoire
+    password_required: false
+
+    # Longueur min mot de passe
+    password_min_length: 6
+
+    # Salle d'attente par defaut
+    waiting_room_default: true
+
+    # Expiration des liens (heures)
+    link_expiration_hours: 168  # 7 jours
+
+    # Token participant expiration (heures)
+    participant_token_expiration_hours: 8
+
+    # Bloquer les participants anonymes
+    block_anonymous: false
+
+    # Verifier email des participants externes
+    verify_external_email: false
+
+  # ===========================================================================
+  # Performance et monitoring
+  # ===========================================================================
+  performance:
+    # WebSocket heartbeat (secondes)
+    websocket_heartbeat: 30
+
+    # Timeout reconnexion (secondes)
+    reconnect_timeout: 60
+
+    # Buffer chat messages
+    chat_buffer_size: 100
+
+    # Compression des donnees whiteboard
+    whiteboard_compression: true
+
+  # ===========================================================================
+  # Integration Celery (taches background)
+  # ===========================================================================
+  celery:
+    # Broker Redis
+    broker_url: "${REDIS_URL:redis://localhost:6379/1}"
+
+    # Backend resultats
+    result_backend: "${REDIS_URL:redis://localhost:6379/1}"
+
+    # Queues
+    queues:
+      - name: "videoconf_recording"
+        routing_key: "recording.*"
+      - name: "videoconf_transcription"
+        routing_key: "transcription.*"
+      - name: "videoconf_minutes"
+        routing_key: "minutes.*"
+      - name: "videoconf_notifications"
+        routing_key: "notifications.*"
+
+    # Concurrency par queue
+    worker_concurrency:
+      videoconf_recording: 2
+      videoconf_transcription: 2
+      videoconf_minutes: 4
+      videoconf_notifications: 4
+
+  # ===========================================================================
+  # Appels Telephoniques
+  # ===========================================================================
+  phone:
+    # Provider: "twilio", "sip", "livekit_sip"
+    provider: "${PHONE_PROVIDER:twilio}"
+
+    # Configuration Twilio
+    twilio:
+      account_sid: "${TWILIO_ACCOUNT_SID:}"
+      auth_token: "${TWILIO_AUTH_TOKEN:}"
+      phone_number: "${TWILIO_PHONE_NUMBER:}"
+      callback_url: "${TWILIO_CALLBACK_URL:https://api.azalplus.com/api/phone}"
+
+    # Configuration SIP (optionnel)
+    sip:
+      server: "${SIP_SERVER:}"
+      username: "${SIP_USERNAME:}"
+      password: "${SIP_PASSWORD:}"
+      port: 5060
+
+    # Configuration LiveKit SIP Bridge (optionnel)
+    livekit_sip:
+      trunk_id: "${LIVEKIT_SIP_TRUNK:}"
+
+    # Enregistrement automatique
+    recording:
+      enabled: true
+      format: "wav"  # wav, mp3, ogg
+      storage_path: "/home/ubuntu/azalplus/uploads/phone_recordings"
+
+    # Transcription automatique
+    transcription:
+      enabled: true
+      language: "fr"
+      provider: "whisper_local"  # whisper_local, whisper_api
+
+    # Compte-rendu automatique
+    minutes:
+      enabled: true
+      provider: "claude"  # claude, openai
+      delay_seconds: 60  # Delai avant generation apres fin d'appel
+
+    # Envoi email automatique
+    email:
+      enabled: true
+      from_address: "${EMAIL_FROM:noreply@azalplus.com}"
+      subject_template: "Compte-rendu de votre appel du {date}"
+
+    # Verification telephone
+    verification:
+      enabled: true
+      sms_template: "Votre code de verification AZALPLUS: {code}"
+      code_expiry_minutes: 10

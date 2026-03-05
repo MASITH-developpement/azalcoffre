@@ -2,7 +2,7 @@
 # Autocompletion intelligente avec OpenAI et Anthropic
 
 from .service import AutocompletionIAService
-from .router import router
+from .router import router, public_router as entreprise_public_router
 from .schemas import (
     SuggestionRequest,
     SuggestionResponse,
@@ -11,10 +11,13 @@ from .schemas import (
     FeedbackRequest,
 )
 from .providers import OpenAIProvider, AnthropicProvider, LocalProvider
+from .meta import MODULE_META
 
 __all__ = [
     "AutocompletionIAService",
     "router",
+    "entreprise_public_router",
+    "MODULE_META",
     "SuggestionRequest",
     "SuggestionResponse",
     "CompletionRequest",

@@ -78,23 +78,19 @@ router = APIRouter()
 # Génération dynamique de schemas Pydantic
 # =============================================================================
 def generate_pydantic_model(module: ModuleDefinition, mode: str = "create"):
-    """Génère un modèle Pydantic depuis une définition de module."""
+    """Génère un modèle Pydantic depuis une définition de module.
+
+    Note: Tous les champs sont optionnels côté Pydantic.
+    La validation des champs requis se fait via Validator.validate_record()
+    ce qui permet d'ajouter des valeurs par défaut avant la validation.
+    """
 
     fields = {}
 
     for nom, field_def in module.champs.items():
         python_type = _get_python_type(field_def)
-
-        if mode == "create":
-            # Champs requis en création
-            if field_def.requis:
-                fields[nom] = (python_type, ...)
-            else:
-                fields[nom] = (Optional[python_type], field_def.defaut)
-
-        elif mode == "update":
-            # Tous les champs optionnels en update
-            fields[nom] = (Optional[python_type], None)
+        # Tous les champs optionnels - la validation se fait après
+        fields[nom] = (Optional[python_type], field_def.defaut)
 
     model_name = f"{module.nom.title()}{mode.title()}"
     return create_model(model_name, **fields)
@@ -103,26 +99,49 @@ def _get_python_type(field_def: FieldDefinition):
     """Convertit un type YAML en type Python."""
 
     type_mapping = {
+        # Text types
+        "text": str,
         "texte": str,
         "texte court": str,
         "texte long": str,
+        "textarea": str,
+        "string": str,
+        # Contact types
         "email": str,
         "telephone": str,
+        "tel": str,
         "url": str,
+        # Numeric types
+        "number": float,
         "nombre": float,
         "entier": int,
+        "integer": int,
         "monnaie": float,
+        "money": float,
         "pourcentage": float,
+        # Date/time types
         "date": str,  # ISO format
         "datetime": str,
         "heure": str,
-        "oui/non": bool,
+        "time": str,
+        # Boolean types
+        "boolean": bool,
         "booleen": bool,
+        "oui/non": bool,
+        "bool": bool,
+        # Reference types
         "uuid": str,
         "lien": str,
+        "relation": str,
+        # Choice types
         "enum": str,
+        "select": str,
+        # Complex types
         "json": dict,
+        "tags": list,
+        # File types
         "fichier": str,
+        "file": str,
         "image": str,
     }
 
@@ -198,6 +217,11 @@ class GenericCRUDRouter:
             """Crée un enregistrement."""
             # Validation des donnees avant insertion
             data_dict = data.model_dump(exclude_unset=True)
+
+            # Injection automatique de user_id si le module a ce champ et qu'il n'est pas fourni
+            if "user_id" in self.module.champs and "user_id" not in data_dict and user_id:
+                data_dict["user_id"] = str(user_id)
+
             validation_result = Validator.validate_record(self.table_name, data_dict)
 
             if not validation_result.valid:
@@ -415,11 +439,8 @@ def register_all_modules():
             crud_router.register(router)
             logger.debug("routes_registered", module=module_name)
 
-# Enregistrer au chargement du module
-# Note: Sera appelé après le chargement des modules dans lifespan
-@router.on_event("startup")
-async def startup():
-    register_all_modules()
+# NOTE: register_all_modules() est appelé explicitement dans core.py
+# Ne pas utiliser @router.on_event("startup") pour éviter le double enregistrement
 
 # =============================================================================
 # Routes utilitaires

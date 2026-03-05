@@ -529,6 +529,162 @@ class MobileService:
 # =============================================================================
 
 @router_mobile.get(
+    "/connect",
+    summary="Connexion mobile via QR code",
+    description="Page de connexion mobile après scan du QR code",
+    include_in_schema=False
+)
+async def mobile_connect(token: str = None):
+    """
+    Page de connexion mobile via QR code.
+    Vérifie le token temporaire et génère un JWT pour l'app mobile.
+    """
+    from fastapi.responses import HTMLResponse
+    from .auth import create_access_token
+    import json
+
+    if not token:
+        return HTMLResponse(content="""
+        <html>
+        <head><title>Erreur</title></head>
+        <body style="font-family: system-ui; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+            <div style="text-align: center;">
+                <h1 style="color: #ef4444;">❌ Token manquant</h1>
+                <p>Veuillez scanner le QR code depuis l'application.</p>
+            </div>
+        </body>
+        </html>
+        """, status_code=400)
+
+    # Vérifier le token dans Redis
+    redis = Database.get_redis()
+    if not redis:
+        return HTMLResponse(content="""
+        <html>
+        <head><title>Erreur</title></head>
+        <body style="font-family: system-ui; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+            <div style="text-align: center;">
+                <h1 style="color: #ef4444;">❌ Service indisponible</h1>
+                <p>Veuillez réessayer plus tard.</p>
+            </div>
+        </body>
+        </html>
+        """, status_code=503)
+
+    token_data = await redis.get(f"mobile_token:{token}")
+
+    if not token_data:
+        return HTMLResponse(content="""
+        <html>
+        <head><title>Erreur</title></head>
+        <body style="font-family: system-ui; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+            <div style="text-align: center;">
+                <h1 style="color: #ef4444;">❌ Token invalide ou expiré</h1>
+                <p>Le QR code a expiré. Veuillez en générer un nouveau.</p>
+            </div>
+        </body>
+        </html>
+        """, status_code=401)
+
+    # Parser les données du token
+    token_info = json.loads(token_data)
+
+    # Supprimer le token (usage unique)
+    await redis.delete(f"mobile_token:{token}")
+
+    # Générer un vrai JWT pour le mobile
+    access_token = create_access_token({
+        "sub": token_info["user_id"],
+        "tenant_id": token_info["tenant_id"],
+        "email": token_info["email"],
+        "nom": token_info.get("nom", ""),
+        "mobile": True
+    })
+
+    logger.info("mobile_connect_success", email=token_info["email"])
+
+    # Retourner une page HTML qui stocke le token et redirige
+    return HTMLResponse(content=f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Connexion réussie</title>
+        <style>
+            body {{
+                font-family: system-ui, -apple-system, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                color: white;
+            }}
+            .container {{
+                text-align: center;
+                padding: 40px;
+            }}
+            .checkmark {{
+                font-size: 64px;
+                margin-bottom: 20px;
+            }}
+            h1 {{
+                margin: 0 0 10px 0;
+                font-size: 24px;
+            }}
+            p {{
+                margin: 0;
+                opacity: 0.9;
+            }}
+            .spinner {{
+                margin-top: 30px;
+                width: 40px;
+                height: 40px;
+                border: 3px solid rgba(255,255,255,0.3);
+                border-top-color: white;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-left: auto;
+                margin-right: auto;
+            }}
+            @keyframes spin {{
+                to {{ transform: rotate(360deg); }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="checkmark">✓</div>
+            <h1>Connexion réussie !</h1>
+            <p>Redirection vers l'application...</p>
+            <div class="spinner"></div>
+        </div>
+        <script>
+            // Stocker le token
+            localStorage.setItem('azalplus_token', '{access_token}');
+            localStorage.setItem('azalplus_user', JSON.stringify({{
+                email: '{token_info["email"]}',
+                nom: '{token_info.get("nom", "")}'
+            }}));
+
+            // Rediriger vers l'app mobile ou la page d'accueil
+            setTimeout(function() {{
+                if (window.opener) {{
+                    window.opener.postMessage({{ type: 'mobile_auth', token: '{access_token}' }}, '*');
+                    window.close();
+                }} else {{
+                    window.location.href = '/ui/dashboard';
+                }}
+            }}, 1500);
+        </script>
+    </body>
+    </html>
+    """)
+
+
+@router_mobile.get(
     "/config",
     response_model=MobileConfig,
     summary="Recuperer la configuration mobile",

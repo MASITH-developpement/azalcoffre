@@ -6,7 +6,7 @@
 # vers un enregistrement dans n'importe quel module.
 # =============================================================================
 
-Favoris:
+favoris:
   nom: "Favoris"
   icone: "star"
   menu: "Systeme"

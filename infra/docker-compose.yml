@@ -111,6 +111,68 @@ services:
       timeout: 10s
       retries: 3
 
+  # =============================================================================
+  # VIDEOCONF - Services pour la visioconférence
+  # =============================================================================
+
+  # LiveKit - Serveur WebRTC SFU pour la visioconférence
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: azalplus_livekit
+    restart: unless-stopped
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+    volumes:
+      - ../config/integrations/livekit.yml:/livekit.yaml:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - azalplus_network
+
+  # Celery Worker - Tâches background (enregistrement, transcription, compte-rendu)
+  celery_worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    container_name: azalplus_celery_worker
+    restart: unless-stopped
+    command: celery -A app.modules.videoconf.background_tasks worker -l info -Q videoconf_recording,videoconf_transcription,videoconf_minutes
+    environment:
+      - DATABASE_URL=postgresql://azalplus:${DB_PASSWORD}@postgres:5432/azalplus
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - azalplus_network
+
+  # MinIO - Stockage S3-compatible pour les enregistrements vidéo
+  minio:
+    image: minio/minio:latest
+    container_name: azalplus_minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-azalplus}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - azalplus_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 # =============================================================================
 # Volumes persistants
 # =============================================================================
@@ -124,6 +186,8 @@ volumes:
   app_logs:
     driver: local
   nginx_logs:
+    driver: local
+  minio_data:
     driver: local
 
 # =============================================================================

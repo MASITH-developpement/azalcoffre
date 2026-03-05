@@ -120,7 +120,7 @@ PATH_TRAVERSAL_PATTERNS: List[Tuple[str, str, str]] = [
 COMMAND_INJECTION_PATTERNS: List[Tuple[str, str, str]] = [
     (r";\s*\w+", "high", "Command chaining with ;"),
     (r"\|\s*\w+", "high", "Pipe command"),
-    (r"&\s*\w+", "high", "Background command"),
+    (r"(?<![=\w])&\s+\w+", "high", "Background command"),  # Exclut &param dans query strings
     (r"`[^`]+`", "critical", "Backtick execution"),
     (r"\$\([^)]+\)", "critical", "Command substitution"),
     (r"\|\|", "medium", "OR command chaining"),

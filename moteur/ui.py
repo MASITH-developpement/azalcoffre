@@ -3582,11 +3582,20 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         if (!panel) {{ console.error('Panel not found'); return; }}
         notifPanelOpen = !notifPanelOpen;
         panel.style.display = notifPanelOpen ? 'block' : 'none';
-        console.log('Bell clicked, panel open:', notifPanelOpen);
-        if (notifPanelOpen) {{
+        if (notifPanelOpen && typeof loadNotifications === 'function') {{
             loadNotifications();
         }}
     }}
+    // Fermer le panel si on clique ailleurs
+    document.addEventListener('click', function(e) {{
+        if (!notifPanelOpen) return;
+        var panel = document.getElementById('notif-panel');
+        var bell = document.getElementById('notif-bell');
+        if (panel && bell && !panel.contains(e.target) && !bell.contains(e.target)) {{
+            panel.style.display = 'none';
+            notifPanelOpen = false;
+        }}
+    }});
     </script>
 </head>
 <body>
@@ -3873,39 +3882,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
 
     <script>
     // ==========================================================================
-    // Notifications - JavaScript
+    // Notifications - Chargement des données
     // ==========================================================================
-
-    let notifPanelOpen = false;
-
-    function toggleNotifPanel(event) {{
-        if (event) event.stopPropagation();
-        const panel = document.getElementById('notif-panel');
-        notifPanelOpen = !notifPanelOpen;
-        panel.style.display = notifPanelOpen ? 'block' : 'none';
-        if (notifPanelOpen) {{
-            loadNotifications();
-        }}
-    }}
-
-    // Attacher l'événement au clic sur la cloche
-    document.addEventListener('DOMContentLoaded', function() {{
-        const bell = document.getElementById('notif-bell');
-        if (bell) {{
-            bell.addEventListener('click', toggleNotifPanel);
-            console.log('Notification bell listener attached');
-        }}
-    }});
-
-    // Fermer le panel si on clique ailleurs
-    document.addEventListener('click', function(e) {{
-        const panel = document.getElementById('notif-panel');
-        const notifBtn = document.getElementById('notif-bell');
-        if (notifPanelOpen && panel && notifBtn && !panel.contains(e.target) && !notifBtn.contains(e.target)) {{
-            panel.style.display = 'none';
-            notifPanelOpen = false;
-        }}
-    }});
 
     async function loadNotifications() {{
         const list = document.getElementById('notif-list');

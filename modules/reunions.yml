@@ -1,0 +1,1005 @@
+# =============================================================================
+# AZALPLUS - Module Reunions (Visioconferences)
+# =============================================================================
+# Module complet de gestion des reunions et visioconferences
+# - Video/Audio/Webinar jusqu'a 500 participants
+# - Enregistrement separe audio/video
+# - Transcription IA automatique (Whisper)
+# - Compte-rendu IA (Claude)
+# - Tableau blanc collaboratif
+# - Chat en direct, main levee
+# - Salle d'attente, controles organisateur
+# =============================================================================
+
+nom: Reunions
+icone: video
+menu: Communication
+description: "Gestion des reunions et visioconferences avec enregistrement, transcription IA et compte-rendu automatique"
+
+# =============================================================================
+# CHAMPS PRINCIPAUX
+# =============================================================================
+champs:
+  # ---------------------------------------------------------------------------
+  # Identification
+  # ---------------------------------------------------------------------------
+  - nom: reference
+    type: text
+    obligatoire: false
+    description: "Reference unique (auto-generee MEET-YYYY-XXXX)"
+    readonly: true
+
+  - nom: titre
+    type: text
+    obligatoire: true
+    description: "Titre de la reunion"
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: "Description et ordre du jour"
+
+  # ---------------------------------------------------------------------------
+  # Type et mode
+  # ---------------------------------------------------------------------------
+  - nom: type_reunion
+    type: select
+    obligatoire: true
+    defaut: VIDEO
+    options:
+      - VIDEO
+      - AUDIO
+      - WEBINAR
+    description: "Type de reunion"
+
+  - nom: mode_acces
+    type: select
+    obligatoire: true
+    defaut: SALLE_ATTENTE
+    options:
+      - PRIVE
+      - SALLE_ATTENTE
+      - PUBLIC
+    description: "Mode d'acces (PRIVE=invite seul, SALLE_ATTENTE=validation, PUBLIC=libre)"
+
+  # ---------------------------------------------------------------------------
+  # Planification
+  # ---------------------------------------------------------------------------
+  - nom: date_debut_prevue
+    type: datetime
+    obligatoire: true
+    description: "Date et heure de debut prevue"
+
+  - nom: date_fin_prevue
+    type: datetime
+    obligatoire: false
+    description: "Date et heure de fin prevue"
+
+  - nom: duree_prevue_minutes
+    type: number
+    obligatoire: false
+    defaut: 60
+    description: "Duree prevue en minutes"
+
+  - nom: fuseau_horaire
+    type: text
+    obligatoire: false
+    defaut: "Europe/Paris"
+    description: "Fuseau horaire"
+
+  - nom: recurrence
+    type: select
+    obligatoire: false
+    options:
+      - UNIQUE
+      - QUOTIDIEN
+      - HEBDOMADAIRE
+      - MENSUEL
+    defaut: UNIQUE
+    description: "Recurrence de la reunion"
+
+  # ---------------------------------------------------------------------------
+  # Organisateur
+  # ---------------------------------------------------------------------------
+  - nom: organisateur_id
+    type: relation
+    obligatoire: true
+    relation: employes
+    description: "Organisateur principal de la reunion"
+    autocompletion: true
+
+  - nom: organisateur_nom
+    type: text
+    obligatoire: false
+    description: "Nom affiche de l'organisateur"
+
+  - nom: organisateur_email
+    type: email
+    obligatoire: false
+    description: "Email de l'organisateur"
+
+  - nom: co_organisateurs
+    type: json
+    obligatoire: false
+    description: "Liste des co-organisateurs [{id, nom, email}]"
+
+  # ---------------------------------------------------------------------------
+  # Participants
+  # ---------------------------------------------------------------------------
+  - nom: participants_max
+    type: number
+    obligatoire: false
+    defaut: 50
+    description: "Nombre maximum de participants (max 500)"
+
+  - nom: participants_invites
+    type: json
+    obligatoire: false
+    description: "Liste des participants invites [{email, nom, role}]"
+
+  - nom: participants_connectes_count
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: "Nombre de participants actuellement connectes"
+
+  # ---------------------------------------------------------------------------
+  # Options reunion
+  # ---------------------------------------------------------------------------
+  - nom: salle_attente_active
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Activer la salle d'attente"
+
+  - nom: participants_peuvent_partager_ecran
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Les participants peuvent partager leur ecran"
+
+  - nom: participants_peuvent_activer_camera
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Les participants peuvent activer leur camera"
+
+  - nom: participants_peuvent_activer_micro
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Les participants peuvent activer leur micro"
+
+  - nom: chat_actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Chat actif pendant la reunion"
+
+  - nom: whiteboard_actif
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: "Tableau blanc collaboratif actif"
+
+  - nom: main_levee_active
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Fonction main levee active"
+
+  - nom: reactions_actives
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Reactions emoji actives"
+
+  # ---------------------------------------------------------------------------
+  # Enregistrement
+  # ---------------------------------------------------------------------------
+  - nom: enregistrement_actif
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: "Enregistrement automatique au demarrage"
+
+  - nom: enregistrer_audio_separe
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Enregistrer l'audio dans un fichier separe"
+
+  - nom: enregistrer_video_separe
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Enregistrer la video dans un fichier separe"
+
+  - nom: enregistrement_en_cours
+    type: boolean
+    obligatoire: false
+    defaut: false
+    readonly: true
+    description: "Enregistrement actuellement en cours"
+
+  # ---------------------------------------------------------------------------
+  # Transcription et IA
+  # ---------------------------------------------------------------------------
+  - nom: transcription_auto
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: "Transcription automatique IA (Whisper)"
+
+  - nom: transcription_langue
+    type: select
+    obligatoire: false
+    defaut: fr
+    options:
+      - fr
+      - en
+      - de
+      - es
+      - it
+    description: "Langue de transcription"
+
+  - nom: compte_rendu_auto
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: "Generer automatiquement un compte-rendu IA"
+
+  # ---------------------------------------------------------------------------
+  # Fond virtuel
+  # ---------------------------------------------------------------------------
+  - nom: fond_virtuel_autorise
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: "Autoriser les fonds virtuels"
+
+  - nom: fonds_virtuels_disponibles
+    type: json
+    obligatoire: false
+    description: "Liste des fonds virtuels disponibles [{nom, url}]"
+
+  # ---------------------------------------------------------------------------
+  # Statut
+  # ---------------------------------------------------------------------------
+  - nom: statut
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options:
+      - BROUILLON
+      - PLANIFIEE
+      - EN_COURS
+      - EN_PAUSE
+      - TERMINEE
+      - ANNULEE
+    description: "Statut de la reunion"
+
+  # ---------------------------------------------------------------------------
+  # Dates reelles
+  # ---------------------------------------------------------------------------
+  - nom: date_debut_reelle
+    type: datetime
+    obligatoire: false
+    readonly: true
+    description: "Date et heure reelle de debut"
+
+  - nom: date_fin_reelle
+    type: datetime
+    obligatoire: false
+    readonly: true
+    description: "Date et heure reelle de fin"
+
+  - nom: duree_reelle_minutes
+    type: number
+    obligatoire: false
+    readonly: true
+    description: "Duree reelle en minutes"
+
+  # ---------------------------------------------------------------------------
+  # LiveKit
+  # ---------------------------------------------------------------------------
+  - nom: room_name
+    type: text
+    obligatoire: false
+    readonly: true
+    description: "Nom de la salle LiveKit (genere automatiquement)"
+
+  - nom: room_sid
+    type: text
+    obligatoire: false
+    readonly: true
+    description: "Session ID LiveKit"
+
+  # ---------------------------------------------------------------------------
+  # Liens et acces
+  # ---------------------------------------------------------------------------
+  - nom: lien_reunion
+    type: text
+    obligatoire: false
+    readonly: true
+    description: "Lien de la reunion"
+
+  - nom: lien_court
+    type: text
+    obligatoire: false
+    readonly: true
+    description: "Lien court de la reunion"
+
+  - nom: mot_de_passe
+    type: text
+    obligatoire: false
+    description: "Mot de passe optionnel"
+    chiffre: true
+
+  - nom: code_acces
+    type: text
+    obligatoire: false
+    readonly: true
+    description: "Code d'acces numerique (6 chiffres)"
+
+  # ---------------------------------------------------------------------------
+  # Relations ERP
+  # ---------------------------------------------------------------------------
+  - nom: projet_id
+    type: relation
+    obligatoire: false
+    relation: projets
+    description: "Projet lie"
+    autocompletion: true
+
+  - nom: client_id
+    type: relation
+    obligatoire: false
+    relation: clients
+    description: "Client lie"
+    autocompletion: true
+
+  - nom: affaire_id
+    type: relation
+    obligatoire: false
+    relation: projets
+    description: "Affaire liee"
+    autocompletion: true
+
+  # ---------------------------------------------------------------------------
+  # Tags et notes
+  # ---------------------------------------------------------------------------
+  - nom: tags
+    type: tags
+    obligatoire: false
+    description: "Tags"
+
+  - nom: notes_internes
+    type: textarea
+    obligatoire: false
+    description: "Notes internes (non visibles des participants)"
+
+# =============================================================================
+# SOUS-ENTITE: Participants
+# =============================================================================
+participants:
+  description: "Participants de la reunion"
+  champs:
+    - nom: reunion_id
+      type: relation
+      obligatoire: true
+      relation: reunions
+
+    - nom: user_id
+      type: relation
+      obligatoire: false
+      relation: employes
+      description: "Utilisateur interne (si applicable)"
+
+    - nom: email
+      type: email
+      obligatoire: true
+      description: "Email du participant"
+
+    - nom: nom
+      type: text
+      obligatoire: false
+      description: "Nom affiche"
+
+    - nom: avatar_url
+      type: text
+      obligatoire: false
+      description: "URL de l'avatar"
+
+    - nom: role
+      type: select
+      obligatoire: true
+      defaut: PARTICIPANT
+      options:
+        - ORGANISATEUR
+        - CO_ORGANISATEUR
+        - MODERATEUR
+        - PARTICIPANT
+        - OBSERVATEUR
+      description: "Role dans la reunion"
+
+    - nom: statut
+      type: select
+      obligatoire: true
+      defaut: INVITE
+      options:
+        - INVITE
+        - INVITATION_ENVOYEE
+        - INVITATION_ACCEPTEE
+        - INVITATION_REFUSEE
+        - EN_SALLE_ATTENTE
+        - CONNECTE
+        - DECONNECTE
+        - EXPULSE
+      description: "Statut du participant"
+
+    # Dates
+    - nom: date_invitation
+      type: datetime
+      obligatoire: false
+
+    - nom: date_reponse
+      type: datetime
+      obligatoire: false
+
+    - nom: date_connexion
+      type: datetime
+      obligatoire: false
+
+    - nom: date_deconnexion
+      type: datetime
+      obligatoire: false
+
+    - nom: duree_presence_minutes
+      type: number
+      obligatoire: false
+      defaut: 0
+
+    # Etat media temps reel
+    - nom: micro_actif
+      type: boolean
+      defaut: false
+
+    - nom: camera_active
+      type: boolean
+      defaut: false
+
+    - nom: main_levee
+      type: boolean
+      defaut: false
+
+    - nom: main_levee_at
+      type: datetime
+      obligatoire: false
+
+    - nom: partage_ecran
+      type: boolean
+      defaut: false
+
+    - nom: fond_virtuel
+      type: text
+      obligatoire: false
+      description: "none, blur, ou URL image"
+
+    # Controles
+    - nom: micro_bloque_par_org
+      type: boolean
+      defaut: false
+      description: "Micro bloque par l'organisateur"
+
+    - nom: camera_bloquee_par_org
+      type: boolean
+      defaut: false
+      description: "Camera bloquee par l'organisateur"
+
+    # Token
+    - nom: participant_token
+      type: text
+      obligatoire: false
+      chiffre: true
+      description: "Token LiveKit du participant"
+
+# =============================================================================
+# SOUS-ENTITE: Messages Chat
+# =============================================================================
+messages_chat:
+  description: "Messages du chat de la reunion"
+  champs:
+    - nom: reunion_id
+      type: relation
+      obligatoire: true
+      relation: reunions
+
+    - nom: participant_id
+      type: relation
+      obligatoire: true
+      relation: reunion_participants
+
+    - nom: participant_nom
+      type: text
+      obligatoire: false
+      description: "Nom du participant (cache)"
+
+    - nom: contenu
+      type: textarea
+      obligatoire: true
+      description: "Contenu du message"
+
+    - nom: type_message
+      type: select
+      obligatoire: true
+      defaut: TEXT
+      options:
+        - TEXT
+        - SYSTEM
+        - FICHIER
+        - EMOJI
+        - REACTION
+      description: "Type de message"
+
+    - nom: fichier_url
+      type: text
+      obligatoire: false
+      description: "URL du fichier partage"
+
+    - nom: fichier_nom
+      type: text
+      obligatoire: false
+      description: "Nom du fichier"
+
+    - nom: fichier_taille
+      type: number
+      obligatoire: false
+      description: "Taille en octets"
+
+    - nom: reply_to_id
+      type: relation
+      obligatoire: false
+      relation: reunion_messages_chat
+      description: "Message auquel on repond"
+
+    - nom: reactions
+      type: json
+      obligatoire: false
+      description: "Reactions [{emoji, user_ids}]"
+
+    - nom: lu_par
+      type: json
+      obligatoire: false
+      description: "Liste des IDs qui ont lu"
+
+# =============================================================================
+# SOUS-ENTITE: Enregistrements
+# =============================================================================
+enregistrements:
+  description: "Enregistrements de la reunion"
+  champs:
+    - nom: reunion_id
+      type: relation
+      obligatoire: true
+      relation: reunions
+
+    - nom: type_enregistrement
+      type: select
+      obligatoire: true
+      options:
+        - VIDEO_COMPLET
+        - AUDIO_SEUL
+        - ECRAN_PARTAGE
+        - PARTICIPANT_UNIQUE
+      description: "Type d'enregistrement"
+
+    - nom: format
+      type: select
+      obligatoire: true
+      defaut: WEBM
+      options:
+        - WEBM
+        - MP4
+        - WAV
+        - MP3
+
+    - nom: fichier_url
+      type: text
+      obligatoire: false
+      description: "URL du fichier enregistre"
+
+    - nom: fichier_nom
+      type: text
+      obligatoire: false
+
+    - nom: duree_secondes
+      type: number
+      obligatoire: false
+
+    - nom: taille_octets
+      type: number
+      obligatoire: false
+
+    - nom: statut
+      type: select
+      obligatoire: true
+      defaut: EN_COURS
+      options:
+        - EN_COURS
+        - TRAITEMENT
+        - TRANSCRIPTION
+        - DISPONIBLE
+        - ERREUR
+        - SUPPRIME
+
+    - nom: date_debut
+      type: datetime
+      obligatoire: false
+
+    - nom: date_fin
+      type: datetime
+      obligatoire: false
+
+    - nom: egress_id
+      type: text
+      obligatoire: false
+      description: "ID LiveKit Egress"
+
+    - nom: transcription_brute
+      type: textarea
+      obligatoire: false
+      description: "Transcription complete non formatee"
+
+    - nom: transcription_json
+      type: json
+      obligatoire: false
+      description: "Transcription avec timestamps [{start, end, text, speaker}]"
+
+    - nom: erreur_message
+      type: text
+      obligatoire: false
+      description: "Message d'erreur si echec"
+
+# =============================================================================
+# SOUS-ENTITE: Comptes-rendus
+# =============================================================================
+comptes_rendus:
+  description: "Comptes-rendus de reunion generes par IA"
+  champs:
+    - nom: reunion_id
+      type: relation
+      obligatoire: true
+      relation: reunions
+
+    - nom: titre
+      type: text
+      obligatoire: true
+
+    - nom: resume_executif
+      type: textarea
+      obligatoire: false
+      description: "Resume executif (3-5 points cles)"
+
+    - nom: decisions
+      type: json
+      obligatoire: false
+      description: "Decisions prises [{decision, responsable, deadline}]"
+
+    - nom: actions
+      type: json
+      obligatoire: false
+      description: "Actions a suivre [{action, responsable, deadline, priorite}]"
+
+    - nom: points_reportes
+      type: json
+      obligatoire: false
+      description: "Points reportes pour prochaine reunion"
+
+    - nom: contenu_complet
+      type: textarea
+      obligatoire: true
+      description: "Compte-rendu complet"
+
+    - nom: statut
+      type: select
+      obligatoire: true
+      defaut: BROUILLON
+      options:
+        - BROUILLON
+        - EN_REVISION
+        - VALIDE
+        - ENVOYE
+
+    - nom: genere_par
+      type: select
+      obligatoire: true
+      defaut: IA
+      options:
+        - IA
+        - MANUEL
+        - MIXTE
+
+    - nom: modele_ia
+      type: text
+      obligatoire: false
+      description: "Modele IA utilise (claude-sonnet-4, etc.)"
+
+    - nom: valide_par
+      type: relation
+      obligatoire: false
+      relation: employes
+
+    - nom: date_validation
+      type: datetime
+      obligatoire: false
+
+    - nom: commentaires_validation
+      type: textarea
+      obligatoire: false
+      description: "Commentaires de l'organisateur lors de la validation"
+
+    - nom: destinataires
+      type: json
+      obligatoire: false
+      description: "Liste des emails destinataires"
+
+    - nom: date_envoi
+      type: datetime
+      obligatoire: false
+
+    - nom: version
+      type: number
+      obligatoire: false
+      defaut: 1
+      description: "Numero de version"
+
+# =============================================================================
+# SOUS-ENTITE: Main Levee (queue)
+# =============================================================================
+mains_levees:
+  description: "File d'attente des mains levees"
+  champs:
+    - nom: reunion_id
+      type: relation
+      obligatoire: true
+      relation: reunions
+
+    - nom: participant_id
+      type: relation
+      obligatoire: true
+      relation: reunion_participants
+
+    - nom: position
+      type: number
+      obligatoire: false
+      description: "Position dans la file"
+
+    - nom: raised_at
+      type: datetime
+      obligatoire: true
+
+    - nom: acknowledged_at
+      type: datetime
+      obligatoire: false
+
+    - nom: acknowledged_by
+      type: relation
+      obligatoire: false
+      relation: employes
+
+    - nom: statut
+      type: select
+      obligatoire: true
+      defaut: EN_ATTENTE
+      options:
+        - EN_ATTENTE
+        - RECONNU
+        - PAROLE_DONNEE
+        - ANNULE
+
+# =============================================================================
+# SOUS-ENTITE: Whiteboard State
+# =============================================================================
+whiteboard_states:
+  description: "Etat du tableau blanc collaboratif"
+  champs:
+    - nom: reunion_id
+      type: relation
+      obligatoire: true
+      relation: reunions
+
+    - nom: state_json
+      type: json
+      obligatoire: true
+      description: "Etat complet du whiteboard (tldraw/Y.js)"
+
+    - nom: version
+      type: number
+      obligatoire: true
+      defaut: 0
+
+    - nom: last_updated_by
+      type: relation
+      obligatoire: false
+      relation: reunion_participants
+
+# =============================================================================
+# WORKFLOW
+# =============================================================================
+workflow:
+  BROUILLON -> PLANIFIEE: action planifier
+  PLANIFIEE -> EN_COURS: action demarrer
+  EN_COURS -> EN_PAUSE: action pause
+  EN_PAUSE -> EN_COURS: action reprendre
+  EN_COURS -> TERMINEE: action terminer
+  PLANIFIEE -> ANNULEE: action annuler
+  BROUILLON -> ANNULEE: action annuler
+
+# =============================================================================
+# ACTIONS
+# =============================================================================
+actions:
+  # Cycle de vie
+  - planifier
+  - demarrer
+  - pause
+  - reprendre
+  - terminer
+  - annuler
+
+  # Invitations
+  - envoyer_invitations
+  - renvoyer_invitation
+  - ajouter_participant
+  - retirer_participant
+
+  # Salle d'attente
+  - admettre_participant
+  - refuser_participant
+  - admettre_tous
+
+  # Controles organisateur
+  - muter_participant
+  - demuter_participant
+  - muter_tous
+  - bloquer_camera_participant
+  - debloquer_camera_participant
+  - bloquer_cameras_tous
+  - expulser_participant
+  - transferer_organisateur
+
+  # Media
+  - demarrer_partage_ecran
+  - arreter_partage_ecran
+
+  # Enregistrement
+  - demarrer_enregistrement
+  - arreter_enregistrement
+  - demarrer_enregistrement_audio
+  - demarrer_enregistrement_video
+
+  # Transcription et CR
+  - demarrer_transcription
+  - arreter_transcription
+  - generer_compte_rendu
+  - regenerer_compte_rendu
+  - valider_compte_rendu
+  - envoyer_compte_rendu
+
+  # Whiteboard
+  - activer_whiteboard
+  - exporter_whiteboard
+  - effacer_whiteboard
+
+  # Main levee
+  - reconnaitre_main_levee
+  - donner_parole
+  - baisser_toutes_mains
+
+  # Export
+  - exporter_chat
+  - exporter_liste_participants
+  - dupliquer_reunion
+
+# =============================================================================
+# MARCEAU (IA Assistant)
+# =============================================================================
+marceau:
+  alertes:
+    - condition: "statut = PLANIFIEE et date_debut_prevue < maintenant + 15m"
+      message: "Reunion imminente dans moins de 15 minutes"
+      priorite: haute
+
+    - condition: "statut = EN_COURS et participants_connectes_count = 0 et duree_reelle_minutes > 5"
+      message: "Reunion en cours sans participants depuis plus de 5 minutes"
+      priorite: moyenne
+
+    - condition: "statut = EN_COURS et duree_reelle_minutes > duree_prevue_minutes * 1.5"
+      message: "Reunion depasse significativement le temps prevu"
+      priorite: basse
+
+    - condition: "statut = TERMINEE et transcription_auto = true et comptes_rendus.count = 0"
+      message: "Transcription terminee, compte-rendu a generer"
+      priorite: haute
+
+    - condition: "statut = TERMINEE et comptes_rendus.statut = BROUILLON"
+      message: "Compte-rendu en attente de validation par l'organisateur"
+      priorite: moyenne
+
+  suggestions:
+    - "Envoyer les invitations aux participants"
+    - "Activer l'enregistrement et la transcription pour cette reunion importante"
+    - "Generer le compte-rendu apres la reunion"
+    - "Verifier et valider le compte-rendu avant envoi"
+
+  kpis:
+    - nom: "Reunions ce mois"
+      calcul: "count() ou statut in (TERMINEE, EN_COURS) et date_debut_reelle >= debut_mois"
+
+    - nom: "Duree moyenne"
+      calcul: "moyenne(duree_reelle_minutes) ou statut = TERMINEE"
+
+    - nom: "Participants moyens"
+      calcul: "moyenne(participants.count) ou statut = TERMINEE"
+
+    - nom: "Taux CR envoyes"
+      calcul: "pourcentage(comptes_rendus.statut = ENVOYE) ou statut = TERMINEE et compte_rendu_auto = true"
+
+# =============================================================================
+# VALIDATIONS
+# =============================================================================
+validations:
+  - champ: participants_max
+    regle: "valeur <= 500"
+    message: "Le nombre maximum de participants ne peut pas depasser 500"
+
+  - champ: date_fin_prevue
+    regle: "valeur > date_debut_prevue"
+    message: "La date de fin doit etre posterieure a la date de debut"
+
+  - champ: duree_prevue_minutes
+    regle: "valeur >= 5 et valeur <= 480"
+    message: "La duree doit etre entre 5 minutes et 8 heures"
+
+# =============================================================================
+# HOOKS
+# =============================================================================
+hooks:
+  pre_create:
+    - action: "generer_reference"
+      parametres:
+        prefixe: "MEET"
+        format: "MEET-{YYYY}-{XXXX}"
+
+    - action: "generer_code_acces"
+      parametres:
+        longueur: 6
+
+    - action: "generer_lien_reunion"
+
+  post_create:
+    - action: "notifier"
+      parametres:
+        destinataire: "organisateur"
+        template: "reunion_creee"
+
+  on_status_change:
+    - statut: EN_COURS
+      action: "enregistrer_date_debut_reelle"
+
+    - statut: TERMINEE
+      action: "enregistrer_date_fin_reelle"
+
+    - statut: TERMINEE
+      action: "calculer_duree_reelle"
+
+    - statut: TERMINEE
+      condition: "transcription_auto = true"
+      action: "lancer_transcription_async"
+
+    - statut: TERMINEE
+      condition: "compte_rendu_auto = true et transcription_auto = true"
+      action: "planifier_generation_compte_rendu"

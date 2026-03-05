@@ -1,0 +1,41 @@
+# =============================================================================
+# AZALPLUS - Module Push Tokens
+# =============================================================================
+# Stockage des tokens push (FCM) pour les notifications mobiles et web.
+# Chaque utilisateur peut avoir plusieurs tokens (multi-device).
+# =============================================================================
+
+push_tokens:
+  nom: "Push Tokens"
+  icone: "smartphone"
+  menu: "Systeme"
+  description: "Tokens de notifications push (FCM)"
+
+  # Cache ce module de l'interface utilisateur
+  cache_menu: true
+
+  champs:
+    # Utilisateur proprietaire du token
+    user_id: uuid requis
+
+    # Token FCM (Firebase Cloud Messaging)
+    token: texte requis
+
+    # Plateforme d'origine
+    platform: enum [web, android, ios] defaut=web
+
+    # Informations sur le device
+    device_info: json
+
+    # Token valide ou non (invalide apres erreur FCM)
+    is_valid: oui/non defaut=true
+
+    # Derniere activite (pour nettoyage)
+    last_active_at: datetime
+
+  # Pas d'actions utilisateur - gere par le systeme
+  actions: []
+
+  # Pas d'assistant IA pour ce module technique
+  marceau:
+    enabled: false
