@@ -17,6 +17,7 @@ from contextlib import contextmanager
 from typing import Any, Dict, List, Optional, Generator
 import redis.asyncio as redis
 import structlog
+import json
 from uuid import UUID as PyUUID, uuid4
 
 from .config import settings
@@ -326,6 +327,16 @@ class Database:
             return rows
 
     @classmethod
+    def get(
+        cls,
+        table_name: str,
+        tenant_id: PyUUID,
+        record_id: PyUUID
+    ) -> Optional[Dict]:
+        """Alias pour get_by_id - Récupère un enregistrement par ID."""
+        return cls.get_by_id(table_name, tenant_id, record_id)
+
+    @classmethod
     def get_by_id(
         cls,
         table_name: str,
@@ -381,6 +392,11 @@ class Database:
         if encrypted_fields:
             data = EncryptionMiddleware.encrypt_dict(data, encrypted_fields, tenant_id)
 
+        # Sérialiser les valeurs dict/list en JSON pour JSONB PostgreSQL
+        for key, value in data.items():
+            if isinstance(value, (dict, list)):
+                data[key] = json.dumps(value)
+
         columns = ", ".join(data.keys())
         placeholders = ", ".join(f":{k}" for k in data.keys())
 
@@ -420,6 +436,11 @@ class Database:
         encrypted_fields = cls.get_encrypted_fields(table_name)
         if encrypted_fields:
             data = EncryptionMiddleware.encrypt_dict(data, encrypted_fields, tenant_id)
+
+        # Sérialiser les valeurs dict/list en JSON pour JSONB PostgreSQL
+        for key, value in data.items():
+            if isinstance(value, (dict, list)):
+                data[key] = json.dumps(value)
 
         set_clause = ", ".join(f"{k} = :{k}" for k in data.keys())
 
@@ -564,6 +585,67 @@ class Database:
 
             except Exception as e:
                 logger.warning("search_table_error", table=table_name, error=str(e))
+                return []
+
+    @classmethod
+    def search(
+        cls,
+        table_name: str,
+        tenant_id: PyUUID,
+        query: str,
+        fields: Optional[List[str]] = None,
+        limit: int = 20
+    ) -> List[Dict]:
+        """
+        Recherche dans une table avec champs personnalisés.
+
+        Args:
+            table_name: Nom de la table
+            tenant_id: ID du tenant
+            query: Terme de recherche
+            fields: Liste des champs à chercher (défaut: nom, name, code, reference)
+            limit: Nombre max de résultats
+
+        Returns:
+            Liste des enregistrements correspondants
+        """
+        if not query or len(query) < 2:
+            return []
+
+        search_term = f"%{query.lower()}%"
+        search_fields = fields or ["nom", "name", "code", "reference", "email", "titre"]
+
+        with cls.get_session() as session:
+            try:
+                # Construire la clause WHERE avec ILIKE pour chaque champ
+                where_clauses = []
+                for field in search_fields:
+                    where_clauses.append(f"COALESCE(CAST({field} AS TEXT), '') ILIKE :search_term")
+
+                search_condition = " OR ".join(where_clauses)
+
+                sql = f'''
+                    SELECT * FROM azalplus.{table_name}
+                    WHERE tenant_id = :tenant_id
+                    AND deleted_at IS NULL
+                    AND ({search_condition})
+                    ORDER BY created_at DESC
+                    LIMIT :limit
+                '''
+
+                result = session.execute(
+                    text(sql),
+                    {
+                        "tenant_id": str(tenant_id),
+                        "search_term": search_term,
+                        "limit": limit
+                    }
+                )
+
+                return [dict(row._mapping) for row in result]
+
+            except Exception as e:
+                logger.warning("search_error", table=table_name, error=str(e))
                 return []
 
     # =========================================================================

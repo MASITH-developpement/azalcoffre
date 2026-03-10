@@ -126,7 +126,7 @@ export default function ModulePage(): React.ReactElement {
         src={moduleUrl}
         className={`flex-1 w-full border-0 ${isLoading || error ? 'hidden' : ''}`}
         title={moduleConfig.name}
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
         style={{ minHeight: 'calc(100vh - 180px)' }}
       />
     </div>

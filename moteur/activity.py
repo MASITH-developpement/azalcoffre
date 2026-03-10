@@ -22,7 +22,11 @@ import structlog
 import asyncio
 import json
 
+from fastapi import APIRouter, Request, Depends
+from pydantic import BaseModel, Field
+
 from .db import Database
+from .auth import get_current_user
 
 logger = structlog.get_logger()
 
@@ -577,3 +581,47 @@ def create_activity_context(
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent")
     )
+
+
+# =============================================================================
+# API Router pour Recent Items
+# =============================================================================
+recent_router = APIRouter(prefix="/recent", tags=["Recent"])
+
+
+class RecentTrackRequest(BaseModel):
+    """Schema pour tracker un item recent."""
+    module: Optional[str] = Field(default="unknown", description="Nom du module")
+    record_id: Optional[str] = Field(default="", description="ID de l'enregistrement")
+    nom: Optional[str] = Field(default="Sans nom", description="Nom affiche")
+    sous_titre: Optional[str] = Field(default="", description="Sous-titre")
+    statut: Optional[str] = Field(default="", description="Statut")
+    module_icone: Optional[str] = Field(default="📁", description="Icone du module")
+
+    class Config:
+        extra = "allow"  # Accepter les champs supplémentaires
+
+
+@recent_router.post("/track")
+async def track_recent_item(
+    request: Request,
+    data: RecentTrackRequest,
+    user: Optional[Dict] = Depends(get_current_user)
+):
+    """
+    Enregistre un item dans les recents de l'utilisateur.
+    Stocke en localStorage cote client, mais permet aussi le tracking serveur.
+    """
+    # Pour l'instant, on accepte silencieusement sans traitement serveur
+    # Les recents sont geres cote client dans localStorage
+    # Ce endpoint permet un futur tracking serveur si necessaire
+
+    if user:
+        logger.debug(
+            "recent_item_tracked",
+            user_id=user.get("id"),
+            module=data.module,
+            record_id=data.record_id
+        )
+
+    return {"status": "ok"}

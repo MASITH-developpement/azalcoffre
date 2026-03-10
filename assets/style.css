@@ -86,10 +86,17 @@ a:hover { color: var(--primary-dark); }
     padding: 0 16px;
     display: flex;
     align-items: center;
+    gap: 10px;
     border-bottom: 1px solid var(--gray-200);
     font-size: 18px;
     font-weight: 700;
     color: var(--primary);
+}
+
+.sidebar-logo-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
 }
 
 .sidebar-nav {

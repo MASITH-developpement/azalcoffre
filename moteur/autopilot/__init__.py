@@ -37,6 +37,8 @@ from .storage import StorageBackend, MemoryStorage, PostgresStorage
 from .applicators import FixApplicator, PythonFixApplicator
 from .models import FixProposal, Learning, FixStatus
 from .norms import Norm, NormsChecker, AZALPLUS_NORMS, check_against_norms
+from .alerter import AutoPilotAlerter
+from .auto_fixer import AutoFixer
 
 __all__ = [
     "AutoPilot",
@@ -56,6 +58,8 @@ __all__ = [
     "NormsChecker",
     "AZALPLUS_NORMS",
     "check_against_norms",
+    "AutoPilotAlerter",
+    "AutoFixer",
 ]
 
 __version__ = "1.0.0"

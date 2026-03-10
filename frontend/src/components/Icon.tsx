@@ -89,7 +89,7 @@ export const getIconUrl = (name: string): string => {
  * URL de l'API pour les métadonnées de l'icône
  */
 export const getIconApiUrl = (name: string): string => {
-  return `/api/v1/icons/${name}`;
+  return `/api/icons/${name}`;
 };
 
 export default Icon;

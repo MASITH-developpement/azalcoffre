@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350">
+  <rect width="1080" height="1350" fill="#1a1a2e"/>
+
+  <!-- Comparatif prix -->
+  <text x="540" y="200" font-family="Inter, Arial" font-weight="700" font-size="42" fill="#FFFFFF" opacity="0.7" text-anchor="middle">Le marché aujourd'hui</text>
+
+  <!-- Pennylane -->
+  <rect x="100" y="300" width="880" height="120" rx="15" fill="#2d2d44"/>
+  <text x="150" y="375" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF">Pennylane</text>
+  <text x="880" y="375" font-family="Inter, Arial" font-weight="800" font-size="42" fill="#ef4444" text-anchor="end">50-200€/mois</text>
+
+  <!-- Axonaut -->
+  <rect x="100" y="450" width="880" height="120" rx="15" fill="#2d2d44"/>
+  <text x="150" y="525" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF">Axonaut</text>
+  <text x="880" y="525" font-family="Inter, Arial" font-weight="800" font-size="42" fill="#ef4444" text-anchor="end">30-50€/mois</text>
+
+  <!-- Sage -->
+  <rect x="100" y="600" width="880" height="120" rx="15" fill="#2d2d44"/>
+  <text x="150" y="675" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF">Sage</text>
+  <text x="880" y="675" font-family="Inter, Arial" font-weight="800" font-size="42" fill="#ef4444" text-anchor="end">30-100€/mois</text>
+
+  <!-- EBP -->
+  <rect x="100" y="750" width="880" height="120" rx="15" fill="#2d2d44"/>
+  <text x="150" y="825" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF">EBP</text>
+  <text x="880" y="825" font-family="Inter, Arial" font-weight="800" font-size="42" fill="#ef4444" text-anchor="end">20-80€/mois</text>
+
+  <!-- Total -->
+  <text x="540" y="1000" font-family="Inter, Arial" font-weight="700" font-size="36" fill="#FFFFFF" opacity="0.8" text-anchor="middle">Soit 240 à 2400€ par an</text>
+  <text x="540" y="1060" font-family="Inter, Arial" font-weight="700" font-size="36" fill="#FFFFFF" opacity="0.8" text-anchor="middle">Pour des fonctions basiques.</text>
+
+  <!-- Swipe -->
+  <text x="540" y="1200" font-family="Inter, Arial" font-weight="500" font-size="28" fill="#FFFFFF" opacity="0.7" text-anchor="middle">Glissez →</text>
+
+  <!-- Pagination -->
+  <circle cx="480" cy="1280" r="8" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="510" cy="1280" r="8" fill="#FFFFFF"/>
+  <circle cx="540" cy="1280" r="8" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="570" cy="1280" r="8" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="600" cy="1280" r="8" fill="#FFFFFF" opacity="0.4"/>
+</svg>

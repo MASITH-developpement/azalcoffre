@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Cercle bleu roi -->
+  <circle cx="256" cy="256" r="256" fill="#3454D1"/>
+
+  <!-- Point accent bleu clair -->
+  <circle cx="380" cy="120" r="24" fill="#6B9FFF"/>
+
+  <!-- Lettre A -->
+  <text x="200" y="360"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="800"
+        font-size="280"
+        fill="#FFFFFF">A</text>
+
+  <!-- Symbole + -->
+  <text x="340" y="280"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="700"
+        font-size="140"
+        fill="#FFFFFF">+</text>
+</svg>

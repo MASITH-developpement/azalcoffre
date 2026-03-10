@@ -29,6 +29,15 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(errorData)
+        }).then(response => response.json())
+        .then(data => {
+            // Guardian peut demander un reload après correction
+            if (data && data.action === 'reload') {
+                console.log('[Guardian] Correction appliquée, rechargement...');
+                setTimeout(() => {
+                    location.reload(true); // Force reload from server
+                }, 500);
+            }
         }).catch(() => {
             // Silently fail - don't create infinite loop
         });
@@ -94,6 +103,45 @@
     window.fetch = function(...args) {
         return originalFetch.apply(this, args).then(response => {
             if (!response.ok && response.status >= 400) {
+                // 401 Unauthorized - Redirection vers login (une seule fois)
+                if (response.status === 401) {
+                    const redirectKey = 'guardian_401_redirect';
+                    const lastRedirect = sessionStorage.getItem(redirectKey);
+                    const now = Date.now();
+
+                    // Éviter boucle: max 1 redirection par minute
+                    if (lastRedirect && (now - parseInt(lastRedirect)) < 60000) {
+                        console.warn('[Guardian] 401 répété - arrêt pour éviter boucle');
+                        return response;
+                    }
+
+                    // Éviter si déjà sur login
+                    if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth')) {
+                        console.warn('[Guardian] 401 détecté');
+                        sessionStorage.setItem(redirectKey, now.toString());
+
+                        // Si dans un iframe (mobile), envoyer message au parent
+                        if (window.parent !== window) {
+                            console.warn('[Guardian] Dans iframe - notification parent');
+                            window.parent.postMessage({ type: 'GUARDIAN_401', url: window.location.href }, '*');
+                            return response;
+                        }
+
+                        // Sinon redirection directe
+                        sessionStorage.setItem('returnUrl', window.location.href);
+                        window.location.href = '/login';
+                    }
+                    return response;
+                }
+
+                // 403 Forbidden - Afficher message
+                if (response.status === 403) {
+                    console.warn('[Guardian] 403 Accès refusé');
+                    if (typeof showNotification === 'function') {
+                        showNotification('Accès refusé', 'error');
+                    }
+                }
+
                 reportError({
                     error_type: `http_${response.status}`,
                     message: `HTTP ${response.status}: ${response.statusText}`,
@@ -119,6 +167,66 @@
             });
             throw error;
         });
+    };
+
+    /**
+     * Intercepte console.error pour capturer les erreurs non-exceptions
+     */
+    const originalConsoleError = console.error;
+    console.error = function(...args) {
+        // Appeler l'original
+        originalConsoleError.apply(console, args);
+
+        // Ignorer les erreurs connues non-critiques
+        const message = args.map(a => String(a)).join(' ');
+        const ignoredPatterns = [
+            'React DevTools',
+            'Download the React DevTools',
+            'Warning:',
+            'content-script',
+            'extension',
+        ];
+
+        if (ignoredPatterns.some(p => message.includes(p))) {
+            return;
+        }
+
+        // Reporter l'erreur
+        reportError({
+            error_type: 'console_error',
+            message: message.slice(0, 1000),
+            url: window.location.href,
+            source: null,
+            line: null,
+            column: null,
+            stack: new Error().stack || null,
+            user_agent: navigator.userAgent
+        });
+    };
+
+    /**
+     * Intercepte console.warn pour capturer les warnings critiques
+     */
+    const originalConsoleWarn = console.warn;
+    console.warn = function(...args) {
+        // Appeler l'original
+        originalConsoleWarn.apply(console, args);
+
+        const message = args.map(a => String(a)).join(' ');
+
+        // Ne capturer que les warnings React Router (migrations v7)
+        if (message.includes('React Router') && message.includes('v7')) {
+            reportError({
+                error_type: 'deprecation_warning',
+                message: message.slice(0, 1000),
+                url: window.location.href,
+                source: 'react-router',
+                line: null,
+                column: null,
+                stack: null,
+                user_agent: navigator.userAgent
+            });
+        }
     };
 
     console.debug('[ErrorReporter] Frontend error reporting initialized');

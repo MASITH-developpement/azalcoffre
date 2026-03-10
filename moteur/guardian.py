@@ -11,7 +11,7 @@ CRÉATEUR: contact@stephane-moreau.fr (hardcodé)
 """
 
 from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from typing import Optional, List, Dict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -289,11 +289,62 @@ class Guardian:
 
         return result
 
+    # Paths à exclure du logging (endpoints haute fréquence)
+    _EXCLUDE_PATHS = [
+        "/health",
+        "/favicon.ico",
+        "/assets/",
+        "/static/",
+        "/api/docs",
+        "/api/redoc",
+        "/api/openapi.json",
+    ]
+
     @classmethod
     async def log_request(cls, request: Request, response):
-        """Log une requête (silencieux)."""
-        # Log minimal pour audit
-        pass
+        """Log une requête (silencieux) - suivi complet."""
+        path = request.url.path
+
+        # Exclure les endpoints haute fréquence
+        if any(path.startswith(excluded) for excluded in cls._EXCLUDE_PATHS):
+            return
+
+        ip = cls._get_client_ip(request)
+        user_agent = request.headers.get("User-Agent", "")[:200]
+        method = request.method
+        status_code = response.status_code if response else 0
+
+        # Determiner le niveau selon le status code
+        if status_code >= 500:
+            niveau = "ERROR"
+        elif status_code >= 400:
+            niveau = "WARNING"
+        else:
+            niveau = "INFO"
+
+        # Extraire tenant_id et user du state si disponible
+        tenant_id = None
+        user_email = None
+        user_id = None
+        if hasattr(request.state, "tenant_id"):
+            tenant_id = request.state.tenant_id
+        if hasattr(request.state, "user"):
+            user = request.state.user
+            if user:
+                user_email = user.get("email")
+                user_id = user.get("id")
+
+        await cls._log(GuardianLog(
+            niveau=niveau,
+            action=f"{method}:{status_code}",
+            tenant_id=tenant_id,
+            utilisateur_id=user_id,
+            utilisateur_email=user_email,
+            description=f"{method} {path}",
+            ip_address=ip,
+            user_agent=user_agent,
+            action_prise="LOGGED"
+        ))
 
     @classmethod
     async def log_error(cls, request: Request, error: Exception):
@@ -371,9 +422,39 @@ class Guardian:
         if cls._failed_attempts[ip] >= 10:
             cls._blocked_ips.add(ip)
 
+    # Fichiers de log Guardian
+    _LOG_DIR = "/home/ubuntu/azalplus/logs"
+    _REQUESTS_LOG = f"{_LOG_DIR}/guardian_requests.log"
+    _ERRORS_LOG = f"{_LOG_DIR}/guardian_errors.log"
+    _BLOCKS_LOG = f"{_LOG_DIR}/guardian_blocks.log"
+
+    @classmethod
+    def _write_to_file(cls, filepath: str, log: GuardianLog):
+        """Ecrit un log dans un fichier."""
+        try:
+            from pathlib import Path
+            Path(cls._LOG_DIR).mkdir(parents=True, exist_ok=True)
+
+            timestamp = datetime.now().isoformat()
+            line = f"{timestamp} | {log.niveau:8} | {log.action:25} | {log.ip_address or '-':15} | {log.description or ''}\n"
+
+            with open(filepath, 'a') as f:
+                f.write(line)
+        except Exception as e:
+            logger.warning("guardian_file_log_failed", error=str(e))
+
     @classmethod
     async def _log(cls, log: GuardianLog):
-        """Enregistre un log Guardian en base."""
+        """Enregistre un log Guardian en base et fichier."""
+        # 1. Ecrire dans le fichier selon le type
+        if log.niveau in ("BLOCK", "CRITICAL"):
+            cls._write_to_file(cls._BLOCKS_LOG, log)
+        elif log.niveau == "ERROR":
+            cls._write_to_file(cls._ERRORS_LOG, log)
+        else:
+            cls._write_to_file(cls._REQUESTS_LOG, log)
+
+        # 2. Ecrire en base de donnees
         try:
             with Database.get_session() as session:
                 from sqlalchemy import text
@@ -420,8 +501,8 @@ async def verify_createur(request: Request):
     return user
 
 @guardian_router.get("/dashboard")
-async def guardian_dashboard(user: dict = Depends(verify_createur)):
-    """Dashboard Guardian (Créateur uniquement)."""
+async def guardian_dashboard_json(user: dict = Depends(verify_createur)):
+    """Dashboard Guardian JSON (Créateur uniquement)."""
     with Database.get_session() as session:
         from sqlalchemy import text
 
@@ -431,6 +512,8 @@ async def guardian_dashboard(user: dict = Depends(verify_createur)):
                 COUNT(*) FILTER (WHERE niveau = 'BLOCK') as blocked,
                 COUNT(*) FILTER (WHERE niveau = 'WARNING') as warnings,
                 COUNT(*) FILTER (WHERE niveau = 'CRITICAL') as critical,
+                COUNT(*) FILTER (WHERE niveau = 'ERROR') as errors,
+                COUNT(*) FILTER (WHERE niveau = 'INFO') as info,
                 COUNT(*) as total
             FROM azalplus.guardian_log
             WHERE created_at > NOW() - INTERVAL '24 hours'
@@ -448,11 +531,320 @@ async def guardian_dashboard(user: dict = Depends(verify_createur)):
                 "blocked_24h": stats[0],
                 "warnings_24h": stats[1],
                 "critical_24h": stats[2],
-                "total_24h": stats[3]
+                "errors_24h": stats[3],
+                "info_24h": stats[4],
+                "total_24h": stats[5]
             },
             "blocked_ips": list(Guardian._blocked_ips),
             "recent_events": [dict(row._mapping) for row in events]
         }
+
+
+@guardian_router.get("/", response_class=HTMLResponse)
+async def guardian_dashboard_html(request: Request, user: dict = Depends(verify_createur)):
+    """Dashboard Guardian HTML (Créateur uniquement)."""
+    from fastapi.responses import HTMLResponse
+    from datetime import datetime
+
+    # Heure actuelle
+    current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    # Récupérer l'AutoPilot pour les learnings
+    from .core import get_autopilot
+    autopilot = get_autopilot()
+
+    # Learnings et proposals
+    learnings = []
+    proposals = []
+    if autopilot and autopilot._storage:
+        try:
+            learnings = autopilot._storage.get_all_learnings(limit=20)
+            proposals = autopilot._storage.get_pending_proposals()
+            # Ajouter les proposals appliquées récemment
+            with Database.get_session() as sess:
+                from sqlalchemy import text
+                applied = sess.execute(text("""
+                    SELECT id, error_type, file_path, status, confidence,
+                           to_char(created_at, 'DD/MM HH24:MI') as time
+                    FROM azalplus.guardian_fix_proposals
+                    ORDER BY created_at DESC
+                    LIMIT 10
+                """)).fetchall()
+        except Exception as e:
+            logger.warning("guardian_dashboard_autopilot_error", error=str(e))
+            applied = []
+    else:
+        applied = []
+
+    with Database.get_session() as session:
+        from sqlalchemy import text
+
+        # Stats globales
+        stats = session.execute(text("""
+            SELECT
+                COUNT(*) FILTER (WHERE niveau = 'BLOCK') as blocked,
+                COUNT(*) FILTER (WHERE niveau = 'WARNING') as warnings,
+                COUNT(*) FILTER (WHERE niveau = 'CRITICAL') as critical,
+                COUNT(*) FILTER (WHERE niveau = 'ERROR') as errors,
+                COUNT(*) FILTER (WHERE niveau = 'INFO') as info,
+                COUNT(*) as total
+            FROM azalplus.guardian_log
+            WHERE created_at > NOW() - INTERVAL '24 hours'
+        """)).fetchone()
+
+        # Top IPs
+        top_ips = session.execute(text("""
+            SELECT ip_address, COUNT(*) as count,
+                   COUNT(*) FILTER (WHERE niveau IN ('BLOCK', 'WARNING', 'ERROR')) as issues
+            FROM azalplus.guardian_log
+            WHERE created_at > NOW() - INTERVAL '24 hours'
+              AND ip_address IS NOT NULL
+            GROUP BY ip_address
+            ORDER BY count DESC
+            LIMIT 10
+        """)).fetchall()
+
+        # Derniers événements (limité à 10)
+        events = session.execute(text("""
+            SELECT niveau, action, ip_address, description,
+                   to_char(created_at, 'HH24:MI:SS') as time,
+                   utilisateur_email
+            FROM azalplus.guardian_log
+            WHERE created_at > NOW() - INTERVAL '24 hours'
+            ORDER BY created_at DESC
+            LIMIT 10
+        """)).fetchall()
+
+        # Erreurs Frontend (depuis AutoPilot)
+        frontend_errors = session.execute(text("""
+            SELECT error_type, file_path, status, confidence,
+                   to_char(created_at, 'DD/MM HH24:MI') as time,
+                   LEFT(proposed_fix::text, 150) as fix_preview
+            FROM azalplus.guardian_fix_proposals
+            WHERE error_type LIKE 'FRONTEND%' OR error_type LIKE 'js_%'
+               OR error_type LIKE 'http_%' OR error_type LIKE '404%'
+               OR error_type LIKE 'network_%' OR error_type LIKE 'console_%'
+            ORDER BY created_at DESC
+            LIMIT 10
+        """)).fetchall()
+
+        # WAF stats
+        waf_patterns = WAF.get_total_patterns()
+
+        # Générer le HTML
+        html = f"""
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian - Dashboard</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a; color: #e2e8f0; padding: 20px;
+        }}
+        .header {{
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #334155;
+        }}
+        h1 {{ color: #f97316; font-size: 24px; }}
+        .status {{ color: #22c55e; font-size: 14px; }}
+        .stats {{
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px; margin-bottom: 30px;
+        }}
+        .stat {{
+            background: #1e293b; padding: 20px; border-radius: 12px;
+            text-align: center; border: 1px solid #334155;
+        }}
+        .stat-value {{ font-size: 32px; font-weight: bold; }}
+        .stat-label {{ font-size: 12px; color: #94a3b8; margin-top: 5px; }}
+        .stat.blocked .stat-value {{ color: #ef4444; }}
+        .stat.warning .stat-value {{ color: #f59e0b; }}
+        .stat.error .stat-value {{ color: #f97316; }}
+        .stat.info .stat-value {{ color: #22c55e; }}
+        .stat.total .stat-value {{ color: #3b82f6; }}
+        .section {{ margin-bottom: 30px; }}
+        .section-title {{
+            font-size: 16px; color: #94a3b8; margin-bottom: 15px;
+            display: flex; align-items: center; gap: 10px;
+        }}
+        table {{
+            width: 100%; border-collapse: collapse; background: #1e293b;
+            border-radius: 12px; overflow: hidden;
+        }}
+        th, td {{ padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; }}
+        th {{ background: #334155; font-size: 12px; color: #94a3b8; text-transform: uppercase; }}
+        tr:hover {{ background: #334155; }}
+        .badge {{
+            padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+        }}
+        .badge.BLOCK {{ background: #7f1d1d; color: #fca5a5; }}
+        .badge.CRITICAL {{ background: #7f1d1d; color: #fca5a5; }}
+        .badge.WARNING {{ background: #78350f; color: #fcd34d; }}
+        .badge.ERROR {{ background: #7c2d12; color: #fdba74; }}
+        .badge.INFO {{ background: #14532d; color: #86efac; }}
+        .ip {{ font-family: monospace; color: #60a5fa; }}
+        .desc {{ max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+        .refresh {{
+            background: #3b82f6; color: white; border: none; padding: 8px 16px;
+            border-radius: 6px; cursor: pointer; font-size: 14px;
+        }}
+        .refresh:hover {{ background: #2563eb; }}
+        .grid-2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
+        .grid-3 {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }}
+        @media (max-width: 1200px) {{ .grid-3 {{ grid-template-columns: 1fr 1fr; }} }}
+        @media (max-width: 768px) {{ .grid-2, .grid-3 {{ grid-template-columns: 1fr; }} }}
+        .time {{ color: #64748b; font-size: 13px; }}
+        .learning {{ padding: 10px; background: #0f172a; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #3b82f6; }}
+        .learning.validated {{ border-left-color: #22c55e; }}
+        .learning.rejected {{ border-left-color: #ef4444; }}
+        .learning-pattern {{ font-family: monospace; font-size: 11px; color: #94a3b8; }}
+        .learning-fix {{ font-size: 12px; color: #e2e8f0; margin-top: 4px; }}
+        .proposal {{ padding: 10px; background: #0f172a; border-radius: 8px; margin-bottom: 8px; }}
+        .proposal-status {{ display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }}
+        .proposal-status.pending {{ background: #78350f; color: #fcd34d; }}
+        .proposal-status.applied {{ background: #14532d; color: #86efac; }}
+        .proposal-status.approved {{ background: #1e3a5f; color: #93c5fd; }}
+        .proposal-status.rejected {{ background: #7f1d1d; color: #fca5a5; }}
+        .proposal-status.needs_claude {{ background: #4c1d95; color: #c4b5fd; }}
+        .confidence {{ font-size: 11px; color: #64748b; }}
+        .scrollbox {{ max-height: 300px; overflow-y: auto; }}
+        .frontend-error {{ padding: 10px; background: #0f172a; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #f97316; }}
+        .frontend-error .error-type {{ font-weight: 600; color: #f97316; font-size: 12px; }}
+        .frontend-error .error-path {{ font-family: monospace; font-size: 11px; color: #94a3b8; }}
+        .frontend-error .error-fix {{ font-size: 11px; color: #64748b; margin-top: 4px; font-family: monospace; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Guardian Dashboard</h1>
+            <div class="status">WAF actif - {waf_patterns} patterns</div>
+            <div class="time">{current_time}</div>
+        </div>
+        <button class="refresh" onclick="location.reload()">Actualiser</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat total">
+            <div class="stat-value">{stats[5]}</div>
+            <div class="stat-label">Total (24h)</div>
+        </div>
+        <div class="stat info">
+            <div class="stat-value">{stats[4]}</div>
+            <div class="stat-label">OK</div>
+        </div>
+        <div class="stat warning">
+            <div class="stat-value">{stats[1]}</div>
+            <div class="stat-label">Warnings</div>
+        </div>
+        <div class="stat error">
+            <div class="stat-value">{stats[3]}</div>
+            <div class="stat-label">Erreurs</div>
+        </div>
+        <div class="stat blocked">
+            <div class="stat-value">{stats[0]}</div>
+            <div class="stat-label">Bloquées</div>
+        </div>
+        <div class="stat blocked">
+            <div class="stat-value">{stats[2]}</div>
+            <div class="stat-label">Critiques</div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="section">
+            <div class="section-title">Top IPs (24h)</div>
+            <table>
+                <thead><tr><th>IP</th><th>Requêtes</th><th>Issues</th></tr></thead>
+                <tbody>
+                    {"".join(f'<tr><td class="ip">{row[0]}</td><td>{row[1]}</td><td>{row[2]}</td></tr>' for row in top_ips)}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">IPs Bloquées (mémoire)</div>
+            <table>
+                <thead><tr><th>IP</th><th>Tentatives</th></tr></thead>
+                <tbody>
+                    {"".join(f'<tr><td class="ip">{ip}</td><td>{Guardian._failed_attempts.get(ip, 0)}</td></tr>' for ip in Guardian._blocked_ips) or '<tr><td colspan="2" style="text-align:center;color:#64748b;">Aucune IP bloquée</td></tr>'}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Derniers événements (10)</div>
+        <table>
+            <thead>
+                <tr><th>Heure</th><th>Niveau</th><th>Action</th><th>IP</th><th>Description</th><th>User</th></tr>
+            </thead>
+            <tbody>
+                {"".join(f'''<tr>
+                    <td>{row[4]}</td>
+                    <td><span class="badge {row[0]}">{row[0]}</span></td>
+                    <td>{row[1]}</td>
+                    <td class="ip">{row[2] or '-'}</td>
+                    <td class="desc" title="{(row[3] or '').replace('"', '&quot;')}">{(row[3] or '-')[:60]}</td>
+                    <td>{(row[5] or '-').split('@')[0] if row[5] else '-'}</td>
+                </tr>''' for row in events)}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="grid-2">
+        <div class="section">
+            <div class="section-title">Apprentissages Guardian ({len(learnings)})</div>
+            <div class="scrollbox">
+                {"".join(f'''<div class="learning {l.status}">
+                    <div class="learning-pattern">{l.error_pattern[:80]}...</div>
+                    <div class="learning-fix">{(l.fix_template or '-')[:100]}</div>
+                    <div class="confidence">Confiance: {int(l.confidence*100)}% | Utilisé: {l.times_applied}x | {l.status}</div>
+                </div>''' for l in learnings) or '<div style="color:#64748b;text-align:center;padding:20px;">Aucun apprentissage</div>'}
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Actions Claude (AutoPilot)</div>
+            <div class="scrollbox">
+                {"".join(f'''<div class="proposal">
+                    <span class="proposal-status {row[3]}">{row[3].upper()}</span>
+                    <span style="margin-left:8px;font-size:12px;">{row[1]}</span>
+                    <div style="font-size:11px;color:#64748b;margin-top:4px;">
+                        {(row[2] or '-').split('/')[-1]} | Confiance: {int(row[4]*100) if row[4] else 0}% | {row[5]}
+                    </div>
+                </div>''' for row in applied) if applied else '<div style="color:#64748b;text-align:center;padding:20px;">Aucune action Claude</div>'}
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Erreurs Frontend ({len(frontend_errors)})</div>
+        <div class="scrollbox">
+            {"".join(f'''<div class="frontend-error">
+                <div class="error-type">{row[0]}</div>
+                <div class="error-path">{(row[1] or '-')[:80]}</div>
+                <div style="display:flex;justify-content:space-between;margin-top:6px;">
+                    <span class="proposal-status {row[2]}">{row[2].upper()}</span>
+                    <span class="confidence">Confiance: {int(row[3]*100) if row[3] else 0}% | {row[4]}</span>
+                </div>
+                <div class="error-fix">{(row[5] or '')[:100]}...</div>
+            </div>''' for row in frontend_errors) if frontend_errors else '<div style="color:#64748b;text-align:center;padding:20px;">Aucune erreur frontend capturée</div>'}
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh toutes les 30 secondes
+        setTimeout(() => location.reload(), 30000);
+    </script>
+</body>
+</html>
+"""
+        return HTMLResponse(content=html)
 
 @guardian_router.get("/logs")
 async def guardian_logs(
@@ -1461,8 +1853,28 @@ IP: {client_ip}
 
     # Soumettre à AutoPilot pour analyse
     from .core import get_autopilot
+    from .autopilot import AutoFixer
     autopilot = get_autopilot()
 
+    fix_applied = False
+    fix_message = ""
+
+    # 1. Essayer AutoFixer pour TOUTES les erreurs (pas seulement 404)
+    logger.info("guardian_calling_autofixer", error_type=report.error_type)
+    try:
+        success, message = AutoFixer.try_fix(error_log)
+        logger.info("autofixer_returned", success=success, message=message[:100] if message else "")
+        if success:
+            fix_applied = True
+            fix_message = message
+            logger.info("frontend_error_autofixed",
+                       error_type=report.error_type,
+                       source=report.source,
+                       fix=message)
+    except Exception as e:
+        logger.warning("frontend_autofix_error", error=str(e))
+
+    # 2. Soumettre à AutoPilot pour apprentissage
     if autopilot:
         proposal = autopilot.analyze(error_log)
         if proposal:
@@ -1471,5 +1883,16 @@ IP: {client_ip}
                        status=proposal.status.value,
                        confidence=proposal.confidence)
 
-    # Réponse neutre (Guardian invisible)
-    return {"status": "received"}
+            # Si confiance élevée et fix non encore appliqué, essayer d'appliquer
+            if not fix_applied and proposal.confidence >= 0.9:
+                autopilot.validate(proposal.id, approved=True,
+                                  explanation="Auto-validated (high confidence frontend fix)")
+                fix_applied = True
+
+    # Réponse avec info de fix (pour permettre reload si corrigé)
+    response = {"status": "received"}
+    if fix_applied:
+        response["action"] = "reload"
+        response["fix"] = fix_message
+
+    return response

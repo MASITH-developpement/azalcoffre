@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 120">
+  <!-- Cercle bleu roi -->
+  <circle cx="60" cy="60" r="55" fill="#3454D1"/>
+
+  <!-- Point accent bleu clair -->
+  <circle cx="92" cy="28" r="6" fill="#6B9FFF"/>
+
+  <!-- Lettre A+ dans le cercle -->
+  <text x="45" y="82"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="800"
+        font-size="58"
+        fill="#FFFFFF">A</text>
+  <text x="78" y="68"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="700"
+        font-size="32"
+        fill="#FFFFFF">+</text>
+
+  <!-- Texte AZALPLUS -->
+  <text x="135" y="78"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="700"
+        font-size="48"
+        fill="#3454D1">AZAL</text>
+  <text x="283" y="78"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="700"
+        font-size="48"
+        fill="#6B9FFF">PLUS</text>
+</svg>

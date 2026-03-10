@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2563eb">
+    <title>Profil - Technicien</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            padding-top: var(--safe-top);
+            padding-bottom: calc(80px + var(--safe-bottom));
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px 16px 60px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin: -40px 16px 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .profile-name {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-role {
+            color: var(--gray-500);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        /* Content */
+        .content {
+            padding: 0 16px 16px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            margin: 20px 0 12px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Info Card */
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 12px;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* Menu Items */
+        .menu-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            text-decoration: none;
+            color: var(--gray-900);
+            cursor: pointer;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:active {
+            background: var(--gray-50);
+        }
+
+        .menu-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 12px;
+        }
+
+        .menu-icon.danger {
+            background: #fef2f2;
+        }
+
+        .menu-text {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .menu-text.danger {
+            color: var(--danger);
+        }
+
+        .menu-arrow {
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            padding: 8px 16px calc(8px + var(--safe-bottom));
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 11px;
+            border-radius: 8px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .nav-item-icon {
+            font-size: 22px;
+        }
+
+        /* Version */
+        .version {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray-500);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Mon Profil</h1>
+    </header>
+
+    <div class="profile-card">
+        <div class="avatar">{{ user.prenom[0] }}{{ user.nom[0] if user.nom else '' }}</div>
+        <div class="profile-name">{{ user.prenom }} {{ user.nom }}</div>
+        <div class="profile-role">Technicien</div>
+        <div class="profile-stats">
+            <div class="stat">
+                <div class="stat-value">{{ stats.interventions_mois }}</div>
+                <div class="stat-label">Ce mois</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ stats.heures_mois }}h</div>
+                <div class="stat-label">Heures</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ stats.note_moyenne }}</div>
+                <div class="stat-label">Note moy.</div>
+            </div>
+        </div>
+    </div>
+
+    <main class="content">
+        <h2 class="section-title">Informations</h2>
+        <div class="info-card">
+            <div class="info-row">
+                <div class="info-icon">&#x1F4E7;</div>
+                <div class="info-content">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">{{ user.email }}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">&#x1F4F1;</div>
+                <div class="info-content">
+                    <div class="info-label">Telephone</div>
+                    <div class="info-value">{{ user.telephone or 'Non renseigne' }}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">&#x1F3E2;</div>
+                <div class="info-content">
+                    <div class="info-label">Entreprise</div>
+                    <div class="info-value">{{ tenant_name }}</div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">Parametres</h2>
+        <div class="menu-card">
+            <a href="#" class="menu-item" onclick="toggleNotifications()">
+                <div class="menu-icon">&#x1F514;</div>
+                <span class="menu-text">Notifications</span>
+                <span class="menu-arrow">&#x276F;</span>
+            </a>
+            <a href="#" class="menu-item" onclick="showHelp()">
+                <div class="menu-icon">&#x2753;</div>
+                <span class="menu-text">Aide</span>
+                <span class="menu-arrow">&#x276F;</span>
+            </a>
+            <a href="#" class="menu-item" onclick="logout()">
+                <div class="menu-icon danger">&#x1F6AA;</div>
+                <span class="menu-text danger">Deconnexion</span>
+                <span class="menu-arrow">&#x276F;</span>
+            </a>
+        </div>
+
+        <div class="version">
+            AZALPLUS v1.0.0
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="/ui/technicien/dashboard" class="nav-item">
+            <span class="nav-item-icon">&#x1F3E0;</span>
+            <span>Accueil</span>
+        </a>
+        <a href="/ui/technicien/interventions" class="nav-item">
+            <span class="nav-item-icon">&#x1F527;</span>
+            <span>Interventions</span>
+        </a>
+        <a href="/ui/technicien/temps" class="nav-item">
+            <span class="nav-item-icon">&#x23F1;</span>
+            <span>Temps</span>
+        </a>
+        <a href="/ui/technicien/profil" class="nav-item active">
+            <span class="nav-item-icon">&#x1F464;</span>
+            <span>Profil</span>
+        </a>
+    </nav>
+
+    <script>
+        function getToken() {
+            return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+        }
+
+        function toggleNotifications() {
+            const enabled = localStorage.getItem('notifications') !== 'false';
+            localStorage.setItem('notifications', enabled ? 'false' : 'true');
+            alert(enabled ? 'Notifications desactivees' : 'Notifications activees');
+        }
+
+        function showHelp() {
+            alert('Pour toute assistance, contactez votre administrateur.');
+        }
+
+        function logout() {
+            if (confirm('Voulez-vous vraiment vous deconnecter ?')) {
+                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
+                localStorage.removeItem('dashboard_cache');
+                window.location.href = '/ui/login';
+            }
+        }
+    </script>
+</body>
+</html>

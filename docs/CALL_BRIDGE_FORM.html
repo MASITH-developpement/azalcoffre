@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche Call Bridge - AZALPLUS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            background: #f1f5f9;
+            color: #1a1a1a;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #10b981;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f0fdf4;
+            border-radius: 8px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field-group label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 13px;
+        }
+
+        .field-group input[type="text"],
+        .field-group input[type="date"],
+        .field-group input[type="time"],
+        .field-group textarea {
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .field-group input:focus,
+        .field-group textarea:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #059669;
+            margin: 30px 0 15px 0;
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-left: 4px solid #10b981;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .pitch-box {
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+            border: 1px solid #fde047;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .pitch-box p {
+            margin-bottom: 8px;
+            color: #713f12;
+        }
+
+        .volume-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .volume-list li {
+            padding: 6px 0 6px 25px;
+            position: relative;
+        }
+
+        .volume-list li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+        }
+
+        .question-table {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .question-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .question-row:nth-child(odd) {
+            background: #f8fafc;
+        }
+
+        .question-label {
+            font-weight: 500;
+            color: #334155;
+            display: flex;
+            align-items: center;
+        }
+
+        .question-answer input[type="text"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #10b981;
+        }
+
+        .scenario-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .scenario-box p {
+            margin-bottom: 8px;
+            color: #1e40af;
+        }
+
+        .scenario-box .question {
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #93c5fd;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .steps-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .steps-table th,
+        .steps-table td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+        }
+
+        .steps-table th {
+            background: #f1f5f9;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .steps-table input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .impression-section {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .impression-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .impression-option:hover {
+            background: #e2e8f0;
+        }
+
+        .impression-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #10b981;
+        }
+
+        .impression-option.positive { color: #166534; }
+        .impression-option.neutral { color: #92400e; }
+        .impression-option.negative { color: #991b1b; }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .export-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .export-btn {
+            background: #fff;
+            color: #059669;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .export-result {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .export-result textarea {
+            background: #fff;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            background: #1e40af;
+            color: #fff;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .copy-btn:hover {
+            background: #1e3a8a;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .compare-note {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+
+        .compare-note strong {
+            color: #92400e;
+        }
+
+        @media (max-width: 600px) {
+            .meta-grid,
+            .question-row,
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>FICHE CALL BRIDGE</h1>
+        <div class="subtitle">Paiement Open Banking - Partenariat Intégrateur</div>
+    </div>
+
+    <form id="bridgeForm">
+        <div class="meta-grid">
+            <div class="field-group">
+                <label>Date</label>
+                <input type="date" name="date" id="date">
+            </div>
+            <div class="field-group">
+                <label>Interlocuteur</label>
+                <input type="text" name="interlocuteur" placeholder="Nom de la personne">
+            </div>
+            <div class="field-group">
+                <label>Heure</label>
+                <input type="time" name="heure" value="13:00">
+            </div>
+            <div class="field-group">
+                <label>Fonction</label>
+                <input type="text" name="fonction" placeholder="Poste / Titre">
+            </div>
+        </div>
+
+        <div class="compare-note">
+            <strong>Note :</strong> Call Powens à 8h00 ce matin. Comparer les réponses pour choisir le meilleur partenaire.
+        </div>
+
+        <h2>PRÉSENTATION AZALPLUS (2 min)</h2>
+
+        <div class="pitch-box">
+            <p><strong>« MASITH Développement édite AZALPLUS, un ERP gratuit pour TPE.</strong></p>
+            <p>L'ERP est 100% gratuit. On se rémunère sur les flux financiers.</p>
+            <p>On veut intégrer un paiement par virement Open Banking dans chaque facture. »</p>
+        </div>
+
+        <ul class="volume-list">
+            <li><strong>500 TPE</strong> année 1 → <strong>5 000 TPE</strong> à 3 ans</li>
+            <li><strong>15 000 → 150 000</strong> paiements/mois</li>
+            <li>Ticket moyen : <strong>300-500€</strong></li>
+        </ul>
+
+        <h2>1. MODÈLE ÉCONOMIQUE</h2>
+
+        <div class="question-table">
+            <div class="question-row">
+                <div class="question-label">Comment fonctionne votre modèle "revenus partagés" ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q1_revenus_partages" placeholder="Réponse...">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Puis-je ajouter une marge sur chaque transaction ?</div>
+                <div class="question-answer">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="q1_marge" value="Oui"> Oui</label>
+                        <label class="radio-item"><input type="radio" name="q1_marge" value="Non"> Non</label>
+                    </div>
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Si oui, comment ? (%, fixe, intégré ou séparé)</div>
+                <div class="question-answer">
+                    <input type="text" name="q1_marge_comment" placeholder="Réponse...">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Quel est votre tarif de base ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q1_tarif" placeholder="___% ou ___€/transaction">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Tarif dégressif sur volume ?</div>
+                <div class="question-answer">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="q1_degressif" value="Oui"> Oui</label>
+                        <label class="radio-item"><input type="radio" name="q1_degressif" value="Non"> Non</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>2. FONCTIONNEMENT TECHNIQUE</h2>
+
+        <div class="question-table">
+            <div class="question-row">
+                <div class="question-label">Comment fonctionne le paiement côté client final ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q2_fonctionnement" placeholder="Réponse...">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Délai de réception des fonds pour la TPE ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q2_delai" placeholder="Réponse...">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Banques couvertes en France ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q2_banques" placeholder="___%">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Taux de succès des paiements ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q2_succes" placeholder="___%">
+                </div>
+            </div>
+        </div>
+
+        <h2>3. INTÉGRATION</h2>
+
+        <div class="question-table">
+            <div class="question-row">
+                <div class="question-label">API REST disponible ?</div>
+                <div class="question-answer">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="q3_api" value="Oui"> Oui</label>
+                        <label class="radio-item"><input type="radio" name="q3_api" value="Non"> Non</label>
+                    </div>
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Documentation publique ?</div>
+                <div class="question-answer">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="q3_doc" value="Oui"> Oui</label>
+                        <label class="radio-item"><input type="radio" name="q3_doc" value="Non"> Non</label>
+                    </div>
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Sandbox / environnement de test ?</div>
+                <div class="question-answer">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="q3_sandbox" value="Oui"> Oui</label>
+                        <label class="radio-item"><input type="radio" name="q3_sandbox" value="Non"> Non</label>
+                    </div>
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Délai d'intégration estimé ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q3_delai" placeholder="___ semaines">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Accompagnement technique inclus ?</div>
+                <div class="question-answer">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="q3_accompagnement" value="Oui"> Oui</label>
+                        <label class="radio-item"><input type="radio" name="q3_accompagnement" value="Non"> Non</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>4. COMMERCIAL / PARTENARIAT</h2>
+
+        <div class="question-table">
+            <div class="question-row">
+                <div class="question-label">Frais d'activation / setup ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q4_setup" placeholder="___€">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Frais mensuels fixes ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q4_mensuel" placeholder="___€/mois">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Programme partenaire / intégrateur ?</div>
+                <div class="question-answer">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="q4_partenaire" value="Oui"> Oui</label>
+                        <label class="radio-item"><input type="radio" name="q4_partenaire" value="Non"> Non</label>
+                    </div>
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Contrat minimum ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q4_contrat" placeholder="___ mois">
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Exclusivité demandée ?</div>
+                <div class="question-answer">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="q4_exclusivite" value="Oui"> Oui</label>
+                        <label class="radio-item"><input type="radio" name="q4_exclusivite" value="Non"> Non</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>5. SCÉNARIO À VALIDER</h2>
+
+        <div class="scenario-box">
+            <p>« Mon client TPE envoie une facture de <strong>500€</strong>.</p>
+            <p>Son client clique sur <strong>'Payer'</strong>.</p>
+            <p>Il est redirigé vers sa banque, valide le virement.</p>
+            <p>La TPE reçoit <strong>500€ moins les frais</strong>. »</p>
+            <p class="question">→ Puis-je configurer les frais à 1.5% (dont 0.5% pour moi) ?</p>
+        </div>
+
+        <div class="question-table">
+            <div class="question-row">
+                <div class="question-label">C'est possible ?</div>
+                <div class="question-answer">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="q5_possible" value="Oui"> Oui</label>
+                        <label class="radio-item"><input type="radio" name="q5_possible" value="Non"> Non</label>
+                    </div>
+                </div>
+            </div>
+            <div class="question-row">
+                <div class="question-label">Comment techniquement ?</div>
+                <div class="question-answer">
+                    <input type="text" name="q5_comment" placeholder="Réponse...">
+                </div>
+            </div>
+        </div>
+
+        <h2>NOTES LIBRES</h2>
+
+        <textarea name="notes" placeholder="Prenez vos notes ici pendant le call..."></textarea>
+
+        <h2>PROCHAINES ÉTAPES CONVENUES</h2>
+
+        <table class="steps-table">
+            <thead>
+                <tr>
+                    <th style="width:50%">Action</th>
+                    <th style="width:25%">Qui</th>
+                    <th style="width:25%">Délai</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text" name="step1_action" placeholder="Action..."></td>
+                    <td><input type="text" name="step1_qui" placeholder="Qui..."></td>
+                    <td><input type="text" name="step1_delai" placeholder="Délai..."></td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="step2_action" placeholder="Action..."></td>
+                    <td><input type="text" name="step2_qui" placeholder="Qui..."></td>
+                    <td><input type="text" name="step2_delai" placeholder="Délai..."></td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="step3_action" placeholder="Action..."></td>
+                    <td><input type="text" name="step3_qui" placeholder="Qui..."></td>
+                    <td><input type="text" name="step3_delai" placeholder="Délai..."></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>IMPRESSION GÉNÉRALE</h2>
+
+        <div class="impression-section">
+            <label class="impression-option positive">
+                <input type="radio" name="impression" value="Très positif">
+                <span><strong>Très positif</strong> — on avance</span>
+            </label>
+            <label class="impression-option positive">
+                <input type="radio" name="impression" value="Positif">
+                <span><strong>Positif</strong> — à creuser</span>
+            </label>
+            <label class="impression-option neutral">
+                <input type="radio" name="impression" value="Neutre">
+                <span><strong>Neutre</strong> — attendre d'autres options</span>
+            </label>
+            <label class="impression-option negative">
+                <input type="radio" name="impression" value="Négatif">
+                <span><strong>Négatif</strong> — chercher ailleurs</span>
+            </label>
+        </div>
+
+        <div class="field-group" style="margin-top:15px">
+            <label>Commentaire</label>
+            <textarea name="commentaire" placeholder="Votre impression générale..." style="min-height:80px"></textarea>
+        </div>
+
+        <h2>CONTACT APRÈS CALL</h2>
+
+        <div class="contact-grid">
+            <div class="field-group">
+                <label>Nom</label>
+                <input type="text" name="contact_nom" placeholder="Nom complet">
+            </div>
+            <div class="field-group">
+                <label>Email</label>
+                <input type="text" name="contact_email" placeholder="email@bridgeapi.io">
+            </div>
+            <div class="field-group">
+                <label>Téléphone</label>
+                <input type="text" name="contact_tel" placeholder="+33...">
+            </div>
+        </div>
+
+        <div class="export-section">
+            <button type="button" class="export-btn" onclick="exportForm()">
+                📋 EXPORTER LES RÉPONSES
+            </button>
+            <div class="export-result" id="exportResult">
+                <textarea id="exportText" readonly></textarea>
+                <button type="button" class="copy-btn" onclick="copyExport()">📋 Copier dans le presse-papier</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="footer">
+        <strong>MASITH Développement</strong> — AZALPLUS — Call Bridge
+    </div>
+</div>
+
+<script>
+// Auto-fill today's date
+document.getElementById('date').valueAsDate = new Date();
+
+function exportForm() {
+    const form = document.getElementById('bridgeForm');
+    const formData = new FormData(form);
+
+    let output = `# COMPTE-RENDU CALL BRIDGE\n\n`;
+    output += `**Date:** ${formData.get('date') || 'Non renseigné'}\n`;
+    output += `**Heure:** ${formData.get('heure') || '13:00'}\n`;
+    output += `**Interlocuteur:** ${formData.get('interlocuteur') || 'Non renseigné'}\n`;
+    output += `**Fonction:** ${formData.get('fonction') || 'Non renseigné'}\n\n`;
+
+    output += `---\n\n## 1. MODÈLE ÉCONOMIQUE\n\n`;
+    output += `- **Modèle revenus partagés:** ${formData.get('q1_revenus_partages') || '-'}\n`;
+    output += `- **Marge possible:** ${formData.get('q1_marge') || '-'}\n`;
+    output += `- **Comment:** ${formData.get('q1_marge_comment') || '-'}\n`;
+    output += `- **Tarif de base:** ${formData.get('q1_tarif') || '-'}\n`;
+    output += `- **Tarif dégressif:** ${formData.get('q1_degressif') || '-'}\n\n`;
+
+    output += `## 2. FONCTIONNEMENT TECHNIQUE\n\n`;
+    output += `- **Fonctionnement paiement:** ${formData.get('q2_fonctionnement') || '-'}\n`;
+    output += `- **Délai réception fonds:** ${formData.get('q2_delai') || '-'}\n`;
+    output += `- **Banques couvertes:** ${formData.get('q2_banques') || '-'}\n`;
+    output += `- **Taux de succès:** ${formData.get('q2_succes') || '-'}\n\n`;
+
+    output += `## 3. INTÉGRATION\n\n`;
+    output += `- **API REST:** ${formData.get('q3_api') || '-'}\n`;
+    output += `- **Documentation publique:** ${formData.get('q3_doc') || '-'}\n`;
+    output += `- **Sandbox:** ${formData.get('q3_sandbox') || '-'}\n`;
+    output += `- **Délai intégration:** ${formData.get('q3_delai') || '-'}\n`;
+    output += `- **Accompagnement:** ${formData.get('q3_accompagnement') || '-'}\n\n`;
+
+    output += `## 4. COMMERCIAL\n\n`;
+    output += `- **Frais setup:** ${formData.get('q4_setup') || '-'}\n`;
+    output += `- **Frais mensuels:** ${formData.get('q4_mensuel') || '-'}\n`;
+    output += `- **Programme partenaire:** ${formData.get('q4_partenaire') || '-'}\n`;
+    output += `- **Contrat minimum:** ${formData.get('q4_contrat') || '-'}\n`;
+    output += `- **Exclusivité:** ${formData.get('q4_exclusivite') || '-'}\n\n`;
+
+    output += `## 5. SCÉNARIO MARGE 0.5%\n\n`;
+    output += `- **Possible:** ${formData.get('q5_possible') || '-'}\n`;
+    output += `- **Comment:** ${formData.get('q5_comment') || '-'}\n\n`;
+
+    output += `---\n\n## NOTES\n\n${formData.get('notes') || 'Aucune note'}\n\n`;
+
+    output += `---\n\n## PROCHAINES ÉTAPES\n\n`;
+    if (formData.get('step1_action')) {
+        output += `1. **${formData.get('step1_action')}** — ${formData.get('step1_qui')} — ${formData.get('step1_delai')}\n`;
+    }
+    if (formData.get('step2_action')) {
+        output += `2. **${formData.get('step2_action')}** — ${formData.get('step2_qui')} — ${formData.get('step2_delai')}\n`;
+    }
+    if (formData.get('step3_action')) {
+        output += `3. **${formData.get('step3_action')}** — ${formData.get('step3_qui')} — ${formData.get('step3_delai')}\n`;
+    }
+
+    output += `\n---\n\n## IMPRESSION GÉNÉRALE\n\n`;
+    output += `**${formData.get('impression') || 'Non renseigné'}**\n\n`;
+    output += `${formData.get('commentaire') || ''}\n\n`;
+
+    output += `---\n\n## CONTACT\n\n`;
+    output += `- **Nom:** ${formData.get('contact_nom') || '-'}\n`;
+    output += `- **Email:** ${formData.get('contact_email') || '-'}\n`;
+    output += `- **Tél:** ${formData.get('contact_tel') || '-'}\n`;
+
+    document.getElementById('exportText').value = output;
+    document.getElementById('exportResult').style.display = 'block';
+}
+
+function copyExport() {
+    const text = document.getElementById('exportText');
+    text.select();
+    document.execCommand('copy');
+
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => {
+        btn.textContent = '📋 Copier dans le presse-papier';
+    }, 2000);
+}
+
+// Save form data to localStorage
+function saveForm() {
+    const form = document.getElementById('bridgeForm');
+    const formData = new FormData(form);
+    const data = {};
+    formData.forEach((value, key) => data[key] = value);
+    localStorage.setItem('bridgeForm', JSON.stringify(data));
+}
+
+// Load form data from localStorage
+function loadForm() {
+    const saved = localStorage.getItem('bridgeForm');
+    if (saved) {
+        const data = JSON.parse(saved);
+        Object.keys(data).forEach(key => {
+            const input = document.querySelector(`[name="${key}"]`);
+            if (input) {
+                if (input.type === 'radio') {
+                    const radio = document.querySelector(`[name="${key}"][value="${data[key]}"]`);
+                    if (radio) radio.checked = true;
+                } else {
+                    input.value = data[key];
+                }
+            }
+        });
+    }
+}
+
+// Auto-save on change
+document.getElementById('bridgeForm').addEventListener('change', saveForm);
+document.getElementById('bridgeForm').addEventListener('input', saveForm);
+
+// Load on page load
+window.addEventListener('load', loadForm);
+</script>
+
+</body>
+</html>

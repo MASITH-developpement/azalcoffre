@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3454D1"/>
+      <stop offset="100%" style="stop-color:#2A45B0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1350" fill="url(#bg4)"/>
+
+  <!-- Logo -->
+  <circle cx="540" cy="280" r="120" fill="#FFFFFF"/>
+  <circle cx="540" cy="280" r="108" fill="#3454D1"/>
+  <circle cx="630" cy="190" r="16" fill="#6B9FFF"/>
+  <text x="495" y="330" font-family="Inter, Arial" font-weight="800" font-size="130" fill="#FFFFFF">A</text>
+  <text x="600" y="280" font-family="Inter, Arial" font-weight="700" font-size="65" fill="#FFFFFF">+</text>
+
+  <!-- Nom -->
+  <text x="540" y="480" font-family="Inter, Arial" font-weight="800" font-size="72" fill="#FFFFFF" text-anchor="middle">AZALPLUS</text>
+
+  <!-- Prix -->
+  <rect x="390" y="530" width="300" height="100" rx="50" fill="#FFFFFF"/>
+  <text x="540" y="600" font-family="Inter, Arial" font-weight="800" font-size="56" fill="#3454D1" text-anchor="middle">0€</text>
+
+  <!-- Features -->
+  <text x="540" y="730" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF" text-anchor="middle">✓ Facturation illimitée</text>
+  <text x="540" y="790" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF" text-anchor="middle">✓ Devis illimités</text>
+  <text x="540" y="850" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF" text-anchor="middle">✓ Clients &amp; Fournisseurs</text>
+  <text x="540" y="910" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF" text-anchor="middle">✓ Stock &amp; Catalogue</text>
+  <text x="540" y="970" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF" text-anchor="middle">✓ Comptabilité</text>
+  <text x="540" y="1030" font-family="Inter, Arial" font-weight="600" font-size="36" fill="#FFFFFF" text-anchor="middle">✓ Paiements instantanés</text>
+
+  <!-- Swipe -->
+  <text x="540" y="1200" font-family="Inter, Arial" font-weight="500" font-size="28" fill="#FFFFFF" opacity="0.7" text-anchor="middle">Glissez →</text>
+
+  <!-- Pagination -->
+  <circle cx="480" cy="1280" r="8" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="510" cy="1280" r="8" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="540" cy="1280" r="8" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="570" cy="1280" r="8" fill="#FFFFFF"/>
+  <circle cx="600" cy="1280" r="8" fill="#FFFFFF" opacity="0.4"/>
+</svg>

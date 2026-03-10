@@ -311,6 +311,18 @@ class ApiClient {
             headers: config.headers,
             ...(config.body ? { body: JSON.stringify(config.body) } : {}),
           });
+        } else {
+          // Refresh failed - redirect to login (une seule fois)
+          const redirectKey = 'guardian_401_redirect';
+          const lastRedirect = sessionStorage.getItem(redirectKey);
+          const now = Date.now();
+
+          if (!lastRedirect || (now - parseInt(lastRedirect)) > 60000) {
+            console.warn('[Guardian] 401 - session expirée, redirection login');
+            sessionStorage.setItem(redirectKey, now.toString());
+            TokenManager.clearTokens();
+            window.location.href = '/login';
+          }
         }
       }
 

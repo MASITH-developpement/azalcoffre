@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2563eb">
+    <title>Interventions - Technicien</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            padding-top: var(--safe-top);
+            padding-bottom: calc(80px + var(--safe-bottom));
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--gray-100);
+            color: var(--gray-700);
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+        }
+
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .filter-tab .count {
+            display: inline-block;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 9px;
+            background: rgba(0,0,0,0.15);
+            font-size: 11px;
+            line-height: 18px;
+            margin-left: 4px;
+        }
+
+        .filter-tab.active .count {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Content */
+        .content {
+            padding: 16px;
+        }
+
+        /* Date Group */
+        .date-group {
+            margin-bottom: 20px;
+        }
+
+        .date-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-500);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-header .today-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Intervention Cards */
+        .intervention-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .intervention-card {
+            background: white;
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid var(--primary);
+            cursor: pointer;
+        }
+
+        .intervention-card.urgent {
+            border-left-color: var(--danger);
+        }
+
+        .intervention-card.en-cours {
+            border-left-color: var(--success);
+            background: linear-gradient(to right, rgba(34, 197, 94, 0.05), white);
+        }
+
+        .intervention-card.terminee {
+            border-left-color: var(--gray-500);
+            opacity: 0.7;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .card-ref {
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .card-status {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .status-planifiee { background: #dbeafe; color: #1d4ed8; }
+        .status-sur-site { background: #fef3c7; color: #d97706; }
+        .status-en-cours { background: #dcfce7; color: #16a34a; }
+        .status-travaux-termines { background: #e0e7ff; color: #4f46e5; }
+        .status-terminee { background: var(--gray-100); color: var(--gray-600); }
+        .status-bloquee { background: #fef2f2; color: #dc2626; }
+
+        .card-client {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .card-address {
+            font-size: 13px;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .card-time {
+            font-size: 13px;
+            color: var(--warning);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-priority {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .priority-urgent { background: #fef2f2; color: #dc2626; }
+        .priority-high { background: #fff7ed; color: #ea580c; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* Search */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: var(--gray-100);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .search-bar span {
+            color: var(--gray-500);
+            margin-right: 8px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            padding: 8px 16px calc(8px + var(--safe-bottom));
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 11px;
+            border-radius: 8px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .nav-item-icon {
+            font-size: 22px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1 class="header-title">Mes Interventions</h1>
+        <div class="search-bar">
+            <span>&#x1F50D;</span>
+            <input type="text" placeholder="Rechercher..." id="searchInput" oninput="filterInterventions()">
+        </div>
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">
+                Toutes <span class="count">{{ counts.all }}</span>
+            </button>
+            <button class="filter-tab" data-filter="today" onclick="setFilter('today')">
+                Aujourd'hui <span class="count">{{ counts.today }}</span>
+            </button>
+            <button class="filter-tab" data-filter="en_cours" onclick="setFilter('en_cours')">
+                En cours <span class="count">{{ counts.en_cours }}</span>
+            </button>
+            <button class="filter-tab" data-filter="planifiee" onclick="setFilter('planifiee')">
+                Planifiees <span class="count">{{ counts.planifiee }}</span>
+            </button>
+            <button class="filter-tab" data-filter="terminee" onclick="setFilter('terminee')">
+                Terminees <span class="count">{{ counts.terminee }}</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="content" id="interventionContent">
+        {% if interventions_grouped %}
+            {% for date_label, interventions in interventions_grouped.items() %}
+            <div class="date-group" data-date="{{ date_label }}">
+                <div class="date-header">
+                    {{ date_label }}
+                    {% if date_label == date_aujourdhui %}
+                    <span class="today-badge">Aujourd'hui</span>
+                    {% endif %}
+                </div>
+                <div class="intervention-list">
+                    {% for intervention in interventions %}
+                    <div class="intervention-card
+                        {% if intervention.priorite == 'URGENT' %}urgent{% endif %}
+                        {% if intervention.statut in ['SUR_SITE', 'EN_COURS'] %}en-cours{% endif %}
+                        {% if intervention.statut == 'TERMINEE' %}terminee{% endif %}"
+                        data-status="{{ intervention.statut }}"
+                        data-client="{{ intervention.client_nom|lower }}"
+                        data-ref="{{ intervention.reference|lower }}"
+                        onclick="openIntervention('{{ intervention.id }}')">
+                        <div class="card-header">
+                            <span class="card-ref">{{ intervention.reference }}</span>
+                            <span class="card-status status-{{ intervention.statut|lower|replace('_', '-') }}">
+                                {{ intervention.statut|replace('_', ' ') }}
+                            </span>
+                        </div>
+                        <div class="card-client">{{ intervention.client_nom }}</div>
+                        {% if intervention.adresse_ligne1 %}
+                        <div class="card-address">
+                            <span>&#x1F4CD;</span>
+                            {{ intervention.adresse_ligne1 }}{% if intervention.ville %}, {{ intervention.ville }}{% endif %}
+                        </div>
+                        {% endif %}
+                        <div class="card-footer">
+                            {% if intervention.date_prevue_debut %}
+                            <span class="card-time">
+                                <span>&#x1F4C5;</span>
+                                {{ intervention.date_prevue_debut|format_datetime }}
+                            </span>
+                            {% else %}
+                            <span></span>
+                            {% endif %}
+                            {% if intervention.priorite and intervention.priorite != 'NORMAL' %}
+                            <span class="card-priority priority-{{ intervention.priorite|lower }}">
+                                {{ intervention.priorite }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">&#x1F4CB;</div>
+                <p>Aucune intervention</p>
+            </div>
+        {% endif %}
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="/ui/technicien/dashboard" class="nav-item">
+            <span class="nav-item-icon">&#x1F3E0;</span>
+            <span>Accueil</span>
+        </a>
+        <a href="/ui/technicien/interventions" class="nav-item active">
+            <span class="nav-item-icon">&#x1F527;</span>
+            <span>Interventions</span>
+        </a>
+        <a href="/ui/technicien/temps" class="nav-item">
+            <span class="nav-item-icon">&#x23F1;</span>
+            <span>Temps</span>
+        </a>
+        <a href="/ui/technicien/profil" class="nav-item">
+            <span class="nav-item-icon">&#x1F464;</span>
+            <span>Profil</span>
+        </a>
+    </nav>
+
+    <script>
+        let currentFilter = 'all';
+
+        function openIntervention(id) {
+            window.location.href = `/ui/technicien/intervention/${id}`;
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+
+            // Update tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+
+            // Filter cards
+            filterInterventions();
+        }
+
+        function filterInterventions() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.intervention-card');
+            const dateGroups = document.querySelectorAll('.date-group');
+
+            cards.forEach(card => {
+                const status = card.dataset.status;
+                const client = card.dataset.client;
+                const ref = card.dataset.ref;
+
+                // Filter check
+                let matchesFilter = true;
+                if (currentFilter === 'today') {
+                    const group = card.closest('.date-group');
+                    matchesFilter = group && group.querySelector('.today-badge') !== null;
+                } else if (currentFilter === 'en_cours') {
+                    matchesFilter = ['SUR_SITE', 'EN_COURS'].includes(status);
+                } else if (currentFilter === 'planifiee') {
+                    matchesFilter = status === 'PLANIFIEE';
+                } else if (currentFilter === 'terminee') {
+                    matchesFilter = status === 'TERMINEE';
+                }
+
+                // Search check
+                const matchesSearch = !searchTerm ||
+                    client.includes(searchTerm) ||
+                    ref.includes(searchTerm);
+
+                card.style.display = (matchesFilter && matchesSearch) ? 'block' : 'none';
+            });
+
+            // Hide empty date groups
+            dateGroups.forEach(group => {
+                const visibleCards = group.querySelectorAll('.intervention-card[style="display: block"], .intervention-card:not([style])');
+                const hasVisible = Array.from(group.querySelectorAll('.intervention-card')).some(c => c.style.display !== 'none');
+                group.style.display = hasVisible ? 'block' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

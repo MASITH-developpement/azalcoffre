@@ -1,0 +1,63 @@
+nom: Waitlist
+icone: users
+menu: Marketing
+description: Liste d'attente pré-lancement AZALPLUS
+
+champs:
+  - nom: email
+    type: email
+    obligatoire: true
+    unique: true
+    label: "Email"
+
+  - nom: prenom
+    type: text
+    obligatoire: true
+    label: "Prénom"
+
+  - nom: activite
+    type: select
+    options:
+      - Artisan
+      - Commerçant
+      - Indépendant / Freelance
+      - TPE (1-10 salariés)
+      - Autre
+    label: "Activité"
+
+  - nom: source
+    type: select
+    options:
+      - LinkedIn
+      - Facebook
+      - Groupe Zaliers
+      - Bouche à oreille
+      - Recherche Google
+      - Autre
+    label: "Comment nous avez-vous connu ?"
+
+  - nom: utm_source
+    type: text
+    label: "UTM Source"
+
+  - nom: utm_campaign
+    type: text
+    label: "UTM Campaign"
+
+  - nom: utm_content
+    type: text
+    label: "UTM Content"
+
+  - nom: inscrit_le
+    type: datetime
+    auto: now
+    label: "Date d'inscription"
+
+  - nom: converti
+    type: boolean
+    defaut: false
+    label: "Compte créé"
+
+  - nom: notes
+    type: textarea
+    label: "Notes"

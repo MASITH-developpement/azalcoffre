@@ -15,6 +15,7 @@ const RecordDetailPage = lazy(() => import('./pages/RecordDetailPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const OfflinePage = lazy(() => import('./pages/OfflinePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const ConnectPage = lazy(() => import('./pages/ConnectPage'));
 
 // Loading fallback component
 function LoadingFallback(): React.ReactElement {
@@ -101,6 +102,7 @@ function AppRoutes(): React.ReactElement {
             </PublicRoute>
           }
         />
+        <Route path="/connect" element={<ConnectPage />} />
 
         {/* Protected routes with MobileLayout */}
         <Route element={<ProtectedLayout />}>

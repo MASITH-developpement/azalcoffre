@@ -32,6 +32,89 @@ from .icons import IconManager
 
 logger = structlog.get_logger()
 
+
+# =============================================================================
+# Auto-numbering configuration
+# =============================================================================
+AUTO_NUMBER_CONFIG = {
+    # Format: module_name -> (prefix, field_name, include_year)
+    "interventions": ("INT", "reference", True),
+    "clients": ("CLI", "code", False),
+    "fournisseurs": ("FOU", "code", False),
+    "donneur_ordre": ("DO", "code", False),
+    "devis": ("DEV", "numero", True),
+    "factures": ("FAC", "numero", True),
+    "avoirs": ("AVO", "numero", True),
+    "bons_livraison": ("BL", "numero", True),
+    "commandes": ("CMD", "numero", True),
+    "projets": ("PRJ", "code", False),
+    "contrats": ("CTR", "numero", True),
+    "produits": ("PRD", "code", False),
+    "tickets": ("TKT", "numero", True),
+}
+
+
+def generate_auto_number(module_name: str, tenant_id: UUID) -> Optional[str]:
+    """
+    Génère automatiquement un numéro unique pour un module.
+    Format: PREFIX-YYYY-XXXXX ou PREFIX-XXXXX selon la config.
+    """
+    config = AUTO_NUMBER_CONFIG.get(module_name.lower())
+    if not config:
+        return None
+
+    prefix, field_name, include_year = config
+    year = datetime.now().year
+
+    # Récupérer le dernier numéro pour ce module/tenant
+    with Database.get_session() as session:
+        from sqlalchemy import text
+
+        if include_year:
+            # Chercher le dernier numéro de l'année en cours
+            pattern = f"{prefix}-{year}-%"
+            sql = text(f"""
+                SELECT {field_name} FROM azalplus.{module_name}
+                WHERE tenant_id = :tenant_id
+                AND {field_name} LIKE :pattern
+                AND deleted_at IS NULL
+                ORDER BY {field_name} DESC
+                LIMIT 1
+            """)
+            result = session.execute(sql, {"tenant_id": str(tenant_id), "pattern": pattern})
+        else:
+            # Chercher le dernier numéro global
+            pattern = f"{prefix}-%"
+            sql = text(f"""
+                SELECT {field_name} FROM azalplus.{module_name}
+                WHERE tenant_id = :tenant_id
+                AND {field_name} LIKE :pattern
+                AND deleted_at IS NULL
+                ORDER BY {field_name} DESC
+                LIMIT 1
+            """)
+            result = session.execute(sql, {"tenant_id": str(tenant_id), "pattern": pattern})
+
+        row = result.fetchone()
+
+        if row and row[0]:
+            # Extraire le numéro séquentiel
+            last_number = row[0]
+            try:
+                # Format: PREFIX-YYYY-XXXXX ou PREFIX-XXXXX
+                parts = last_number.split("-")
+                seq = int(parts[-1]) + 1
+            except (ValueError, IndexError):
+                seq = 1
+        else:
+            seq = 1
+
+        # Générer le nouveau numéro
+        if include_year:
+            return f"{prefix}-{year}-{seq:05d}"
+        else:
+            return f"{prefix}-{seq:05d}"
+
 # =============================================================================
 # API Router v1
 # =============================================================================
@@ -330,6 +413,103 @@ Retourne la liste paginee des {self.display_name}.
             )
 
         # =================================================================
+        # BULK ROUTES - MUST BE BEFORE /{item_id} ROUTES
+        # =================================================================
+
+        # BULK CREATE - POST /{module}/bulk
+        @router.post(
+            f"/{module_name}/bulk",
+            tags=[tag],
+            summary=f"Creation en masse de {self.display_name}",
+            responses={
+                200: {"description": "Resultat de l'operation", "model": BulkResult},
+                401: {"description": "Non authentifie", "model": ErrorDetail}
+            }
+        )
+        async def bulk_create_early(
+            items: List[Dict[str, Any]] = Body(..., max_items=100),
+            tenant_id: UUID = Depends(get_current_tenant),
+            user_id: UUID = Depends(get_current_user_id),
+            user: dict = Depends(require_auth)
+        ) -> BulkResult:
+            success = 0
+            failed = 0
+            errors = []
+            for idx, item_data in enumerate(items):
+                try:
+                    Database.insert(self.table_name, tenant_id, item_data, user_id)
+                    success += 1
+                except Exception as e:
+                    failed += 1
+                    errors.append({"index": idx, "error": str(e)})
+            return BulkResult(success=success, failed=failed, errors=errors)
+
+        # BULK UPDATE - PATCH /{module}/bulk
+        @router.patch(
+            f"/{module_name}/bulk",
+            tags=[tag],
+            summary=f"Mise a jour en masse de {self.display_name}",
+            responses={
+                200: {"description": "Resultat de l'operation", "model": BulkResult},
+                401: {"description": "Non authentifie", "model": ErrorDetail}
+            }
+        )
+        async def bulk_update_early(
+            data: Dict[str, Any] = Body(...),
+            tenant_id: UUID = Depends(get_current_tenant),
+            user_id: UUID = Depends(get_current_user_id),
+            user: dict = Depends(require_auth)
+        ) -> BulkResult:
+            ids = data.get("ids", [])
+            updates = data.get("updates", {})
+            if not ids:
+                return BulkResult(success=0, failed=0, errors=[{"error": "Aucun ID fourni"}])
+            if not updates:
+                return BulkResult(success=0, failed=0, errors=[{"error": "Aucune mise a jour fournie"}])
+            success = 0
+            failed = 0
+            errors = []
+            for item_id in ids:
+                try:
+                    Database.update(self.table_name, tenant_id, UUID(item_id), updates, user_id)
+                    success += 1
+                except Exception as e:
+                    failed += 1
+                    errors.append({"id": item_id, "error": str(e)})
+            return BulkResult(success=success, failed=failed, errors=errors)
+
+        # BULK DELETE - DELETE /{module}/bulk
+        @router.delete(
+            f"/{module_name}/bulk",
+            tags=[tag],
+            summary=f"Suppression en masse de {self.display_name}",
+            responses={
+                200: {"description": "Resultat de l'operation", "model": BulkResult},
+                401: {"description": "Non authentifie", "model": ErrorDetail}
+            }
+        )
+        async def bulk_delete_early(
+            data: Dict[str, Any] = Body(...),
+            tenant_id: UUID = Depends(get_current_tenant),
+            user_id: UUID = Depends(get_current_user_id),
+            user: dict = Depends(require_auth)
+        ) -> BulkResult:
+            ids = data.get("ids", [])
+            if not ids:
+                return BulkResult(success=0, failed=0, errors=[{"error": "Aucun ID fourni"}])
+            success = 0
+            failed = 0
+            errors = []
+            for item_id in ids:
+                try:
+                    Database.soft_delete(self.table_name, tenant_id, UUID(item_id))
+                    success += 1
+                except Exception as e:
+                    failed += 1
+                    errors.append({"id": item_id, "error": str(e)})
+            return BulkResult(success=success, failed=failed, errors=errors)
+
+        # =================================================================
         # GET - GET /{module}/{id}
         # =================================================================
         @router.get(
@@ -392,9 +572,22 @@ Cree un(e) nouveau/nouvelle {self.display_name}.
         ):
             """Cree un nouvel enregistrement."""
 
-            # Validate required fields
+            # Auto-generate reference/code/numero if configured
+            config = AUTO_NUMBER_CONFIG.get(self.table_name.lower())
+            if config:
+                prefix, field_name, include_year = config
+                # Ne générer que si le champ n'est pas fourni ou est vide
+                if not data.get(field_name):
+                    auto_number = generate_auto_number(self.table_name, tenant_id)
+                    if auto_number:
+                        data[field_name] = auto_number
+
+            # Validate required fields (skip auto-generated fields)
             for field_name, field_def in self.module.champs.items():
                 if field_def.requis and field_name not in data:
+                    # Skip if it's an auto-generated field
+                    if config and field_name == config[1]:
+                        continue
                     raise HTTPException(
                         status_code=422,
                         detail=f"Champ requis manquant: {field_name}"
@@ -602,63 +795,6 @@ Exporte les {self.display_name} au format CSV ou JSON.
                         "Content-Disposition": f"attachment; filename={module_name}_export.json"
                     }
                 )
-
-        # =================================================================
-        # BULK CREATE - POST /{module}/bulk
-        # =================================================================
-        @router.post(
-            f"/{module_name}/bulk",
-            tags=[tag],
-            summary=f"Creation en masse de {self.display_name}",
-            description=f"""
-Cree plusieurs {self.display_name} en une seule requete.
-
-### Limite
-Maximum 100 elements par requete.
-
-### Comportement
-- Les elements valides sont crees meme si certains echouent
-- Le resultat indique le nombre de succes et d'echecs
-            """,
-            responses={
-                200: {"description": "Resultat de l'operation", "model": BulkResult},
-                401: {"description": "Non authentifie", "model": ErrorDetail}
-            }
-        )
-        async def bulk_create(
-            items: List[Dict[str, Any]] = Body(..., max_items=100, description="Liste des elements a creer"),
-            tenant_id: UUID = Depends(get_current_tenant),
-            user_id: UUID = Depends(get_current_user_id),
-            user: dict = Depends(require_auth)
-        ) -> BulkResult:
-            """Cree plusieurs enregistrements."""
-
-            success = 0
-            failed = 0
-            errors = []
-
-            for idx, item_data in enumerate(items):
-                try:
-                    Database.insert(
-                        self.table_name,
-                        tenant_id,
-                        item_data,
-                        user_id
-                    )
-                    success += 1
-                except Exception as e:
-                    failed += 1
-                    errors.append({
-                        "index": idx,
-                        "error": str(e),
-                        "data": item_data
-                    })
-
-            return BulkResult(
-                success=success,
-                failed=failed,
-                errors=errors
-            )
 
     def _get_required_fields_doc(self) -> str:
         """Generate documentation for required fields."""

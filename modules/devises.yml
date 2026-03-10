@@ -1,105 +1,68 @@
 # AZALPLUS - Module Devises (Multi-Currency)
-Devise:
-  nom: "Devises"
-  icone: "globe"
-  menu: "Paramètres"
-  description: "Gestion des devises et taux de change"
+nom: Devises
+icone: globe
+menu: Paramètres
+description: Gestion des devises et taux de change
 
-  champs:
-    code: texte requis unique
-    nom: texte requis
-    symbole: texte requis
-    taux: nombre defaut=1.0 min=0
-    decimales: entier defaut=2 min=0 max=4
-    position_symbole: enum [AVANT, APRES] defaut=APRES
-    separateur_milliers: texte defaut=" "
-    separateur_decimal: texte defaut=","
-    actif: oui/non defaut=oui
-    date_maj_taux: datetime
+champs:
+  - nom: code
+    type: text
+    obligatoire: true
+    description: Code ISO de la devise (EUR, USD, etc.)
 
-  # Devises par défaut (injectées automatiquement)
-  donnees_initiales:
-    - code: EUR
-      nom: Euro
-      symbole: "€"
-      taux: 1.0
-      decimales: 2
-      position_symbole: APRES
-      actif: oui
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom de la devise
 
-    - code: USD
-      nom: Dollar américain
-      symbole: "$"
-      taux: 1.08
-      decimales: 2
-      position_symbole: AVANT
-      actif: oui
+  - nom: symbole
+    type: text
+    obligatoire: true
+    description: Symbole de la devise
 
-    - code: GBP
-      nom: Livre sterling
-      symbole: "£"
-      taux: 0.86
-      decimales: 2
-      position_symbole: AVANT
-      actif: oui
+  - nom: taux
+    type: number
+    obligatoire: false
+    defaut: 1.0
+    description: Taux de change par rapport à EUR
 
-    - code: CHF
-      nom: Franc suisse
-      symbole: "CHF"
-      taux: 0.97
-      decimales: 2
-      position_symbole: APRES
-      actif: oui
+  - nom: decimales
+    type: number
+    obligatoire: false
+    defaut: 2
+    description: Nombre de décimales
 
-    - code: CAD
-      nom: Dollar canadien
-      symbole: "CA$"
-      taux: 1.47
-      decimales: 2
-      position_symbole: AVANT
-      actif: oui
+  - nom: position_symbole
+    type: select
+    obligatoire: false
+    options: [AVANT, APRES]
+    defaut: APRES
+    description: Position du symbole
 
-    - code: JPY
-      nom: Yen japonais
-      symbole: "¥"
-      taux: 162.50
-      decimales: 0
-      position_symbole: AVANT
-      actif: oui
+  - nom: separateur_milliers
+    type: text
+    obligatoire: false
+    defaut: " "
+    description: Séparateur de milliers
 
-    - code: MAD
-      nom: Dirham marocain
-      symbole: "DH"
-      taux: 10.85
-      decimales: 2
-      position_symbole: APRES
-      actif: oui
+  - nom: separateur_decimal
+    type: text
+    obligatoire: false
+    defaut: ","
+    description: Séparateur décimal
 
-    - code: XOF
-      nom: Franc CFA (BCEAO)
-      symbole: "FCFA"
-      taux: 655.957
-      decimales: 0
-      position_symbole: APRES
-      actif: oui
+  - nom: actif
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Devise active
 
-    - code: TND
-      nom: Dinar tunisien
-      symbole: "DT"
-      taux: 3.35
-      decimales: 3
-      position_symbole: APRES
-      actif: oui
+  - nom: date_maj_taux
+    type: date
+    obligatoire: false
+    description: Date de mise à jour du taux
 
-    - code: DZD
-      nom: Dinar algérien
-      symbole: "DA"
-      taux: 145.50
-      decimales: 2
-      position_symbole: APRES
-      actif: oui
-
-  actions:
-    - actualiser_taux
-    - activer
-    - desactiver
+actions:
+  - actualiser_taux
+  - activer
+  - desactiver

@@ -3,8 +3,9 @@
  * Capture automatiquement les erreurs et les envoie à Guardian/AutoPilot
  */
 
-const API_URL = import.meta.env.VITE_API_URL || '';
-const REPORT_ENDPOINT = `${API_URL}/guardian/frontend-error`;
+// Utiliser BACKEND_URL (sans /api) pour Guardian
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || '';
+const REPORT_ENDPOINT = `${BACKEND_URL}/guardian/frontend-error`;
 const MAX_ERRORS_PER_MINUTE = 10;
 
 let errorCount = 0;
@@ -94,6 +95,61 @@ export function initializeErrorReporter(): void {
       });
     }
   }, true);
+
+  // Intercepte console.warn pour les warnings critiques (React Router v7)
+  const originalConsoleWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    originalConsoleWarn.apply(console, args);
+
+    const message = args.map(a => String(a)).join(' ');
+
+    // Capturer les warnings React Router v7
+    if (message.includes('React Router') && message.includes('v7')) {
+      reportError({
+        error_type: 'deprecation_warning',
+        message: message.slice(0, 1000),
+        url: window.location.href,
+        source: 'react-router',
+        line: null,
+        column: null,
+        stack: null,
+        user_agent: navigator.userAgent,
+      });
+    }
+  };
+
+  // Intercepte console.error pour capturer les erreurs non-exceptions
+  const originalConsoleError = console.error;
+  console.error = (...args: unknown[]) => {
+    // Appeler l'original
+    originalConsoleError.apply(console, args);
+
+    // Ignorer les erreurs connues non-critiques
+    const message = args.map(a => String(a)).join(' ');
+    const ignoredPatterns = [
+      'React DevTools',
+      'Download the React DevTools',
+      'Warning:',
+      'content-script',
+      'extension',
+    ];
+
+    if (ignoredPatterns.some(p => message.includes(p))) {
+      return;
+    }
+
+    // Reporter l'erreur
+    reportError({
+      error_type: 'console_error',
+      message: message.slice(0, 1000),
+      url: window.location.href,
+      source: null,
+      line: null,
+      column: null,
+      stack: new Error().stack || null,
+      user_agent: navigator.userAgent,
+    });
+  };
 
   console.debug('[ErrorReporter] Mobile error reporting initialized');
 }

@@ -1,0 +1,2750 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AZALPLUS - L'ERP 100% gratuit pour les TPE. Facturation, comptabilité, CRM, stock, projets. 90+ modules sans abonnement, sans limite, sans pub.">
+    <meta name="keywords" content="ERP gratuit, logiciel gestion TPE, facturation gratuite, comptabilité TPE, CRM gratuit, artisan, commerce">
+    <title>AZALPLUS — L'ERP 100% Gratuit pour les TPE</title>
+    <link rel="icon" type="image/svg+xml" href="logo-azalplus.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3454D1;
+            --primary-light: #6B9FFF;
+            --primary-dark: #2a44a8;
+            --success: #10b981;
+            --dark: #0f172a;
+            --gray: #64748b;
+            --light: #f8fafc;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 12px 0;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo img {
+            height: 40px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 35px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            font-size: 15px;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-cta {
+            background: var(--primary);
+            color: var(--white);
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .nav-cta:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 84, 209, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(160deg, #f8fafc 0%, #ffffff 40%, #f0f7ff 100%);
+            padding: 100px 20px 60px;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(52, 84, 209, 0.03) 0%, rgba(107, 159, 255, 0.05) 100%);
+            clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--white);
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray);
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+
+        .hero-eyebrow .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero-title {
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 24px;
+            color: var(--dark);
+            letter-spacing: -0.02em;
+        }
+
+        .hero-title .highlight {
+            color: var(--primary);
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: var(--gray);
+            margin-bottom: 32px;
+            line-height: 1.7;
+            max-width: 540px;
+        }
+
+        .hero-subtitle strong {
+            color: var(--dark);
+        }
+
+        .hero-proof {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 35px;
+            flex-wrap: wrap;
+        }
+
+        .proof-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .proof-item .check {
+            width: 22px;
+            height: 22px;
+            background: linear-gradient(135deg, var(--success), #34d399);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .proof-item span {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+            box-shadow: 0 4px 20px rgba(52, 84, 209, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(52, 84, 209, 0.35);
+        }
+
+        .btn-ghost {
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .btn-ghost:hover {
+            color: var(--primary);
+        }
+
+        .hero-note {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .hero-mockup {
+            width: 100%;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .mockup-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mockup-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .mockup-content {
+            padding: 30px;
+            min-height: 350px;
+            background: #fafbfc;
+        }
+
+        .mockup-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mockup-card {
+            flex: 1;
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .mockup-card-header {
+            font-size: 12px;
+            color: var(--gray);
+            margin-bottom: 8px;
+        }
+
+        .mockup-card-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .mockup-card-value.positive {
+            color: var(--success);
+        }
+
+        .mockup-table {
+            background: var(--white);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .mockup-table-row {
+            display: flex;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+        }
+
+        .mockup-table-row:last-child {
+            border-bottom: none;
+        }
+
+        .mockup-table-row span:first-child {
+            flex: 1;
+            color: var(--gray);
+        }
+
+        .mockup-table-row span:last-child {
+            font-weight: 600;
+        }
+
+        /* Value Props */
+        .value-props {
+            padding: 80px 20px;
+            background: var(--white);
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .value-props-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+        }
+
+        .value-prop {
+            text-align: center;
+        }
+
+        .value-prop-number {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .value-prop-label {
+            font-size: 15px;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        /* Why Free Section */
+        .why-free {
+            padding: 100px 20px;
+            background: linear-gradient(180deg, #f8fafc 0%, var(--white) 100%);
+        }
+
+        .section-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            background: rgba(52, 84, 209, 0.08);
+            color: var(--primary);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 38px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: var(--gray);
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        .why-free-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .why-free-text h3 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        .why-free-text p {
+            font-size: 17px;
+            color: var(--gray);
+            margin-bottom: 25px;
+            line-height: 1.8;
+        }
+
+        .why-free-list {
+            list-style: none;
+        }
+
+        .why-free-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+
+        .why-free-list .icon {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .why-free-visual {
+            background: var(--dark);
+            border-radius: 16px;
+            padding: 40px;
+            color: var(--white);
+        }
+
+        .comparison-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gray);
+            margin-bottom: 25px;
+        }
+
+        .comparison-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .comparison-item:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-item .name {
+            font-weight: 500;
+        }
+
+        .comparison-item .price {
+            font-weight: 700;
+        }
+
+        .comparison-item .price.expensive {
+            color: #f87171;
+        }
+
+        .comparison-item .price.free {
+            color: #34d399;
+            font-size: 20px;
+        }
+
+        .comparison-item.highlight {
+            background: rgba(52, 84, 209, 0.2);
+            margin: 0 -40px;
+            padding: 18px 40px;
+            border-radius: 8px;
+        }
+
+        /* Modules Section */
+        .modules {
+            padding: 100px 20px;
+            background: var(--white);
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .module-card {
+            background: #fafbfc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 28px;
+            transition: all 0.3s;
+        }
+
+        .module-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(52, 84, 209, 0.08);
+            transform: translateY(-3px);
+        }
+
+        .module-card .icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+
+        .module-card h4 {
+            font-size: 17px;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .module-card p {
+            font-size: 14px;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Testimonial / Trust */
+        .trust {
+            padding: 80px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            text-align: center;
+            color: var(--white);
+        }
+
+        .trust-quote {
+            font-size: 28px;
+            font-weight: 600;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            line-height: 1.5;
+        }
+
+        .trust-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--white);
+            color: var(--primary);
+            padding: 16px 32px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .trust-cta:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Pour Qui Section */
+        .pour-qui {
+            padding: 100px 20px;
+            background: var(--white);
+        }
+
+        .metiers-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+
+        .metier-card {
+            background: linear-gradient(145deg, #fafbfc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            padding: 35px 25px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .metier-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 40px rgba(52, 84, 209, 0.1);
+        }
+
+        .metier-card .emoji {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .metier-card h4 {
+            font-size: 19px;
+            margin-bottom: 12px;
+            color: var(--dark);
+        }
+
+        .metier-card p {
+            font-size: 14px;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        .metier-card .modules-list {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .metier-card .module-tag {
+            background: var(--white);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Comment ça marche */
+        .how-it-works {
+            padding: 100px 20px;
+            background: linear-gradient(180deg, #f8fafc 0%, var(--white) 100%);
+        }
+
+        .steps-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            position: relative;
+        }
+
+        .steps-container::before {
+            content: '';
+            position: absolute;
+            top: 60px;
+            left: 20%;
+            right: 20%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-light), var(--primary), var(--primary-light));
+            z-index: 0;
+        }
+
+        .step {
+            flex: 1;
+            max-width: 280px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--white);
+            box-shadow: 0 10px 30px rgba(52, 84, 209, 0.3);
+        }
+
+        .step h4 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: var(--dark);
+        }
+
+        .step p {
+            font-size: 15px;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        .step-time {
+            margin-top: 15px;
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Video Demo Section */
+        .video-demo {
+            padding: 100px 20px;
+            background: var(--dark);
+            color: var(--white);
+        }
+
+        .video-demo .section-header {
+            margin-bottom: 50px;
+        }
+
+        .video-demo .section-tag {
+            background: rgba(107, 159, 255, 0.2);
+            color: var(--primary-light);
+        }
+
+        .video-demo .section-title {
+            color: var(--white);
+        }
+
+        .video-demo .section-subtitle {
+            color: #94a3b8;
+        }
+
+        .video-container {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+
+        .video-placeholder {
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .video-placeholder:hover {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        }
+
+        .video-placeholder:hover .play-button {
+            transform: scale(1.1);
+        }
+
+        .play-button {
+            width: 90px;
+            height: 90px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+            box-shadow: 0 10px 40px rgba(52, 84, 209, 0.5);
+        }
+
+        .play-button::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 24px solid var(--white);
+            border-top: 14px solid transparent;
+            border-bottom: 14px solid transparent;
+            margin-left: 6px;
+        }
+
+        .video-placeholder p {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        .video-features {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 40px;
+        }
+
+        .video-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .video-feature .icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(107, 159, 255, 0.15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-light);
+        }
+
+        /* Demo Mockup Animation */
+        .demo-mockup {
+            background: #1a1f36;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .demo-logo {
+            background: white;
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 16px;
+            padding: 5px 10px;
+            border-radius: 6px;
+        }
+
+        .demo-nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        .demo-nav-item {
+            color: rgba(255,255,255,0.7);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .demo-nav-item.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .demo-user {
+            color: white;
+            font-size: 13px;
+            background: rgba(255,255,255,0.15);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .demo-content {
+            padding: 30px;
+            min-height: 320px;
+            position: relative;
+            background: #0f1225;
+        }
+
+        .demo-step {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            right: 30px;
+            bottom: 30px;
+            opacity: 0;
+            transform: translateX(30px);
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+
+        .demo-step.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        /* Step 1: Liste Devis */
+        .demo-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .demo-btn-small {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .demo-list {
+            background: #1a1f36;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .demo-list-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #0f1225;
+            gap: 15px;
+        }
+
+        .demo-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .demo-list-item.highlight-new {
+            background: rgba(52, 84, 209, 0.1);
+            border: 1px dashed var(--primary);
+        }
+
+        .demo-list-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+        }
+
+        .demo-list-ref {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .demo-list-client {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .demo-list-amount {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .demo-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-accepted {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .badge-pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        /* Step 2: Lignes devis */
+        .demo-lines-header {
+            color: #64748b;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin: 15px 0 10px;
+            letter-spacing: 1px;
+        }
+
+        .demo-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a3050;
+            font-size: 13px;
+        }
+
+        .demo-line-desc {
+            color: #94a3b8;
+        }
+
+        .demo-line-price {
+            color: white;
+            font-weight: 500;
+        }
+
+        /* Step 3: PDF Preview */
+        .demo-pdf-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .demo-pdf-doc {
+            background: white;
+            width: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .demo-pdf-header-bar {
+            height: 8px;
+            background: var(--primary);
+        }
+
+        .demo-pdf-content {
+            padding: 15px;
+            text-align: center;
+        }
+
+        .demo-pdf-logo {
+            font-size: 8px;
+            color: #94a3b8;
+            border: 1px dashed #d1d5db;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        .demo-pdf-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .demo-pdf-client {
+            font-size: 9px;
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .demo-pdf-lines {
+            margin-bottom: 15px;
+        }
+
+        .demo-pdf-line {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin-bottom: 6px;
+        }
+
+        .demo-pdf-line.short {
+            width: 60%;
+        }
+
+        .demo-pdf-total {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .demo-pdf-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .demo-btn-secondary {
+            background: #1a1f36;
+            color: white;
+            border: 1px solid #2a3050;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* Step 4: Client View */
+        .demo-client-view {
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        .demo-client-badge {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .demo-client-email {
+            background: #1a1f36;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .demo-email-from {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .demo-email-subject {
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .demo-email-attachment {
+            background: #0f1225;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .demo-attachment-size {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .demo-client-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .demo-btn-accept {
+            background: transparent;
+            border: 2px solid var(--success);
+            color: var(--success);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .demo-btn-pay-now {
+            background: var(--success);
+            border: none;
+            color: white;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Step 5: Success Devis */
+        .demo-success-ref {
+            color: var(--primary-light);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .demo-success-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .demo-success-action {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .demo-success-action.done {
+            color: var(--success);
+        }
+
+        /* Old styles kept for compatibility */
+        .demo-kpis {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .demo-kpi {
+            background: #1a1f36;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .demo-kpi-label {
+            display: block;
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .demo-kpi-value {
+            display: block;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .demo-action-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .demo-cursor {
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .demo-btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .demo-btn-primary:hover {
+            background: var(--primary-dark);
+            transform: scale(1.02);
+        }
+
+        /* Step 2: Form */
+        .demo-form {
+            background: #1a1f36;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .demo-form-title {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .demo-form-row {
+            margin-bottom: 15px;
+        }
+
+        .demo-form-row label {
+            display: block;
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .demo-input {
+            background: #0f1225;
+            border: 1px solid #2a3050;
+            padding: 10px 14px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            min-height: 40px;
+        }
+
+        .demo-input.typing::after {
+            content: '|';
+            animation: blink-cursor 0.8s infinite;
+            color: var(--primary-light);
+        }
+
+        @keyframes blink-cursor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .demo-form-total {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-top: 1px solid #2a3050;
+            margin-top: 15px;
+            color: white;
+        }
+
+        .demo-total-value {
+            font-weight: 700;
+            color: var(--success);
+            font-size: 18px;
+        }
+
+        .demo-btn-send {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        /* Step 3: Email */
+        .demo-email-preview {
+            background: #1a1f36;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .demo-email-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--success);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .demo-email-icon {
+            font-size: 20px;
+        }
+
+        .demo-email-body {
+            background: #0f1225;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .demo-email-doc {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .demo-doc-icon {
+            font-size: 32px;
+        }
+
+        .demo-doc-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .demo-doc-name {
+            color: white;
+            font-weight: 500;
+        }
+
+        .demo-doc-size {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .demo-btn-pay {
+            width: 100%;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .demo-client-hint {
+            margin-top: 15px;
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        /* Step 4: Payment */
+        .demo-payment {
+            background: #1a1f36;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 350px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .demo-payment-header {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .demo-bank-select {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .demo-bank {
+            background: #0f1225;
+            padding: 12px;
+            border-radius: 8px;
+            color: #94a3b8;
+            font-size: 12px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .demo-bank.selected {
+            border-color: var(--primary);
+            color: white;
+            background: rgba(52, 84, 209, 0.2);
+        }
+
+        .demo-payment-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin: 20px 0;
+        }
+
+        .demo-btn-confirm {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .demo-payment-secure {
+            margin-top: 15px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        /* Step 5: Success */
+        .demo-success {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .demo-success-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            animation: pop-in 0.5s ease;
+        }
+
+        @keyframes pop-in {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .demo-success-title {
+            color: var(--success);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .demo-success-amount {
+            color: white;
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .demo-success-details {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .demo-notification {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(52, 84, 209, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: var(--primary-light);
+            font-size: 13px;
+        }
+
+        /* Progress bar */
+        .demo-progress {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            padding: 15px;
+            background: #0f1225;
+            border-top: 1px solid #1a1f36;
+        }
+
+        .demo-progress-step {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #64748b;
+            background: #1a1f36;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .demo-progress-step.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .demo-progress-step.done {
+            background: var(--success);
+            color: white;
+        }
+
+        /* FAQ Section */
+        .faq {
+            padding: 100px 20px;
+            background: var(--white);
+        }
+
+        .faq-grid {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 25px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            font-family: inherit;
+            transition: color 0.3s;
+        }
+
+        .faq-question:hover {
+            color: var(--primary);
+        }
+
+        .faq-question .toggle {
+            width: 28px;
+            height: 28px;
+            background: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--gray);
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .faq-item.active .faq-question .toggle {
+            background: var(--primary);
+            color: var(--white);
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 300px;
+            padding-bottom: 25px;
+        }
+
+        .faq-answer p {
+            color: var(--gray);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .faq-answer p strong {
+            color: var(--dark);
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 20px;
+            background: var(--light);
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 38px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .cta p {
+            font-size: 18px;
+            color: var(--gray);
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .signup-form {
+            max-width: 450px;
+            margin: 0 auto;
+            display: flex;
+            gap: 12px;
+        }
+
+        .signup-form input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .signup-form input:focus {
+            border-color: var(--primary);
+        }
+
+        .signup-form button {
+            padding: 16px 28px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .signup-form button:hover {
+            background: var(--primary-dark);
+        }
+
+        .cta-note {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .cta-note span {
+            margin: 0 8px;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 50px 20px;
+            background: var(--dark);
+            color: #94a3b8;
+        }
+
+        .footer-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-brand img {
+            height: 35px;
+            filter: brightness(0) invert(1);
+            opacity: 0.9;
+        }
+
+        .footer-brand p {
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--white);
+        }
+
+        .footer-contact {
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .footer-contact a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-title {
+                font-size: 38px;
+            }
+
+            .hero-subtitle {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-proof {
+                justify-content: center;
+            }
+
+            .hero-cta {
+                justify-content: center;
+            }
+
+            .hero-visual {
+                max-width: 500px;
+                margin: 0 auto;
+            }
+
+            .value-props-container,
+            .modules-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .why-free-content {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .signup-form {
+                flex-direction: column;
+            }
+
+            .footer-container {
+                flex-direction: column;
+                gap: 30px;
+                text-align: center;
+            }
+
+            .footer-contact {
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .value-props-container,
+            .modules-grid,
+            .metiers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+
+            .steps-container {
+                flex-direction: column;
+                gap: 40px;
+            }
+
+            .steps-container::before {
+                display: none;
+            }
+
+            .video-features {
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+            }
+
+            .faq-question {
+                font-size: 16px;
+            }
+
+            .demo-nav {
+                display: none;
+            }
+
+            .demo-kpis {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .demo-kpi {
+                padding: 15px;
+            }
+
+            .demo-kpi-value {
+                font-size: 20px;
+            }
+
+            .demo-bank-select {
+                grid-template-columns: 1fr;
+            }
+
+            .demo-progress-step {
+                padding: 6px 10px;
+                font-size: 10px;
+            }
+
+            .demo-content {
+                padding: 20px;
+                min-height: 280px;
+            }
+
+            .demo-step {
+                top: 20px;
+                left: 20px;
+                right: 20px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .metiers-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .steps-container::before {
+                display: none;
+            }
+        }
+    </style>
+    <!-- Guardian Error Reporter (surveille les erreurs) -->
+    <script>
+    (function() {
+        const GUARDIAN_URL = 'http://57.128.7.20:8000/guardian/frontend-error';
+        window.onerror = function(msg, src, line, col, err) {
+            fetch(GUARDIAN_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    error_type: 'js_error',
+                    message: String(msg),
+                    url: location.href,
+                    source: src,
+                    line: line,
+                    column: col,
+                    stack: err ? err.stack : null,
+                    user_agent: navigator.userAgent
+                })
+            }).catch(() => {});
+            return false;
+        };
+        document.addEventListener('error', function(e) {
+            if (e.target.tagName === 'IMG' || e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK') {
+                fetch(GUARDIAN_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        error_type: '404',
+                        message: 'Failed to load ' + e.target.tagName.toLowerCase(),
+                        url: location.href,
+                        source: e.target.src || e.target.href,
+                        line: null, column: null, stack: null,
+                        user_agent: navigator.userAgent
+                    })
+                }).catch(() => {});
+            }
+        }, true);
+    })();
+    </script>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+    <div class="nav-container">
+        <a href="#" class="nav-logo">
+            <img src="logo-azalplus-full.svg" alt="AZALPLUS">
+        </a>
+        <ul class="nav-links">
+            <li><a href="#modules">Modules</a></li>
+            <li><a href="#pour-qui">Pour qui ?</a></li>
+            <li><a href="#demo">Démo</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+        <a href="#inscription" class="nav-cta">Commencer maintenant</a>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-container">
+        <div class="hero-content">
+            <div class="hero-eyebrow">
+                <span class="dot"></span>
+                <span>Disponible maintenant</span>
+            </div>
+            <h1 class="hero-title">
+                Gérez votre entreprise.<br>
+                <span class="highlight">Sans payer un centime.</span>
+            </h1>
+            <p class="hero-subtitle">
+                AZALPLUS vous offre <strong>90 modules de gestion</strong> — facturation, comptabilité, CRM, stocks, projets — sans abonnement, sans limite d'utilisation, sans publicité.
+            </p>
+            <div class="hero-proof">
+                <div class="proof-item">
+                    <span class="check">✓</span>
+                    <span>Zéro abonnement</span>
+                </div>
+                <div class="proof-item">
+                    <span class="check">✓</span>
+                    <span>Zéro limite</span>
+                </div>
+                <div class="proof-item">
+                    <span class="check">✓</span>
+                    <span>Zéro pub</span>
+                </div>
+            </div>
+            <div class="hero-cta">
+                <a href="#inscription" class="btn btn-primary">
+                    Créer mon compte gratuit
+                </a>
+                <a href="#demo" class="btn btn-ghost">
+                    Voir comment ça marche →
+                </a>
+            </div>
+            <p class="hero-note">Inscription en 2 minutes. Aucune carte bancaire demandée.</p>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-mockup">
+                <div class="mockup-header">
+                    <span class="mockup-dot"></span>
+                    <span class="mockup-dot"></span>
+                    <span class="mockup-dot"></span>
+                </div>
+                <div class="mockup-content">
+                    <div class="mockup-row">
+                        <div class="mockup-card">
+                            <div class="mockup-card-header">Chiffre d'affaires</div>
+                            <div class="mockup-card-value">47 850 €</div>
+                        </div>
+                        <div class="mockup-card">
+                            <div class="mockup-card-header">Ce mois</div>
+                            <div class="mockup-card-value positive">+12,4%</div>
+                        </div>
+                    </div>
+                    <div class="mockup-table">
+                        <div class="mockup-table-row">
+                            <span>Factures émises</span>
+                            <span>34</span>
+                        </div>
+                        <div class="mockup-table-row">
+                            <span>Devis en attente</span>
+                            <span>8</span>
+                        </div>
+                        <div class="mockup-table-row">
+                            <span>Clients actifs</span>
+                            <span>127</span>
+                        </div>
+                        <div class="mockup-table-row">
+                            <span>Tâches à faire</span>
+                            <span>5</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Value Props -->
+<section class="value-props">
+    <div class="value-props-container">
+        <div class="value-prop">
+            <div class="value-prop-number">90+</div>
+            <div class="value-prop-label">Modules inclus</div>
+        </div>
+        <div class="value-prop">
+            <div class="value-prop-number">0 €</div>
+            <div class="value-prop-label">Pour toujours</div>
+        </div>
+        <div class="value-prop">
+            <div class="value-prop-number">∞</div>
+            <div class="value-prop-label">Factures & devis</div>
+        </div>
+        <div class="value-prop">
+            <div class="value-prop-number">🇫🇷</div>
+            <div class="value-prop-label">Hébergé en France</div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Free Section -->
+<section class="why-free" id="pourquoi">
+    <div class="section-container">
+        <div class="section-header">
+            <div class="section-tag">Notre philosophie</div>
+            <h2 class="section-title">Pourquoi c'est gratuit ?</h2>
+            <p class="section-subtitle">Pas de piège. Pas de version "Pro" cachée. Voici comment ça fonctionne.</p>
+        </div>
+        <div class="why-free-content">
+            <div class="why-free-text">
+                <h3>Vous choisissez. Vous gagnez dans tous les cas.</h3>
+                <p>
+                    Deux formules, zéro mauvaise surprise. Vous gardez le contrôle.
+                </p>
+                <ul class="why-free-list">
+                    <li>
+                        <span class="icon">✓</span>
+                        <span><strong>Option 1 : Paiement intégré</strong> — vos clients paient en un clic, l'ERP est 100% gratuit</span>
+                    </li>
+                    <li>
+                        <span class="icon">✓</span>
+                        <span><strong>Option 2 : Vos moyens de paiement</strong> — petit % sur votre CA facturé</span>
+                    </li>
+                    <li>
+                        <span class="icon">✓</span>
+                        <span><strong>Pas de publicité</strong> — jamais</span>
+                    </li>
+                    <li>
+                        <span class="icon">✓</span>
+                        <span><strong>Vos données vous appartiennent</strong> — export à tout moment</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="why-free-visual">
+                <div class="comparison-title">Comparatif sur 80 000 € de CA/an</div>
+                <div class="comparison-item">
+                    <span class="name">Banque trad. + Sage</span>
+                    <span class="price expensive">2 400 €/an</span>
+                </div>
+                <div class="comparison-item">
+                    <span class="name">Banque trad. + Odoo</span>
+                    <span class="price expensive">1 800 €/an</span>
+                </div>
+                <div class="comparison-item">
+                    <span class="name">Qonto + Pennylane</span>
+                    <span class="price expensive">1 550 €/an</span>
+                </div>
+                <div class="comparison-item">
+                    <span class="name">Shine + Axonaut</span>
+                    <span class="price expensive">950 €/an</span>
+                </div>
+                <div class="comparison-item" style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                    <span class="name"><strong>AZALPLUS Option 2</strong><br><small style="opacity:0.7">1.5% du CA · users illimités · 90+ modules</small></span>
+                    <span class="price" style="color:#fcd34d;">1 200 €/an</span>
+                </div>
+                <div class="comparison-item highlight">
+                    <span class="name"><strong>AZALPLUS Option 1</strong><br><small style="opacity:0.9">Paiement intégré · users illimités · 90+ modules</small></span>
+                    <span class="price free">0 €</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparatif ERP seul -->
+        <div class="why-free-content" style="margin-top: 60px;">
+            <div class="why-free-visual" style="order: -1;">
+                <div class="comparison-title">Comparatif ERP (sans banque)</div>
+                <div class="comparison-item">
+                    <span class="name">Axonaut<br><small style="opacity:0.6">12 users · 10 modules</small></span>
+                    <span class="price expensive">4 320 €/an</span>
+                </div>
+                <div class="comparison-item">
+                    <span class="name">Odoo Enterprise<br><small style="opacity:0.6">12 users · 10 modules</small></span>
+                    <span class="price expensive">3 600 €/an</span>
+                </div>
+                <div class="comparison-item">
+                    <span class="name">Sage 100 Premium<br><small style="opacity:0.6">12 users · 10 modules</small></span>
+                    <span class="price expensive">3 120 €/an</span>
+                </div>
+                <div class="comparison-item">
+                    <span class="name">Pennylane Essentiel<br><small style="opacity:0.6">12 users · 10 modules</small></span>
+                    <span class="price expensive">2 988 €/an</span>
+                </div>
+                <div class="comparison-item" style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                    <span class="name"><strong>AZALPLUS Option 2</strong><br><small style="opacity:0.7">1.5% du CA · users illimités · 90+ modules</small></span>
+                    <span class="price" style="color:#fcd34d;">1 200 €/an</span>
+                </div>
+                <div class="comparison-item highlight">
+                    <span class="name"><strong>AZALPLUS Option 1</strong><br><small style="opacity:0.9">Paiement intégré · users illimités · 90+ modules</small></span>
+                    <span class="price free">0 €</span>
+                </div>
+                <div style="margin-top: 15px; font-size: 10px; opacity: 0.5; line-height: 1.6;">
+                    Sources : <a href="https://www.sage.com/fr-fr/-/media/files/sagedotcom/france/documents/pdf/conditions-generales/2025/guide-produits-et-tarifs_2025_01_01_sans_spc.pdf" target="_blank" style="color: #6B9FFF;">Sage</a> · <a href="https://www.pennylane.com/fr/tarifs" target="_blank" style="color: #6B9FFF;">Pennylane</a> · <a href="https://www.odoo.com/pricing" target="_blank" style="color: #6B9FFF;">Odoo</a> · <a href="https://axonaut.com/content/prix" target="_blank" style="color: #6B9FFF;">Axonaut</a>
+                </div>
+            </div>
+            <div class="why-free-text">
+                <h3>90 modules inclus. Eux facturent par fonctionnalité.</h3>
+                <p>
+                    Les ERP traditionnels vous font payer chaque module en plus. Chez nous, tout est inclus dès le départ.
+                </p>
+                <ul class="why-free-list">
+                    <li>
+                        <span class="icon">✓</span>
+                        <span><strong>Facturation + Compta + CRM</strong> — inclus</span>
+                    </li>
+                    <li>
+                        <span class="icon">✓</span>
+                        <span><strong>Stock + Achats + Projets</strong> — inclus</span>
+                    </li>
+                    <li>
+                        <span class="icon">✓</span>
+                        <span><strong>RH + Interventions + Planning</strong> — inclus</span>
+                    </li>
+                    <li>
+                        <span class="icon">✓</span>
+                        <span><strong>Utilisateurs illimités</strong> — inclus</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modules Section -->
+<section class="modules" id="modules">
+    <div class="section-container">
+        <div class="section-header">
+            <div class="section-tag">Tout inclus</div>
+            <h2 class="section-title">90 modules. Zéro supplément.</h2>
+            <p class="section-subtitle">Tout ce dont une TPE a besoin pour gérer son activité au quotidien.</p>
+        </div>
+        <div class="modules-grid">
+            <div class="module-card">
+                <div class="icon">📄</div>
+                <h4>Facturation</h4>
+                <p>Devis, factures, avoirs, relances automatiques</p>
+            </div>
+            <div class="module-card">
+                <div class="icon">📊</div>
+                <h4>Comptabilité</h4>
+                <p>Saisie, lettrage, rapprochement, TVA, bilan</p>
+            </div>
+            <div class="module-card">
+                <div class="icon">👥</div>
+                <h4>CRM</h4>
+                <p>Contacts, prospects, pipeline commercial</p>
+            </div>
+            <div class="module-card">
+                <div class="icon">📦</div>
+                <h4>Stock</h4>
+                <p>Produits, mouvements, inventaires, alertes</p>
+            </div>
+            <div class="module-card">
+                <div class="icon">📋</div>
+                <h4>Projets</h4>
+                <p>Tâches, temps passé, budgets, facturation</p>
+            </div>
+            <div class="module-card">
+                <div class="icon">🔧</div>
+                <h4>Interventions</h4>
+                <p>Planification, terrain, comptes-rendus</p>
+            </div>
+            <div class="module-card">
+                <div class="icon">👷</div>
+                <h4>RH</h4>
+                <p>Employés, congés, absences, notes de frais</p>
+            </div>
+            <div class="module-card">
+                <div class="icon">➕</div>
+                <h4>Et 80 autres...</h4>
+                <p>Achats, production, qualité, documents...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trust Section -->
+<section class="trust">
+    <div class="section-container">
+        <p class="trust-quote">
+            "Les TPE méritent des outils professionnels.<br>
+            Elles ne devraient pas avoir à choisir entre leur budget et leur efficacité."
+        </p>
+        <a href="#inscription" class="trust-cta">
+            Essayer AZALPLUS maintenant →
+        </a>
+    </div>
+</section>
+
+<!-- Pour Qui Section -->
+<section class="pour-qui" id="pour-qui">
+    <div class="section-container">
+        <div class="section-header">
+            <div class="section-tag">Pour tous les indépendants</div>
+            <h2 class="section-title">Conçu pour votre métier</h2>
+            <p class="section-subtitle">Que vous soyez artisan, commerçant ou consultant, AZALPLUS s'adapte à vos besoins.</p>
+        </div>
+        <div class="metiers-grid">
+            <div class="metier-card">
+                <span class="emoji">🔧</span>
+                <h4>Artisans</h4>
+                <p>Plombiers, électriciens, menuisiers... Gérez vos chantiers de A à Z.</p>
+                <div class="modules-list">
+                    <span class="module-tag">Devis</span>
+                    <span class="module-tag">Interventions</span>
+                    <span class="module-tag">Planning</span>
+                </div>
+            </div>
+            <div class="metier-card">
+                <span class="emoji">🛒</span>
+                <h4>Commerçants</h4>
+                <p>Boutiques, e-commerce... Pilotez vos ventes et vos stocks.</p>
+                <div class="modules-list">
+                    <span class="module-tag">Stock</span>
+                    <span class="module-tag">Caisse</span>
+                    <span class="module-tag">Fournisseurs</span>
+                </div>
+            </div>
+            <div class="metier-card">
+                <span class="emoji">💼</span>
+                <h4>Consultants</h4>
+                <p>Freelances, cabinets... Suivez vos missions et votre temps.</p>
+                <div class="modules-list">
+                    <span class="module-tag">Projets</span>
+                    <span class="module-tag">Temps</span>
+                    <span class="module-tag">Facturation</span>
+                </div>
+            </div>
+            <div class="metier-card">
+                <span class="emoji">⚕️</span>
+                <h4>Professions libérales</h4>
+                <p>Avocats, architectes... Gérez clients et honoraires simplement.</p>
+                <div class="modules-list">
+                    <span class="module-tag">CRM</span>
+                    <span class="module-tag">Agenda</span>
+                    <span class="module-tag">Comptabilité</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Comment ça marche -->
+<section class="how-it-works" id="comment">
+    <div class="section-container">
+        <div class="section-header">
+            <div class="section-tag">Simple comme bonjour</div>
+            <h2 class="section-title">Opérationnel en 3 étapes</h2>
+            <p class="section-subtitle">Pas de formation, pas de consultant. Vous êtes autonome.</p>
+        </div>
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h4>Créez votre compte</h4>
+                <p>Email, mot de passe, c'est tout. Pas de carte bancaire, pas de SIRET demandé.</p>
+                <span class="step-time">⏱ 30 secondes</span>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h4>Configurez votre activité</h4>
+                <p>Importez vos clients ou partez de zéro. Personnalisez vos modèles de factures.</p>
+                <span class="step-time">⏱ 5 minutes</span>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h4>Facturez et encaissez</h4>
+                <p>Créez votre premier devis. Envoyez-le. Votre client paie en un clic.</p>
+                <span class="step-time">⏱ 2 minutes</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Video Demo Section -->
+<section class="video-demo" id="demo">
+    <div class="section-container">
+        <div class="section-header">
+            <div class="section-tag">Voir en action</div>
+            <h2 class="section-title">Découvrez AZALPLUS en 3 minutes</h2>
+            <p class="section-subtitle">Une démo vaut mieux qu'un long discours.</p>
+        </div>
+        <div class="video-container">
+            <div class="demo-mockup" id="demo-animation">
+                <!-- Header -->
+                <div class="demo-header">
+                    <div class="demo-logo">A+</div>
+                    <div class="demo-nav">
+                        <span class="demo-nav-item active">Tableau de bord</span>
+                        <span class="demo-nav-item">Factures</span>
+                        <span class="demo-nav-item">Clients</span>
+                        <span class="demo-nav-item">Stock</span>
+                    </div>
+                    <div class="demo-user">Marie D.</div>
+                </div>
+
+                <!-- Content -->
+                <div class="demo-content">
+                    <!-- Step 1: Liste Devis -->
+                    <div class="demo-step step-1 active">
+                        <div class="demo-list-header">
+                            <span style="color: white; font-weight: 600;">📋 Mes devis</span>
+                            <button class="demo-btn-primary demo-btn-small">+ Nouveau devis</button>
+                        </div>
+                        <div class="demo-list">
+                            <div class="demo-list-item">
+                                <div class="demo-list-info">
+                                    <span class="demo-list-ref">DEV-2024-041</span>
+                                    <span class="demo-list-client">Martin SAS</span>
+                                </div>
+                                <span class="demo-list-amount">1 850 €</span>
+                                <span class="demo-badge badge-accepted">Accepté</span>
+                            </div>
+                            <div class="demo-list-item">
+                                <div class="demo-list-info">
+                                    <span class="demo-list-ref">DEV-2024-040</span>
+                                    <span class="demo-list-client">Garage Leroy</span>
+                                </div>
+                                <span class="demo-list-amount">4 200 €</span>
+                                <span class="demo-badge badge-pending">En attente</span>
+                            </div>
+                            <div class="demo-list-item highlight-new">
+                                <div class="demo-list-info">
+                                    <span class="demo-list-ref">DEV-2024-042</span>
+                                    <span class="demo-list-client">+ Nouveau...</span>
+                                </div>
+                                <span class="demo-cursor" style="margin-left: auto;">👆</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Créer Devis -->
+                    <div class="demo-step step-2">
+                        <div class="demo-form">
+                            <div class="demo-form-title">✏️ Nouveau devis</div>
+                            <div class="demo-form-row">
+                                <label>Client</label>
+                                <div class="demo-input typing">Boulangerie Dupain</div>
+                            </div>
+                            <div class="demo-form-row">
+                                <label>Objet</label>
+                                <div class="demo-input typing delay-1">Rénovation vitrine</div>
+                            </div>
+                            <div class="demo-lines-header">Lignes du devis</div>
+                            <div class="demo-line">
+                                <span class="demo-line-desc">Dépose ancienne vitrine</span>
+                                <span class="demo-line-price">450 €</span>
+                            </div>
+                            <div class="demo-line">
+                                <span class="demo-line-desc">Fourniture vitrine double</span>
+                                <span class="demo-line-price">1 200 €</span>
+                            </div>
+                            <div class="demo-line">
+                                <span class="demo-line-desc">Pose et finitions</span>
+                                <span class="demo-line-price">850 €</span>
+                            </div>
+                            <div class="demo-form-total">
+                                <span>Total TTC</span>
+                                <span class="demo-total-value">3 000 €</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Aperçu PDF -->
+                    <div class="demo-step step-3">
+                        <div class="demo-pdf-preview">
+                            <div class="demo-pdf-doc">
+                                <div class="demo-pdf-header-bar"></div>
+                                <div class="demo-pdf-content">
+                                    <div class="demo-pdf-logo">VOTRE LOGO</div>
+                                    <div class="demo-pdf-title">DEVIS N° DEV-2024-042</div>
+                                    <div class="demo-pdf-client">Boulangerie Dupain</div>
+                                    <div class="demo-pdf-lines">
+                                        <div class="demo-pdf-line"></div>
+                                        <div class="demo-pdf-line"></div>
+                                        <div class="demo-pdf-line short"></div>
+                                    </div>
+                                    <div class="demo-pdf-total">Total : 3 000 € TTC</div>
+                                </div>
+                            </div>
+                            <div class="demo-pdf-actions">
+                                <button class="demo-btn-secondary">📥 Télécharger PDF</button>
+                                <button class="demo-btn-primary">✉️ Envoyer au client</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Client reçoit -->
+                    <div class="demo-step step-4">
+                        <div class="demo-client-view">
+                            <div class="demo-client-badge">👤 Vue client</div>
+                            <div class="demo-client-email">
+                                <div class="demo-email-from">De : VotreEntreprise</div>
+                                <div class="demo-email-subject">Votre devis DEV-2024-042</div>
+                                <div class="demo-email-attachment">
+                                    <span>📎 Devis_DEV-2024-042.pdf</span>
+                                    <span class="demo-attachment-size">3 000 € TTC</span>
+                                </div>
+                                <div class="demo-client-buttons">
+                                    <button class="demo-btn-accept">✓ Accepter le devis</button>
+                                    <button class="demo-btn-pay-now">💳 Accepter et payer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Devis accepté -->
+                    <div class="demo-step step-5">
+                        <div class="demo-success">
+                            <div class="demo-success-icon">🎉</div>
+                            <div class="demo-success-title">Devis accepté !</div>
+                            <div class="demo-success-ref">DEV-2024-042 → FAC-2024-042</div>
+                            <div class="demo-success-amount">3 000 €</div>
+                            <div class="demo-success-actions">
+                                <div class="demo-success-action done">✓ Facture générée</div>
+                                <div class="demo-success-action done">✓ Email envoyé</div>
+                                <div class="demo-success-action done">✓ Paiement reçu</div>
+                            </div>
+                            <div class="demo-notification">
+                                <span class="demo-notif-icon">🔔</span>
+                                <span>+3 000 € sur votre compte</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div class="demo-progress">
+                    <div class="demo-progress-step active" data-step="1">Mes devis</div>
+                    <div class="demo-progress-step" data-step="2">Créer</div>
+                    <div class="demo-progress-step" data-step="3">Aperçu</div>
+                    <div class="demo-progress-step" data-step="4">Client</div>
+                    <div class="demo-progress-step" data-step="5">Payé !</div>
+                </div>
+            </div>
+        </div>
+        <div class="video-features">
+            <div class="video-feature">
+                <span class="icon">📄</span>
+                <span>Créer un devis en 60 secondes</span>
+            </div>
+            <div class="video-feature">
+                <span class="icon">💳</span>
+                <span>Paiement client intégré</span>
+            </div>
+            <div class="video-feature">
+                <span class="icon">📊</span>
+                <span>Tableau de bord temps réel</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="faq" id="faq">
+    <div class="section-container">
+        <div class="section-header">
+            <div class="section-tag">Questions fréquentes</div>
+            <h2 class="section-title">On répond à tout</h2>
+            <p class="section-subtitle">Les questions que vous vous posez (et c'est normal).</p>
+        </div>
+        <div class="faq-grid">
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>C'est vraiment 100% gratuit ? Où est le piège ?</span>
+                    <span class="toggle">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p><strong>Pas de piège.</strong> L'ERP complet est gratuit : 90 modules, utilisateurs illimités, données illimitées. <strong>Deux options :</strong> vous utilisez notre système de paiement intégré (vos clients paient en un clic) et l'ERP reste 100% gratuit. Ou vous gardez vos moyens de paiement habituels et vous payez un petit pourcentage sur votre CA facturé. Dans les deux cas, vous êtes gagnant.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>Mes données sont-elles sécurisées ?</span>
+                    <span class="toggle">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p><strong>Vos données sont hébergées en France</strong>, dans des datacenters certifiés. Chiffrement de bout en bout, sauvegardes quotidiennes, conformité RGPD totale. Vous pouvez exporter toutes vos données à tout moment en un clic. Nous ne revendons jamais vos informations.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>Et si AZALPLUS ferme demain ?</span>
+                    <span class="toggle">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p><strong>Vos données vous appartiennent.</strong> Export complet disponible à tout moment (clients, factures, comptabilité) en formats standards (CSV, JSON, PDF). Notre code source est documenté pour permettre une migration facile. Et nous sommes là pour durer : notre modèle économique est rentable et pérenne.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>Puis-je migrer depuis un autre logiciel ?</span>
+                    <span class="toggle">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p><strong>Oui, facilement.</strong> Import de vos clients, produits et historique depuis Excel, CSV, ou directement depuis Axonaut, Pennylane, Sage, Cegid. Notre assistant d'import vous guide étape par étape. Migration gratuite avec accompagnement si besoin.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>C'est compliqué à prendre en main ?</span>
+                    <span class="toggle">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p><strong>Si vous savez utiliser un smartphone, vous savez utiliser AZALPLUS.</strong> Interface intuitive, zéro jargon technique. Vous créez votre premier devis en moins de 5 minutes. Et si besoin, notre support répond en moins de 24h (vraiment, pas un robot).</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>Est-ce conforme pour ma comptabilité ?</span>
+                    <span class="toggle">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p><strong>100% conforme</strong> à la réglementation française : factures conformes à l'article 289 du CGI, mentions légales obligatoires, archivage certifié, piste d'audit. Export FEC pour votre comptable. Compatible avec la facturation électronique 2026.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta" id="inscription">
+    <div class="section-container">
+        <h2>Prêt à simplifier votre gestion ?</h2>
+        <p>Créez votre compte en 2 minutes. Commencez à facturer dans l'heure.</p>
+        <form class="signup-form" action="#" method="POST">
+            <input type="email" placeholder="Votre email professionnel" required>
+            <button type="submit">Créer mon compte</button>
+        </form>
+        <p class="cta-note">
+            <span>✓ Gratuit pour toujours</span>
+            <span>✓ Aucune carte bancaire</span>
+            <span>✓ Données en France</span>
+        </p>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer" id="contact">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <img src="logo-azalplus-full.svg" alt="AZALPLUS">
+            <p>L'ERP gratuit pour les TPE</p>
+        </div>
+        <ul class="footer-links">
+            <li><a href="#">Modules</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">CGU</a></li>
+            <li><a href="#">Confidentialité</a></li>
+        </ul>
+        <div class="footer-contact">
+            <p><strong>MASITH Développement</strong></p>
+            <p><a href="mailto:contact@masith.fr">contact@masith.fr</a></p>
+            <p>+33 6 75 78 87 58</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+// Demo Animation
+const demoSteps = document.querySelectorAll('.demo-step');
+const progressSteps = document.querySelectorAll('.demo-progress-step');
+let currentStep = 1;
+let demoInterval;
+
+function animateKPIs() {
+    document.querySelectorAll('.demo-kpi-value').forEach(el => {
+        const target = parseInt(el.dataset.value);
+        const isPrice = target > 1000;
+        let current = 0;
+        const increment = target / 30;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            el.textContent = isPrice
+                ? Math.floor(current).toLocaleString('fr-FR') + ' €'
+                : Math.floor(current);
+        }, 30);
+    });
+}
+
+function goToStep(step) {
+    // Update steps
+    demoSteps.forEach((s, i) => {
+        s.classList.remove('active');
+        if (i + 1 === step) s.classList.add('active');
+    });
+
+    // Update progress
+    progressSteps.forEach((p, i) => {
+        p.classList.remove('active', 'done');
+        if (i + 1 === step) p.classList.add('active');
+        if (i + 1 < step) p.classList.add('done');
+    });
+
+    // Animate KPIs on step 1
+    if (step === 1) {
+        setTimeout(animateKPIs, 300);
+    }
+
+    currentStep = step;
+}
+
+function nextStep() {
+    const next = currentStep >= 5 ? 1 : currentStep + 1;
+    goToStep(next);
+}
+
+function startDemo() {
+    goToStep(1);
+    demoInterval = setInterval(nextStep, 3000);
+}
+
+// Click on progress steps
+progressSteps.forEach((step, i) => {
+    step.addEventListener('click', () => {
+        clearInterval(demoInterval);
+        goToStep(i + 1);
+        demoInterval = setInterval(nextStep, 3000);
+    });
+});
+
+// Start demo when visible
+const demoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            startDemo();
+            demoObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.5 });
+
+const demoElement = document.getElementById('demo-animation');
+if (demoElement) {
+    demoObserver.observe(demoElement);
+}
+
+// FAQ Accordion
+document.querySelectorAll('.faq-question').forEach(button => {
+    button.addEventListener('click', () => {
+        const faqItem = button.parentElement;
+        const isActive = faqItem.classList.contains('active');
+
+        // Fermer tous les autres
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Ouvrir celui cliqué (si pas déjà ouvert)
+        if (!isActive) {
+            faqItem.classList.add('active');
+        }
+    });
+});
+
+// Smooth scroll pour les ancres
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+
+// Animation au scroll (intersection observer)
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, observerOptions);
+
+// Appliquer l'animation aux sections
+document.querySelectorAll('.section-header, .metier-card, .step, .module-card, .faq-item').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(el);
+});
+</script>
+
+</body>
+</html>

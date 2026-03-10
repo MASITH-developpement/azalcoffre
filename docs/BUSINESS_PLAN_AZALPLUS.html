@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Business Plan AZALPLUS - MASITH Développement</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fff;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        /* Cover Page */
+        .cover {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            page-break-after: always;
+            border: 3px solid #1e40af;
+            padding: 60px;
+            margin: -40px;
+            margin-bottom: 40px;
+        }
+
+        .cover-logo {
+            font-size: 56pt;
+            font-weight: 800;
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .cover-subtitle {
+            font-size: 18pt;
+            color: #64748b;
+            margin-bottom: 60px;
+        }
+
+        .cover-title {
+            font-size: 32pt;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+        }
+
+        .cover-type {
+            font-size: 14pt;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 80px;
+        }
+
+        .cover-info {
+            font-size: 12pt;
+            color: #475569;
+        }
+
+        .cover-info p {
+            margin: 8px 0;
+        }
+
+        .cover-confidential {
+            margin-top: 60px;
+            padding: 15px 30px;
+            border: 2px solid #dc2626;
+            color: #dc2626;
+            font-weight: 600;
+            font-size: 11pt;
+        }
+
+        /* Table of Contents */
+        .toc {
+            page-break-after: always;
+        }
+
+        .toc h2 {
+            font-size: 24pt;
+            color: #1e40af;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #1e40af;
+        }
+
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px dotted #cbd5e1;
+        }
+
+        .toc-item span {
+            font-size: 12pt;
+        }
+
+        .toc-item .num {
+            font-weight: 700;
+            color: #1e40af;
+            margin-right: 15px;
+        }
+
+        /* Sections */
+        h1 {
+            font-size: 24pt;
+            color: #1e40af;
+            margin: 40px 0 25px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #1e40af;
+            page-break-before: always;
+        }
+
+        h1:first-of-type {
+            page-break-before: avoid;
+        }
+
+        h2 {
+            font-size: 16pt;
+            color: #1e3a8a;
+            margin: 30px 0 15px 0;
+        }
+
+        h3 {
+            font-size: 13pt;
+            color: #334155;
+            margin: 20px 0 10px 0;
+        }
+
+        p {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        /* Executive Summary Box */
+        .exec-summary {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 5px solid #1e40af;
+            padding: 25px 30px;
+            margin: 20px 0;
+        }
+
+        .exec-summary h3 {
+            color: #1e40af;
+            margin-top: 0;
+        }
+
+        /* Key Figures */
+        .key-figures {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .key-figure {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .key-figure .number {
+            font-size: 24pt;
+            font-weight: 800;
+            color: #1e40af;
+        }
+
+        .key-figure .label {
+            font-size: 10pt;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 10pt;
+        }
+
+        th, td {
+            border: 1px solid #d1d5db;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #1e40af;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        tr.total {
+            background: #1e3a8a;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        tr.highlight {
+            background: #fef9c3;
+        }
+
+        .table-title {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 10px;
+            font-size: 11pt;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .highlight-box.warning {
+            background: #fef9c3;
+            border-color: #fde047;
+        }
+
+        .highlight-box.info {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+
+        .highlight-box h4 {
+            color: #166534;
+            margin-bottom: 10px;
+        }
+
+        .highlight-box.warning h4 {
+            color: #a16207;
+        }
+
+        .highlight-box.info h4 {
+            color: #1e40af;
+        }
+
+        /* Financial Tables */
+        .financial-table th {
+            text-align: right;
+        }
+
+        .financial-table th:first-child {
+            text-align: left;
+        }
+
+        .financial-table td {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .financial-table td:first-child {
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .financial-table .negative {
+            color: #dc2626;
+        }
+
+        .financial-table .positive {
+            color: #059669;
+        }
+
+        /* Timeline */
+        .timeline {
+            margin: 25px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .timeline-marker {
+            width: 40px;
+            height: 40px;
+            background: #1e40af;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-right: 20px;
+        }
+
+        .timeline-content h4 {
+            color: #1e40af;
+            margin-bottom: 5px;
+        }
+
+        .timeline-content p {
+            color: #64748b;
+            font-size: 10pt;
+            margin: 0;
+        }
+
+        /* Team */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .team-member {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .team-member h4 {
+            color: #1e40af;
+            margin-bottom: 5px;
+        }
+
+        .team-member .role {
+            color: #64748b;
+            font-size: 10pt;
+            margin-bottom: 10px;
+        }
+
+        .team-member p {
+            font-size: 10pt;
+            margin: 0;
+        }
+
+        /* SWOT */
+        .swot-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .swot-item {
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .swot-item.strengths {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+        }
+
+        .swot-item.weaknesses {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+        }
+
+        .swot-item.opportunities {
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+        }
+
+        .swot-item.threats {
+            background: #fefce8;
+            border: 1px solid #fde047;
+        }
+
+        .swot-item h4 {
+            margin-bottom: 10px;
+            font-size: 12pt;
+        }
+
+        .swot-item.strengths h4 { color: #166534; }
+        .swot-item.weaknesses h4 { color: #dc2626; }
+        .swot-item.opportunities h4 { color: #1e40af; }
+        .swot-item.threats h4 { color: #a16207; }
+
+        .swot-item ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 10pt;
+        }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 9pt;
+            color: #94a3b8;
+        }
+
+        /* Print */
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            h1 {
+                page-break-before: always;
+            }
+
+            .cover {
+                margin: 0;
+                border: 3px solid #1e40af;
+            }
+
+            table, .key-figures, .swot-grid, .team-grid {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE DE COUVERTURE -->
+<div class="cover">
+    <div class="cover-logo">AZALPLUS</div>
+    <div class="cover-subtitle">L'ERP 100% gratuit pour les TPE</div>
+
+    <div class="cover-title">Business Plan</div>
+    <div class="cover-type">Document Investisseurs & Banques</div>
+
+    <div class="cover-info">
+        <p><strong>MASITH Développement</strong></p>
+        <p>Stéphane Moreau — Fondateur</p>
+        <p>contact@masith.fr — +33 6 75 78 87 58</p>
+        <p>Mars 2026</p>
+    </div>
+
+    <div class="cover-confidential">
+        DOCUMENT CONFIDENTIEL
+    </div>
+</div>
+
+<!-- TABLE DES MATIÈRES -->
+<div class="toc">
+    <h2>Sommaire</h2>
+
+    <div class="toc-item">
+        <span><span class="num">1.</span> Executive Summary</span>
+        <span>3</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">2.</span> L'Entreprise</span>
+        <span>4</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">3.</span> Le Produit : AZALPLUS</span>
+        <span>5</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">4.</span> Analyse du Marché</span>
+        <span>6</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">5.</span> Modèle Économique</span>
+        <span>8</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">6.</span> Stratégie Commerciale</span>
+        <span>10</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">7.</span> Projections Financières</span>
+        <span>12</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">8.</span> Équipe</span>
+        <span>15</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">9.</span> Besoins de Financement</span>
+        <span>16</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">10.</span> Risques et Mitigations</span>
+        <span>17</span>
+    </div>
+    <div class="toc-item">
+        <span><span class="num">11.</span> Annexes</span>
+        <span>18</span>
+    </div>
+</div>
+
+<!-- 1. EXECUTIVE SUMMARY -->
+<h1>1. Executive Summary</h1>
+
+<div class="exec-summary">
+    <h3>Vision</h3>
+    <p><strong>AZALPLUS est un ERP (logiciel de gestion d'entreprise) 100% gratuit destiné aux TPE françaises.</strong> Contrairement aux solutions existantes qui facturent des abonnements mensuels de 30€ à 200€, AZALPLUS offre gratuitement <strong>plus de 90 modules métier</strong> : facturation, comptabilité, CRM, gestion de stock, projets, RH, interventions, et bien plus encore.</p>
+    <p><strong>Le modèle économique repose sur les flux financiers</strong> qui transitent par la plateforme : commissions sur les paiements Open Banking, vente de données anonymisées B2B, et services bancaires optionnels.</p>
+</div>
+
+<div class="key-figures">
+    <div class="key-figure">
+        <div class="number">90+</div>
+        <div class="label">Modules métier</div>
+    </div>
+    <div class="key-figure">
+        <div class="number">4,2M</div>
+        <div class="label">TPE en France</div>
+    </div>
+    <div class="key-figure">
+        <div class="number">2,5M€</div>
+        <div class="label">CA année 3</div>
+    </div>
+    <div class="key-figure">
+        <div class="number">0€</div>
+        <div class="label">Coût pour la TPE</div>
+    </div>
+</div>
+
+<h2>Points clés</h2>
+
+<ul>
+    <li><strong>Marché massif et sous-équipé :</strong> 4,2 millions de TPE en France, dont 70% n'utilisent pas d'ERP professionnel</li>
+    <li><strong>Couverture fonctionnelle inégalée :</strong> Plus de 90 modules métier inclus gratuitement (vs 5-10 modules chez les concurrents gratuits)</li>
+    <li><strong>Proposition de valeur unique :</strong> ERP complet gratuit vs 200-500€/mois pour une solution équivalente</li>
+    <li><strong>Modèle aligné :</strong> AZALPLUS gagne quand les TPE utilisent le système (pas de revenus passifs)</li>
+    <li><strong>Revenus diversifiés :</strong> 3 sources de revenus complémentaires</li>
+    <li><strong>Scalabilité :</strong> Architecture No-Code = coûts marginaux quasi nuls par nouveau client</li>
+</ul>
+
+<h2>Demande de financement</h2>
+
+<p>MASITH Développement recherche un financement de <strong>150 000€</strong> pour :</p>
+<ul>
+    <li>Finaliser le développement technique (intégration paiements)</li>
+    <li>Lancer la stratégie d'acquisition (500 TPE année 1)</li>
+    <li>Couvrir les besoins de trésorerie sur 18 mois</li>
+</ul>
+
+<!-- 2. L'ENTREPRISE -->
+<h1>2. L'Entreprise</h1>
+
+<h2>MASITH Développement</h2>
+
+<table>
+    <tr>
+        <th style="width:35%">Raison sociale</th>
+        <td>MASITH Développement</td>
+    </tr>
+    <tr>
+        <th>Forme juridique</th>
+        <td>SAS (à confirmer)</td>
+    </tr>
+    <tr>
+        <th>Date de création</th>
+        <td>2026</td>
+    </tr>
+    <tr>
+        <th>Siège social</th>
+        <td>France</td>
+    </tr>
+    <tr>
+        <th>Activité</th>
+        <td>Édition de logiciels SaaS</td>
+    </tr>
+    <tr>
+        <th>Code NAF</th>
+        <td>5829C - Édition de logiciels applicatifs</td>
+    </tr>
+</table>
+
+<h2>Historique et genèse</h2>
+
+<p>MASITH Développement est née d'un constat simple : <strong>les TPE françaises sont mal équipées en outils de gestion</strong>. Les solutions existantes sont soit trop complexes, soit trop chères pour des structures de 1 à 10 salariés.</p>
+
+<p>Le fondateur, fort de son expérience dans le développement logiciel et la gestion d'entreprise, a conçu AZALPLUS comme une réponse à ce problème. L'idée centrale : <strong>rendre l'ERP gratuit en se rémunérant sur les flux financiers</strong>, créant ainsi un alignement d'intérêts entre l'éditeur et ses utilisateurs.</p>
+
+<h2>Mission et valeurs</h2>
+
+<div class="highlight-box">
+    <h4>Mission</h4>
+    <p>Démocratiser l'accès aux outils de gestion professionnels pour toutes les TPE françaises, en supprimant la barrière du coût.</p>
+</div>
+
+<p><strong>Valeurs fondamentales :</strong></p>
+<ul>
+    <li><strong>Gratuité réelle :</strong> Pas de freemium déguisé, pas de limites artificielles</li>
+    <li><strong>Transparence :</strong> Modèle économique clair et compréhensible</li>
+    <li><strong>Respect des données :</strong> Jamais de vente de données personnelles</li>
+    <li><strong>Indépendance :</strong> Pas de dépendance à un partenaire unique</li>
+</ul>
+
+<!-- 3. LE PRODUIT -->
+<h1>3. Le Produit : AZALPLUS</h1>
+
+<h2>Description générale</h2>
+
+<p>AZALPLUS est un <strong>ERP (Enterprise Resource Planning) cloud</strong> conçu spécifiquement pour les TPE. Il regroupe tous les outils de gestion dont une petite entreprise a besoin, accessibles depuis n'importe quel navigateur web.</p>
+
+<h2>Plus de 90 modules métier</h2>
+
+<p>AZALPLUS propose <strong>plus de 90 modules fonctionnels</strong>, couvrant l'intégralité des besoins d'une TPE. Voici les principales catégories :</p>
+
+<table>
+    <tr>
+        <th>Catégorie</th>
+        <th>Modules inclus</th>
+        <th>Équivalent concurrent</th>
+    </tr>
+    <tr>
+        <td><strong>Commercial</strong></td>
+        <td>Clients, prospects, devis, commandes, factures, avoirs, relances, contrats, abonnements</td>
+        <td>Sellsy (40€), Axonaut (50€)</td>
+    </tr>
+    <tr>
+        <td><strong>Achats</strong></td>
+        <td>Fournisseurs, demandes d'achat, bons de commande, réceptions, factures fournisseurs</td>
+        <td>Odoo (20€/module)</td>
+    </tr>
+    <tr>
+        <td><strong>Comptabilité</strong></td>
+        <td>Plan comptable, écritures, lettrage, rapprochement bancaire, TVA, bilan, liasse fiscale</td>
+        <td>Pennylane (50-200€)</td>
+    </tr>
+    <tr>
+        <td><strong>Trésorerie</strong></td>
+        <td>Comptes bancaires, prévisions, encaissements, décaissements, virements</td>
+        <td>Agicap (100€+)</td>
+    </tr>
+    <tr>
+        <td><strong>Stock & Logistique</strong></td>
+        <td>Produits, variantes, mouvements, inventaires, emplacements, préparation, expéditions</td>
+        <td>Odoo (20€/module)</td>
+    </tr>
+    <tr>
+        <td><strong>Production</strong></td>
+        <td>Nomenclatures, gammes, ordres de fabrication, suivi atelier</td>
+        <td>Sage 100 (200€+)</td>
+    </tr>
+    <tr>
+        <td><strong>Projets</strong></td>
+        <td>Projets, tâches, jalons, temps passé, budgets, facturation projet</td>
+        <td>Monday (10€/user)</td>
+    </tr>
+    <tr>
+        <td><strong>Interventions / SAV</strong></td>
+        <td>Tickets, planification, interventions terrain, comptes-rendus, pièces</td>
+        <td>Praxedo (30€/user)</td>
+    </tr>
+    <tr>
+        <td><strong>RH & Paie</strong></td>
+        <td>Employés, contrats, congés, absences, notes de frais, pointage, évaluations</td>
+        <td>PayFit (19€/salarié)</td>
+    </tr>
+    <tr>
+        <td><strong>CRM</strong></td>
+        <td>Pipeline, opportunités, activités, campagnes, e-mailing, scoring</td>
+        <td>HubSpot (45€)</td>
+    </tr>
+    <tr>
+        <td><strong>Documents</strong></td>
+        <td>GED, modèles, signatures électroniques, archivage</td>
+        <td>DocuSign (25€)</td>
+    </tr>
+    <tr>
+        <td><strong>Qualité</strong></td>
+        <td>Non-conformités, audits, actions correctives, certifications</td>
+        <td>Qualios (50€+)</td>
+    </tr>
+    <tr class="highlight">
+        <td><strong>TOTAL AZALPLUS</strong></td>
+        <td><strong>90+ modules — Tous inclus, illimités</strong></td>
+        <td><strong>0€/mois</strong></td>
+    </tr>
+</table>
+
+<div class="highlight-box">
+    <h4>Comparaison de coût</h4>
+    <p>Une TPE qui souhaiterait assembler une solution équivalente avec des outils payants dépenserait entre <strong>200€ et 500€ par mois</strong>. AZALPLUS offre tout cela <strong>gratuitement</strong>.</p>
+</div>
+
+<h2>Architecture technique</h2>
+
+<div class="highlight-box info">
+    <h4>Stack technologique</h4>
+    <ul>
+        <li><strong>Backend :</strong> Python 3.11, FastAPI, PostgreSQL 16</li>
+        <li><strong>Frontend :</strong> Généré dynamiquement (No-Code engine)</li>
+        <li><strong>Infrastructure :</strong> Cloud français, RGPD compliant</li>
+        <li><strong>Sécurité :</strong> Chiffrement AES-256, authentification 2FA</li>
+    </ul>
+</div>
+
+<h2>Avantage compétitif : Architecture No-Code</h2>
+
+<p>AZALPLUS repose sur une <strong>architecture No-Code propriétaire</strong>. Chaque module métier est défini par un simple fichier de configuration (YAML), automatiquement transformé en :</p>
+<ul>
+    <li>Tables de base de données</li>
+    <li>API REST complète</li>
+    <li>Interface utilisateur</li>
+    <li>Workflows métier</li>
+</ul>
+
+<p>Cette architecture permet de <strong>créer de nouveaux modules en quelques heures</strong> au lieu de plusieurs semaines, réduisant drastiquement les coûts de développement et de maintenance.</p>
+
+<!-- 4. ANALYSE DU MARCHÉ -->
+<h1>4. Analyse du Marché</h1>
+
+<h2>Le marché des TPE en France</h2>
+
+<div class="key-figures">
+    <div class="key-figure">
+        <div class="number">4,2M</div>
+        <div class="label">TPE en France</div>
+    </div>
+    <div class="key-figure">
+        <div class="number">96%</div>
+        <div class="label">des entreprises FR</div>
+    </div>
+    <div class="key-figure">
+        <div class="number">3M</div>
+        <div class="label">Micro-entreprises</div>
+    </div>
+    <div class="key-figure">
+        <div class="number">70%</div>
+        <div class="label">Sans ERP pro</div>
+    </div>
+</div>
+
+<p>Les TPE (Très Petites Entreprises : 0-9 salariés) représentent <strong>96% du tissu économique français</strong>. Elles incluent :</p>
+<ul>
+    <li>Artisans (bâtiment, services)</li>
+    <li>Commerces de proximité</li>
+    <li>Professions libérales</li>
+    <li>Consultants et freelances</li>
+    <li>Micro-entreprises</li>
+</ul>
+
+<h2>Problèmes identifiés</h2>
+
+<table>
+    <tr>
+        <th>Problème</th>
+        <th>Impact</th>
+        <th>% TPE concernées</th>
+    </tr>
+    <tr>
+        <td>Outils de gestion trop chers</td>
+        <td>Utilisation d'Excel, papier, ou rien</td>
+        <td>65%</td>
+    </tr>
+    <tr>
+        <td>Solutions trop complexes</td>
+        <td>Abandon après quelques semaines</td>
+        <td>45%</td>
+    </tr>
+    <tr>
+        <td>Temps passé sur l'administratif</td>
+        <td>Moins de temps pour le métier</td>
+        <td>80%</td>
+    </tr>
+    <tr>
+        <td>Retards de paiement</td>
+        <td>Problèmes de trésorerie</td>
+        <td>55%</td>
+    </tr>
+</table>
+
+<h2>Marché adressable</h2>
+
+<table>
+    <tr>
+        <th>Niveau</th>
+        <th>Définition</th>
+        <th>Valeur</th>
+    </tr>
+    <tr>
+        <td><strong>TAM</strong> (Total)</td>
+        <td>Marché ERP TPE France</td>
+        <td>2,5 Md€/an</td>
+    </tr>
+    <tr>
+        <td><strong>SAM</strong> (Serviceable)</td>
+        <td>TPE sans ERP, digitalisables</td>
+        <td>800 M€/an</td>
+    </tr>
+    <tr>
+        <td><strong>SOM</strong> (Obtainable)</td>
+        <td>Objectif AZALPLUS à 5 ans</td>
+        <td>25 M€/an</td>
+    </tr>
+</table>
+
+<h2>Analyse concurrentielle</h2>
+
+<table>
+    <tr>
+        <th>Concurrent</th>
+        <th>Positionnement</th>
+        <th>Prix</th>
+        <th>Forces</th>
+        <th>Faiblesses</th>
+    </tr>
+    <tr>
+        <td><strong>Pennylane</strong></td>
+        <td>Compta + Banque</td>
+        <td>50-200€/mois</td>
+        <td>UX moderne, IA</td>
+        <td>Cher, focus compta</td>
+    </tr>
+    <tr>
+        <td><strong>Axonaut</strong></td>
+        <td>ERP complet</td>
+        <td>30-80€/mois</td>
+        <td>Complet, français</td>
+        <td>Interface datée</td>
+    </tr>
+    <tr>
+        <td><strong>Odoo</strong></td>
+        <td>ERP modulaire</td>
+        <td>20€/module</td>
+        <td>Très complet</td>
+        <td>Complexe, coûteux</td>
+    </tr>
+    <tr>
+        <td><strong>Henrri</strong></td>
+        <td>Facturation</td>
+        <td>Gratuit (limité)</td>
+        <td>Simple</td>
+        <td>Très limité</td>
+    </tr>
+    <tr class="highlight">
+        <td><strong>AZALPLUS</strong></td>
+        <td>ERP complet gratuit</td>
+        <td>0€</td>
+        <td>Gratuit, complet</td>
+        <td>Nouveau, à prouver</td>
+    </tr>
+</table>
+
+<h2>Analyse SWOT</h2>
+
+<div class="swot-grid">
+    <div class="swot-item strengths">
+        <h4>Forces</h4>
+        <ul>
+            <li>Gratuit = barrière d'entrée nulle</li>
+            <li><strong>90+ modules</strong> = couverture complète</li>
+            <li>Architecture No-Code scalable</li>
+            <li>Modèle aligné avec le client</li>
+        </ul>
+    </div>
+    <div class="swot-item weaknesses">
+        <h4>Faiblesses</h4>
+        <ul>
+            <li>Nouveau sur le marché</li>
+            <li>Dépendance aux partenaires paiement</li>
+            <li>Équipe réduite</li>
+            <li>Notoriété à construire</li>
+        </ul>
+    </div>
+    <div class="swot-item opportunities">
+        <h4>Opportunités</h4>
+        <ul>
+            <li>Marché TPE sous-équipé</li>
+            <li>Facturation électronique 2026</li>
+            <li>Open Banking en croissance</li>
+            <li>Données B2B valorisables</li>
+        </ul>
+    </div>
+    <div class="swot-item threats">
+        <h4>Menaces</h4>
+        <ul>
+            <li>Réaction des concurrents</li>
+            <li>Évolution réglementaire</li>
+            <li>Concentration du marché paiement</li>
+            <li>Résistance au changement TPE</li>
+        </ul>
+    </div>
+</div>
+
+<!-- 5. MODÈLE ÉCONOMIQUE -->
+<h1>5. Modèle Économique</h1>
+
+<h2>Principe fondamental</h2>
+
+<div class="exec-summary">
+    <p><strong>L'ERP est gratuit. AZALPLUS se rémunère sur les flux financiers qui transitent par la plateforme.</strong></p>
+    <p>Ce modèle crée un alignement d'intérêts : AZALPLUS gagne quand les TPE utilisent activement le système et encaissent leurs factures.</p>
+</div>
+
+<h2>Sources de revenus</h2>
+
+<h3>Source 1 : Paiements Open Banking (Principal)</h3>
+
+<p>Chaque facture émise via AZALPLUS inclut un <strong>bouton "Payer maintenant"</strong>. Le client final clique, est redirigé vers sa banque, et valide un virement instantané.</p>
+
+<table>
+    <tr>
+        <th>Élément</th>
+        <th>Détail</th>
+    </tr>
+    <tr>
+        <td>Commission partenaire (Powens/Bridge)</td>
+        <td>~1.0%</td>
+    </tr>
+    <tr>
+        <td>Marge AZALPLUS</td>
+        <td>0.3 - 0.5%</td>
+    </tr>
+    <tr>
+        <td><strong>Total facturé au client final</strong></td>
+        <td><strong>1.3 - 1.5%</strong></td>
+    </tr>
+</table>
+
+<div class="highlight-box">
+    <h4>Avantages vs carte bancaire</h4>
+    <ul>
+        <li><strong>Moins cher :</strong> 1.3% vs 1.5-2.9% (Stripe, PayPal)</li>
+        <li><strong>Instantané :</strong> Fonds reçus immédiatement vs 2-7 jours</li>
+        <li><strong>Pas de chargeback :</strong> Virement irrévocable</li>
+    </ul>
+</div>
+
+<h3>Source 2 : Données anonymisées (Secondaire)</h3>
+
+<p>L'ERP collecte des données sur l'activité des TPE. Ces données, <strong>agrégées et anonymisées</strong>, ont une valeur pour :</p>
+<ul>
+    <li>Banques (scoring crédit, modèles de risque)</li>
+    <li>Assureurs (tarification, sinistralité)</li>
+    <li>Cabinets de conseil (études sectorielles)</li>
+    <li>Collectivités (politique économique)</li>
+</ul>
+
+<table>
+    <tr>
+        <th>Produit</th>
+        <th>Prix</th>
+    </tr>
+    <tr>
+        <td>Étude sectorielle ("Plombiers IDF")</td>
+        <td>5 000 - 15 000€</td>
+    </tr>
+    <tr>
+        <td>Baromètre mensuel TPE</td>
+        <td>2 000 - 5 000€/mois</td>
+    </tr>
+    <tr>
+        <td>API données agrégées</td>
+        <td>20 000 - 50 000€/an</td>
+    </tr>
+</table>
+
+<p><strong>Activation :</strong> À partir de 5 000 TPE actives (masse critique pour représentativité).</p>
+
+<h3>Source 3 : Compte bancaire intégré (Optionnel)</h3>
+
+<p>Les TPE peuvent <strong>optionnellement</strong> activer un compte bancaire professionnel intégré à l'ERP (via partenaire BaaS type Swan).</p>
+
+<table>
+    <tr>
+        <th>Source</th>
+        <th>Revenu AZALPLUS</th>
+    </tr>
+    <tr>
+        <td>Frais de compte</td>
+        <td>3-5€/mois par compte</td>
+    </tr>
+    <tr>
+        <td>Interchange carte</td>
+        <td>Variable</td>
+    </tr>
+    <tr>
+        <td>Tap to Pay (encaissement)</td>
+        <td>0.2-0.3% des transactions</td>
+    </tr>
+</table>
+
+<p><strong>Activation :</strong> Phase 2, après validation du modèle paiement. Estimation : 20-30% des TPE activeront cette option.</p>
+
+<h3>Comparatif tarification bancaire</h3>
+
+<p>Le compte AZALPLUS se positionne comme une <strong>alternative économique</strong> aux solutions bancaires traditionnelles et néo-banques :</p>
+
+<p class="table-title">Comparatif Banques Classiques vs Néo-banques vs AZALPLUS</p>
+
+<table>
+    <tr>
+        <th>Critère</th>
+        <th>Banque Classique</th>
+        <th>Néo-banque</th>
+        <th style="background:#059669">AZALPLUS</th>
+    </tr>
+    <tr>
+        <td><strong>Abonnement mensuel</strong></td>
+        <td>25 - 50€/mois</td>
+        <td>9 - 40€/mois</td>
+        <td style="background:#f0fdf4"><strong>9 - 12€/mois</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Frais de tenue de compte</strong></td>
+        <td>5 - 15€/mois</td>
+        <td>0 - 5€/mois</td>
+        <td style="background:#f0fdf4"><strong>Inclus</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Carte bancaire</strong></td>
+        <td>30 - 150€/an</td>
+        <td>Incluse</td>
+        <td style="background:#f0fdf4"><strong>Incluse</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Virements SEPA</strong></td>
+        <td>0,50 - 1€/virement</td>
+        <td>Illimités</td>
+        <td style="background:#f0fdf4"><strong>Illimités</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Prélèvements</strong></td>
+        <td>0,50 - 1€/prélèvement</td>
+        <td>Inclus</td>
+        <td style="background:#f0fdf4"><strong>Inclus</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Encaissement CB (TPE)</strong></td>
+        <td>1,5 - 2,5%</td>
+        <td>1,4 - 1,75%</td>
+        <td style="background:#f0fdf4"><strong>1,2 - 1,5%</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Dépôt d'espèces</strong></td>
+        <td>Gratuit (agence)</td>
+        <td>Payant ou impossible</td>
+        <td style="background:#f0fdf4">Via partenaires</td>
+    </tr>
+    <tr>
+        <td><strong>Découvert autorisé</strong></td>
+        <td>Oui (TAEG 15-20%)</td>
+        <td>Rare</td>
+        <td style="background:#f0fdf4">Non (phase 1)</td>
+    </tr>
+    <tr>
+        <td><strong>Intégration ERP</strong></td>
+        <td>❌ Non</td>
+        <td>❌ Non</td>
+        <td style="background:#f0fdf4"><strong>✅ Native</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Rapprochement auto</strong></td>
+        <td>❌ Manuel</td>
+        <td>❌ Manuel</td>
+        <td style="background:#f0fdf4"><strong>✅ Automatique</strong></td>
+    </tr>
+</table>
+
+<p class="table-title">Comparatif détaillé Néo-banques Pro</p>
+
+<table>
+    <tr>
+        <th>Néo-banque</th>
+        <th>Offre de base</th>
+        <th>Offre complète</th>
+        <th>Encaissement CB</th>
+        <th>Points forts</th>
+    </tr>
+    <tr>
+        <td><strong>Qonto</strong></td>
+        <td>9€/mois</td>
+        <td>39€/mois</td>
+        <td>Non inclus</td>
+        <td>UX, intégrations</td>
+    </tr>
+    <tr>
+        <td><strong>Shine</strong></td>
+        <td>7,90€/mois</td>
+        <td>29,90€/mois</td>
+        <td>1,4% (SumUp)</td>
+        <td>Simplicité, auto-entrepreneurs</td>
+    </tr>
+    <tr>
+        <td><strong>Blank</strong></td>
+        <td>6€/mois</td>
+        <td>25€/mois</td>
+        <td>1,5%</td>
+        <td>Facturation intégrée</td>
+    </tr>
+    <tr>
+        <td><strong>Revolut Business</strong></td>
+        <td>0€/mois</td>
+        <td>25€/mois</td>
+        <td>1% + 0,20€</td>
+        <td>Multi-devises</td>
+    </tr>
+    <tr>
+        <td><strong>N26 Business</strong></td>
+        <td>0€/mois</td>
+        <td>16,90€/mois</td>
+        <td>Non</td>
+        <td>Cashback</td>
+    </tr>
+    <tr>
+        <td><strong>Finom</strong></td>
+        <td>5€/mois</td>
+        <td>30€/mois</td>
+        <td>Non</td>
+        <td>Facturation</td>
+    </tr>
+    <tr class="highlight">
+        <td><strong>AZALPLUS</strong></td>
+        <td><strong>9€/mois</strong></td>
+        <td><strong>12€/mois</strong></td>
+        <td><strong>1,2 - 1,5%</strong></td>
+        <td><strong>ERP complet gratuit inclus</strong></td>
+    </tr>
+</table>
+
+<div class="highlight-box">
+    <h4>Avantage différenciant AZALPLUS</h4>
+    <p>Contrairement aux néo-banques qui proposent une facturation basique en complément, <strong>AZALPLUS offre un ERP complet de 90+ modules GRATUITEMENT</strong>. Le compte bancaire est une option, pas le produit principal.</p>
+    <p><strong>Économie totale pour une TPE :</strong></p>
+    <ul>
+        <li>ERP (Axonaut, Pennylane...) : 50-200€/mois → <strong>0€ avec AZALPLUS</strong></li>
+        <li>Banque pro : 20-40€/mois → <strong>9-12€/mois avec AZALPLUS</strong></li>
+        <li><strong>Économie : 60 à 230€/mois soit 720 à 2 760€/an</strong></li>
+    </ul>
+</div>
+
+<p class="table-title">Coût annuel total comparé (ERP + Banque)</p>
+
+<table class="financial-table">
+    <tr>
+        <th>Solution</th>
+        <th>ERP/an</th>
+        <th>Banque/an</th>
+        <th>Total/an</th>
+    </tr>
+    <tr>
+        <td>Axonaut + Qonto</td>
+        <td>600€</td>
+        <td>468€</td>
+        <td><strong>1 068€</strong></td>
+    </tr>
+    <tr>
+        <td>Pennylane + Shine</td>
+        <td>1 200€</td>
+        <td>359€</td>
+        <td><strong>1 559€</strong></td>
+    </tr>
+    <tr>
+        <td>Odoo + Blank</td>
+        <td>480€</td>
+        <td>300€</td>
+        <td><strong>780€</strong></td>
+    </tr>
+    <tr>
+        <td>Sage + Banque classique</td>
+        <td>1 800€</td>
+        <td>600€</td>
+        <td><strong>2 400€</strong></td>
+    </tr>
+    <tr class="total">
+        <td><strong>AZALPLUS + Compte intégré</strong></td>
+        <td><strong>0€</strong></td>
+        <td><strong>144€</strong></td>
+        <td><strong>144€</strong></td>
+    </tr>
+</table>
+
+<h2>Récapitulatif par phase</h2>
+
+<table>
+    <tr>
+        <th>Phase</th>
+        <th>TPE</th>
+        <th>Paiements</th>
+        <th>Données</th>
+        <th>Banque</th>
+        <th>Total/mois</th>
+    </tr>
+    <tr>
+        <td>Phase 1 (Y1)</td>
+        <td>500</td>
+        <td>18 000€</td>
+        <td>0€</td>
+        <td>1 500€</td>
+        <td><strong>19 500€</strong></td>
+    </tr>
+    <tr>
+        <td>Phase 2 (Y2)</td>
+        <td>2 000</td>
+        <td>72 000€</td>
+        <td>0€</td>
+        <td>6 000€</td>
+        <td><strong>78 000€</strong></td>
+    </tr>
+    <tr>
+        <td>Phase 3 (Y3)</td>
+        <td>5 000</td>
+        <td>180 000€</td>
+        <td>15 000€</td>
+        <td>15 000€</td>
+        <td><strong>210 000€</strong></td>
+    </tr>
+    <tr class="total">
+        <td>Phase 4 (Y4+)</td>
+        <td>10 000</td>
+        <td>360 000€</td>
+        <td>30 000€</td>
+        <td>30 000€</td>
+        <td><strong>420 000€</strong></td>
+    </tr>
+</table>
+
+<!-- 6. STRATÉGIE COMMERCIALE -->
+<h1>6. Stratégie Commerciale</h1>
+
+<h2>Cibles prioritaires</h2>
+
+<table>
+    <tr>
+        <th>Segment</th>
+        <th>Caractéristiques</th>
+        <th>Potentiel</th>
+    </tr>
+    <tr>
+        <td><strong>Artisans</strong></td>
+        <td>Plombiers, électriciens, maçons</td>
+        <td>★★★★★</td>
+    </tr>
+    <tr>
+        <td><strong>Commerces</strong></td>
+        <td>Boutiques, restauration rapide</td>
+        <td>★★★★☆</td>
+    </tr>
+    <tr>
+        <td><strong>Services</strong></td>
+        <td>Consultants, coachs, formateurs</td>
+        <td>★★★★☆</td>
+    </tr>
+    <tr>
+        <td><strong>Créateurs</strong></td>
+        <td>Nouvelles entreprises, auto-entrepreneurs</td>
+        <td>★★★☆☆</td>
+    </tr>
+</table>
+
+<h2>Canaux d'acquisition</h2>
+
+<h3>Canal 1 : SEO / Content Marketing</h3>
+<ul>
+    <li>Articles de blog : "ERP gratuit", "Facturation TPE", "Gestion artisan"</li>
+    <li>Guides pratiques téléchargeables</li>
+    <li>Vidéos tutoriels YouTube</li>
+</ul>
+<p><strong>Coût d'acquisition estimé :</strong> 15-30€/TPE</p>
+
+<h3>Canal 2 : Partenariats</h3>
+<ul>
+    <li>Fédérations professionnelles (CAPEB, CGAD...)</li>
+    <li>Chambres des métiers</li>
+    <li>Experts-comptables</li>
+    <li>Banques régionales</li>
+</ul>
+<p><strong>Coût d'acquisition estimé :</strong> 5-15€/TPE</p>
+
+<h3>Canal 3 : Bouche-à-oreille</h3>
+<ul>
+    <li>Programme de parrainage</li>
+    <li>Avis et témoignages</li>
+    <li>Communauté utilisateurs</li>
+</ul>
+<p><strong>Coût d'acquisition estimé :</strong> 0-5€/TPE</p>
+
+<h2>Funnel de conversion</h2>
+
+<div class="timeline">
+    <div class="timeline-item">
+        <div class="timeline-marker">1</div>
+        <div class="timeline-content">
+            <h4>Découverte</h4>
+            <p>SEO, partenaires, bouche-à-oreille → Visite site</p>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-marker">2</div>
+        <div class="timeline-content">
+            <h4>Inscription</h4>
+            <p>Création compte gratuit en 2 minutes</p>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-marker">3</div>
+        <div class="timeline-content">
+            <h4>Activation</h4>
+            <p>Première facture créée et envoyée</p>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-marker">4</div>
+        <div class="timeline-content">
+            <h4>Premier paiement</h4>
+            <p>Client paie via Open Banking → Revenu AZALPLUS</p>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-marker">5</div>
+        <div class="timeline-content">
+            <h4>Rétention</h4>
+            <p>Usage régulier, adoption autres modules</p>
+        </div>
+    </div>
+</div>
+
+<h2>Objectifs d'acquisition</h2>
+
+<table class="financial-table">
+    <tr>
+        <th>Année</th>
+        <th>Nouvelles TPE</th>
+        <th>TPE actives (cumul)</th>
+        <th>Budget acquisition</th>
+        <th>CAC moyen</th>
+    </tr>
+    <tr>
+        <td>Année 1</td>
+        <td>500</td>
+        <td>500</td>
+        <td>15 000€</td>
+        <td>30€</td>
+    </tr>
+    <tr>
+        <td>Année 2</td>
+        <td>1 500</td>
+        <td>2 000</td>
+        <td>30 000€</td>
+        <td>20€</td>
+    </tr>
+    <tr>
+        <td>Année 3</td>
+        <td>3 000</td>
+        <td>5 000</td>
+        <td>45 000€</td>
+        <td>15€</td>
+    </tr>
+</table>
+
+<!-- 7. PROJECTIONS FINANCIÈRES -->
+<h1>7. Projections Financières</h1>
+
+<h2>Hypothèses clés</h2>
+
+<table>
+    <tr>
+        <th>Hypothèse</th>
+        <th>Valeur</th>
+        <th>Source</th>
+    </tr>
+    <tr>
+        <td>Paiements/mois par TPE</td>
+        <td>30</td>
+        <td>Moyenne secteur</td>
+    </tr>
+    <tr>
+        <td>Ticket moyen</td>
+        <td>400€</td>
+        <td>Estimation prudente</td>
+    </tr>
+    <tr>
+        <td>Taux adoption paiement OB</td>
+        <td>60%</td>
+        <td>Benchmark Fintecture</td>
+    </tr>
+    <tr>
+        <td>Marge sur paiement</td>
+        <td>0.30%</td>
+        <td>Négociation partenaire</td>
+    </tr>
+    <tr>
+        <td>Taux activation compte bancaire</td>
+        <td>25%</td>
+        <td>Estimation prudente</td>
+    </tr>
+    <tr>
+        <td>Churn annuel</td>
+        <td>15%</td>
+        <td>Moyenne SaaS TPE</td>
+    </tr>
+</table>
+
+<h2>Compte de résultat prévisionnel</h2>
+
+<p class="table-title">En milliers d'euros (K€)</p>
+
+<table class="financial-table">
+    <tr>
+        <th></th>
+        <th>Année 1</th>
+        <th>Année 2</th>
+        <th>Année 3</th>
+        <th>Année 4</th>
+        <th>Année 5</th>
+    </tr>
+    <tr>
+        <td><strong>CHIFFRE D'AFFAIRES</strong></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Paiements Open Banking</td>
+        <td>108</td>
+        <td>432</td>
+        <td>1 080</td>
+        <td>2 160</td>
+        <td>3 240</td>
+    </tr>
+    <tr>
+        <td>Données anonymisées</td>
+        <td>0</td>
+        <td>0</td>
+        <td>180</td>
+        <td>360</td>
+        <td>480</td>
+    </tr>
+    <tr>
+        <td>Compte bancaire</td>
+        <td>9</td>
+        <td>36</td>
+        <td>90</td>
+        <td>180</td>
+        <td>270</td>
+    </tr>
+    <tr class="total">
+        <td><strong>TOTAL CA</strong></td>
+        <td><strong>117</strong></td>
+        <td><strong>468</strong></td>
+        <td><strong>1 350</strong></td>
+        <td><strong>2 700</strong></td>
+        <td><strong>3 990</strong></td>
+    </tr>
+    <tr>
+        <td><strong>CHARGES</strong></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Infrastructure (serveurs, APIs)</td>
+        <td>12</td>
+        <td>24</td>
+        <td>48</td>
+        <td>72</td>
+        <td>96</td>
+    </tr>
+    <tr>
+        <td>Développement / Tech</td>
+        <td>60</td>
+        <td>80</td>
+        <td>120</td>
+        <td>180</td>
+        <td>240</td>
+    </tr>
+    <tr>
+        <td>Marketing / Acquisition</td>
+        <td>15</td>
+        <td>30</td>
+        <td>45</td>
+        <td>60</td>
+        <td>75</td>
+    </tr>
+    <tr>
+        <td>Frais généraux</td>
+        <td>12</td>
+        <td>18</td>
+        <td>30</td>
+        <td>48</td>
+        <td>60</td>
+    </tr>
+    <tr>
+        <td>Support client</td>
+        <td>0</td>
+        <td>24</td>
+        <td>48</td>
+        <td>72</td>
+        <td>96</td>
+    </tr>
+    <tr class="total">
+        <td><strong>TOTAL CHARGES</strong></td>
+        <td><strong>99</strong></td>
+        <td><strong>176</strong></td>
+        <td><strong>291</strong></td>
+        <td><strong>432</strong></td>
+        <td><strong>567</strong></td>
+    </tr>
+    <tr>
+        <td><strong>RÉSULTAT BRUT</strong></td>
+        <td class="positive">18</td>
+        <td class="positive">292</td>
+        <td class="positive">1 059</td>
+        <td class="positive">2 268</td>
+        <td class="positive">3 423</td>
+    </tr>
+    <tr>
+        <td>Impôts (25%)</td>
+        <td>5</td>
+        <td>73</td>
+        <td>265</td>
+        <td>567</td>
+        <td>856</td>
+    </tr>
+    <tr class="total">
+        <td><strong>RÉSULTAT NET</strong></td>
+        <td class="positive"><strong>13</strong></td>
+        <td class="positive"><strong>219</strong></td>
+        <td class="positive"><strong>794</strong></td>
+        <td class="positive"><strong>1 701</strong></td>
+        <td class="positive"><strong>2 567</strong></td>
+    </tr>
+</table>
+
+<h2>Plan de trésorerie (Année 1)</h2>
+
+<p class="table-title">En milliers d'euros (K€)</p>
+
+<table class="financial-table">
+    <tr>
+        <th></th>
+        <th>T1</th>
+        <th>T2</th>
+        <th>T3</th>
+        <th>T4</th>
+        <th>Total Y1</th>
+    </tr>
+    <tr>
+        <td>Trésorerie début</td>
+        <td>150</td>
+        <td>108</td>
+        <td>78</td>
+        <td>63</td>
+        <td>150</td>
+    </tr>
+    <tr>
+        <td>Encaissements</td>
+        <td>12</td>
+        <td>22</td>
+        <td>35</td>
+        <td>48</td>
+        <td>117</td>
+    </tr>
+    <tr>
+        <td>Décaissements</td>
+        <td>-54</td>
+        <td>-52</td>
+        <td>-50</td>
+        <td>-48</td>
+        <td>-204</td>
+    </tr>
+    <tr>
+        <td>Apport initial</td>
+        <td>0</td>
+        <td>0</td>
+        <td>0</td>
+        <td>0</td>
+        <td>0</td>
+    </tr>
+    <tr class="total">
+        <td><strong>Trésorerie fin</strong></td>
+        <td><strong>108</strong></td>
+        <td><strong>78</strong></td>
+        <td><strong>63</strong></td>
+        <td><strong>63</strong></td>
+        <td><strong>63</strong></td>
+    </tr>
+</table>
+
+<h2>Indicateurs clés (KPIs)</h2>
+
+<table>
+    <tr>
+        <th>KPI</th>
+        <th>Année 1</th>
+        <th>Année 3</th>
+        <th>Année 5</th>
+    </tr>
+    <tr>
+        <td>TPE actives</td>
+        <td>500</td>
+        <td>5 000</td>
+        <td>15 000</td>
+    </tr>
+    <tr>
+        <td>ARPU (revenu/TPE/mois)</td>
+        <td>19,5€</td>
+        <td>22,5€</td>
+        <td>22,2€</td>
+    </tr>
+    <tr>
+        <td>LTV (valeur vie client)</td>
+        <td>780€</td>
+        <td>1 350€</td>
+        <td>1 776€</td>
+    </tr>
+    <tr>
+        <td>CAC (coût acquisition)</td>
+        <td>30€</td>
+        <td>15€</td>
+        <td>10€</td>
+    </tr>
+    <tr>
+        <td>Ratio LTV/CAC</td>
+        <td>26x</td>
+        <td>90x</td>
+        <td>178x</td>
+    </tr>
+    <tr>
+        <td>Marge brute</td>
+        <td>15%</td>
+        <td>78%</td>
+        <td>86%</td>
+    </tr>
+</table>
+
+<h2>Point mort</h2>
+
+<div class="highlight-box">
+    <h4>Break-even estimé : ~300-400 TPE actives</h4>
+    <p>Avec 400 TPE actives utilisant régulièrement le paiement Open Banking, AZALPLUS atteint l'équilibre opérationnel. Cet objectif est prévu pour le <strong>mois 8-10 de l'année 1</strong>.</p>
+</div>
+
+<!-- 8. ÉQUIPE -->
+<h1>8. Équipe</h1>
+
+<h2>Équipe fondatrice</h2>
+
+<div class="team-grid">
+    <div class="team-member">
+        <h4>Stéphane Moreau</h4>
+        <div class="role">Fondateur & CEO</div>
+        <p>Développeur et entrepreneur avec une expertise en logiciels de gestion et en développement web. Responsable de la vision produit, de la stratégie et des partenariats.</p>
+    </div>
+    <div class="team-member">
+        <h4>À recruter</h4>
+        <div class="role">CTO / Lead Developer</div>
+        <p>Profil recherché : expérience en architecture SaaS, Python/FastAPI, PostgreSQL. Responsable de la roadmap technique et de l'équipe dev.</p>
+    </div>
+</div>
+
+<h2>Recrutements prévus</h2>
+
+<table>
+    <tr>
+        <th>Poste</th>
+        <th>Période</th>
+        <th>Profil</th>
+    </tr>
+    <tr>
+        <td>Développeur Full-Stack</td>
+        <td>Année 1 - T2</td>
+        <td>Python, React, PostgreSQL</td>
+    </tr>
+    <tr>
+        <td>Responsable Commercial</td>
+        <td>Année 1 - T3</td>
+        <td>Expérience SaaS B2B, TPE</td>
+    </tr>
+    <tr>
+        <td>Support Client</td>
+        <td>Année 2 - T1</td>
+        <td>Relation client, connaissance ERP</td>
+    </tr>
+    <tr>
+        <td>Growth Manager</td>
+        <td>Année 2 - T2</td>
+        <td>SEO, content, partenariats</td>
+    </tr>
+</table>
+
+<h2>Organisation cible (Année 3)</h2>
+
+<table>
+    <tr>
+        <th>Département</th>
+        <th>Effectif</th>
+    </tr>
+    <tr>
+        <td>Direction</td>
+        <td>1</td>
+    </tr>
+    <tr>
+        <td>Tech / Produit</td>
+        <td>3</td>
+    </tr>
+    <tr>
+        <td>Commercial / Partenariats</td>
+        <td>2</td>
+    </tr>
+    <tr>
+        <td>Support / Customer Success</td>
+        <td>2</td>
+    </tr>
+    <tr class="total">
+        <td><strong>TOTAL</strong></td>
+        <td><strong>8</strong></td>
+    </tr>
+</table>
+
+<!-- 9. BESOINS DE FINANCEMENT -->
+<h1>9. Besoins de Financement</h1>
+
+<h2>Montant recherché</h2>
+
+<div class="key-figures">
+    <div class="key-figure">
+        <div class="number">150K€</div>
+        <div class="label">Financement total</div>
+    </div>
+    <div class="key-figure">
+        <div class="number">18</div>
+        <div class="label">Mois de runway</div>
+    </div>
+    <div class="key-figure">
+        <div class="number">T2 2026</div>
+        <div class="label">Date souhaitée</div>
+    </div>
+    <div class="key-figure">
+        <div class="number">500</div>
+        <div class="label">TPE à atteindre</div>
+    </div>
+</div>
+
+<h2>Utilisation des fonds</h2>
+
+<table>
+    <tr>
+        <th>Poste</th>
+        <th>Montant</th>
+        <th>%</th>
+        <th>Détail</th>
+    </tr>
+    <tr>
+        <td><strong>Développement technique</strong></td>
+        <td>60 000€</td>
+        <td>40%</td>
+        <td>Intégration paiements, stabilisation, features</td>
+    </tr>
+    <tr>
+        <td><strong>Acquisition clients</strong></td>
+        <td>30 000€</td>
+        <td>20%</td>
+        <td>SEO, content, partenariats, events</td>
+    </tr>
+    <tr>
+        <td><strong>Infrastructure</strong></td>
+        <td>15 000€</td>
+        <td>10%</td>
+        <td>Serveurs, APIs, sécurité</td>
+    </tr>
+    <tr>
+        <td><strong>Trésorerie / BFR</strong></td>
+        <td>30 000€</td>
+        <td>20%</td>
+        <td>Couverture décalage encaissements</td>
+    </tr>
+    <tr>
+        <td><strong>Frais généraux</strong></td>
+        <td>15 000€</td>
+        <td>10%</td>
+        <td>Juridique, comptable, assurances</td>
+    </tr>
+    <tr class="total">
+        <td><strong>TOTAL</strong></td>
+        <td><strong>150 000€</strong></td>
+        <td><strong>100%</strong></td>
+        <td></td>
+    </tr>
+</table>
+
+<h2>Options de financement envisagées</h2>
+
+<table>
+    <tr>
+        <th>Source</th>
+        <th>Montant</th>
+        <th>Type</th>
+        <th>Statut</th>
+    </tr>
+    <tr>
+        <td>Prêt d'honneur (Initiative France)</td>
+        <td>30 000€</td>
+        <td>Prêt 0%</td>
+        <td>À solliciter</td>
+    </tr>
+    <tr>
+        <td>BPI France (Prêt Amorçage)</td>
+        <td>50 000€</td>
+        <td>Prêt garanti</td>
+        <td>À solliciter</td>
+    </tr>
+    <tr>
+        <td>Prêt bancaire</td>
+        <td>50 000€</td>
+        <td>Prêt classique</td>
+        <td>À solliciter</td>
+    </tr>
+    <tr>
+        <td>Apport personnel</td>
+        <td>20 000€</td>
+        <td>Capital</td>
+        <td>Disponible</td>
+    </tr>
+    <tr class="total">
+        <td><strong>TOTAL</strong></td>
+        <td><strong>150 000€</strong></td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
+
+<h2>Jalons de déblocage</h2>
+
+<div class="timeline">
+    <div class="timeline-item">
+        <div class="timeline-marker">1</div>
+        <div class="timeline-content">
+            <h4>M0 : Déblocage initial (50K€)</h4>
+            <p>Finalisation intégration paiement, lancement beta</p>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-marker">2</div>
+        <div class="timeline-content">
+            <h4>M6 : Déblocage phase 2 (50K€)</h4>
+            <p>100 TPE actives, premiers revenus validés</p>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-marker">3</div>
+        <div class="timeline-content">
+            <h4>M12 : Déblocage final (50K€)</h4>
+            <p>300 TPE actives, break-even en vue</p>
+        </div>
+    </div>
+</div>
+
+<!-- 10. RISQUES ET MITIGATIONS -->
+<h1>10. Risques et Mitigations</h1>
+
+<table>
+    <tr>
+        <th style="width:25%">Risque</th>
+        <th style="width:15%">Probabilité</th>
+        <th style="width:15%">Impact</th>
+        <th style="width:45%">Mitigation</th>
+    </tr>
+    <tr>
+        <td><strong>Faible adoption du paiement Open Banking</strong></td>
+        <td>Moyenne</td>
+        <td>Élevé</td>
+        <td>UX optimisée, argument "instantané + moins cher", incentives TPE</td>
+    </tr>
+    <tr>
+        <td><strong>Partenaire paiement augmente ses tarifs</strong></td>
+        <td>Faible</td>
+        <td>Moyen</td>
+        <td>Contrat négocié, partenaires alternatifs identifiés (Bridge, Powens)</td>
+    </tr>
+    <tr>
+        <td><strong>Concurrent copie le modèle gratuit</strong></td>
+        <td>Moyenne</td>
+        <td>Moyen</td>
+        <td>Avance technologique, communauté, effet réseau données</td>
+    </tr>
+    <tr>
+        <td><strong>Évolution réglementaire (RGPD, DSP2)</strong></td>
+        <td>Faible</td>
+        <td>Moyen</td>
+        <td>Audit juridique régulier, conformité by design</td>
+    </tr>
+    <tr>
+        <td><strong>Difficulté à recruter des développeurs</strong></td>
+        <td>Moyenne</td>
+        <td>Moyen</td>
+        <td>Full remote, package attractif, projet innovant</td>
+    </tr>
+    <tr>
+        <td><strong>Retard de développement</strong></td>
+        <td>Moyenne</td>
+        <td>Moyen</td>
+        <td>Architecture No-Code = développement rapide, MVP prioritaire</td>
+    </tr>
+    <tr>
+        <td><strong>Problème de sécurité / fuite de données</strong></td>
+        <td>Faible</td>
+        <td>Élevé</td>
+        <td>Audit sécurité, chiffrement, tests de pénétration, assurance cyber</td>
+    </tr>
+</table>
+
+<h2>Plan de contingence</h2>
+
+<div class="highlight-box warning">
+    <h4>Scénario pessimiste : 50% des objectifs</h4>
+    <p>Si seulement 250 TPE sont actives à la fin de l'année 1 :</p>
+    <ul>
+        <li>Réduction des coûts marketing</li>
+        <li>Focus sur le produit et la rétention</li>
+        <li>Pivot possible vers modèle freemium léger</li>
+        <li>Runway étendu à 24 mois avec trésorerie restante</li>
+    </ul>
+</div>
+
+<!-- 11. ANNEXES -->
+<h1>11. Annexes</h1>
+
+<h2>A. Glossaire</h2>
+
+<table>
+    <tr>
+        <th>Terme</th>
+        <th>Définition</th>
+    </tr>
+    <tr>
+        <td>ERP</td>
+        <td>Enterprise Resource Planning - Logiciel de gestion intégré</td>
+    </tr>
+    <tr>
+        <td>TPE</td>
+        <td>Très Petite Entreprise (0-9 salariés)</td>
+    </tr>
+    <tr>
+        <td>Open Banking</td>
+        <td>Directive européenne permettant l'accès aux services bancaires via API</td>
+    </tr>
+    <tr>
+        <td>BaaS</td>
+        <td>Banking as a Service - Services bancaires en marque blanche</td>
+    </tr>
+    <tr>
+        <td>SaaS</td>
+        <td>Software as a Service - Logiciel en ligne par abonnement</td>
+    </tr>
+    <tr>
+        <td>CAC</td>
+        <td>Customer Acquisition Cost - Coût d'acquisition client</td>
+    </tr>
+    <tr>
+        <td>LTV</td>
+        <td>Lifetime Value - Valeur vie client</td>
+    </tr>
+    <tr>
+        <td>ARPU</td>
+        <td>Average Revenue Per User - Revenu moyen par utilisateur</td>
+    </tr>
+    <tr>
+        <td>DSP2</td>
+        <td>Directive sur les Services de Paiement 2 - Réglementation européenne</td>
+    </tr>
+</table>
+
+<h2>B. Références</h2>
+
+<ul>
+    <li>INSEE - Statistiques entreprises France 2025</li>
+    <li>Banque de France - Observatoire des délais de paiement</li>
+    <li>ACPR - Rapport Open Banking 2025</li>
+    <li>Xerfi - Marché des ERP en France</li>
+</ul>
+
+<h2>C. Contacts</h2>
+
+<table>
+    <tr>
+        <th>Contact</th>
+        <th>Coordonnées</th>
+    </tr>
+    <tr>
+        <td>Stéphane Moreau (Fondateur)</td>
+        <td>contact@masith.fr — +33 6 75 78 87 58</td>
+    </tr>
+    <tr>
+        <td>Site web</td>
+        <td>www.azalplus.fr (en construction)</td>
+    </tr>
+    <tr>
+        <td>Société</td>
+        <td>MASITH Développement</td>
+    </tr>
+</table>
+
+<div class="page-footer">
+    <p><strong>MASITH Développement — AZALPLUS</strong></p>
+    <p>Document confidentiel — Mars 2026</p>
+</div>
+
+</body>
+</html>

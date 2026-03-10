@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche Call - Checklist</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            padding: 20px;
+            max-width: 210mm;
+            margin: 0 auto;
+            background: #fff;
+            color: #1a1a1a;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #1e40af;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 22pt;
+            color: #1e40af;
+        }
+
+        .header-info {
+            text-align: right;
+            font-size: 10pt;
+            color: #64748b;
+        }
+
+        .header-info strong {
+            color: #1a1a1a;
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 12pt;
+            font-weight: 700;
+            color: #fff;
+            background: #1e40af;
+            padding: 6px 12px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .section-title.green {
+            background: #059669;
+        }
+
+        .section-title.orange {
+            background: #d97706;
+        }
+
+        .section-title.purple {
+            background: #7c3aed;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #94a3b8;
+            border-radius: 3px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .pitch-box {
+            background: #fef9c3;
+            border: 1px solid #fde047;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 10pt;
+        }
+
+        .pitch-box p {
+            margin-bottom: 6px;
+        }
+
+        .pitch-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .stats-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: #fff;
+            border-radius: 4px;
+        }
+
+        .stat-item .number {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #059669;
+        }
+
+        .stat-item .label {
+            font-size: 9pt;
+            color: #64748b;
+        }
+
+        .important-box {
+            background: #fef2f2;
+            border: 2px solid #fca5a5;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+
+        .important-box h4 {
+            color: #dc2626;
+            font-size: 11pt;
+            margin-bottom: 8px;
+        }
+
+        .notes-area {
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            min-height: 80px;
+            background: repeating-linear-gradient(
+                transparent,
+                transparent 23px,
+                #e5e7eb 23px,
+                #e5e7eb 24px
+            );
+        }
+
+        .scenario-box {
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 10pt;
+        }
+
+        .scenario-box .question {
+            font-weight: 700;
+            color: #1e40af;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #93c5fd;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 9pt;
+            color: #94a3b8;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+
+        table.quick-ref {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+        }
+
+        table.quick-ref th,
+        table.quick-ref td {
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            text-align: left;
+        }
+
+        table.quick-ref th {
+            background: #f1f5f9;
+            font-weight: 600;
+            width: 50%;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>FICHE CALL PARTENAIRE</h1>
+    <div class="header-info">
+        <strong>AZALPLUS</strong> — MASITH Développement<br>
+        Stéphane Moreau — 06 75 78 87 58
+    </div>
+</div>
+
+<div class="two-columns">
+    <!-- Colonne gauche -->
+    <div>
+        <div class="section">
+            <div class="section-title">📋 AVANT LE CALL</div>
+            <ul class="checklist">
+                <li><span class="checkbox"></span> Formulaire ouvert (Powens ou Bridge)</li>
+                <li><span class="checkbox"></span> Cette fiche imprimée</li>
+                <li><span class="checkbox"></span> Stylo prêt</li>
+                <li><span class="checkbox"></span> Connexion stable</li>
+                <li><span class="checkbox"></span> Environnement calme</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <div class="section-title green">🎤 PITCH (2 min)</div>
+            <div class="pitch-box">
+                <p><strong>« MASITH Développement édite AZALPLUS, un ERP gratuit pour TPE.</strong></p>
+                <p>L'ERP est 100% gratuit. On se rémunère sur les flux financiers.</p>
+                <p>On veut intégrer un paiement par virement Open Banking dans chaque facture. »</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title green">📊 CHIFFRES CLÉS</div>
+            <div class="stats-box">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="number">500</div>
+                        <div class="label">TPE Année 1</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="number">5 000</div>
+                        <div class="label">TPE Année 3</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="number">15K→150K</div>
+                        <div class="label">Paiements/mois</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="number">300-500€</div>
+                        <div class="label">Ticket moyen</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title orange">⚠️ SCÉNARIO À VALIDER</div>
+            <div class="scenario-box">
+                <p>TPE envoie facture 500€ → Client clique "Payer" → Redirigé vers sa banque → Valide virement → TPE reçoit 500€ - frais</p>
+                <p class="question">→ Puis-je configurer 1.5% total (dont 0.5% pour moi) ?</p>
+            </div>
+        </div>
+
+        <div class="important-box">
+            <h4>🚨 QUESTION CRITIQUE</h4>
+            <p><strong>« Puis-je ajouter ma propre marge sur chaque transaction ? »</strong></p>
+            <p style="font-size:10pt;color:#64748b;margin-top:5px;">Si NON → le partenaire n'est pas viable pour notre modèle.</p>
+        </div>
+    </div>
+
+    <!-- Colonne droite -->
+    <div>
+        <div class="section">
+            <div class="section-title purple">❓ QUESTIONS ESSENTIELLES</div>
+            <ul class="checklist">
+                <li><span class="checkbox"></span> Tarif de base ? (____ % ou ____ €)</li>
+                <li><span class="checkbox"></span> Marge intégrateur possible ? (OUI / NON)</li>
+                <li><span class="checkbox"></span> Comment techniquement ?</li>
+                <li><span class="checkbox"></span> Banques couvertes France ? (____ %)</li>
+                <li><span class="checkbox"></span> Taux de succès paiements ? (____ %)</li>
+                <li><span class="checkbox"></span> Délai réception fonds ?</li>
+                <li><span class="checkbox"></span> API REST + Doc publique ?</li>
+                <li><span class="checkbox"></span> Sandbox disponible ?</li>
+                <li><span class="checkbox"></span> Frais setup ? (____ €)</li>
+                <li><span class="checkbox"></span> Frais mensuels ? (____ €)</li>
+                <li><span class="checkbox"></span> Délai intégration ? (____ sem.)</li>
+                <li><span class="checkbox"></span> Exclusivité demandée ?</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📝 RÉPONSES CLÉS</div>
+            <table class="quick-ref">
+                <tr>
+                    <th>Tarif base</th>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>Ma marge possible</th>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>Total client final</th>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>Couverture banques</th>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>Frais setup</th>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>Frais mensuels</th>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">✅ PROCHAINE ÉTAPE</div>
+            <div class="notes-area"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">💭 IMPRESSION</div>
+            <ul class="checklist">
+                <li><span class="checkbox"></span> <strong style="color:#059669">Très positif</strong> — on avance</li>
+                <li><span class="checkbox"></span> <strong style="color:#059669">Positif</strong> — à creuser</li>
+                <li><span class="checkbox"></span> <strong style="color:#d97706">Neutre</strong> — attendre</li>
+                <li><span class="checkbox"></span> <strong style="color:#dc2626">Négatif</strong> — chercher ailleurs</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    MASITH Développement — AZALPLUS — contact@masith.fr — 06 75 78 87 58
+</div>
+
+</body>
+</html>

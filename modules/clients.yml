@@ -24,6 +24,49 @@ champs:
     description: Raison sociale
     autocompletion: true
 
+  - nom: adresse1
+    type: text
+    obligatoire: false
+    description: Adresse ligne 1
+    autocompletion: true
+    groupe: identification
+
+  - nom: adresse2
+    type: text
+    obligatoire: false
+    description: Adresse ligne 2
+    autocompletion: true
+    groupe: identification
+
+  - nom: cp
+    type: text
+    obligatoire: false
+    description: Code postal
+    autocompletion: true
+    groupe: identification
+
+  - nom: ville
+    type: text
+    obligatoire: false
+    description: Ville
+    autocompletion: true
+    groupe: identification
+
+  - nom: region
+    type: text
+    obligatoire: false
+    description: Region
+    autocompletion: true
+    groupe: identification
+
+  - nom: pays
+    type: text
+    obligatoire: false
+    description: Pays
+    defaut: France
+    autocompletion: true
+    groupe: identification
+
   - nom: type
     type: select
     obligatoire: false
@@ -62,39 +105,6 @@ champs:
     obligatoire: false
     autocompletion: true
 
-  # Adresse
-  - nom: address_line1
-    type: text
-    obligatoire: false
-    autocompletion: true
-
-  - nom: address_line2
-    type: text
-    obligatoire: false
-    autocompletion: true
-
-  - nom: city
-    type: text
-    obligatoire: false
-    autocompletion: true
-
-  - nom: postal_code
-    type: text
-    obligatoire: false
-    autocompletion: true
-
-  - nom: state
-    type: text
-    obligatoire: false
-    description: Region/Departement
-    autocompletion: true
-
-  - nom: country_code
-    type: text
-    obligatoire: false
-    defaut: FR
-    description: Code pays ISO
-    autocompletion: true
 
   # Informations legales
   - nom: tax_id

@@ -105,6 +105,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/api/mobile/connect",
         # Guardian - Error reporting (public, rate-limited)
         "/guardian/frontend-error",
+        # Waitlist - Pré-inscription (public)
+        "/waitlist",
+        "/inscription",
+        "/api/public/waitlist",
     ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

@@ -95,7 +95,12 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         return f'''
         <div class="form-group">
             <label class="label" for="{field_id}">{label}</label>
-            <input type="date" class="input" id="{field_id}" name="{field.nom}" value="{value or ''}" {required}>
+            <div class="datetime-picker-wrapper">
+                <input type="text" class="input datetime-picker" id="{field_id}" name="{field.nom}"
+                       value="{value or ''}" {required} readonly
+                       onclick="openDateTimePicker(this, 'date')" placeholder="Sélectionner une date...">
+                <span class="datetime-picker-icon" onclick="openDateTimePicker(document.getElementById('{field_id}'), 'date')">📅</span>
+            </div>
         </div>
         '''
 
@@ -103,7 +108,12 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         return f'''
         <div class="form-group">
             <label class="label" for="{field_id}">{label}</label>
-            <input type="datetime-local" class="input" id="{field_id}" name="{field.nom}" value="{value or ''}" {required}>
+            <div class="datetime-picker-wrapper">
+                <input type="text" class="input datetime-picker" id="{field_id}" name="{field.nom}"
+                       value="{value or ''}" {required} readonly
+                       onclick="openDateTimePicker(this, 'datetime')" placeholder="Sélectionner date et heure...">
+                <span class="datetime-picker-icon" onclick="openDateTimePicker(document.getElementById('{field_id}'), 'datetime')">📅</span>
+            </div>
         </div>
         '''
 
@@ -130,14 +140,23 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
     elif field.type in ["lien", "relation"]:
         # Pour les liens/relations, on génère un select avec option de création
         linked_module = field.lien_vers or getattr(field, 'relation', '') or ""
+        linked_module_lower = linked_module.lower()
+
+        # Configuration auto-fill pour certains champs de relation
+        autofill_config = ""
+        if field.nom == "client_id":
+            autofill_config = 'data-autofill="adresse_ligne1:address_line1,adresse_ligne2:address_line2,ville:city,code_postal:postal_code,contact_sur_place:contact_name,telephone_contact:phone,email_contact:email"'
+        elif field.nom == "donneur_ordre_id":
+            autofill_config = 'data-autofill="adresse_ligne1:adresse_ligne1,adresse_ligne2:adresse_ligne2,ville:ville,code_postal:code_postal,contact_sur_place:contact_principal,telephone_contact:telephone,email_contact:email"'
+
         return f'''
         <div class="form-group">
             <label class="label" for="{field_id}">{label}</label>
             <div class="select-with-create">
-                <select class="input" id="{field_id}" name="{field.nom}" data-link="{linked_module}" {required}>
+                <select class="input" id="{field_id}" name="{field.nom}" data-link="{linked_module}" {autofill_config} {required} onchange="handleRelationAutofill(this)">
                     <option value="">-- Sélectionner --</option>
                 </select>
-                <button type="button" class="btn-create-inline" onclick="openCreateModal('{linked_module}', '{field_id}')" title="Créer nouveau">
+                <button type="button" class="btn-create-inline" onclick="openFullCreatePage('{linked_module_lower}', '{field_id}')" title="Créer nouveau">
                     +
                 </button>
             </div>
@@ -475,16 +494,21 @@ async def dashboard(request: Request, user: dict = Depends(require_auth)):
                 margin-bottom: 30px;
             }}
             .kpi-card {{
-                background: white;
+                background: var(--gray-100);
                 border-radius: 12px;
                 padding: 24px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                box-shadow: var(--shadow-sm);
                 border-left: 4px solid var(--primary);
+                transition: all 0.2s;
             }}
-            .kpi-card.success {{ border-left-color: #10B981; }}
-            .kpi-card.warning {{ border-left-color: #F59E0B; }}
-            .kpi-card.danger {{ border-left-color: #EF4444; }}
-            .kpi-card.info {{ border-left-color: #3B82F6; }}
+            .kpi-card:hover {{
+                box-shadow: var(--shadow);
+                border-left-color: var(--primary-light);
+            }}
+            .kpi-card.success {{ border-left-color: var(--success); }}
+            .kpi-card.warning {{ border-left-color: var(--warning); }}
+            .kpi-card.danger {{ border-left-color: var(--error); }}
+            .kpi-card.info {{ border-left-color: var(--info); }}
             .kpi-header {{
                 display: flex;
                 justify-content: space-between;
@@ -493,7 +517,7 @@ async def dashboard(request: Request, user: dict = Depends(require_auth)):
             }}
             .kpi-title {{
                 font-size: 14px;
-                color: #64748B;
+                color: var(--gray-500);
                 font-weight: 500;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
@@ -505,18 +529,18 @@ async def dashboard(request: Request, user: dict = Depends(require_auth)):
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: #F1F5F9;
+                background: var(--gray-200);
             }}
-            .kpi-icon svg {{ width: 20px; height: 20px; }}
+            .kpi-icon svg {{ width: 20px; height: 20px; color: var(--primary-light); }}
             .kpi-value {{
                 font-size: 28px;
                 font-weight: 700;
-                color: #1E293B;
+                color: var(--gray-900);
                 margin-bottom: 4px;
             }}
             .kpi-subtitle {{
                 font-size: 13px;
-                color: #94A3B8;
+                color: var(--gray-500);
             }}
             .kpi-badge {{
                 display: inline-block;
@@ -526,15 +550,15 @@ async def dashboard(request: Request, user: dict = Depends(require_auth)):
                 font-weight: 500;
                 margin-left: 8px;
             }}
-            .kpi-badge.up {{ background: #D1FAE5; color: #059669; }}
-            .kpi-badge.down {{ background: #FEE2E2; color: #DC2626; }}
+            .kpi-badge.up {{ background: var(--success-light); color: var(--success); }}
+            .kpi-badge.down {{ background: var(--error-light); color: var(--error); }}
             .section-title {{
                 font-size: 18px;
                 font-weight: 600;
-                color: #1E293B;
+                color: var(--gray-800);
                 margin: 30px 0 15px 0;
                 padding-bottom: 10px;
-                border-bottom: 2px solid #E2E8F0;
+                border-bottom: 2px solid var(--gray-200);
             }}
             .quick-links {{
                 display: grid;
@@ -1125,7 +1149,7 @@ async def modules_settings(request: Request, user: dict = Depends(require_auth))
 
             async function saveModules() {{
                 const checkboxes = document.querySelectorAll('.module-checkbox:checked');
-                const enabledModules = Array.from(checkboxes).map(cb => cb.value);
+                const enabledModules = Array.from(checkboxes).map(cb => cb.dataset.id);
 
                 console.log('Saving modules:', enabledModules);
 
@@ -2229,6 +2253,652 @@ async def calendar_view(
     return HTMLResponse(content=html)
 
 
+# =============================================================================
+# Interface Technicien Mobile
+# =============================================================================
+
+@ui_router.get("/technicien/dashboard", response_class=HTMLResponse)
+async def technicien_dashboard(
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Dashboard technicien mobile."""
+    from datetime import datetime, timedelta
+    from uuid import UUID as UUIDType
+
+    user_id = user.get("id") or user.get("sub")
+    today = date.today()
+    start_of_week = today - timedelta(days=today.weekday())
+
+    # Interventions du jour assignees au technicien
+    # Note: On recupere toutes les interventions et on filtre en Python
+    # car le filtre UUID pose probleme avec certains formats
+    all_interventions_raw = Database.query(
+        "interventions",
+        tenant_id,
+        limit=200
+    )
+
+    # Filtrer par intervenant_id en Python (plus robuste)
+    all_interventions = [
+        i for i in all_interventions_raw
+        if str(i.get("intervenant_id", "")) == str(user_id)
+    ]
+
+    interventions_today = []
+    interventions_week = []
+    interventions_en_cours = []
+
+    for intv in all_interventions:
+        if intv.get("statut") == "ANNULEE":
+            continue
+
+        date_prevue = intv.get("date_prevue_debut")
+        statut = intv.get("statut")
+
+        if date_prevue:
+            date_intv = date_prevue.date() if hasattr(date_prevue, 'date') else date_prevue
+
+            if date_intv == today:
+                interventions_today.append(intv)
+
+            if date_intv >= start_of_week:
+                interventions_week.append(intv)
+
+        if statut in ["SUR_SITE", "EN_COURS"]:
+            interventions_en_cours.append(intv)
+            if intv not in interventions_today:
+                interventions_today.append(intv)
+
+    # Enrichir avec noms clients
+    client_ids = list(set(i.get("client_id") for i in interventions_today if i.get("client_id")))
+    clients = {}
+    if client_ids:
+        for cid in client_ids:
+            client = Database.get("clients", tenant_id, cid)
+            if client:
+                clients[cid] = client.get("name", client.get("legal_name", ""))
+
+    for intv in interventions_today:
+        intv["client_nom"] = clients.get(intv.get("client_id"), "Client inconnu")
+
+    # Heures saisies cette semaine
+    # Recuperer tous les temps et filtrer en Python (evite probleme cast UUID)
+    try:
+        temps_entries_raw = Database.query(
+            "temps",
+            tenant_id,
+            limit=500
+        )
+        temps_entries = [
+            e for e in temps_entries_raw
+            if str(e.get("user_id", "")) == str(user_id)
+        ]
+        heures_semaine = sum(
+            (e.get("duree_minutes", 0) or 0) / 60
+            for e in temps_entries
+            if e.get("date") and e.get("date") >= start_of_week
+        )
+    except Exception:
+        heures_semaine = 0
+
+    # Trier par heure prevue
+    interventions_today.sort(key=lambda x: x.get("date_prevue_debut") or datetime.max)
+
+    # Charger le template
+    try:
+        template = jinja_env.get_template("technicien/dashboard.html")
+
+        # Ajouter filtre format_time
+        def format_time(dt):
+            if dt and hasattr(dt, 'strftime'):
+                return dt.strftime("%H:%M")
+            return ""
+
+        jinja_env.filters['format_time'] = format_time
+
+        # Formater la date en francais
+        jours_fr = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+        mois_fr = ["", "janvier", "février", "mars", "avril", "mai", "juin",
+                   "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+        date_jour_fr = f"{jours_fr[today.weekday()]} {today.day} {mois_fr[today.month]} {today.year}"
+
+        html = template.render(
+            user=user,
+            date_jour=date_jour_fr,
+            interventions_aujourdhui=len(interventions_today),
+            interventions_semaine=len(interventions_week),
+            interventions_en_cours=len(interventions_en_cours),
+            heures_saisies_semaine=round(heures_semaine, 1),
+            interventions=interventions_today
+        )
+        return HTMLResponse(content=html)
+
+    except Exception as e:
+        logger.error("technicien_dashboard_error", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@ui_router.get("/technicien/intervention/{intervention_id}", response_class=HTMLResponse)
+async def technicien_intervention_detail(
+    intervention_id: str,
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Detail intervention pour technicien avec workflow."""
+    from uuid import UUID
+
+    try:
+        intv_uuid = UUID(intervention_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID intervention invalide")
+
+    intervention = Database.get("interventions", tenant_id, intv_uuid)
+    if not intervention:
+        raise HTTPException(status_code=404, detail="Intervention non trouvee")
+
+    # Enrichir avec client
+    client = Database.get("clients", tenant_id, intervention.get("client_id"))
+    intervention["client_nom"] = client.get("name", client.get("legal_name", "")) if client else "Client inconnu"
+    intervention["client_telephone"] = client.get("phone") if client else None
+    intervention["client_email"] = client.get("email") if client else None
+
+    # Determiner l'etape courante
+    statut = intervention.get("statut", "DRAFT")
+    current_step = {
+        "DRAFT": 1,
+        "A_PLANIFIER": 1,
+        "PLANIFIEE": 1,
+        "SUR_SITE": 2,
+        "EN_COURS": 3,
+        "TRAVAUX_TERMINES": 7,
+        "TERMINEE": 8
+    }.get(statut, 1)
+
+    # Ajuster selon les donnees saisies
+    if statut == "EN_COURS":
+        photos_avant = intervention.get("photos_avant") or []
+        photos_apres = intervention.get("photos_apres") or []
+        materiel = intervention.get("materiel_utilise_lignes") or []
+        travaux = intervention.get("travaux_realises")
+
+        if len(photos_avant) < 2:
+            current_step = 3
+        elif len(photos_apres) < 2:
+            current_step = 4
+        elif not materiel and not intervention.get("materiel_utilise"):
+            current_step = 5
+        elif not travaux:
+            current_step = 6
+        else:
+            current_step = 6
+
+    try:
+        template = jinja_env.get_template("technicien/intervention.html")
+
+        def format_time(dt):
+            if dt and hasattr(dt, 'strftime'):
+                return dt.strftime("%H:%M")
+            return ""
+
+        jinja_env.filters['format_time'] = format_time
+
+        html = template.render(
+            user=user,
+            intervention=intervention,
+            current_step=current_step
+        )
+        return HTMLResponse(content=html)
+
+    except Exception as e:
+        logger.error("technicien_intervention_error", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@ui_router.get("/technicien/intervention/{intervention_id}/navigation", response_class=HTMLResponse)
+async def technicien_navigation(
+    intervention_id: str,
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Page de navigation GPS vers l'intervention."""
+    from uuid import UUID
+    import urllib.parse
+
+    try:
+        intv_uuid = UUID(intervention_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID intervention invalide")
+
+    intervention = Database.get("interventions", tenant_id, intv_uuid)
+    if not intervention:
+        raise HTTPException(status_code=404, detail="Intervention non trouvee")
+
+    # Construire l'adresse
+    adresse_parts = []
+    if intervention.get("adresse_ligne1"):
+        adresse_parts.append(intervention["adresse_ligne1"])
+    if intervention.get("code_postal"):
+        adresse_parts.append(intervention["code_postal"])
+    if intervention.get("ville"):
+        adresse_parts.append(intervention["ville"])
+
+    adresse_complete = ", ".join(adresse_parts)
+    adresse_encoded = urllib.parse.quote(adresse_complete)
+
+    # Section contact conditionnelle
+    contact_html = ""
+    if intervention.get("telephone_contact"):
+        tel = intervention.get("telephone_contact")
+        contact_name = intervention.get("contact_sur_place", "")
+        contact_html = f'''
+        <div class="card">
+            <div class="title">&#x1F4DE; Contact sur place</div>
+            <div class="address">{contact_name}</div>
+            <a href="tel:{tel}"
+               style="display: block; margin-top: 12px; padding: 14px; background: #22c55e;
+                      color: white; text-align: center; border-radius: 10px; text-decoration: none;
+                      font-weight: 600;">
+                Appeler {tel}
+            </a>
+        </div>
+        '''
+
+    html = f'''
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Navigation - {intervention.get("reference", "")}</title>
+        <script>
+        (function(){{
+            'use strict';
+            var REPORT_ENDPOINT='/guardian/frontend-error';
+            var errorCount=0;
+            function reportError(d){{
+                if(errorCount>=10)return;
+                errorCount++;
+                fetch(REPORT_ENDPOINT,{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(d)}})
+                .then(function(r){{return r.json();}})
+                .then(function(data){{
+                    if(data&&data.action==='reload'){{location.reload(true);}}
+                }}).catch(function(){{}});
+            }}
+            window.onerror=function(message,source,line,column,error){{
+                reportError({{error_type:'js_error',message:String(message),url:window.location.href,source:source,line:line,column:column,stack:error?error.stack:null,user_agent:navigator.userAgent}});
+                return false;
+            }};
+        }})();
+        </script>
+        <style>
+            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: #f3f4f6;
+                min-height: 100vh;
+                padding: 16px;
+            }}
+            .card {{
+                background: white;
+                border-radius: 16px;
+                padding: 20px;
+                margin-bottom: 16px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            }}
+            .title {{ font-size: 18px; font-weight: 700; margin-bottom: 16px; }}
+            .address {{ font-size: 15px; color: #374151; line-height: 1.5; }}
+            .nav-buttons {{ display: flex; flex-direction: column; gap: 12px; }}
+            .nav-btn {{
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: 16px;
+                border-radius: 12px;
+                text-decoration: none;
+                font-size: 16px;
+                font-weight: 600;
+                color: white;
+            }}
+            .nav-btn.google {{ background: #4285f4; }}
+            .nav-btn.apple {{ background: #333; }}
+            .nav-btn.waze {{ background: #33ccff; }}
+            .back-btn {{
+                display: block;
+                text-align: center;
+                padding: 14px;
+                color: #6b7280;
+                text-decoration: none;
+                margin-top: 16px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="title">&#x1F4CD; Destination</div>
+            <div class="address">{adresse_complete}</div>
+        </div>
+
+        <div class="card">
+            <div class="title">Choisir l'application</div>
+            <div class="nav-buttons">
+                <a href="https://www.google.com/maps/dir/?api=1&destination={adresse_encoded}"
+                   class="nav-btn google">
+                    &#x1F5FA; Google Maps
+                </a>
+                <a href="http://maps.apple.com/?daddr={adresse_encoded}"
+                   class="nav-btn apple">
+                    &#x1F34E; Apple Plans
+                </a>
+                <a href="https://waze.com/ul?q={adresse_encoded}&navigate=yes"
+                   class="nav-btn waze">
+                    &#x1F697; Waze
+                </a>
+            </div>
+        </div>
+
+        {contact_html}
+
+        <a href="/ui/technicien/intervention/{intervention_id}" class="back-btn">
+            &#x2190; Retour a l'intervention
+        </a>
+    </body>
+    </html>
+    '''
+
+    return HTMLResponse(content=html)
+
+
+@ui_router.get("/technicien/profil", response_class=HTMLResponse)
+async def technicien_profil(
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Page profil technicien."""
+    from datetime import datetime, timedelta
+
+    user_id = user.get("id") or user.get("sub")
+    today = date.today()
+    start_of_month = today.replace(day=1)
+
+    # Stats du technicien
+    try:
+        all_interventions = Database.query("interventions", tenant_id, limit=500)
+        my_interventions = [
+            i for i in all_interventions
+            if str(i.get("intervenant_id", "")) == str(user_id)
+        ]
+
+        # Interventions du mois
+        interventions_mois = len([
+            i for i in my_interventions
+            if i.get("date_cloture") and i.get("date_cloture").date() >= start_of_month
+        ])
+
+        # Note moyenne
+        notes = [i.get("avis_client") for i in my_interventions if i.get("avis_client")]
+        note_moyenne = round(sum(notes) / len(notes), 1) if notes else "-"
+
+    except Exception:
+        interventions_mois = 0
+        note_moyenne = "-"
+
+    # Heures du mois
+    try:
+        temps_entries = Database.query("temps", tenant_id, limit=500)
+        my_temps = [
+            e for e in temps_entries
+            if str(e.get("user_id", "")) == str(user_id)
+        ]
+        heures_mois = sum(
+            (e.get("duree_minutes", 0) or 0) / 60
+            for e in my_temps
+            if e.get("date") and e.get("date") >= start_of_month
+        )
+    except Exception:
+        heures_mois = 0
+
+    # Nom tenant
+    try:
+        tenant = Database.get("tenants", tenant_id, tenant_id)
+        tenant_name = tenant.get("nom", "Entreprise") if tenant else "Entreprise"
+    except Exception:
+        tenant_name = "Entreprise"
+
+    try:
+        template = jinja_env.get_template("technicien/profil.html")
+        html = template.render(
+            user=user,
+            tenant_name=tenant_name,
+            stats={
+                "interventions_mois": interventions_mois,
+                "heures_mois": round(heures_mois, 1),
+                "note_moyenne": note_moyenne
+            }
+        )
+        return HTMLResponse(content=html)
+
+    except Exception as e:
+        logger.error("technicien_profil_error", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@ui_router.get("/technicien/interventions", response_class=HTMLResponse)
+async def technicien_interventions_list(
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Liste complete des interventions du technicien."""
+    from datetime import datetime
+    from collections import OrderedDict
+
+    user_id = user.get("id") or user.get("sub")
+    today = date.today()
+
+    # Jours et mois en francais
+    jours_fr = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
+    mois_fr = ["", "janvier", "fevrier", "mars", "avril", "mai", "juin",
+               "juillet", "aout", "septembre", "octobre", "novembre", "decembre"]
+
+    # Toutes les interventions du technicien
+    all_interventions = Database.query("interventions", tenant_id, limit=500)
+    my_interventions = [
+        i for i in all_interventions
+        if str(i.get("intervenant_id", "")) == str(user_id)
+    ]
+
+    # Enrichir avec noms clients
+    client_ids = list(set(i.get("client_id") for i in my_interventions if i.get("client_id")))
+    clients = {}
+    for cid in client_ids:
+        try:
+            client = Database.get("clients", tenant_id, cid)
+            if client:
+                clients[cid] = client.get("name", client.get("legal_name", ""))
+        except Exception:
+            pass
+
+    for intv in my_interventions:
+        intv["client_nom"] = clients.get(intv.get("client_id"), "Client")
+
+    # Trier par date prevue (plus recentes d'abord)
+    my_interventions.sort(
+        key=lambda x: x.get("date_prevue_debut") or datetime.min,
+        reverse=True
+    )
+
+    # Grouper par date
+    interventions_grouped = OrderedDict()
+    for intv in my_interventions:
+        date_prevue = intv.get("date_prevue_debut")
+        if date_prevue:
+            date_obj = date_prevue.date() if hasattr(date_prevue, 'date') else date_prevue
+            date_label = f"{jours_fr[date_obj.weekday()]} {date_obj.day} {mois_fr[date_obj.month]}"
+        else:
+            date_label = "Non planifiee"
+
+        if date_label not in interventions_grouped:
+            interventions_grouped[date_label] = []
+        interventions_grouped[date_label].append(intv)
+
+    # Compteurs
+    counts = {
+        "all": len(my_interventions),
+        "today": len([i for i in my_interventions if i.get("date_prevue_debut") and
+                      (i["date_prevue_debut"].date() if hasattr(i["date_prevue_debut"], 'date') else i["date_prevue_debut"]) == today]),
+        "en_cours": len([i for i in my_interventions if i.get("statut") in ["SUR_SITE", "EN_COURS"]]),
+        "planifiee": len([i for i in my_interventions if i.get("statut") == "PLANIFIEE"]),
+        "terminee": len([i for i in my_interventions if i.get("statut") == "TERMINEE"])
+    }
+
+    # Date d'aujourd'hui formatee
+    date_aujourdhui = f"{jours_fr[today.weekday()]} {today.day} {mois_fr[today.month]}"
+
+    try:
+        template = jinja_env.get_template("technicien/interventions.html")
+
+        def format_datetime(dt):
+            if dt and hasattr(dt, 'strftime'):
+                return dt.strftime("%d/%m %H:%M")
+            return ""
+
+        jinja_env.filters['format_datetime'] = format_datetime
+
+        html = template.render(
+            user=user,
+            interventions_grouped=interventions_grouped,
+            counts=counts,
+            date_aujourdhui=date_aujourdhui
+        )
+        return HTMLResponse(content=html)
+
+    except Exception as e:
+        logger.error("technicien_interventions_error", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@ui_router.get("/technicien/temps", response_class=HTMLResponse)
+async def technicien_temps(
+    request: Request,
+    week_offset: int = 0,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Page saisie temps technicien."""
+    from datetime import datetime, timedelta
+
+    user_id = user.get("id") or user.get("sub")
+    today = date.today()
+
+    # Mois en francais
+    mois_fr = ["", "jan", "fev", "mar", "avr", "mai", "juin",
+               "juil", "aout", "sep", "oct", "nov", "dec"]
+    mois_fr_long = ["", "janvier", "fevrier", "mars", "avril", "mai", "juin",
+                    "juillet", "aout", "septembre", "octobre", "novembre", "decembre"]
+
+    # Calculer la semaine
+    start_of_week = today - timedelta(days=today.weekday()) + timedelta(weeks=week_offset)
+    end_of_week = start_of_week + timedelta(days=6)
+    start_of_month = today.replace(day=1)
+
+    # Label semaine
+    if start_of_week.month == end_of_week.month:
+        semaine_label = f"{start_of_week.day} - {end_of_week.day} {mois_fr_long[start_of_week.month]}"
+    else:
+        semaine_label = f"{start_of_week.day} {mois_fr[start_of_week.month]} - {end_of_week.day} {mois_fr[end_of_week.month]}"
+
+    # Recuperer les temps
+    try:
+        all_temps = Database.query("temps", tenant_id, limit=500)
+        my_temps = [
+            e for e in all_temps
+            if str(e.get("user_id", "")) == str(user_id)
+        ]
+    except Exception:
+        my_temps = []
+
+    # Filtrer par semaine
+    temps_semaine = []
+    heures_semaine = 0
+    heures_mois = 0
+
+    for entry in my_temps:
+        entry_date = entry.get("date")
+        if not entry_date:
+            continue
+
+        if isinstance(entry_date, datetime):
+            entry_date = entry_date.date()
+
+        duree = entry.get("duree_minutes", 0) or 0
+
+        # Cette semaine
+        if start_of_week <= entry_date <= end_of_week:
+            heures_semaine += duree / 60
+            entry["jour"] = entry_date.day
+            entry["mois_abbr"] = mois_fr[entry_date.month].upper()
+            entry["heures"] = int(duree // 60)
+            entry["minutes"] = int(duree % 60)
+            temps_semaine.append(entry)
+
+        # Ce mois
+        if entry_date >= start_of_month:
+            heures_mois += duree / 60
+
+    # Trier par date (plus recentes d'abord)
+    temps_semaine.sort(key=lambda x: x.get("date"), reverse=True)
+
+    # Enrichir avec interventions
+    for entry in temps_semaine:
+        if entry.get("intervention_id"):
+            try:
+                intv = Database.get("interventions", tenant_id, entry["intervention_id"])
+                if intv:
+                    entry["intervention_ref"] = intv.get("reference")
+            except Exception:
+                pass
+
+    # Interventions actives pour le formulaire
+    try:
+        all_interventions = Database.query("interventions", tenant_id, limit=200)
+        interventions_actives = [
+            i for i in all_interventions
+            if str(i.get("intervenant_id", "")) == str(user_id)
+            and i.get("statut") in ["PLANIFIEE", "SUR_SITE", "EN_COURS", "TRAVAUX_TERMINES"]
+        ]
+        # Enrichir avec client
+        for intv in interventions_actives:
+            try:
+                client = Database.get("clients", tenant_id, intv.get("client_id"))
+                intv["client_nom"] = client.get("name", "") if client else ""
+            except Exception:
+                intv["client_nom"] = ""
+    except Exception:
+        interventions_actives = []
+
+    try:
+        template = jinja_env.get_template("technicien/temps.html")
+        html = template.render(
+            user=user,
+            semaine_label=semaine_label,
+            heures_semaine=round(heures_semaine, 1),
+            heures_mois=round(heures_mois, 1),
+            temps_entries=temps_semaine,
+            interventions_actives=interventions_actives
+        )
+        return HTMLResponse(content=html)
+
+    except Exception as e:
+        logger.error("technicien_temps_error", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @ui_router.get("/{module_name}", response_class=HTMLResponse)
 async def module_list(
     module_name: str,
@@ -2264,18 +2934,63 @@ async def module_list(
         for f in display_fields
     ])
 
+    # Cache pour les relations (éviter de requêter plusieurs fois la même entité)
+    relation_cache = {}
+
+    def resolve_relation(field_name: str, field_config, value):
+        """Résout une relation UUID vers le nom de l'entité liée."""
+        if not value:
+            return "-"
+
+        # Récupérer le module lié
+        related_module = getattr(field_config, 'relation', None) or getattr(field_config, 'lien_vers', None)
+        if not related_module:
+            return str(value)
+
+        # Clé de cache
+        cache_key = f"{related_module}:{value}"
+        if cache_key in relation_cache:
+            return relation_cache[cache_key]
+
+        # Requêter l'entité liée
+        try:
+            related_item = Database.get_by_id(related_module.lower(), tenant_id, value)
+            if related_item:
+                # Chercher un champ de nom dans l'ordre de préférence
+                display_name = (
+                    related_item.get('name') or
+                    related_item.get('nom') or
+                    related_item.get('raison_sociale') or
+                    related_item.get('code') or
+                    related_item.get('reference') or
+                    str(value)[:8] + "..."
+                )
+                relation_cache[cache_key] = display_name
+                return display_name
+        except Exception:
+            pass
+
+        return str(value)[:8] + "..."
+
     table_rows = ""
     for item in items:
         cells = ""
         for f in display_fields:
             value = item.get(f, "")
+            field_config = module.champs.get(f)
+
             if f == "statut" and value:
                 value = get_status_badge(value)
+            elif field_config and field_config.type in ["relation", "lien"]:
+                value = resolve_relation(f, field_config, value)
+            elif value is None:
+                value = "-"
+
             cells += f"<td>{value}</td>"
         table_rows += f'''
         <tr data-id="{item['id']}" onclick="handleRowClick(event, '{item['id']}', '/ui/{module_name}/{item['id']}')" style="cursor:pointer">
             <td class="checkbox-cell" onclick="event.stopPropagation()">
-                <input type="checkbox" class="row-checkbox" data-id="{item['id']}" onchange="updateBulkSelection()">
+                <input type="checkbox" class="row-checkbox" data-id="{item['id']}" onchange="updateBulkActions()">
             </td>
             {cells}
         </tr>
@@ -2315,8 +3030,9 @@ async def module_create_form(
     if not module:
         raise HTTPException(status_code=404, detail="Module non trouvé")
 
-    # Formulaire spécial pour Devis/Factures
-    if module_name.lower() in ["devis", "facture"]:
+    # Formulaire spécial pour modules avec lignes (documents commerciaux)
+    document_modules = ["devis", "factures", "facture", "avoirs", "avoir", "bons_livraison", "bon_livraison", "contrats", "contrat", "notes_frais", "note_frais"]
+    if module_name.lower() in document_modules:
         html = generate_layout(
             title=f"Nouveau {module.nom_affichage}",
             content=generate_document_form(module, module_name),
@@ -2325,40 +3041,301 @@ async def module_create_form(
         )
         return HTMLResponse(content=html)
 
-    # Formulaire standard pour autres modules
-    fields_html = ""
-    for nom, field in module.champs.items():
-        if field.type not in ["auto", "calcul"]:
-            fields_html += get_field_html(field, module_name=module_name)
+    # Formulaire standard pour autres modules - organisé en sections
+    # Grouper les champs par catégorie logique
+    sections = organize_fields_into_sections(module)
 
     html = generate_layout(
         title=f"Nouveau {module.nom_affichage}",
-        content=generate_form(module_name, fields_html),
+        content=generate_sectioned_form(module_name, sections, module),
         user=user,
         modules=get_all_modules()
     )
     return HTMLResponse(content=html)
 
 
-def generate_form(module_name: str, fields_html: str) -> str:
-    """Génère un formulaire standard avec soumission API."""
+def organize_intervention_fields(module) -> dict:
+    """Organisation specifique des champs pour le module Interventions."""
+
+    # Champs par section dans l'ordre souhaite
+    general_fields = [
+        "reference", "donneur_ordre_id", "reference_externe", "client_id",
+        "type_intervention", "priorite", "corps_etat", "titre", "description"
+    ]
+
+    planning_fields = [
+        "date_prevue_debut", "date_prevue_fin", "duree_prevue_minutes",
+        "intervenant_id"
+    ]
+
+    adresse_fields = [
+        "adresse_ligne1", "adresse_ligne2", "code_postal", "ville", "pays"
+    ]
+
+    contact_fields = [
+        "contact_civilite", "contact_sur_place", "telephone_contact", "email_contact"
+    ]
+
+    execution_fields = [
+        "statut", "date_arrivee_site", "date_demarrage", "date_fin",
+        "duree_reelle_minutes", "constat_arrivee", "travaux_realises",
+        "anomalies", "recommandations"
+    ]
+
+    materiel_fields = [
+        "materiel_necessaire", "materiel_utilise", "materiel_utilise_lignes"
+    ]
+
+    facturation_fields = [
+        "facturable", "montant_ht", "montant_ttc", "facture_generee_id"
+    ]
+
+    signature_fields = [
+        "signature_client", "nom_signataire", "date_signature", "is_signed",
+        "avis_client", "appreciation_client"
+    ]
+
+    liens_fields = [
+        "projet_id", "affaire_id", "devis_id", "facture_client_id"
+    ]
+
+    sections = {
+        "General": [],
+        "Planning": [],
+        "Adresse intervention": [],
+        "Contact sur place": [],
+        "Execution": [],
+        "Materiel": [],
+        "Facturation": [],
+        "Signature client": [],
+        "Liens": [],
+        "Autres": []
+    }
+
+    # Map des champs vers sections
+    field_to_section = {}
+    for f in general_fields:
+        field_to_section[f] = "General"
+    for f in planning_fields:
+        field_to_section[f] = "Planning"
+    for f in adresse_fields:
+        field_to_section[f] = "Adresse intervention"
+    for f in contact_fields:
+        field_to_section[f] = "Contact sur place"
+    for f in execution_fields:
+        field_to_section[f] = "Execution"
+    for f in materiel_fields:
+        field_to_section[f] = "Materiel"
+    for f in facturation_fields:
+        field_to_section[f] = "Facturation"
+    for f in signature_fields:
+        field_to_section[f] = "Signature client"
+    for f in liens_fields:
+        field_to_section[f] = "Liens"
+
+    # Organiser les champs
+    for nom, field in module.champs.items():
+        if field.type in ["auto", "calcul"]:
+            continue
+
+        section_name = field_to_section.get(nom, "Autres")
+        sections[section_name].append((nom, field))
+
+    # Trier les champs dans chaque section selon l'ordre defini
+    def sort_key(item):
+        nom = item[0]
+        for idx, f in enumerate(general_fields + planning_fields + adresse_fields +
+                                contact_fields + execution_fields + materiel_fields +
+                                facturation_fields + signature_fields + liens_fields):
+            if f == nom:
+                return idx
+        return 999
+
+    for section_name in sections:
+        sections[section_name].sort(key=sort_key)
+
+    # Supprimer les sections vides
+    return {k: v for k, v in sections.items() if v}
+
+
+def organize_fields_into_sections(module) -> dict:
+    """Organise les champs en sections logiques basées sur leur nom/type."""
+
+    # Organisation specifique pour les interventions
+    module_name = getattr(module, 'nom', '').lower()
+    if 'intervention' in module_name:
+        return organize_intervention_fields(module)
+
+    # Sections universelles ordonnées
+    sections = {
+        "Identification": [],    # Code, nom, type, statut
+        "Contact": [],           # Email, téléphone, civilité, contact
+        "Adresse": [],           # Adresse, ville, code postal, pays
+        "Informations légales": [],  # SIRET, TVA, forme juridique
+        "Commercial": [],        # Commercial assigné, conditions paiement
+        "Dates & Planning": [],  # Dates prévues, exécution
+        "Montants": [],          # Prix, totaux, TVA
+        "Notes": [],             # Notes, commentaires, description
+        "Liens": [],             # Relations vers autres modules
+        "Autres": []
+    }
+
+    for nom, field in module.champs.items():
+        if field.type in ["auto", "calcul"]:
+            continue
+
+        nom_lower = nom.lower()
+
+        # === IDENTIFICATION ===
+        if any(x in nom_lower for x in ["code", "name", "nom", "type", "statut", "status", "titre", "title", "reference", "numero"]):
+            sections["Identification"].append((nom, field))
+
+        # === CONTACT ===
+        elif any(x in nom_lower for x in ["email", "phone", "tel", "mobile", "fax", "contact", "civilite", "website", "linkedin"]):
+            sections["Contact"].append((nom, field))
+
+        # === ADRESSE ===
+        elif any(x in nom_lower for x in ["address", "adresse", "city", "ville", "postal", "zip", "country", "pays", "state", "region", "departement"]):
+            sections["Adresse"].append((nom, field))
+
+        # === INFORMATIONS LÉGALES ===
+        elif any(x in nom_lower for x in ["tax_id", "tva_intra", "siret", "siren", "registration", "legal", "raison_sociale", "forme_juridique"]):
+            sections["Informations légales"].append((nom, field))
+
+        # === COMMERCIAL ===
+        elif any(x in nom_lower for x in ["assigned", "commercial", "payment", "paiement", "credit", "discount", "remise", "currency", "devise", "industry", "secteur", "segment", "source", "score", "revenue", "order_count", "size", "employee"]):
+            sections["Commercial"].append((nom, field))
+
+        # === DATES & PLANNING ===
+        elif any(x in nom_lower for x in ["date", "debut", "fin", "validite", "expir", "duree", "arrivee", "demarrage", "prevue"]):
+            sections["Dates & Planning"].append((nom, field))
+
+        # === MONTANTS ===
+        elif any(x in nom_lower for x in ["montant", "prix", "total", "tva", "ht", "ttc", "facturable", "solde"]):
+            sections["Montants"].append((nom, field))
+
+        # === NOTES ===
+        elif any(x in nom_lower for x in ["note", "comment", "description", "observation", "materiel"]):
+            sections["Notes"].append((nom, field))
+        elif field.type in ["textarea", "texte long"]:
+            sections["Notes"].append((nom, field))
+
+        # === LIENS (relations) ===
+        elif field.type in ["lien", "relation"]:
+            sections["Liens"].append((nom, field))
+
+        # === AUTRES ===
+        else:
+            sections["Autres"].append((nom, field))
+
+    # Supprimer les sections vides et retourner dans l'ordre
+    return {k: v for k, v in sections.items() if v}
+
+
+def generate_sectioned_form(module_name: str, sections: dict, module) -> str:
+    """Génère un formulaire avec sections et onglets style Odoo."""
+
+    section_names = list(sections.keys())
+
+    # Générer les onglets
+    tabs_html = ""
+    for i, section_name in enumerate(section_names):
+        active = "active" if i == 0 else ""
+        tabs_html += f'<button class="doc-tab {active}" onclick="showSection(\'{i}\')">{section_name}</button>'
+
+    # Générer le contenu des sections
+    sections_html = ""
+    for i, (section_name, fields) in enumerate(sections.items()):
+        display = "block" if i == 0 else "none"
+        fields_in_section = ""
+
+        # Créer des lignes de 2 champs
+        field_pairs = []
+        current_pair = []
+        for nom, field in fields:
+            # Les textareas prennent toute la largeur
+            if field.type in ["textarea", "texte long"]:
+                if current_pair:
+                    field_pairs.append(current_pair)
+                    current_pair = []
+                field_pairs.append([(nom, field, True)])  # True = full width
+            else:
+                current_pair.append((nom, field, False))
+                if len(current_pair) == 2:
+                    field_pairs.append(current_pair)
+                    current_pair = []
+        if current_pair:
+            field_pairs.append(current_pair)
+
+        # Générer le HTML
+        for pair in field_pairs:
+            if len(pair) == 1 and pair[0][2]:  # Full width textarea
+                nom, field, _ = pair[0]
+                fields_in_section += f'''
+                <div class="doc-row" style="grid-template-columns: 1fr;">
+                    <div class="doc-field">
+                        {get_field_html(field, module_name=module_name)}
+                    </div>
+                </div>'''
+            else:
+                row_fields = ""
+                for nom, field, _ in pair:
+                    row_fields += f'''
+                    <div class="doc-field">
+                        {get_field_html(field, module_name=module_name)}
+                    </div>'''
+                fields_in_section += f'''
+                <div class="doc-row">
+                    {row_fields}
+                </div>'''
+
+        sections_html += f'''
+        <div class="section-content" id="section-{i}" style="display: {display};">
+            {fields_in_section}
+        </div>'''
 
     return f'''
     <div class="card">
         <div class="card-header">
-            <span class="badge badge-gray">Nouveau</span>
+            <div class="flex items-center gap-2">
+                <span class="badge badge-gray">Nouveau</span>
+            </div>
+            <div class="flex gap-2">
+                <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
+                <button type="button" id="submit-btn" onclick="submitForm()" class="btn btn-primary">Enregistrer</button>
+            </div>
         </div>
+
         <form id="create-form" class="card-body">
-            <div class="form-grid">
-                {fields_html}
+            <div class="doc-section">
+                <div class="doc-tabs">
+                    {tabs_html}
+                </div>
+                <div style="margin-top: 20px;">
+                    {sections_html}
+                </div>
             </div>
         </form>
-        <div class="card-body flex justify-end gap-2" style="border-top: 1px solid var(--gray-200); padding-top: 16px;">
-            <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
-            <button type="button" id="submit-btn" onclick="submitForm()" class="btn btn-primary">Enregistrer</button>
-        </div>
     </div>
 
+    <script>
+    function showSection(index) {{
+        // Cacher toutes les sections
+        document.querySelectorAll('.section-content').forEach(s => s.style.display = 'none');
+        // Désactiver tous les onglets
+        document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
+        // Afficher la section sélectionnée
+        document.getElementById('section-' + index).style.display = 'block';
+        // Activer l'onglet sélectionné
+        document.querySelectorAll('.doc-tab')[index].classList.add('active');
+    }}
+    </script>
+    ''' + generate_form_scripts(module_name)
+
+
+def generate_form_scripts(module_name: str) -> str:
+    """Génère les scripts communs pour les formulaires."""
+    return f'''
     <!-- Messages de notification -->
     <div id="notification" class="notification hidden"></div>
 
@@ -2404,344 +3381,6 @@ def generate_form(module_name: str, fields_html: str) -> str:
         @keyframes spin {{
             to {{ transform: rotate(360deg); }}
         }}
-    </style>
-
-    <script>
-    function showNotification(message, type) {{
-        const notif = document.getElementById('notification');
-        notif.textContent = message;
-        notif.className = 'notification ' + type;
-        setTimeout(() => {{
-            notif.classList.add('hidden');
-        }}, 4000);
-    }}
-
-    function collectFormData() {{
-        const form = document.getElementById('create-form');
-        const formData = new FormData(form);
-        const data = {{}};
-
-        for (const [key, value] of formData.entries()) {{
-            // Gestion des checkbox
-            const input = form.querySelector(`[name="${{key}}"]`);
-            if (input && input.type === 'checkbox') {{
-                data[key] = input.checked;
-            }} else if (input && input.type === 'number') {{
-                data[key] = value ? parseFloat(value) : null;
-            }} else {{
-                data[key] = value || null;
-            }}
-        }}
-
-        // Ajouter les checkbox non cochées
-        form.querySelectorAll('input[type="checkbox"]').forEach(cb => {{
-            if (!data.hasOwnProperty(cb.name)) {{
-                data[cb.name] = cb.checked;
-            }}
-        }});
-
-        return data;
-    }}
-
-    async function submitForm() {{
-        const submitBtn = document.getElementById('submit-btn');
-        const originalText = submitBtn.innerHTML;
-
-        // État de chargement
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner"></span>Enregistrement...';
-
-        try {{
-            const data = collectFormData();
-
-            const response = await fetch('/api/{module_name}', {{
-                method: 'POST',
-                credentials: 'include',
-                headers: {{
-                    'Content-Type': 'application/json',
-                }},
-                body: JSON.stringify(data)
-            }});
-
-            if (response.ok) {{
-                const result = await response.json();
-                showNotification('Enregistrement créé avec succès !', 'success');
-
-                // Redirection vers la liste après 1.5 secondes
-                setTimeout(() => {{
-                    window.location.href = '/ui/{module_name}';
-                }}, 1500);
-            }} else {{
-                const errorData = await response.json().catch(() => ({{}}));
-                const errorMessage = errorData.detail || errorData.message || 'Erreur lors de l\\'enregistrement';
-                showNotification(errorMessage, 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }}
-        }} catch (error) {{
-            console.error('Erreur:', error);
-            showNotification('Erreur de connexion au serveur', 'error');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        }}
-    }}
-
-    // Charger les données de lien (select avec data-link)
-    document.addEventListener('DOMContentLoaded', function() {{
-        document.querySelectorAll('select[data-link]').forEach(async select => {{
-            const linkedModule = select.dataset.link;
-            await loadSelectOptions(select, linkedModule);
-        }});
-    }});
-
-    async function loadSelectOptions(select, linkedModule) {{
-        try {{
-            // Convertir en minuscules pour l'API
-            const apiModule = linkedModule.toLowerCase();
-            const response = await fetch(`/api/${{apiModule}}`, {{ credentials: 'include' }});
-            if (response.ok) {{
-                const data = await response.json();
-                const items = data.items || data || [];
-                // Garder la première option (-- Sélectionner --)
-                const firstOption = select.options[0];
-                select.innerHTML = '';
-                select.appendChild(firstOption);
-                items.forEach(item => {{
-                    const option = document.createElement('option');
-                    option.value = item.id;
-                    option.textContent = item.nom || item.raison_sociale || item.titre || item.numero || item.email || item.id;
-                    select.appendChild(option);
-                }});
-            }}
-        }} catch (e) {{
-            console.error('Erreur chargement des liens:', e);
-        }}
-    }}
-
-    // Modal de création inline
-    let currentSelectId = null;
-    let currentModule = null;
-
-    function openCreateModal(moduleName, selectId) {{
-        currentSelectId = selectId;
-        currentModule = moduleName;
-        document.getElementById('createModalTitle').textContent = 'Créer ' + moduleName;
-        document.getElementById('createModalModule').value = moduleName;
-        document.getElementById('createModalBody').innerHTML = '<p>Chargement...</p>';
-        document.getElementById('createModal').style.display = 'flex';
-
-        // Charger le formulaire simplifié
-        loadQuickCreateForm(moduleName);
-    }}
-
-    async function loadQuickCreateForm(moduleName) {{
-        // Formulaire simplifié avec les champs essentiels
-        const commonFields = {{
-            'Clients': ['code', 'name', 'legal_name', 'email', 'phone'],
-            'clients': ['code', 'name', 'legal_name', 'email', 'phone'],
-            'Fournisseurs': ['reference', 'nom', 'raison_sociale', 'email', 'telephone'],
-            'fournisseurs': ['reference', 'nom', 'raison_sociale', 'email', 'telephone'],
-            'Produits': ['nom', 'reference', 'prix_vente'],
-            'produits': ['nom', 'reference', 'prix_vente'],
-            'Utilisateurs': ['nom', 'email'],
-            'utilisateurs': ['nom', 'email'],
-            'Employes': ['nom', 'prenom', 'email', 'poste'],
-            'employes': ['nom', 'prenom', 'email', 'poste'],
-            'Projets': ['nom', 'description'],
-            'projets': ['nom', 'description'],
-            'Agenda': ['titre', 'date_debut'],
-            'agenda': ['titre', 'date_debut'],
-        }};
-
-        const fields = commonFields[moduleName] || ['nom'];
-        let formHtml = '<form id="quickCreateForm">';
-        fields.forEach(field => {{
-            const label = field.replace('_', ' ').replace(/^./, c => c.toUpperCase());
-            formHtml += `
-                <div class="form-group" style="margin-bottom: 12px;">
-                    <label class="label">${{label}}</label>
-                    <input type="text" class="input" name="${{field}}" id="quick_${{field}}">
-                </div>
-            `;
-        }});
-        formHtml += '</form>';
-        document.getElementById('createModalBody').innerHTML = formHtml;
-    }}
-
-    function closeCreateModal() {{
-        document.getElementById('createModal').style.display = 'none';
-        currentSelectId = null;
-        currentModule = null;
-    }}
-
-    async function saveQuickCreate() {{
-        console.log('saveQuickCreate called, currentModule:', currentModule);
-
-        const form = document.getElementById('quickCreateForm');
-        if (!form) {{
-            console.error('Form not found');
-            showNotification('Erreur: formulaire non trouvé', 'error');
-            return;
-        }}
-        const formData = new FormData(form);
-        const data = {{}};
-        formData.forEach((value, key) => {{
-            if (value) data[key] = value;
-        }});
-        console.log('Form data collected:', data);
-
-        // Auto-génération des champs obligatoires pour certains modules
-        const moduleDefaults = {{
-            'employes': {{
-                matricule: 'EMP-' + Date.now().toString(36).toUpperCase(),
-                type_contrat: 'CDI',
-                date_embauche: new Date().toISOString().split('T')[0],
-                statut: 'ACTIF',
-                is_active: true
-            }},
-            'produits': {{
-                is_active: true
-            }},
-            'clients': {{
-                code: 'CLI-' + Date.now().toString(36).toUpperCase(),
-                is_active: true
-            }},
-            'fournisseurs': {{
-                reference: 'FRN-' + Date.now().toString(36).toUpperCase(),
-                is_active: true
-            }},
-            'agenda': {{
-                type: 'RDV',
-                statut: 'PLANIFIE',
-                is_active: true
-            }}
-        }};
-
-        const moduleLower = currentModule.toLowerCase();
-        console.log('moduleLower:', moduleLower, 'defaults:', moduleDefaults[moduleLower]);
-        if (moduleDefaults[moduleLower]) {{
-            Object.entries(moduleDefaults[moduleLower]).forEach(([key, value]) => {{
-                if (!(key in data)) {{
-                    data[key] = value;
-                }}
-            }});
-        }}
-        console.log('Final data to send:', data);
-
-        try {{
-            const apiModule = currentModule.toLowerCase();
-            const response = await fetch(`/api/${{apiModule}}`, {{
-                method: 'POST',
-                credentials: 'include',
-                headers: {{
-                    'Content-Type': 'application/json'
-                }},
-                body: JSON.stringify(data)
-            }});
-
-            if (response.ok) {{
-                const newItem = await response.json();
-                console.log('Created item:', newItem);
-                // Ajouter au select et sélectionner
-                const select = document.getElementById(currentSelectId);
-                if (select) {{
-                    const option = document.createElement('option');
-                    option.value = newItem.id;
-                    option.textContent = newItem.nom || newItem.raison_sociale || newItem.titre || newItem.id;
-                    option.selected = true;
-                    select.appendChild(option);
-                }}
-                closeCreateModal();
-                showNotification('Créé avec succès', 'success');
-            }} else {{
-                const err = await response.json();
-                console.error('Server error:', err);
-                // Afficher les erreurs de validation de manière explicite
-                let errorMsg = 'Erreur';
-                if (err.detail) {{
-                    if (typeof err.detail === 'string') {{
-                        errorMsg = err.detail;
-                    }} else if (err.detail.errors && Array.isArray(err.detail.errors)) {{
-                        // Erreurs de validation avec champs
-                        const fieldErrors = err.detail.errors.map(e => {{
-                            const fieldName = e.field.replace('_', ' ');
-                            return `${{fieldName}}: ${{e.message}}`;
-                        }});
-                        errorMsg = fieldErrors.join(', ');
-                    }} else if (Array.isArray(err.detail)) {{
-                        // Erreurs Pydantic
-                        const fieldErrors = err.detail.map(e => {{
-                            const field = e.loc ? e.loc[e.loc.length - 1] : 'champ';
-                            return `${{field}}: ${{e.msg}}`;
-                        }});
-                        errorMsg = fieldErrors.join(', ');
-                    }} else {{
-                        errorMsg = JSON.stringify(err.detail);
-                    }}
-                }}
-                // Afficher l'erreur dans le modal lui-même
-                const modalBody = document.getElementById('createModalBody');
-                const existingError = modalBody.querySelector('.modal-error');
-                if (existingError) existingError.remove();
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'modal-error';
-                errorDiv.style.cssText = 'background:#fee;border:1px solid #c00;color:#c00;padding:10px;margin-bottom:10px;border-radius:4px;';
-                errorDiv.textContent = errorMsg;
-                modalBody.insertBefore(errorDiv, modalBody.firstChild);
-                showNotification(errorMsg, 'error');
-            }}
-        }} catch (e) {{
-            console.error('saveQuickCreate error:', e);
-            showNotification('Erreur: ' + e.message, 'error');
-        }}
-    }}
-    </script>
-
-    <!-- Modal de création rapide -->
-    <div id="createModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="createModalTitle">Créer</h3>
-                <button onclick="closeCreateModal()" class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body" id="createModalBody">
-            </div>
-            <input type="hidden" id="createModalModule">
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeCreateModal()">Annuler</button>
-                <button class="btn btn-primary" onclick="saveQuickCreate()">Créer</button>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        .select-with-create {{
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }}
-        .select-with-create select {{
-            flex: 1;
-        }}
-        .btn-create-inline {{
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            border: 1px solid var(--primary-color, #2563EB);
-            background: var(--primary-color, #2563EB);
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
-        }}
-        .btn-create-inline:hover {{
-            background: var(--primary-dark, #1d4ed8);
-            transform: scale(1.05);
-        }}
         .modal-overlay {{
             position: fixed;
             top: 0;
@@ -2766,12 +3405,9 @@ def generate_form(module_name: str, fields_html: str) -> str:
             justify-content: space-between;
             align-items: center;
             padding: 16px 20px;
-            border-bottom: 1px solid var(--gray-200, #e5e7eb);
+            border-bottom: 1px solid var(--gray-200);
         }}
-        .modal-header h3 {{
-            margin: 0;
-            font-size: 18px;
-        }}
+        .modal-header h3 {{ margin: 0; font-size: 18px; }}
         .modal-close {{
             background: none;
             border: none;
@@ -2779,24 +3415,317 @@ def generate_form(module_name: str, fields_html: str) -> str:
             cursor: pointer;
             color: var(--gray-500);
         }}
-        .modal-body {{
-            padding: 20px;
-        }}
+        .modal-body {{ padding: 20px; }}
         .modal-footer {{
             display: flex;
             justify-content: flex-end;
             gap: 12px;
             padding: 16px 20px;
-            border-top: 1px solid var(--gray-200, #e5e7eb);
+            border-top: 1px solid var(--gray-200);
         }}
     </style>
+
+    <script>
+    function showNotification(message, type) {{
+        const notif = document.getElementById('notification');
+        notif.textContent = message;
+        notif.className = 'notification ' + type;
+        setTimeout(() => {{ notif.classList.add('hidden'); }}, 4000);
+    }}
+
+    function collectFormData() {{
+        const form = document.getElementById('create-form');
+        const formData = new FormData(form);
+        const data = {{}};
+        for (const [key, value] of formData.entries()) {{
+            const input = form.querySelector(`[name="${{key}}"]`);
+            if (input && input.type === 'checkbox') {{
+                data[key] = input.checked;
+            }} else if (input && input.type === 'number') {{
+                data[key] = value ? parseFloat(value) : null;
+            }} else if (input && input.classList.contains('datetime-picker')) {{
+                // Utiliser la valeur ISO stockée dans data-iso-value
+                data[key] = input.dataset.isoValue || value || null;
+            }} else {{
+                data[key] = value || null;
+            }}
+        }}
+        form.querySelectorAll('input[type="checkbox"]').forEach(cb => {{
+            if (!data.hasOwnProperty(cb.name)) data[cb.name] = cb.checked;
+        }});
+        return data;
+    }}
+
+    async function submitForm() {{
+        const submitBtn = document.getElementById('submit-btn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner"></span>Enregistrement...';
+        try {{
+            const data = collectFormData();
+            const response = await fetch('/api/{module_name}', {{
+                method: 'POST',
+                credentials: 'include',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify(data)
+            }});
+            if (response.ok) {{
+                const result = await response.json();
+                showNotification('Enregistrement créé avec succès !', 'success');
+                // Vérifier s'il y a une URL de redirection
+                const params = new URLSearchParams(window.location.search);
+                const redirectUrl = params.get('redirect');
+                if (redirectUrl) {{
+                    // Retourner à la page précédente avec l'ID du nouveau record
+                    const decodedUrl = decodeURIComponent(redirectUrl);
+                    const selectField = params.get('select_field');
+                    // Stocker l'ID créé pour pré-sélection
+                    if (result.id && selectField) {{
+                        sessionStorage.setItem('newlyCreatedId', result.id);
+                        sessionStorage.setItem('newlyCreatedField', selectField);
+                    }}
+                    setTimeout(() => {{ window.location.href = decodedUrl; }}, 800);
+                }} else {{
+                    setTimeout(() => {{ window.location.href = '/ui/{module_name}'; }}, 1500);
+                }}
+            }} else {{
+                const err = await response.json().catch(() => ({{}}));
+                showNotification(err.detail || 'Erreur', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }}
+        }} catch (e) {{
+            showNotification('Erreur de connexion', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }}
+    }}
+
+    document.addEventListener('DOMContentLoaded', function() {{
+        // Récupérer le token depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const authToken = urlParams.get('token') || '';
+
+        document.querySelectorAll('select[data-link]').forEach(async select => {{
+            const linkedModule = select.dataset.link;
+            try {{
+                const response = await fetch(`/api/${{linkedModule.toLowerCase()}}`, {{
+                    credentials: 'include',
+                    headers: {{
+                        'Authorization': 'Bearer ' + authToken
+                    }}
+                }});
+                if (response.ok) {{
+                    const data = await response.json();
+                    const items = data.items || data || [];
+                    const firstOption = select.options[0];
+                    select.innerHTML = '';
+                    select.appendChild(firstOption);
+                    items.forEach(item => {{
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = item.nom || item.name || item.raison_sociale || item.titre || item.numero || item.code || item.email || item.id;
+                        select.appendChild(opt);
+                    }});
+                }}
+            }} catch (e) {{ console.error('Erreur chargement:', e); }}
+        }});
+    }});
+
+    function openCreateModal(moduleName, selectId) {{
+        document.getElementById('createModalTitle').textContent = 'Créer ' + moduleName;
+        document.getElementById('createModalModule').value = moduleName;
+        document.getElementById('createModal').style.display = 'flex';
+        window.currentSelectId = selectId;
+        window.currentModule = moduleName;
+    }}
+    function closeCreateModal() {{
+        document.getElementById('createModal').style.display = 'none';
+    }}
+
+    // Auto-remplir les champs quand une relation est sélectionnée
+    async function handleRelationAutofill(select) {{
+        const autofillConfig = select.dataset.autofill;
+        if (!autofillConfig || !select.value) return;
+
+        const linkedModule = select.dataset.link;
+        const selectedId = select.value;
+
+        try {{
+            const urlParams = new URLSearchParams(window.location.search);
+            const authToken = urlParams.get('token') || '';
+
+            const response = await fetch(`/api/${{linkedModule.toLowerCase()}}/${{selectedId}}`, {{
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + authToken
+                }}
+            }});
+
+            if (response.ok) {{
+                const data = await response.json();
+
+                // Parser la config: "champ_local:champ_distant,..."
+                const mappings = autofillConfig.split(',');
+                mappings.forEach(mapping => {{
+                    const [localField, remoteField] = mapping.split(':');
+                    const value = data[remoteField] || '';
+
+                    // Trouver le champ local et le remplir
+                    const input = document.querySelector(`[name="${{localField}}"]`);
+                    if (input && !input.value) {{
+                        input.value = value;
+                        // Trigger change event pour d'autres listeners
+                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    }}
+                }});
+
+                console.log('Auto-fill appliqué depuis', linkedModule);
+            }}
+        }} catch (e) {{
+            console.error('Erreur auto-fill:', e);
+        }}
+    }}
+
+    // Ouvrir la page complete de creation dans une nouvelle fenetre
+    function openFullCreatePage(moduleName, selectId) {{
+        // Sauvegarder l'URL actuelle pour retour après création
+        const returnUrl = encodeURIComponent(window.location.href);
+        const url = '/ui/' + moduleName + '/nouveau?redirect=' + returnUrl + '&select_field=' + selectId;
+        // Naviguer dans la même page
+        window.location.href = url;
+    }}
+
+    function openFullCreatePage_OLD(moduleName, selectId) {{
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token') || '';
+        const url = '/ui/' + moduleName + '/nouveau?token=' + token;
+
+        // Stocker l'ID du select pour rafraichir apres creation
+        window.pendingSelectRefresh = selectId;
+        window.pendingModule = moduleName;
+
+        // Ouvrir dans une nouvelle fenetre
+        const popup = window.open(url, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+
+        // Rafraichir le select quand l'utilisateur revient sur cette page
+        window.addEventListener('focus', function onFocus() {{
+            if (window.pendingSelectRefresh) {{
+                refreshSelectOptions(window.pendingModule, window.pendingSelectRefresh);
+                window.pendingSelectRefresh = null;
+                window.pendingModule = null;
+            }}
+            window.removeEventListener('focus', onFocus);
+        }});
+    }}
+
+    // Rafraichir les options d'un select apres creation
+    async function refreshSelectOptions(moduleName, selectId) {{
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token') || '';
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        try {{
+            const response = await fetch('/api/' + moduleName.toLowerCase(), {{
+                credentials: 'include',
+                headers: {{ 'Authorization': 'Bearer ' + token }}
+            }});
+            if (response.ok) {{
+                const data = await response.json();
+                const items = data.items || data || [];
+                const currentValue = select.value;
+                const firstOption = select.options[0];
+                select.innerHTML = '';
+                select.appendChild(firstOption);
+                items.forEach(item => {{
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = item.nom || item.name || item.code || item.titre || item.numero || item.id;
+                    select.appendChild(opt);
+                }});
+                // Selectionner le dernier element cree (le plus recent)
+                if (items.length > 0) {{
+                    select.value = items[0].id;
+                }}
+            }}
+        }} catch (e) {{
+            console.error('Erreur rafraichissement:', e);
+        }}
+    }}
+
+    async function saveQuickCreate() {{
+        const moduleName = window.currentModule;
+        const selectId = window.currentSelectId;
+        const nom = document.getElementById('quick_nom').value.trim();
+
+        if (!nom) {{
+            alert('Veuillez saisir un nom');
+            return;
+        }}
+
+        // Récupérer le token
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token') || '';
+
+        // Convertir le nom du module en minuscules pour l'API
+        const apiModule = moduleName.toLowerCase();
+
+        try {{
+            const response = await fetch('/api/' + apiModule, {{
+                method: 'POST',
+                headers: {{
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                }},
+                body: JSON.stringify({{ nom: nom, name: nom }})
+            }});
+
+            if (response.ok) {{
+                const data = await response.json();
+                // Ajouter l'option au select
+                const select = document.getElementById(selectId);
+                if (select) {{
+                    const opt = document.createElement('option');
+                    opt.value = data.id;
+                    opt.textContent = nom;
+                    opt.selected = true;
+                    select.appendChild(opt);
+                }}
+                // Fermer la modal et vider le champ
+                document.getElementById('quick_nom').value = '';
+                closeCreateModal();
+            }} else {{
+                const err = await response.json();
+                alert('Erreur: ' + (err.detail || 'Création échouée'));
+            }}
+        }} catch (e) {{
+            alert('Erreur: ' + e.message);
+        }}
+    }}
+    </script>
+
+    <div id="createModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="createModalTitle">Créer</h3>
+                <button onclick="closeCreateModal()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="createModalBody">
+                <div class="form-group"><label class="label">Nom</label><input type="text" class="input" id="quick_nom"></div>
+            </div>
+            <input type="hidden" id="createModalModule">
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateModal()">Annuler</button>
+                <button class="btn btn-primary" onclick="saveQuickCreate()">Créer</button>
+            </div>
+        </div>
+    </div>
     '''
 
 
-def generate_document_form(module, module_name: str) -> str:
-    """Génère un formulaire style Odoo pour devis/factures."""
-
-    doc_type = "Devis" if module_name.lower() == "devis" else "Facture"
+def generate_form(module_name: str, fields_html: str) -> str:
+    """Génère un formulaire standard style Odoo avec soumission API."""
 
     return f'''
     <div class="card">
@@ -2805,7 +3734,49 @@ def generate_document_form(module, module_name: str) -> str:
                 <span class="badge badge-gray">Nouveau</span>
             </div>
             <div class="flex gap-2">
-                <button class="btn btn-secondary">Annuler</button>
+                <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
+                <button type="button" id="submit-btn" onclick="submitForm()" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+
+        <form id="create-form" class="card-body">
+            <div class="doc-section">
+                <div class="form-fields-container">
+                    {fields_html}
+                </div>
+            </div>
+        </form>
+    </div>
+    ''' + generate_form_scripts(module_name)
+
+
+def generate_document_form(module, module_name: str) -> str:
+    """Génère un formulaire style Odoo pour documents avec lignes."""
+
+    # Déterminer le type de document
+    doc_types = {
+        "devis": "Devis",
+        "factures": "Facture",
+        "facture": "Facture",
+        "avoirs": "Avoir",
+        "avoir": "Avoir",
+        "bons_livraison": "Bon de livraison",
+        "bon_livraison": "Bon de livraison",
+        "contrats": "Contrat",
+        "contrat": "Contrat",
+        "notes_frais": "Note de frais",
+        "note_frais": "Note de frais",
+    }
+    doc_type = doc_types.get(module_name.lower(), module.nom_affichage)
+
+    return f'''
+    <div class="card">
+        <div class="card-header">
+            <div class="flex items-center gap-2">
+                <span class="badge badge-gray">Nouveau</span>
+            </div>
+            <div class="flex gap-2">
+                <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
                 <button class="btn btn-primary" onclick="saveDocument()">Enregistrer</button>
             </div>
         </div>
@@ -2816,9 +3787,14 @@ def generate_document_form(module, module_name: str) -> str:
                 <div class="doc-row">
                     <div class="doc-field">
                         <label class="label">Client</label>
-                        <select class="input" id="client_id">
-                            <option value="">Sélectionner un client...</option>
-                        </select>
+                        <div class="select-with-create">
+                            <select class="input" id="client_id">
+                                <option value="">Sélectionner un client...</option>
+                            </select>
+                            <button type="button" class="btn-create-inline" onclick="openFullCreatePage('clients', 'client_id')" title="Créer nouveau client">
+                                +
+                            </button>
+                        </div>
                     </div>
                     <div class="doc-field">
                         <label class="label">Date d'expiration</label>
@@ -3040,17 +4016,35 @@ def generate_document_form(module, module_name: str) -> str:
 
     // Charger les clients au chargement de la page
     document.addEventListener('DOMContentLoaded', async function() {{
+        const urlParams = new URLSearchParams(window.location.search);
+        const authToken = urlParams.get('token') || '';
+
         try {{
-            const response = await fetch('/api/Client', {{ credentials: 'include' }});
+            const response = await fetch('/api/clients', {{
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + authToken
+                }}
+            }});
             if (response.ok) {{
-                const clients = await response.json();
+                const data = await response.json();
+                const clients = data.items || data || [];
                 const select = document.getElementById('client_id');
                 clients.forEach(client => {{
                     const option = document.createElement('option');
                     option.value = client.id;
-                    option.textContent = client.nom || client.raison_sociale || client.id;
+                    option.textContent = client.name || client.nom || client.raison_sociale || client.code || client.id;
                     select.appendChild(option);
                 }});
+
+                // Vérifier s'il y a un client nouvellement créé à pré-sélectionner
+                const newlyCreatedId = sessionStorage.getItem('newlyCreatedId');
+                const newlyCreatedField = sessionStorage.getItem('newlyCreatedField');
+                if (newlyCreatedId && newlyCreatedField === 'client_id') {{
+                    select.value = newlyCreatedId;
+                    sessionStorage.removeItem('newlyCreatedId');
+                    sessionStorage.removeItem('newlyCreatedField');
+                }}
             }}
         }} catch (e) {{
             console.error('Erreur chargement clients:', e);
@@ -3070,6 +4064,82 @@ def generate_document_form(module, module_name: str) -> str:
             this.classList.add('active');
         }});
     }});
+
+    // Auto-remplir les champs quand une relation est sélectionnée
+    async function handleRelationAutofill(select) {{
+        const autofillConfig = select.dataset.autofill;
+        if (!autofillConfig || !select.value) return;
+
+        const linkedModule = select.dataset.link;
+        const selectedId = select.value;
+
+        try {{
+            const urlParams = new URLSearchParams(window.location.search);
+            const authToken = urlParams.get('token') || '';
+
+            const response = await fetch(`/api/${{linkedModule.toLowerCase()}}/${{selectedId}}`, {{
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + authToken
+                }}
+            }});
+
+            if (response.ok) {{
+                const data = await response.json();
+
+                // Parser la config: "champ_local:champ_distant,..."
+                const mappings = autofillConfig.split(',');
+                mappings.forEach(mapping => {{
+                    const [localField, remoteField] = mapping.split(':');
+                    const value = data[remoteField] || '';
+
+                    // Trouver le champ local et le remplir
+                    const input = document.querySelector(`[name="${{localField}}"]`);
+                    if (input && !input.value) {{
+                        input.value = value;
+                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    }}
+                }});
+
+                console.log('Auto-fill appliqué depuis', linkedModule);
+            }}
+        }} catch (e) {{
+            console.error('Erreur auto-fill:', e);
+        }}
+    }}
+
+    // Ouvrir la page de creation dans une nouvelle fenetre
+    function openFullCreatePage(moduleName, selectId) {{
+        // Sauvegarder l'URL actuelle pour retour après création
+        const returnUrl = encodeURIComponent(window.location.href);
+        const url = '/ui/' + moduleName + '/nouveau?redirect=' + returnUrl + '&select_field=' + selectId;
+        // Naviguer dans la même page
+        window.location.href = url;
+    }}
+
+    // Rafraichir les options d'un select apres creation
+    async function refreshSelectOptions(moduleName, selectId) {{
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        try {{
+            const response = await fetch('/api/' + moduleName, {{ credentials: 'include' }});
+            if (response.ok) {{
+                const data = await response.json();
+                const items = data.items || data || [];
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Sélectionner un client...</option>';
+                items.forEach(item => {{
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = item.name || item.nom || item.raison_sociale || item.code || item.id;
+                    select.appendChild(option);
+                }});
+                if (currentValue) select.value = currentValue;
+            }}
+        }} catch (e) {{
+            console.error('Erreur rafraichissement:', e);
+        }}
+    }}
     </script>
     '''
 
@@ -3117,46 +4187,63 @@ async def module_detail(
     item_statut = item.get('statut', '')
     module_icone = get_icon(module.icone) if module.icone else '📁'
 
+    # Échapper les valeurs pour JavaScript (template literals et attributs HTML)
+    def escape_js_string(s):
+        if not s:
+            return ''
+        return str(s).replace('\\', '\\\\').replace('`', '\\`').replace('$', '\\$').replace("'", "\\'").replace('"', '\\"')
+
+    # Échapper pour HTML
+    import html
+    display_name_html = html.escape(str(display_name) if display_name else 'Sans nom')
+
+    display_name_js = escape_js_string(display_name)
+    sous_titre_js = escape_js_string(sous_titre)
+    item_statut_js = escape_js_string(item_statut)
+    module_icone_js = escape_js_string(module_icone)
+
     html = generate_layout(
         title=f"{module.nom_affichage} - Détail",
         content=f'''
-        <div class="mb-6 flex justify-between items-center">
-            <a href="/ui/{module_name}" class="text-muted">← Retour</a>
-            <div class="flex items-center gap-3">
-                <button class="star-btn" id="fav-btn-{item_id}"
-                    onclick="toggleFavori('{module_name}', '{item_id}', `{display_name}`, `{sous_titre}`, '{item_statut}', '{module_icone}', this)"
-                    title="Ajouter aux favoris">
-                    ☆
-                </button>
-                {statut_html}
-            </div>
+        <div class="mb-4">
+            <a href="/ui/{module_name}" class="text-muted">← Retour à la liste</a>
         </div>
 
         <div class="card">
-            <div class="card-header flex justify-between items-center">
-                <h2 class="font-bold">{display_name}</h2>
-                <div class="print-actions no-print">
-                    <button onclick="openPrintPreview()" class="btn-print" title="Apercu avant impression">
-                        <span class="print-icon">👁️</span>
-                        <span class="hide-mobile">Apercu</span>
-                    </button>
-                    <button onclick="window.print()" class="btn-print btn-print-primary" title="Imprimer">
-                        <span class="print-icon">🖨️</span>
-                        <span class="hide-mobile">Imprimer</span>
+            <div class="card-header">
+                <div class="flex items-center gap-3">
+                    {get_status_badge(item.get('statut', 'ACTIF')) if 'statut' in item else '<span class="badge badge-gray">Édition</span>'}
+                    <h2 class="font-bold" style="margin: 0;">{display_name_html}</h2>
+                    <button class="star-btn" id="fav-btn-{item_id}"
+                        onclick="toggleFavori('{module_name}', '{item_id}', `{display_name_js}`, `{sous_titre_js}`, '{item_statut_js}', `{module_icone_js}`, this)"
+                        title="Ajouter aux favoris">
+                        ☆
                     </button>
                 </div>
-            </div>
-            <form id="edit-form" class="card-body">
-                {fields_html}
-            </form>
-            <div class="card-footer flex justify-between no-print">
                 <div class="flex gap-2">
-                    <button onclick="deleteItem()" class="btn btn-danger">Supprimer</button>
-                    <button onclick="duplicateItem()" class="btn btn-secondary" title="Creer une copie de cet enregistrement">Dupliquer</button>
-                </div>
-                <div class="flex gap-3">
+                    <button onclick="openPrintPreview()" class="btn btn-secondary btn-sm" title="Apercu avant impression">
+                        👁️ <span class="hide-mobile">Aperçu</span>
+                    </button>
+                    <button onclick="window.print()" class="btn btn-secondary btn-sm" title="Imprimer">
+                        🖨️ <span class="hide-mobile">Imprimer</span>
+                    </button>
                     <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
                     <button onclick="saveItem()" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </div>
+
+            <form id="edit-form" class="card-body">
+                <div class="doc-section">
+                    <div class="form-fields-container">
+                        {fields_html}
+                    </div>
+                </div>
+            </form>
+
+            <div class="card-footer flex justify-between no-print">
+                <div class="flex gap-2">
+                    <button onclick="deleteItem()" class="btn btn-danger btn-sm">Supprimer</button>
+                    <button onclick="duplicateItem()" class="btn btn-secondary btn-sm" title="Creer une copie">Dupliquer</button>
                 </div>
             </div>
         </div>
@@ -3175,7 +4262,7 @@ async def module_detail(
                 </div>
                 <div class="print-doc-info">
                     <div class="print-doc-type">{module.nom_affichage}</div>
-                    <div class="print-doc-number">{display_name}</div>
+                    <div class="print-doc-number">{display_name_html}</div>
                     <div class="print-doc-date">Imprime le: Date du jour</div>
                 </div>
             </div>
@@ -3192,23 +4279,67 @@ async def module_detail(
         {documents_html}
 
         <script>
+        function getToken() {{
+            const params = new URLSearchParams(window.location.search);
+            return params.get('token') || localStorage.getItem('auth_token') || '';
+        }}
+
         async function saveItem() {{
             const form = document.getElementById('edit-form');
-            const data = Object.fromEntries(new FormData(form));
-            const res = await fetch('/api/{module_name}/{item_id}', {{
-                method: 'PUT',
-                credentials: 'include',
-                headers: {{'Content-Type': 'application/json'}},
-                body: JSON.stringify(data)
+            const formData = new FormData(form);
+            const data = {{}};
+
+            // Convertir FormData en objet, gérer les checkboxes
+            formData.forEach((value, key) => {{
+                data[key] = value;
             }});
-            if (res.ok) window.location.reload();
-            else alert('Erreur');
+
+            // Gérer les checkboxes non cochées
+            form.querySelectorAll('input[type="checkbox"]').forEach(cb => {{
+                if (!formData.has(cb.name)) {{
+                    data[cb.name] = false;
+                }} else {{
+                    data[cb.name] = true;
+                }}
+            }});
+
+            const token = getToken();
+            try {{
+                const res = await fetch('/api/{module_name}/{item_id}', {{
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {{
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    }},
+                    body: JSON.stringify(data)
+                }});
+
+                if (res.ok) {{
+                    window.location.reload();
+                }} else {{
+                    const err = await res.json().catch(() => ({{}}));
+                    alert('Erreur: ' + (err.detail || err.message || 'Enregistrement échoué'));
+                    console.error('Save error:', err);
+                }}
+            }} catch (e) {{
+                alert('Erreur réseau: ' + e.message);
+                console.error('Network error:', e);
+            }}
         }}
 
         async function deleteItem() {{
-            if (!confirm('Supprimer ?')) return;
-            const res = await fetch('/api/{module_name}/{item_id}', {{method: 'DELETE', credentials: 'include'}});
+            if (!confirm('Supprimer cet élément ?')) return;
+            const token = getToken();
+            const res = await fetch('/api/{module_name}/{item_id}', {{
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + token
+                }}
+            }});
             if (res.ok) window.location = '/ui/{module_name}';
+            else alert('Erreur de suppression');
         }}
 
         // Document management functions
@@ -3329,7 +4460,7 @@ async def module_detail(
             }}
 
             // Track recent view
-            trackRecent('{module_name}', '{item_id}', `{display_name}`, `{sous_titre}`, '{item_statut}', '{module_icone}');
+            trackRecent('{module_name}', '{item_id}', `{display_name_js}`, `{sous_titre_js}`, '{item_statut_js}', `{module_icone_js}`);
         }});
         </script>
         ''',
@@ -3387,8 +4518,9 @@ def generate_list_with_bulk_actions(
 ) -> str:
     """Génère une liste avec actions en masse."""
 
-    bulk_actions_html = ""
+    # Toujours afficher les actions bulk (au moins le bouton supprimer)
     if has_status:
+        # Avec statut : sélecteur de statut + bouton appliquer + bouton supprimer
         bulk_actions_html = f'''
         <div class="bulk-actions" id="bulk-actions" style="display: none;">
             <span class="bulk-count">0 sélectionné(s)</span>
@@ -3397,6 +4529,14 @@ def generate_list_with_bulk_actions(
                 {status_options}
             </select>
             <button class="btn btn-secondary" onclick="applyBulkStatus()">Appliquer</button>
+            <button class="btn btn-danger" onclick="deleteBulkItems()">Supprimer</button>
+        </div>
+        '''
+    else:
+        # Sans statut : juste le bouton supprimer
+        bulk_actions_html = f'''
+        <div class="bulk-actions" id="bulk-actions" style="display: none;">
+            <span class="bulk-count">0 sélectionné(s)</span>
             <button class="btn btn-danger" onclick="deleteBulkItems()">Supprimer</button>
         </div>
         '''
@@ -3435,6 +4575,14 @@ def generate_list_with_bulk_actions(
     </div>
 
     <script>
+        function handleRowClick(event, id, url) {{
+            // Ne pas naviguer si on clique sur une checkbox ou un bouton
+            if (event.target.type === 'checkbox' || event.target.tagName === 'BUTTON' || event.target.closest('button')) {{
+                return;
+            }}
+            window.location.href = url;
+        }}
+
         function toggleSelectAll() {{
             const selectAll = document.getElementById('select-all');
             const checkboxes = document.querySelectorAll('.row-checkbox');
@@ -3455,26 +4603,33 @@ def generate_list_with_bulk_actions(
             cb.addEventListener('change', updateBulkActions);
         }});
 
+        // Récupérer le token depuis l'URL
+        function getToken() {{
+            const params = new URLSearchParams(window.location.search);
+            return params.get('token') || '';
+        }}
+
         async function applyBulkStatus() {{
             const status = document.getElementById('bulk-status').value;
             if (!status) return alert('Veuillez sélectionner un statut');
 
-            const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
-            if (ids.length === 0) return;
+            const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.dataset.id);
+            if (ids.length === 0) return alert('Aucun élément sélectionné');
 
             try {{
-                const response = await fetch('/api/v1/{module_name}/bulk', {{
+                const response = await fetch('/api/{module_name}/bulk', {{
                     method: 'PATCH',
-                    credentials: 'include',
                     headers: {{
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + getToken()
                     }},
                     body: JSON.stringify({{ ids, updates: {{ statut: status }} }})
                 }});
                 if (response.ok) {{
                     location.reload();
                 }} else {{
-                    alert('Erreur lors de la mise à jour');
+                    const err = await response.json();
+                    alert('Erreur: ' + (err.detail || 'Mise à jour échouée'));
                 }}
             }} catch (e) {{
                 alert('Erreur: ' + e.message);
@@ -3482,24 +4637,25 @@ def generate_list_with_bulk_actions(
         }}
 
         async function deleteBulkItems() {{
-            const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
-            if (ids.length === 0) return;
+            const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.dataset.id);
+            if (ids.length === 0) return alert('Aucun élément sélectionné');
 
             if (!confirm('Supprimer ' + ids.length + ' élément(s) ?')) return;
 
             try {{
-                const response = await fetch('/api/v1/{module_name}/bulk', {{
+                const response = await fetch('/api/{module_name}/bulk', {{
                     method: 'DELETE',
-                    credentials: 'include',
                     headers: {{
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + getToken()
                     }},
                     body: JSON.stringify({{ ids }})
                 }});
                 if (response.ok) {{
                     location.reload();
                 }} else {{
-                    alert('Erreur lors de la suppression');
+                    const err = await response.json();
+                    alert('Erreur: ' + (err.detail || 'Suppression échouée'));
                 }}
             }} catch (e) {{
                 alert('Erreur: ' + e.message);
@@ -3572,6 +4728,54 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title} - AZALPLUS</title>
+    <!-- Error Reporter INLINE - capture immédiate avant tout autre script -->
+    <script>
+    (function(){{
+        'use strict';
+        var REPORT_ENDPOINT='/guardian/frontend-error';
+        var errorCount=0;
+        setInterval(function(){{errorCount=0;}},60000);
+        function reportError(d){{
+            if(errorCount>=10)return;
+            errorCount++;
+            fetch(REPORT_ENDPOINT,{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(d)}})
+            .then(function(r){{return r.json();}})
+            .then(function(data){{
+                if(data&&data.action==='reload'){{
+                    console.log('[Guardian] Correction appliquée, rechargement...');
+                    setTimeout(function(){{location.reload(true);}},500);
+                }}
+            }}).catch(function(){{}});
+        }}
+        window.onerror=function(message,source,line,column,error){{
+            reportError({{
+                error_type:'js_error',
+                message:String(message),
+                url:window.location.href,
+                source:source,
+                line:line,
+                column:column,
+                stack:error?error.stack:null,
+                user_agent:navigator.userAgent
+            }});
+            return false;
+        }};
+        window.onunhandledrejection=function(event){{
+            reportError({{
+                error_type:'promise_rejection',
+                message:String(event.reason),
+                url:window.location.href,
+                source:null,
+                line:null,
+                column:null,
+                stack:event.reason&&event.reason.stack?event.reason.stack:null,
+                user_agent:navigator.userAgent
+            }});
+        }};
+        console.debug('[ErrorReporter] Inline error reporting initialized');
+    }})();
+    </script>
+    <script src="/assets/js/error-reporter.js"></script>
     <link rel="stylesheet" href="/static/style.css">
     <script>
     // Notification bell - defined early so onclick works
@@ -3597,14 +4801,20 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         }}
     }});
     </script>
-    <!-- Error Reporter (Guardian/AutoPilot) -->
-    <script src="/assets/js/error-reporter.js"></script>
 </head>
 <body>
     <div class="app-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-logo">AZALPLUS</div>
+            <div class="sidebar-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="sidebar-logo-icon">
+                    <circle cx="256" cy="256" r="256" fill="#3454D1"/>
+                    <circle cx="380" cy="120" r="24" fill="#6B9FFF"/>
+                    <text x="200" y="360" font-family="Inter, Montserrat, Arial, sans-serif" font-weight="800" font-size="280" fill="#FFFFFF">A</text>
+                    <text x="340" y="280" font-family="Inter, Montserrat, Arial, sans-serif" font-weight="700" font-size="140" fill="#FFFFFF">+</text>
+                </svg>
+                <span>AZALPLUS</span>
+            </div>
 
             <nav class="sidebar-nav">
                 <div class="nav-section">
@@ -3703,6 +4913,38 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     </div>
 
     <style>
+        /* === STYLES GLOBAUX BOUTON CREATION INLINE === */
+        .select-with-create {{
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }}
+        .select-with-create select {{
+            flex: 1;
+        }}
+        .btn-create-inline {{
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 6px;
+            border: 2px solid #3454D1;
+            background: #3454D1;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+        .btn-create-inline:hover {{
+            background: #2a45b0;
+            border-color: #2a45b0;
+        }}
+
         /* Favoris Sidebar */
         .favoris-sidebar-list {{
             max-height: 200px;
@@ -3880,9 +5122,477 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             color: var(--gray-400);
             font-size: 13px;
         }}
+
+        /* ============================================
+           DATETIME PICKER GLOBAL
+           ============================================ */
+        .datetime-picker-wrapper {{
+            position: relative;
+            display: flex;
+            align-items: center;
+        }}
+        .datetime-picker-wrapper .datetime-picker {{
+            padding-right: 40px;
+            cursor: pointer;
+        }}
+        .datetime-picker-icon {{
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            font-size: 18px;
+        }}
+        .datetime-modal {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }}
+        .datetime-modal-content {{
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 380px;
+            max-height: 90vh;
+            overflow: hidden;
+        }}
+        .datetime-modal-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #dbeafe;
+        }}
+        .datetime-modal-header h3 {{
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e40af;
+        }}
+        .datetime-modal-close {{
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #1e40af;
+        }}
+        .datetime-calendar {{
+            padding: 16px;
+            background: #ffffff;
+        }}
+        .calendar-nav {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }}
+        .calendar-nav button {{
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #374151;
+        }}
+        .calendar-nav button:hover {{
+            background: #f3f4f6;
+            color: #1f2937;
+        }}
+        .calendar-nav span {{
+            font-weight: 600;
+            font-size: 15px;
+            color: #1f2937;
+        }}
+        .calendar-grid {{
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }}
+        .calendar-day-header {{
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            padding: 8px 0;
+        }}
+        .calendar-day {{
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.15s;
+            color: #1f2937;
+            background: #ffffff;
+        }}
+        .calendar-day:hover {{
+            background: #e5e7eb;
+            color: #1f2937;
+        }}
+        .calendar-day.today {{
+            border: 2px solid #3454D1;
+            color: #3454D1;
+            font-weight: 600;
+        }}
+        .calendar-day.selected {{
+            background: #3454D1;
+            color: #ffffff !important;
+        }}
+        .calendar-day.other-month {{
+            color: #9ca3af;
+            background: #f9fafb;
+        }}
+        .calendar-day.disabled {{
+            color: #d1d5db;
+            background: #f3f4f6;
+            cursor: not-allowed;
+        }}
+        .time-slots {{
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #ffffff;
+        }}
+        .time-slots-title {{
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #1e40af;
+        }}
+        .time-slots-grid {{
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }}
+        .time-slot {{
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.15s;
+            background: #f0f9ff;
+            color: #1e40af;
+        }}
+        .time-slot:hover {{
+            background: #dbeafe;
+            border-color: #3454D1;
+            color: #1e40af;
+        }}
+        .time-slot.selected {{
+            background: #3454D1;
+            color: #ffffff !important;
+            border-color: #3454D1;
+        }}
+        .time-slot.unavailable {{
+            background: #fee2e2;
+            color: #991b1b;
+            cursor: not-allowed;
+            border-color: #fecaca;
+        }}
+        .time-slot.unavailable:hover {{
+            background: #fee2e2;
+            border-color: #fecaca;
+            color: #991b1b;
+        }}
+        .datetime-modal-footer {{
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            background: #f0f9ff;
+        }}
+        .technician-info {{
+            padding: 12px 16px;
+            background: #dbeafe;
+            border-bottom: 1px solid #bfdbfe;
+            font-size: 13px;
+            color: #1e40af;
+        }}
+        .loading-slots {{
+            text-align: center;
+            padding: 20px;
+            color: #374151;
+        }}
     </style>
 
     <script>
+    // ==========================================================================
+    // Token d'authentification global
+    // ==========================================================================
+    function getAuthToken() {{
+        const params = new URLSearchParams(window.location.search);
+        return params.get('token') || '';
+    }}
+    const AUTH_TOKEN = getAuthToken();
+
+    // ==========================================================================
+    // DATETIME PICKER GLOBAL
+    // ==========================================================================
+    let dtPickerState = {{
+        inputElement: null,
+        mode: 'datetime',
+        selectedDate: null,
+        selectedTime: null,
+        currentMonth: new Date(),
+        technicianId: null,
+        unavailableSlots: []
+    }};
+
+    function openDateTimePicker(inputElement, mode) {{
+        dtPickerState.inputElement = inputElement;
+        dtPickerState.mode = mode;
+        dtPickerState.selectedDate = null;
+        dtPickerState.selectedTime = null;
+        dtPickerState.currentMonth = new Date();
+        dtPickerState.unavailableSlots = [];
+
+        // Chercher le technicien sélectionné (si existe)
+        const techSelect = document.getElementById('intervenant_id');
+        dtPickerState.technicianId = techSelect ? techSelect.value : null;
+
+        renderDateTimePicker();
+    }}
+
+    function renderDateTimePicker() {{
+        // Supprimer modal existant
+        const existing = document.getElementById('datetime-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'datetime-modal';
+        modal.className = 'datetime-modal';
+        modal.onclick = (e) => {{ if (e.target === modal) closeDateTimePicker(); }};
+
+        const title = dtPickerState.mode === 'date' ? 'Sélectionner une date' : 'Sélectionner date et heure';
+
+        modal.innerHTML = `
+            <div class="datetime-modal-content">
+                <div class="datetime-modal-header">
+                    <h3>${{title}}</h3>
+                    <button class="datetime-modal-close" onclick="closeDateTimePicker()">&times;</button>
+                </div>
+                ${{dtPickerState.technicianId ? '<div class="technician-info" id="tech-info">Chargement disponibilités...</div>' : ''}}
+                <div class="datetime-calendar">
+                    <div class="calendar-nav">
+                        <button onclick="navigateMonth(-1)">&lt; Préc.</button>
+                        <span id="calendar-month-label"></span>
+                        <button onclick="navigateMonth(1)">Suiv. &gt;</button>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid"></div>
+                </div>
+                ${{dtPickerState.mode === 'datetime' ? `
+                <div class="time-slots" id="time-slots-container" style="display:none;">
+                    <div class="time-slots-title">Créneaux disponibles (1h)</div>
+                    <div class="time-slots-grid" id="time-slots-grid"></div>
+                </div>
+                ` : ''}}
+                <div class="datetime-modal-footer">
+                    <button class="btn btn-secondary" onclick="closeDateTimePicker()">Annuler</button>
+                    <button class="btn btn-primary" onclick="confirmDateTime()">Valider</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        renderCalendar();
+
+        // Charger les disponibilités si technicien sélectionné
+        if (dtPickerState.technicianId) {{
+            loadTechnicianAvailability();
+        }}
+    }}
+
+    function renderCalendar() {{
+        const grid = document.getElementById('calendar-grid');
+        const label = document.getElementById('calendar-month-label');
+        const date = dtPickerState.currentMonth;
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        label.textContent = `${{months[date.getMonth()]}} ${{date.getFullYear()}}`;
+
+        const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        let html = days.map(d => `<div class="calendar-day-header">${{d}}</div>`).join('');
+
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        let startDay = firstDay.getDay() - 1;
+        if (startDay < 0) startDay = 6;
+
+        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        const prevLastDay = new Date(date.getFullYear(), date.getMonth(), 0).getDate();
+
+        // Jours du mois précédent
+        for (let i = startDay - 1; i >= 0; i--) {{
+            html += `<div class="calendar-day other-month disabled">${{prevLastDay - i}}</div>`;
+        }}
+
+        // Jours du mois actuel
+        for (let d = 1; d <= lastDay; d++) {{
+            const thisDate = new Date(date.getFullYear(), date.getMonth(), d);
+            const isToday = thisDate.getTime() === today.getTime();
+            const isPast = thisDate < today;
+            const isSelected = dtPickerState.selectedDate &&
+                               dtPickerState.selectedDate.getTime() === thisDate.getTime();
+
+            let classes = 'calendar-day';
+            if (isToday) classes += ' today';
+            if (isPast) classes += ' disabled';
+            if (isSelected) classes += ' selected';
+
+            const onclick = isPast ? '' : `onclick="selectDate(${{date.getFullYear()}}, ${{date.getMonth()}}, ${{d}})"`;
+            html += `<div class="${{classes}}" ${{onclick}}>${{d}}</div>`;
+        }}
+
+        // Jours du mois suivant
+        const remaining = 42 - (startDay + lastDay);
+        for (let i = 1; i <= remaining; i++) {{
+            html += `<div class="calendar-day other-month disabled">${{i}}</div>`;
+        }}
+
+        grid.innerHTML = html;
+    }}
+
+    function navigateMonth(delta) {{
+        dtPickerState.currentMonth.setMonth(dtPickerState.currentMonth.getMonth() + delta);
+        renderCalendar();
+    }}
+
+    function selectDate(year, month, day) {{
+        dtPickerState.selectedDate = new Date(year, month, day);
+        renderCalendar();
+
+        if (dtPickerState.mode === 'datetime') {{
+            document.getElementById('time-slots-container').style.display = 'block';
+            renderTimeSlots();
+        }}
+    }}
+
+    async function loadTechnicianAvailability() {{
+        const techInfo = document.getElementById('tech-info');
+        if (!dtPickerState.technicianId) return;
+
+        try {{
+            const response = await fetch(`/api/v1/utilisateurs/${{dtPickerState.technicianId}}`, {{
+                credentials: 'include'
+            }});
+            if (response.ok) {{
+                const tech = await response.json();
+                techInfo.textContent = `Technicien: ${{tech.nom || tech.name || tech.email}}`;
+
+                // Charger les interventions planifiées
+                const intResponse = await fetch(`/api/v1/interventions?intervenant_id=${{dtPickerState.technicianId}}&statut=PLANIFIEE,EN_COURS,SUR_SITE`, {{
+                    credentials: 'include'
+                }});
+                if (intResponse.ok) {{
+                    const interventions = await intResponse.json();
+                    dtPickerState.unavailableSlots = (interventions.items || interventions || []).map(i => ({{
+                        start: new Date(i.date_prevue_debut),
+                        end: new Date(i.date_prevue_fin || new Date(new Date(i.date_prevue_debut).getTime() + 60*60*1000))
+                    }}));
+                }}
+            }}
+        }} catch (e) {{
+            console.error('Erreur chargement technicien:', e);
+            techInfo.textContent = 'Technicien sélectionné';
+        }}
+    }}
+
+    function renderTimeSlots() {{
+        const grid = document.getElementById('time-slots-grid');
+        if (!dtPickerState.selectedDate) {{
+            grid.innerHTML = '<p>Sélectionnez une date</p>';
+            return;
+        }}
+
+        // Créneaux de 8h à 18h par tranche de 1h
+        const slots = [];
+        for (let h = 8; h <= 17; h++) {{
+            slots.push(`${{h.toString().padStart(2, '0')}}:00`);
+        }}
+
+        let html = '';
+        for (const slot of slots) {{
+            const [hours, minutes] = slot.split(':').map(Number);
+            const slotDate = new Date(dtPickerState.selectedDate);
+            slotDate.setHours(hours, minutes, 0, 0);
+            const slotEnd = new Date(slotDate.getTime() + 60*60*1000); // +1h
+
+            // Vérifier si le créneau est disponible
+            const isUnavailable = dtPickerState.unavailableSlots.some(u => {{
+                return (slotDate >= u.start && slotDate < u.end) ||
+                       (slotEnd > u.start && slotEnd <= u.end) ||
+                       (slotDate <= u.start && slotEnd >= u.end);
+            }});
+
+            const isSelected = dtPickerState.selectedTime === slot;
+            const isPast = slotDate < new Date();
+
+            let classes = 'time-slot';
+            if (isUnavailable || isPast) classes += ' unavailable';
+            if (isSelected) classes += ' selected';
+
+            const onclick = (isUnavailable || isPast) ? '' : `onclick="selectTime('${{slot}}')"`;
+            const label = isUnavailable ? `${{slot}} (occupé)` : slot;
+            html += `<div class="${{classes}}" ${{onclick}}>${{label}}</div>`;
+        }}
+
+        grid.innerHTML = html;
+    }}
+
+    function selectTime(time) {{
+        dtPickerState.selectedTime = time;
+        renderTimeSlots();
+    }}
+
+    function confirmDateTime() {{
+        if (!dtPickerState.selectedDate) {{
+            alert('Veuillez sélectionner une date');
+            return;
+        }}
+
+        if (dtPickerState.mode === 'datetime' && !dtPickerState.selectedTime) {{
+            alert('Veuillez sélectionner un créneau horaire');
+            return;
+        }}
+
+        let value;
+        const d = dtPickerState.selectedDate;
+        const dateStr = `${{d.getFullYear()}}-${{(d.getMonth()+1).toString().padStart(2,'0')}}-${{d.getDate().toString().padStart(2,'0')}}`;
+
+        if (dtPickerState.mode === 'datetime') {{
+            value = `${{dateStr}}T${{dtPickerState.selectedTime}}`;
+            dtPickerState.inputElement.value = `${{d.getDate().toString().padStart(2,'0')}}/${{(d.getMonth()+1).toString().padStart(2,'0')}}/${{d.getFullYear()}} ${{dtPickerState.selectedTime}}`;
+        }} else {{
+            value = dateStr;
+            dtPickerState.inputElement.value = `${{d.getDate().toString().padStart(2,'0')}}/${{(d.getMonth()+1).toString().padStart(2,'0')}}/${{d.getFullYear()}}`;
+        }}
+
+        // Stocker la valeur ISO dans un attribut data
+        dtPickerState.inputElement.dataset.isoValue = value;
+
+        closeDateTimePicker();
+    }}
+
+    function closeDateTimePicker() {{
+        const modal = document.getElementById('datetime-modal');
+        if (modal) modal.remove();
+    }}
+
     // ==========================================================================
     // Notifications - Chargement des données
     // ==========================================================================
@@ -3893,7 +5603,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
 
         try {{
             const response = await fetch('/api/notifications?limit=10&order_by=created_at&order_dir=desc', {{
-                credentials: 'include'
+                credentials: 'include',
+                headers: {{ 'Authorization': 'Bearer ' + AUTH_TOKEN }}
             }});
 
             if (response.ok) {{
@@ -3944,7 +5655,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             await fetch(`/api/notifications/${{id}}`, {{
                 method: 'PUT',
                 credentials: 'include',
-                headers: {{ 'Content-Type': 'application/json' }},
+                headers: {{ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AUTH_TOKEN }},
                 body: JSON.stringify({{ read: true, lu: true }})
             }});
             loadNotifications();
@@ -3966,7 +5677,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     async function loadSidebarFavoris() {{
         try {{
             const res = await fetch('/api/favoris?limit=10&order_by=created_at&order_dir=desc', {{
-                credentials: 'include'
+                credentials: 'include',
+                headers: {{ 'Authorization': 'Bearer ' + AUTH_TOKEN }}
             }});
             if (res.ok) {{
                 const data = await res.json();
@@ -4002,7 +5714,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             if (isActive) {{
                 // Retirer le favori - d'abord trouver l'ID du favori
                 const searchRes = await fetch(`/api/favoris?module=${{encodeURIComponent(module)}}&record_id=${{recordId}}`, {{
-                    credentials: 'include'
+                    credentials: 'include',
+                    headers: {{ 'Authorization': 'Bearer ' + AUTH_TOKEN }}
                 }});
                 if (searchRes.ok) {{
                     const searchData = await searchRes.json();
@@ -4012,7 +5725,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                     if (favori) {{
                         await fetch(`/api/favoris/${{favori.id}}`, {{
                             method: 'DELETE',
-                            credentials: 'include'
+                            credentials: 'include',
+                            headers: {{ 'Authorization': 'Bearer ' + AUTH_TOKEN }}
                         }});
                     }}
                 }}
@@ -4021,7 +5735,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                 await fetch('/api/favoris', {{
                     method: 'POST',
                     credentials: 'include',
-                    headers: {{ 'Content-Type': 'application/json' }},
+                    headers: {{ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AUTH_TOKEN }},
                     body: JSON.stringify({{
                         module: module,
                         record_id: recordId,
@@ -4051,7 +5765,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     async function checkIsFavori(module, recordId) {{
         try {{
             const res = await fetch(`/api/favoris?limit=100`, {{
-                credentials: 'include'
+                credentials: 'include',
+                headers: {{ 'Authorization': 'Bearer ' + AUTH_TOKEN }}
             }});
             if (res.ok) {{
                 const data = await res.json();
@@ -4068,11 +5783,17 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     // Tracker une visite (recent)
     async function trackRecent(module, recordId, nom, sousTitre, statut, moduleIcone) {{
         try {{
+            const token = localStorage.getItem('access_token');
+            if (!token) return; // Pas de tracking si pas connecté
+
             // Envoyer la visite au backend
             await fetch('/api/recent/track', {{
                 method: 'POST',
                 credentials: 'include',
-                headers: {{ 'Content-Type': 'application/json' }},
+                headers: {{
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                }},
                 body: JSON.stringify({{
                     module: module,
                     record_id: recordId,
@@ -5028,11 +6749,45 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     function copyMobileLink() {{
         var mobileBaseUrl = window.location.protocol + '//' + window.location.hostname + ':5174';
         var mobileUrl = mobileBaseUrl + '/connect?token=' + encodeURIComponent(mobileToken || '') + '&api=' + encodeURIComponent(window.location.origin);
-        navigator.clipboard.writeText(mobileUrl).then(function() {{
-            alert('Lien copié !');
-        }}).catch(function() {{
-            prompt('Copiez ce lien:', mobileUrl);
-        }});
+
+        // Fallback pour HTTP (clipboard API ne marche qu'en HTTPS)
+        function fallbackCopy(text) {{
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            textarea.style.top = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {{
+                var success = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                return success;
+            }} catch (e) {{
+                document.body.removeChild(textarea);
+                return false;
+            }}
+        }}
+
+        // Essayer clipboard API d'abord, sinon fallback
+        if (navigator.clipboard && window.isSecureContext) {{
+            navigator.clipboard.writeText(mobileUrl).then(function() {{
+                showToast('Lien copié dans le presse-papier !', 'success');
+            }}).catch(function() {{
+                if (fallbackCopy(mobileUrl)) {{
+                    showToast('Lien copié !', 'success');
+                }} else {{
+                    prompt('Copiez ce lien manuellement:', mobileUrl);
+                }}
+            }});
+        }} else {{
+            if (fallbackCopy(mobileUrl)) {{
+                showToast('Lien copié !', 'success');
+            }} else {{
+                prompt('Copiez ce lien manuellement:', mobileUrl);
+            }}
+        }}
     }}
     </script>
 </body>

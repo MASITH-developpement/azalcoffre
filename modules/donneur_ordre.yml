@@ -1,0 +1,282 @@
+# AZALPLUS - Module Donneur d'Ordre
+nom: donneur_ordre
+icone: building-2
+menu: Commercial
+description: Gestion des donneurs d'ordre pour interventions et facturation
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    obligatoire: true
+    description: Code/Numero donneur d'ordre
+    autocompletion: true
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom / Raison sociale
+    autocompletion: true
+
+  - nom: type
+    type: select
+    obligatoire: false
+    defaut: CLIENT
+    options: [CLIENT, FOURNISSEUR, ASSURANCE, BAILLEUR, SYNDIC, REGIE, AUTRE]
+    description: Type de donneur d'ordre
+
+  - nom: statut
+    type: select
+    obligatoire: false
+    defaut: ACTIF
+    options: [ACTIF, INACTIF, SUSPENDU]
+
+  # Liens optionnels
+  - nom: client_id
+    type: relation
+    obligatoire: false
+    relation: Clients
+    description: Client associe (si existant)
+    autocompletion: true
+
+  - nom: fournisseur_id
+    type: relation
+    obligatoire: false
+    relation: Fournisseurs
+    description: Fournisseur associe (si existant)
+    autocompletion: true
+
+  # Informations legales
+  - nom: siret
+    type: text
+    obligatoire: false
+    description: Numero SIRET
+    autocompletion: true
+
+  - nom: tva_intracommunautaire
+    type: text
+    obligatoire: false
+    description: Numero TVA intracommunautaire
+
+  - nom: forme_juridique
+    type: select
+    obligatoire: false
+    options: [SARL, SAS, SA, EURL, EI, SCI, ASSOCIATION, AUTRE]
+
+  # Contact principal
+  - nom: contact_nom
+    type: text
+    obligatoire: false
+    description: Nom du contact principal
+    autocompletion: true
+
+  - nom: contact_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+
+  - nom: contact_fonction
+    type: text
+    obligatoire: false
+    description: Fonction du contact
+
+  - nom: email
+    type: email
+    obligatoire: false
+    description: Email principal
+    autocompletion: true
+
+  - nom: telephone
+    type: tel
+    obligatoire: false
+    description: Telephone principal
+
+  - nom: portable
+    type: tel
+    obligatoire: false
+
+  # Adresse principale
+  - nom: adresse_ligne1
+    type: text
+    obligatoire: false
+    description: Adresse ligne 1
+    autocompletion: true
+
+  - nom: adresse_ligne2
+    type: text
+    obligatoire: false
+    description: Adresse ligne 2
+
+  - nom: code_postal
+    type: text
+    obligatoire: false
+
+  - nom: ville
+    type: text
+    obligatoire: false
+    autocompletion: true
+
+  - nom: pays
+    type: text
+    obligatoire: false
+    defaut: France
+
+  # Adresse de facturation (si differente)
+  - nom: facturation_adresse_ligne1
+    type: text
+    obligatoire: false
+    description: Adresse facturation ligne 1
+
+  - nom: facturation_adresse_ligne2
+    type: text
+    obligatoire: false
+
+  - nom: facturation_code_postal
+    type: text
+    obligatoire: false
+
+  - nom: facturation_ville
+    type: text
+    obligatoire: false
+
+  - nom: facturation_pays
+    type: text
+    obligatoire: false
+    defaut: France
+
+  # Contact facturation
+  - nom: facturation_email
+    type: email
+    obligatoire: false
+    description: Email pour factures
+    autocompletion: true
+
+  - nom: facturation_contact_nom
+    type: text
+    obligatoire: false
+    description: Nom contact facturation
+
+  - nom: facturation_telephone
+    type: tel
+    obligatoire: false
+
+  # Contact commercial
+  - nom: commercial_nom
+    type: text
+    obligatoire: false
+    description: Nom contact commercial
+    autocompletion: true
+
+  - nom: commercial_civilite
+    type: select
+    obligatoire: false
+    options: [Mr, Mme, Melle]
+
+  - nom: commercial_email
+    type: email
+    obligatoire: false
+    autocompletion: true
+
+  - nom: commercial_telephone
+    type: tel
+    obligatoire: false
+
+  # Conditions commerciales
+  - nom: delai_paiement
+    type: number
+    obligatoire: false
+    defaut: 30
+    description: Delai de paiement (jours)
+
+  - nom: mode_paiement
+    type: select
+    obligatoire: false
+    options: [VIREMENT, CHEQUE, PRELEVEMENT, CB, ESPECES]
+    defaut: VIREMENT
+
+  - nom: conditions_paiement
+    type: textarea
+    obligatoire: false
+    description: Conditions particulieres
+
+  - nom: taux_remise
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Taux de remise par defaut (%)
+
+  - nom: encours_max
+    type: money
+    obligatoire: false
+    description: Encours maximum autorise
+
+  # Rapports et notifications
+  - nom: email_rapport
+    type: email
+    obligatoire: false
+    description: Email pour envoi des rapports
+    autocompletion: true
+
+  - nom: envoi_rapport_auto
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Envoi automatique des rapports
+
+  - nom: frequence_rapport
+    type: select
+    obligatoire: false
+    options: [CHAQUE_INTERVENTION, HEBDOMADAIRE, MENSUEL]
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes internes
+
+  - nom: notes_facturation
+    type: textarea
+    obligatoire: false
+    description: Notes pour la facturation
+
+# Workflow
+workflow:
+  ACTIF -> INACTIF: null
+  ACTIF -> SUSPENDU: null
+  INACTIF -> ACTIF: null
+  SUSPENDU -> ACTIF: null
+
+# Organisation des champs dans le formulaire
+sections:
+  - titre: Identification
+    champs: [code, nom, type, statut, siret, tva_intracommunautaire, forme_juridique]
+
+  - titre: Contact principal
+    champs: [contact_civilite, contact_nom, contact_fonction, email, telephone, portable]
+
+  - titre: Adresse principale
+    champs: [adresse_ligne1, adresse_ligne2, code_postal, ville, pays]
+
+  - titre: Facturation
+    champs: [facturation_adresse_ligne1, facturation_adresse_ligne2, facturation_code_postal, facturation_ville, facturation_pays, facturation_email, facturation_contact_nom, facturation_telephone]
+
+  - titre: Contact commercial
+    champs: [commercial_civilite, commercial_nom, commercial_email, commercial_telephone]
+
+  - titre: Conditions commerciales
+    champs: [delai_paiement, mode_paiement, conditions_paiement, taux_remise, encours_max]
+
+  - titre: Rapports
+    champs: [email_rapport, envoi_rapport_auto, frequence_rapport]
+
+  - titre: Liens
+    champs: [client_id, fournisseur_id]
+
+  - titre: Notes
+    champs: [notes, notes_facturation]
+
+# Affichage liste
+liste:
+  colonnes: [code, nom, type, email, telephone, statut]
+  tri_defaut: nom
+  recherche: [code, nom, email, telephone, siret]

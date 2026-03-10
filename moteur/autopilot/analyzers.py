@@ -77,7 +77,9 @@ class PythonErrorAnalyzer(ErrorAnalyzer):
 
             # AttributeError
             (r"AttributeError: '(\w+)' object has no attribute '(\w+)'",
-             "Attribut inexistant", 0.6),
+             "Attribut inexistant sur instance", 0.6),
+            (r"AttributeError: type object '(\w+)' has no attribute '(\w+)'",
+             "Méthode de classe inexistante", 0.75),
             (r"AttributeError: module '([^']+)' has no attribute '(\w+)'",
              "Attribut de module inexistant", 0.65),
 
@@ -88,6 +90,20 @@ class PythonErrorAnalyzer(ErrorAnalyzer):
              "Argument inconnu", 0.65),
             (r"TypeError: '(\w+)' object is not (callable|iterable|subscriptable)",
              "Type incorrect", 0.5),
+            (r"TypeError: 'NoneType' object is not iterable",
+             "Itération sur None", 0.85),
+            (r"TypeError: 'NoneType' object is not subscriptable",
+             "Indexation sur None", 0.85),
+            (r"TypeError: cannot unpack non-iterable NoneType object",
+             "Déballage de None", 0.85),
+            (r"TypeError: argument of type 'NoneType' is not iterable",
+             "Vérification dans None", 0.85),
+            (r"TypeError: unsupported operand type\(s\) for (.+): '(\w+)' and '(\w+)'",
+             "Opération type incompatible", 0.6),
+
+            # AttributeError NoneType
+            (r"AttributeError: 'NoneType' object has no attribute '(\w+)'",
+             "Accès attribut sur None", 0.85),
 
             # KeyError
             (r"KeyError: '(\w+)'",
@@ -177,6 +193,45 @@ class PythonErrorAnalyzer(ErrorAnalyzer):
         "logger": "logger = structlog.get_logger()",
     }
 
+    # Mapping des méthodes manquantes vers leurs équivalents
+    METHOD_ALIASES = {
+        # Database
+        "get": "get_by_id",
+        "find": "query",
+        "find_one": "get_by_id",
+        "find_all": "query",
+        "fetch": "get_by_id",
+        "fetch_one": "get_by_id",
+        "fetch_all": "query",
+        "delete": "soft_delete",
+        "remove": "soft_delete",
+        # Collections
+        "append": "add",
+        "push": "append",
+        "pop_front": "popleft",
+        "size": "len",
+        "length": "len",
+        "count": "len",
+        "empty": "clear",
+        # Strings
+        "contains": "__contains__",
+        "substr": "substring",
+        "index_of": "index",
+        # Common
+        "to_string": "__str__",
+        "to_dict": "dict",
+        "to_json": "json",
+        "from_dict": "parse_obj",
+        "from_json": "parse_raw",
+    }
+
+    # Classes connues et leurs méthodes
+    KNOWN_CLASS_METHODS = {
+        "Database": ["get_by_id", "query", "insert", "update", "soft_delete", "get_session", "create_table"],
+        "Session": ["execute", "commit", "rollback", "close", "add", "delete", "query"],
+        "Request": ["json", "form", "body", "headers", "cookies", "query_params"],
+    }
+
     def analyze(self, error_log: str) -> Optional[FixProposal]:
         """Analyse une erreur Python."""
         file_path, line_num = self._extract_file_info(error_log)
@@ -247,8 +302,70 @@ class PythonErrorAnalyzer(ErrorAnalyzer):
         elif "AttributeError" in error_type:
             obj_type = groups[0]
             attr = groups[1] if len(groups) > 1 else ""
-            proposed_fix = f"# '{obj_type}' n'a pas d'attribut '{attr}'\n# Options:\n# 1. Vérifier l'orthographe de '{attr}'\n# 2. Utiliser getattr(obj, '{attr}', default)\n# 3. Vérifier le type de l'objet avec type(obj)"
-            confidence = 0.5
+
+            # Chercher si c'est un alias connu
+            if attr in self.METHOD_ALIASES:
+                correct_method = self.METHOD_ALIASES[attr]
+                proposed_fix = f"# '{obj_type}' n'a pas de méthode '{attr}'\n# Utiliser '{correct_method}' à la place:\n{obj_type}.{correct_method}(...)\n\n# Ou créer un alias dans la classe {obj_type}:\n@classmethod\ndef {attr}(cls, *args, **kwargs):\n    return cls.{correct_method}(*args, **kwargs)"
+                confidence = 0.85
+            # Chercher dans les méthodes connues de la classe
+            elif obj_type in self.KNOWN_CLASS_METHODS:
+                known_methods = self.KNOWN_CLASS_METHODS[obj_type]
+                # Chercher une méthode similaire
+                similar = [m for m in known_methods if attr.lower() in m.lower() or m.lower() in attr.lower()]
+                if similar:
+                    proposed_fix = f"# '{obj_type}' n'a pas de méthode '{attr}'\n# Méthode(s) similaire(s) disponible(s): {', '.join(similar)}\n# Utiliser: {obj_type}.{similar[0]}(...)"
+                    confidence = 0.8
+                else:
+                    proposed_fix = f"# '{obj_type}' n'a pas de méthode '{attr}'\n# Méthodes disponibles: {', '.join(known_methods)}\n# Vérifier le nom correct de la méthode"
+                    confidence = 0.7
+            else:
+                proposed_fix = f"# '{obj_type}' n'a pas d'attribut '{attr}'\n# Options:\n# 1. Vérifier l'orthographe de '{attr}'\n# 2. Ajouter la méthode à la classe {obj_type}\n# 3. Utiliser getattr(obj, '{attr}', default)\n# 4. Vérifier si '{attr}' existe sous un autre nom"
+                confidence = 0.5
+
+        # TypeError - NoneType not iterable
+        elif "TypeError" in error_type and "NoneType" in error_log and "iterable" in error_log:
+            proposed_fix = """# Variable None utilisée dans une boucle
+# Ajouter une valeur par défaut:
+items = variable or []
+for item in items:
+    ...
+
+# Ou dans un template Jinja2:
+{% for item in variable or [] %}
+
+# Ou vérifier avant:
+if variable is not None:
+    for item in variable:
+        ..."""
+            confidence = 0.85
+
+        # TypeError - NoneType not subscriptable
+        elif "TypeError" in error_type and "NoneType" in error_log and "subscriptable" in error_log:
+            proposed_fix = """# Variable None utilisée avec index
+# Vérifier avant d'accéder:
+if variable is not None:
+    value = variable[key]
+
+# Ou utiliser une valeur par défaut:
+value = (variable or {}).get(key, default)"""
+            confidence = 0.85
+
+        # AttributeError - NoneType has no attribute
+        elif "AttributeError" in error_type and "NoneType" in error_log:
+            attr = groups[0] if groups else "?"
+            proposed_fix = f"""# Accès à attribut '{attr}' sur None
+# L'objet est None - vérifier avant:
+if obj is not None:
+    value = obj.{attr}
+
+# Ou utiliser getattr:
+value = getattr(obj, '{attr}', default)
+
+# Ou operator walrus:
+if (obj := get_object()) is not None:
+    value = obj.{attr}"""
+            confidence = 0.85
 
         # TypeError - arguments manquants
         elif "TypeError" in error_type and "missing" in pattern:
@@ -353,7 +470,11 @@ class YAMLErrorAnalyzer(ErrorAnalyzer):
 
 
 class SQLErrorAnalyzer(ErrorAnalyzer):
-    """Analyseur pour les erreurs SQL/SQLAlchemy."""
+    """
+    Analyseur pour les erreurs SQL/SQLAlchemy.
+
+    Génère des vrais SQL ALTER TABLE exécutables, pas juste des commentaires.
+    """
 
     @property
     def category(self) -> ErrorCategory:
@@ -362,30 +483,104 @@ class SQLErrorAnalyzer(ErrorAnalyzer):
     @property
     def patterns(self) -> List[Tuple[str, str, float]]:
         return [
-            (r"sqlalchemy\.exc\.IntegrityError: (.+)",
-             "Violation de contrainte", 0.6),
-            (r"sqlalchemy\.exc\.OperationalError: (.+)",
-             "Erreur opérationnelle", 0.5),
-            (r"sqlalchemy\.exc\.ProgrammingError: (.+)",
-             "Erreur de programmation SQL", 0.55),
+            # NOT NULL violation - très courant, fix simple
+            (r'null value in column "(\w+)" of relation "(\w+)" violates not-null',
+             "Violation NOT NULL", 0.90),
+            # Colonne manquante
+            (r'column "(\w+)" of relation "(\w+)" does not exist',
+             "Colonne inexistante", 0.85),
+            # Colonne manquante (autre format)
+            (r'column "(\w+)" does not exist',
+             "Colonne inexistante", 0.80),
+            # Table manquante
+            (r'relation "(\w+)" does not exist',
+             "Table inexistante", 0.70),
+            # Doublon
             (r"duplicate key value violates unique constraint",
-             "Doublon - clé unique", 0.75),
+             "Doublon - clé unique", 0.60),
+            # Foreign key
             (r"violates foreign key constraint",
-             "Violation foreign key", 0.7),
-            (r"column \"(\w+)\" (does not exist|of relation)",
-             "Colonne inexistante", 0.65),
-            (r"relation \"(\w+)\" does not exist",
-             "Table inexistante", 0.7),
+             "Violation foreign key", 0.55),
         ]
 
     def analyze(self, error_log: str) -> Optional[FixProposal]:
-        """Analyse une erreur SQL."""
+        """Analyse une erreur SQL et propose un fix SQL exécutable."""
         file_path, line_num = self._extract_file_info(error_log)
 
+        # Chercher NOT NULL violation en premier (le plus courant)
+        not_null_match = re.search(
+            r'null value in column "(\w+)" of relation "(\w+)" violates not-null',
+            error_log, re.IGNORECASE
+        )
+        if not_null_match:
+            col, table = not_null_match.groups()
+            default_value = self._get_smart_default(col)
+            proposed_fix = f"ALTER TABLE azalplus.{table} ALTER COLUMN {col} SET DEFAULT {default_value}"
+            return FixProposal(
+                id=FixProposal.generate_id(error_log),
+                error_type="SQLError",
+                error_message=error_log[:500],
+                category=self.category,
+                file_path=file_path,
+                line_number=line_num,
+                original_code=None,
+                proposed_fix=proposed_fix,
+                confidence=0.90,
+                created_at=datetime.now(),
+                status=FixStatus.PENDING
+            )
+
+        # Colonne manquante avec table
+        col_match = re.search(
+            r'column "(\w+)" of relation "(\w+)" does not exist',
+            error_log, re.IGNORECASE
+        )
+        if col_match:
+            col, table = col_match.groups()
+            col_type = self._guess_column_type(col)
+            proposed_fix = f"ALTER TABLE azalplus.{table} ADD COLUMN IF NOT EXISTS {col} {col_type}"
+            return FixProposal(
+                id=FixProposal.generate_id(error_log),
+                error_type="SQLError",
+                error_message=error_log[:500],
+                category=self.category,
+                file_path=file_path,
+                line_number=line_num,
+                original_code=None,
+                proposed_fix=proposed_fix,
+                confidence=0.85,
+                created_at=datetime.now(),
+                status=FixStatus.PENDING
+            )
+
+        # Colonne manquante sans table - chercher la table dans le contexte
+        col_only_match = re.search(r'column "(\w+)" does not exist', error_log, re.IGNORECASE)
+        if col_only_match:
+            col = col_only_match.group(1)
+            # Chercher la table dans l'erreur
+            table_match = re.search(r'relation "(\w+)"', error_log)
+            table = table_match.group(1) if table_match else "UNKNOWN_TABLE"
+            col_type = self._guess_column_type(col)
+            proposed_fix = f"ALTER TABLE azalplus.{table} ADD COLUMN IF NOT EXISTS {col} {col_type}"
+            return FixProposal(
+                id=FixProposal.generate_id(error_log),
+                error_type="SQLError",
+                error_message=error_log[:500],
+                category=self.category,
+                file_path=file_path,
+                line_number=line_num,
+                original_code=None,
+                proposed_fix=proposed_fix,
+                confidence=0.80,
+                created_at=datetime.now(),
+                status=FixStatus.PENDING
+            )
+
+        # Autres patterns avec fixes génériques
         for pattern, desc, confidence in self.patterns:
             match = re.search(pattern, error_log, re.IGNORECASE)
             if match:
-                proposed_fix = self._generate_sql_fix(match, pattern, error_log)
+                proposed_fix = self._generate_generic_fix(desc, error_log)
                 return FixProposal(
                     id=FixProposal.generate_id(error_log),
                     error_type="SQLError",
@@ -402,25 +597,265 @@ class SQLErrorAnalyzer(ErrorAnalyzer):
 
         return None
 
-    def _generate_sql_fix(self, match: re.Match, pattern: str, error_log: str) -> str:
-        """Génère un fix pour erreur SQL."""
-        if "duplicate key" in pattern:
-            return "# Doublon détecté - options:\n# 1. Vérifier si l'entrée existe avant INSERT\n# 2. Utiliser ON CONFLICT DO UPDATE (upsert)\n# 3. Générer un nouvel ID unique"
+    def _get_smart_default(self, column_name: str) -> str:
+        """Retourne une valeur par défaut intelligente basée sur le nom de colonne."""
+        name = column_name.lower()
 
-        if "foreign key" in pattern:
-            return "# Violation de clé étrangère - options:\n# 1. Vérifier que l'enregistrement parent existe\n# 2. Créer l'enregistrement parent d'abord\n# 3. Utiliser ON DELETE CASCADE si approprié"
+        # Texte / titres
+        if any(x in name for x in ['titre', 'title', 'name', 'nom', 'label']):
+            return "'Sans titre'"
+        if any(x in name for x in ['description', 'notes', 'comment', 'remarque']):
+            return "''"
+        # Statut
+        if 'statut' in name or 'status' in name:
+            return "'BROUILLON'"
+        if 'etat' in name or 'state' in name:
+            return "'ACTIF'"
+        # Civilité
+        if 'civilite' in name:
+            return "''"
+        # Référence / code
+        if any(x in name for x in ['reference', 'code', 'ref']):
+            return "''"
+        # Montants
+        if any(x in name for x in ['montant', 'prix', 'total', 'amount', 'price', 'cout']):
+            return "0"
+        # Quantités
+        if any(x in name for x in ['quantite', 'qty', 'nombre', 'count', 'duree']):
+            return "0"
+        # Booléens
+        if any(x in name for x in ['is_', 'has_', 'actif', 'active', 'enabled', 'visible']):
+            return "false"
+        # Email / contact
+        if any(x in name for x in ['email', 'mail', 'telephone', 'tel', 'phone']):
+            return "''"
+        # Type / catégorie
+        if any(x in name for x in ['type', 'categorie', 'category']):
+            return "'AUTRE'"
+        # Adresse
+        if any(x in name for x in ['adresse', 'address', 'ville', 'city', 'pays', 'country']):
+            return "''"
 
-        if "column" in pattern and "does not exist" in pattern:
-            groups = match.groups()
-            col = groups[0] if groups else "?"
-            return f"# La colonne '{col}' n'existe pas:\n# 1. Vérifier l'orthographe\n# 2. Exécuter la migration pour ajouter la colonne\n# 3. Vérifier le schéma de la table"
+        # Défaut générique
+        return "''"
 
-        if "relation" in pattern and "does not exist" in pattern:
-            groups = match.groups()
-            table = groups[0] if groups else "?"
-            return f"# La table '{table}' n'existe pas:\n# 1. Exécuter les migrations\n# 2. Vérifier le nom du schéma (azalplus.table)\n# 3. Créer la table si nécessaire"
+    def _guess_column_type(self, column_name: str) -> str:
+        """Devine le type PostgreSQL basé sur le nom de colonne."""
+        name = column_name.lower()
 
-        return "# Erreur SQL - vérifier:\n# 1. La syntaxe de la requête\n# 2. Les noms de tables/colonnes\n# 3. La connexion à la base de données"
+        # UUID / IDs
+        if name.endswith('_id') or name == 'id':
+            return "UUID"
+        # Dates
+        if any(x in name for x in ['date', 'created_at', 'updated_at', 'deleted_at', '_at']):
+            return "TIMESTAMP"
+        # Booléens
+        if any(x in name for x in ['is_', 'has_', 'actif', 'active', 'enabled', 'visible']):
+            return "BOOLEAN DEFAULT false"
+        # Montants
+        if any(x in name for x in ['montant', 'prix', 'total', 'amount', 'price', 'cout', 'taux']):
+            return "NUMERIC(15,2) DEFAULT 0"
+        # Quantités
+        if any(x in name for x in ['quantite', 'qty', 'nombre', 'count', 'duree', 'minutes']):
+            return "INTEGER DEFAULT 0"
+        # Texte long
+        if any(x in name for x in ['description', 'notes', 'content', 'body', 'remarque', 'commentaire']):
+            return "TEXT"
+        # JSON
+        if any(x in name for x in ['data', 'meta', 'config', 'settings', 'json', 'options']):
+            return "JSONB DEFAULT '{}'"
+        # Tags
+        if 'tags' in name:
+            return "JSONB DEFAULT '[]'"
+
+        # Défaut: VARCHAR
+        return "VARCHAR(255)"
+
+    def _generate_generic_fix(self, desc: str, error_log: str) -> str:
+        """Génère un fix générique pour les cas non traités."""
+        if "Doublon" in desc:
+            return "-- Doublon: vérifier les contraintes UNIQUE ou utiliser ON CONFLICT"
+        if "foreign key" in desc.lower():
+            return "-- Foreign key: vérifier que l'enregistrement parent existe"
+        if "Table inexistante" in desc:
+            table_match = re.search(r'relation "(\w+)"', error_log)
+            if table_match:
+                return f"-- Table '{table_match.group(1)}' manquante: vérifier le module YAML correspondant"
+        return "-- Erreur SQL: vérifier la syntaxe et les contraintes"
+
+
+class JavaScriptErrorAnalyzer(ErrorAnalyzer):
+    """
+    Analyseur spécialisé pour les erreurs JavaScript.
+
+    Peut détecter et proposer des fixes pour :
+    - Fonctions non définies (ReferenceError)
+    - Propriétés undefined (TypeError)
+    - Problèmes d'API navigateur (clipboard, etc.)
+    """
+
+    @property
+    def category(self) -> ErrorCategory:
+        return ErrorCategory.UNKNOWN
+
+    @property
+    def patterns(self) -> List[Tuple[str, str, float]]:
+        return [
+            (r"ReferenceError: (\w+) is not defined", "Fonction/variable JS non définie", 0.95),
+            (r"TypeError: Cannot read properties of undefined \(reading '(\w+)'\)", "Propriété undefined", 0.90),
+            (r"TypeError: (\w+) is not a function", "Non-fonction appelée", 0.80),
+        ]
+
+    # Définitions de fonctions JS communes
+    JS_FUNCTION_FIXES = {
+        "handleRowClick": '''function handleRowClick(event, id, url) {
+    if (event.target.type === 'checkbox' || event.target.tagName === 'BUTTON' || event.target.closest('button')) {
+        return;
+    }
+    window.location.href = url;
+}''',
+        "copyMobileLink": '''async function copyMobileLink() {
+    const link = document.getElementById('mobileLink')?.value || window.location.href;
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(link);
+        } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = link;
+            textarea.style.cssText = 'position:fixed;left:-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+        showNotification('Lien copié !', 'success');
+    } catch (err) {
+        console.error('Erreur copie:', err);
+        showNotification('Erreur lors de la copie', 'error');
+    }
+}''',
+        "showNotification": '''function showNotification(message, type = 'info') {
+    const container = document.getElementById('notifications') || document.body;
+    const notif = document.createElement('div');
+    notif.className = 'notification notification-' + type;
+    notif.textContent = message;
+    notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;z-index:9999;color:white;';
+    notif.style.background = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
+    container.appendChild(notif);
+    setTimeout(() => notif.remove(), 3000);
+}''',
+        "toggleSelectAll": '''function toggleSelectAll(checkbox) {
+    document.querySelectorAll('input[name="selected_ids"]').forEach(cb => cb.checked = checkbox.checked);
+    updateBulkActions();
+}''',
+        "updateBulkActions": '''function updateBulkActions() {
+    const selected = document.querySelectorAll('input[name="selected_ids"]:checked').length;
+    const bulkBar = document.getElementById('bulkActions');
+    if (bulkBar) bulkBar.style.display = selected > 0 ? 'flex' : 'none';
+    const countSpan = document.getElementById('selectedCount');
+    if (countSpan) countSpan.textContent = selected;
+}''',
+        "confirmDelete": '''function confirmDelete(id, name) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer "' + name + '" ?')) {
+        fetch(window.location.pathname + '/' + id, { method: 'DELETE' })
+            .then(r => r.ok ? location.reload() : alert('Erreur'))
+            .catch(e => alert('Erreur: ' + e));
+    }
+}''',
+        "openModal": '''function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) { modal.style.display = 'flex'; modal.classList.add('active'); }
+}''',
+        "closeModal": '''function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
+}''',
+    }
+
+    # Polyfills pour APIs navigateur
+    API_POLYFILLS = {
+        "writeText": '''// Polyfill clipboard pour HTTP
+if (!navigator.clipboard) {
+    navigator.clipboard = {
+        writeText: async (text) => {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.cssText = 'position:fixed;left:-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+    };
+}''',
+    }
+
+    def analyze(self, error_log: str) -> Optional[FixProposal]:
+        """Analyse une erreur JavaScript et propose un fix."""
+
+        # ReferenceError: X is not defined
+        ref_error = re.search(r"ReferenceError: (\w+) is not defined", error_log)
+        if ref_error:
+            func_name = ref_error.group(1)
+            return self._create_function_fix(func_name, error_log)
+
+        # TypeError: Cannot read properties of undefined (reading 'X')
+        type_error = re.search(r"Cannot read properties of undefined \(reading '(\w+)'\)", error_log)
+        if type_error:
+            prop_name = type_error.group(1)
+            return self._create_api_fix(prop_name, error_log)
+
+        return None
+
+    def _create_function_fix(self, func_name: str, error_log: str) -> FixProposal:
+        """Crée un fix pour une fonction JS manquante."""
+        if func_name in self.JS_FUNCTION_FIXES:
+            js_code = self.JS_FUNCTION_FIXES[func_name]
+            proposed_fix = f"CODE_JS_ADD:{func_name}\n{js_code}"
+            confidence = 0.95
+        else:
+            proposed_fix = f"CODE_JS_ADD:{func_name}\nfunction {func_name}(...args) {{ console.log('{func_name}', args); }}"
+            confidence = 0.60
+
+        return FixProposal(
+            id=FixProposal.generate_id(error_log),
+            error_type="JSReferenceError",
+            error_message=f"Function '{func_name}' is not defined",
+            category=self.category,
+            file_path="/home/ubuntu/azalplus/moteur/ui.py",
+            line_number=None,
+            original_code=None,
+            proposed_fix=proposed_fix,
+            confidence=confidence,
+            created_at=datetime.now(),
+            status=FixStatus.PENDING,
+            metadata={"js_function": func_name, "fix_type": "add_function"}
+        )
+
+    def _create_api_fix(self, prop_name: str, error_log: str) -> FixProposal:
+        """Crée un fix pour une erreur d'API navigateur."""
+        if prop_name in self.API_POLYFILLS:
+            js_code = self.API_POLYFILLS[prop_name]
+            proposed_fix = f"CODE_JS_ADD:polyfill_{prop_name}\n{js_code}"
+            confidence = 0.90
+        else:
+            proposed_fix = f"CODE_JS_FIX:null_check_{prop_name}\n// Ajouter vérification: if (obj && obj.{prop_name}) {{ ... }}"
+            confidence = 0.50
+
+        return FixProposal(
+            id=FixProposal.generate_id(error_log),
+            error_type="JSTypeError",
+            error_message=f"Cannot read property '{prop_name}' of undefined",
+            category=self.category,
+            file_path="/home/ubuntu/azalplus/moteur/ui.py",
+            line_number=None,
+            original_code=None,
+            proposed_fix=proposed_fix,
+            confidence=confidence,
+            created_at=datetime.now(),
+            status=FixStatus.PENDING,
+            metadata={"js_property": prop_name, "fix_type": "api_polyfill"}
+        )
 
 
 class FrontendErrorAnalyzer(ErrorAnalyzer):
@@ -477,8 +912,13 @@ class FrontendErrorAnalyzer(ErrorAnalyzer):
                 metadata={"url": url, "frontend": True}
             )
 
-        # Erreur JavaScript
-        elif "[js_error]" in error_log:
+        # Erreur JavaScript - utiliser l'analyseur spécialisé
+        elif "[js_error]" in error_log or "ReferenceError" in error_log or "TypeError" in error_log:
+            js_analyzer = JavaScriptErrorAnalyzer()
+            js_proposal = js_analyzer.analyze(error_log)
+            if js_proposal:
+                return js_proposal
+            # Fallback si JS analyzer n'a pas trouvé
             return FixProposal(
                 id=FixProposal.generate_id(error_log),
                 error_type="FrontendJSError",
@@ -487,8 +927,8 @@ class FrontendErrorAnalyzer(ErrorAnalyzer):
                 file_path=source,
                 line_number=None,
                 original_code=None,
-                proposed_fix="# Erreur JavaScript frontend - vérifier:\n# 1. La console du navigateur\n# 2. Le code JS source\n# 3. Les dépendances JS",
-                confidence=0.5,
+                proposed_fix="# Erreur JavaScript - analyse manuelle requise",
+                confidence=0.3,
                 created_at=datetime.now(),
                 status=FixStatus.NEEDS_CLAUDE,
                 metadata={"url": url, "frontend": True}
@@ -500,6 +940,10 @@ class FrontendErrorAnalyzer(ErrorAnalyzer):
         """Génère un fix pour une erreur 404."""
         if not source:
             return "# Ressource manquante - créer le fichier"
+
+        # API path incorrect - HAUTE PRIORITÉ
+        if "/api/" in source:
+            return self._analyze_api_404(source)
 
         # Icône manquante
         if "/icons/" in source and source.endswith(".svg"):
@@ -520,6 +964,62 @@ class FrontendErrorAnalyzer(ErrorAnalyzer):
 
         return f"# Ressource manquante: {source}\n# Créer le fichier ou corriger le chemin"
 
+    def _analyze_api_404(self, api_path: str) -> str:
+        """Analyse une erreur 404 sur une API et génère le fix."""
+        import os
+        from pathlib import Path
+
+        # Extraire le nom du module de l'API
+        # /api/Client -> Client
+        # /api/v1/clients -> clients
+        match = re.search(r'/api/(?:v1/)?(\w+)', api_path)
+        if not match:
+            return f"# API path incorrect: {api_path}"
+
+        module_name = match.group(1)
+        modules_path = Path("/home/ubuntu/azalplus/modules")
+
+        # Convertir CamelCase en snake_case
+        def to_snake_case(name):
+            s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+            return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+        snake_name = to_snake_case(module_name)
+
+        # Chercher le module correct
+        correct_module = None
+
+        # 1. Essayer snake_case
+        if (modules_path / f"{snake_name}.yml").exists():
+            correct_module = snake_name
+        # 2. Essayer snake_case pluriel
+        elif (modules_path / f"{snake_name}s.yml").exists():
+            correct_module = f"{snake_name}s"
+        # 3. Essayer lowercase
+        elif (modules_path / f"{module_name.lower()}.yml").exists():
+            correct_module = module_name.lower()
+        # 4. Essayer lowercase pluriel
+        elif (modules_path / f"{module_name.lower()}s.yml").exists():
+            correct_module = f"{module_name.lower()}s"
+
+        if correct_module:
+            # Chercher où ce fetch incorrect est utilisé
+            search_pattern = f"fetch.*['\"`]/api/{module_name}['\"`]|fetch.*['\"`]/api/v1/{module_name}['\"`]"
+
+            # Générer un fix exécutable
+            fix = f"""AUTO_FIX_API_PATH
+old_path: /api/{module_name}
+new_path: /api/v1/{correct_module}
+search_dirs: moteur,templates
+action: replace_in_files"""
+            return fix
+
+        # Module non trouvé
+        return f"""# API 404: {api_path}
+# Module '{module_name}' non trouvé
+# Vérifier si le module existe dans /modules/
+# Ou créer le fichier: modules/{snake_name}.yml"""
+
 
 class CompositeAnalyzer(ErrorAnalyzer):
     """
@@ -529,10 +1029,11 @@ class CompositeAnalyzer(ErrorAnalyzer):
 
     def __init__(self, analyzers: List[ErrorAnalyzer] = None):
         self._analyzers = analyzers or [
-            FrontendErrorAnalyzer(),  # Frontend en premier (rapide à détecter)
-            PythonErrorAnalyzer(),
-            YAMLErrorAnalyzer(),
-            SQLErrorAnalyzer(),
+            JavaScriptErrorAnalyzer(),  # JS en premier (erreurs frontend courantes)
+            FrontendErrorAnalyzer(),    # Frontend général
+            SQLErrorAnalyzer(),          # SQL (erreurs DB courantes)
+            PythonErrorAnalyzer(),       # Python
+            YAMLErrorAnalyzer(),         # YAML
         ]
 
     @property

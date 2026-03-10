@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200">
+  <!-- Fond -->
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3454D1"/>
+      <stop offset="100%" style="stop-color:#2A45B0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#bg2)"/>
+
+  <!-- Points décoratifs -->
+  <circle cx="150" cy="150" r="12" fill="#6B9FFF" opacity="0.4"/>
+  <circle cx="1050" cy="200" r="18" fill="#6B9FFF" opacity="0.3"/>
+  <circle cx="100" cy="900" r="15" fill="#6B9FFF" opacity="0.35"/>
+  <circle cx="1100" cy="1000" r="10" fill="#6B9FFF" opacity="0.4"/>
+
+  <!-- Logo A+ grand -->
+  <circle cx="600" cy="320" r="180" fill="#FFFFFF"/>
+  <circle cx="600" cy="320" r="165" fill="#3454D1"/>
+  <circle cx="720" cy="190" r="22" fill="#6B9FFF"/>
+  <text x="540" y="390" font-family="Inter, Arial" font-weight="800" font-size="200" fill="#FFFFFF">A</text>
+  <text x="680" y="320" font-family="Inter, Arial" font-weight="700" font-size="100" fill="#FFFFFF">+</text>
+
+  <!-- Nom -->
+  <text x="600" y="580" font-family="Inter, Arial" font-weight="800" font-size="90" fill="#FFFFFF" text-anchor="middle">AZALPLUS</text>
+
+  <!-- Prix -->
+  <rect x="450" y="620" width="300" height="100" rx="50" fill="#FFFFFF"/>
+  <text x="600" y="690" font-family="Inter, Arial" font-weight="800" font-size="60" fill="#3454D1" text-anchor="middle">0€</text>
+
+  <!-- Features -->
+  <text x="600" y="820" font-family="Inter, Arial" font-weight="500" font-size="36" fill="#FFFFFF" opacity="0.95" text-anchor="middle">Facturation • Devis • Clients • Stock</text>
+  <text x="600" y="875" font-family="Inter, Arial" font-weight="500" font-size="36" fill="#FFFFFF" opacity="0.95" text-anchor="middle">Compta • Projets • CRM</text>
+
+  <!-- Tagline -->
+  <text x="600" y="980" font-family="Inter, Arial" font-weight="700" font-size="42" fill="#FFFFFF" text-anchor="middle">Gratuit. Illimité. Sans piège.</text>
+
+  <!-- CTA -->
+  <rect x="350" y="1050" width="500" height="70" rx="35" fill="#FFFFFF"/>
+  <text x="600" y="1100" font-family="Inter, Arial" font-weight="700" font-size="32" fill="#3454D1" text-anchor="middle">Rejoindre les Zaliers</text>
+</svg>

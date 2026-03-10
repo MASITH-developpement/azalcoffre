@@ -1,47 +1,52 @@
 # =============================================================================
-# AZALPLUS - Thème Style Axonaut
+# AZALPLUS - Thème Dark Professionnel
 # =============================================================================
+# Design moderne inspiré de la landing page AZALPLUS
 # Modifier ici = change TOUT le design automatiquement
 
-nom: "Axonaut"
+nom: "AZALPLUS Dark"
 
 # -----------------------------------------------------------------------------
 # Couleurs
 # -----------------------------------------------------------------------------
 couleurs:
-  # Axonaut utilise un bleu professionnel
-  primaire: "#2563EB"
-  primaire_fonce: "#1D4ED8"
-  primaire_clair: "#DBEAFE"
+  # Bleu AZALPLUS
+  primaire: "#3454D1"
+  primaire_fonce: "#2a44a8"
+  primaire_clair: "#6B9FFF"
 
-  # Sidebar sombre style Axonaut
-  sidebar_fond: "#1E293B"
+  # Sidebar sombre AZALPLUS
+  sidebar_fond: "#0a0e1a"
   sidebar_texte: "#94A3B8"
   sidebar_texte_actif: "#FFFFFF"
-  sidebar_hover: "#334155"
+  sidebar_hover: "#1a1f36"
+  sidebar_actif: "#3454D1"
 
   # Statuts
-  succes: "#22C55E"
-  succes_clair: "#DCFCE7"
-  attention: "#F59E0B"
-  attention_clair: "#FEF3C7"
-  erreur: "#EF4444"
-  erreur_clair: "#FEE2E2"
-  info: "#3B82F6"
-  info_clair: "#DBEAFE"
+  succes: "#10b981"
+  succes_clair: "#065f46"
+  attention: "#f59e0b"
+  attention_clair: "#92400e"
+  erreur: "#ef4444"
+  erreur_clair: "#991b1b"
+  info: "#3b82f6"
+  info_clair: "#1e40af"
 
-  # Neutres
+  # Palette Dark Mode
   blanc: "#FFFFFF"
-  gris_50: "#F8FAFC"
-  gris_100: "#F1F5F9"
-  gris_200: "#E2E8F0"
-  gris_300: "#CBD5E1"
-  gris_400: "#94A3B8"
-  gris_500: "#64748B"
-  gris_600: "#475569"
-  gris_700: "#334155"
-  gris_800: "#1E293B"
-  gris_900: "#0F172A"
+  noir: "#0f1225"
+
+  # Gris inversés pour dark mode
+  gris_50: "#0f1225"        # Fond principal (le plus sombre)
+  gris_100: "#1a1f36"       # Cartes, surfaces élevées
+  gris_200: "#252d47"       # Bordures, séparateurs
+  gris_300: "#3a4558"       # Bordures actives
+  gris_400: "#4a5568"       # Texte désactivé
+  gris_500: "#64748b"       # Texte secondaire
+  gris_600: "#94a3b8"       # Texte normal
+  gris_700: "#cbd5e1"       # Texte important
+  gris_800: "#e2e8f0"       # Titres
+  gris_900: "#f8fafc"       # Texte principal (le plus clair)
 
 # -----------------------------------------------------------------------------
 # Typographie
@@ -67,25 +72,25 @@ espacement:
 # Bordures
 # -----------------------------------------------------------------------------
 bordures:
-  rayon: "6px"
-  rayon_grand: "8px"
-  couleur: "#E2E8F0"
+  rayon: "8px"
+  rayon_grand: "12px"
+  couleur: "#252d47"
 
 # -----------------------------------------------------------------------------
-# Ombres
+# Ombres (adaptées au dark mode)
 # -----------------------------------------------------------------------------
 ombres:
-  petite: "0 1px 2px rgba(0,0,0,0.05)"
-  moyenne: "0 1px 3px rgba(0,0,0,0.1)"
-  grande: "0 4px 6px rgba(0,0,0,0.1)"
+  petite: "0 2px 4px rgba(0,0,0,0.3)"
+  moyenne: "0 4px 8px rgba(0,0,0,0.4)"
+  grande: "0 8px 24px rgba(0,0,0,0.5)"
 
 # -----------------------------------------------------------------------------
 # Layout
 # -----------------------------------------------------------------------------
 layout:
-  sidebar_largeur: "220px"
-  header_hauteur: "50px"
-  contenu_max: "1200px"
+  sidebar_largeur: "240px"
+  header_hauteur: "60px"
+  contenu_max: "1400px"
 
 # -----------------------------------------------------------------------------
 # Breakpoints (Mobile-First Responsive Design)
@@ -100,45 +105,100 @@ breakpoints:
 # Mobile Settings
 # -----------------------------------------------------------------------------
 mobile:
-  # Touch targets minimum size (WCAG recommends 44px)
   touch_target_min: "44px"
-  # Sidebar behavior: "hidden" | "overlay" | "mini"
   sidebar_behavior: "overlay"
-  # Form layout: "stacked" | "inline"
   form_layout: "stacked"
-  # Table layout: "scroll" | "cards" | "responsive"
   table_layout: "cards"
 
 # -----------------------------------------------------------------------------
-# Composants
+# Composants - Boutons
 # -----------------------------------------------------------------------------
 boutons:
-  padding: "8px 16px"
-  rayon: "6px"
-
-inputs:
-  padding: "10px 12px"
-  rayon: "6px"
-
-cartes:
+  padding: "12px 20px"
   rayon: "8px"
+  primaire_fond: "#3454D1"
+  primaire_texte: "#FFFFFF"
+  primaire_hover: "#2a44a8"
+  secondaire_fond: "#1a1f36"
+  secondaire_texte: "#FFFFFF"
+  secondaire_bordure: "#3a4558"
+  secondaire_hover: "#252d47"
+  danger_fond: "#ef4444"
+  danger_texte: "#FFFFFF"
+  danger_hover: "#dc2626"
+
+# -----------------------------------------------------------------------------
+# Composants - Inputs
+# -----------------------------------------------------------------------------
+inputs:
+  padding: "12px 14px"
+  rayon: "8px"
+  fond: "#0f1225"
+  bordure: "#252d47"
+  bordure_focus: "#3454D1"
+  texte: "#f8fafc"
+  placeholder: "#64748b"
+
+# -----------------------------------------------------------------------------
+# Composants - Cartes
+# -----------------------------------------------------------------------------
+cartes:
+  rayon: "12px"
   padding: "24px"
+  fond: "#1a1f36"
+  bordure: "#252d47"
+  ombre: "0 4px 12px rgba(0,0,0,0.3)"
 
+# -----------------------------------------------------------------------------
+# Composants - Tables
+# -----------------------------------------------------------------------------
 tables:
-  header_fond: "#F8FAFC"
-  ligne_hover: "#F8FAFC"
-  padding: "12px 16px"
+  header_fond: "#0f1225"
+  header_texte: "#94a3b8"
+  ligne_fond: "#1a1f36"
+  ligne_hover: "#252d47"
+  ligne_texte: "#e2e8f0"
+  bordure: "#252d47"
+  padding: "14px 16px"
 
+# -----------------------------------------------------------------------------
+# Composants - Badges
+# -----------------------------------------------------------------------------
 badges:
-  padding: "4px 8px"
-  rayon: "4px"
+  padding: "6px 12px"
+  rayon: "20px"
+
+  # Badges de statut
+  brouillon_fond: "#252d47"
+  brouillon_texte: "#94a3b8"
+
+  envoye_fond: "rgba(59, 130, 246, 0.2)"
+  envoye_texte: "#60a5fa"
+
+  accepte_fond: "rgba(16, 185, 129, 0.2)"
+  accepte_texte: "#34d399"
+
+  refuse_fond: "rgba(239, 68, 68, 0.2)"
+  refuse_texte: "#f87171"
+
+  attente_fond: "rgba(245, 158, 11, 0.2)"
+  attente_texte: "#fbbf24"
+
+  termine_fond: "rgba(16, 185, 129, 0.2)"
+  termine_texte: "#34d399"
+
+  annule_fond: "rgba(239, 68, 68, 0.2)"
+  annule_texte: "#f87171"
 
 # -----------------------------------------------------------------------------
 # Header
 # -----------------------------------------------------------------------------
 header:
-  fond: "#FFFFFF"
-  recherche_largeur: "300px"
+  fond: "#1a1f36"
+  texte: "#f8fafc"
+  recherche_fond: "#0f1225"
+  recherche_bordure: "#252d47"
+  recherche_largeur: "350px"
   bouton_ajouter: true
   notifications: true
 
@@ -146,30 +206,42 @@ header:
 # Login
 # -----------------------------------------------------------------------------
 login:
-  fond: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)"
-  carte_largeur: "400px"
-  carte_rayon: "8px"
+  fond: "linear-gradient(135deg, #0a0e1a 0%, #0f1225 100%)"
+  carte_fond: "#1a1f36"
+  carte_largeur: "420px"
+  carte_rayon: "16px"
+  carte_ombre: "0 20px 60px rgba(0,0,0,0.5)"
+
+# -----------------------------------------------------------------------------
+# Dashboard
+# -----------------------------------------------------------------------------
+dashboard:
+  kpi_fond: "#1a1f36"
+  kpi_bordure: "#252d47"
+  kpi_icone_fond: "rgba(52, 84, 209, 0.15)"
+  kpi_icone_couleur: "#6B9FFF"
+  graphique_fond: "#1a1f36"
 
 # -----------------------------------------------------------------------------
 # Style des Documents (Devis/Factures)
 # -----------------------------------------------------------------------------
 documents:
   # Couleur principale du document
-  couleur: "#2563EB"
+  couleur: "#3454D1"
 
   # Structure: "moderne" | "classique" | "minimal"
   structure: "moderne"
 
-  # Style tableaux: "simple" | "zebra" | "bordure" | "sans_bordure"
+  # Style tableaux
   tableaux: "simple"
 
-  # Angles: "arrondis" | "carres"
+  # Angles
   angles: "arrondis"
 
-  # Lignes séparatrices: "fines" | "epaisses" | "aucune"
+  # Lignes séparatrices
   lignes: "fines"
 
-  # Images produits: "aucune" | "petites" | "moyennes" | "grandes"
+  # Images produits
   images_produits: "petites"
 
   # Police du document
@@ -183,3 +255,25 @@ documents:
 
   # Marges (en mm pour PDF)
   marges: "15mm"
+
+  # Fond (pour PDF en dark mode on garde blanc pour impression)
+  fond_impression: "#FFFFFF"
+  texte_impression: "#0f172a"
+
+# -----------------------------------------------------------------------------
+# Animations
+# -----------------------------------------------------------------------------
+animations:
+  transition: "all 0.2s ease"
+  hover_scale: "1.02"
+
+# -----------------------------------------------------------------------------
+# Liste / Tableaux
+# -----------------------------------------------------------------------------
+liste:
+  item_fond: "#1a1f36"
+  item_hover: "#252d47"
+  item_actif: "rgba(52, 84, 209, 0.15)"
+  item_bordure: "#252d47"
+  item_rayon: "10px"
+  item_padding: "16px"

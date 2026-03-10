@@ -23,8 +23,8 @@ champs:
   - nom: donneur_ordre_id
     type: relation
     obligatoire: false
-    relation: DonneursOrdre
-    description: Donneur d'ordre
+    relation: donneur_ordre
+    description: "Donneur d'ordre"
     autocompletion: true
 
   - nom: projet_id
@@ -165,7 +165,7 @@ champs:
     type: select
     obligatoire: true
     defaut: DRAFT
-    options: [DRAFT, A_PLANIFIER, PLANIFIEE, EN_COURS, BLOQUEE, TERMINEE, ANNULEE]
+    options: [DRAFT, A_PLANIFIER, PLANIFIEE, SUR_SITE, EN_COURS, TRAVAUX_TERMINES, BLOQUEE, TERMINEE, ANNULEE]
     description: Statut de l'intervention
 
   # Adresse intervention
@@ -256,8 +256,114 @@ champs:
   - nom: materiel_utilise
     type: textarea
     obligatoire: false
-    description: Materiel utilise
+    description: Materiel utilise (texte libre)
     autocompletion: true
+
+  # =========================================================================
+  # PHOTOS INTERVENTION (workflow technicien)
+  # =========================================================================
+  - nom: photos_avant
+    type: json
+    obligatoire: false
+    description: |
+      Photos avant intervention (minimum 2 recommandees).
+      Format: [{"url": "https://...", "timestamp": "2026-03-09T10:30:00", "gps": {"lat": 48.8, "lng": 2.3}}]
+
+  - nom: photos_apres
+    type: json
+    obligatoire: false
+    description: |
+      Photos apres intervention (minimum 2 recommandees).
+      Format: [{"url": "https://...", "timestamp": "2026-03-09T12:30:00", "gps": {"lat": 48.8, "lng": 2.3}}]
+
+  - nom: constat_arrivee
+    type: textarea
+    obligatoire: false
+    description: Constat a l'arrivee sur site
+    autocompletion: true
+
+  - nom: travaux_realises
+    type: textarea
+    obligatoire: false
+    description: Description des travaux realises
+    autocompletion: true
+
+  - nom: anomalies
+    type: textarea
+    obligatoire: false
+    description: Anomalies constatees
+    autocompletion: true
+
+  - nom: recommandations
+    type: textarea
+    obligatoire: false
+    description: Recommandations pour le client
+    autocompletion: true
+
+  # =========================================================================
+  # MATERIEL UTILISE STRUCTURE (pour facturation)
+  # =========================================================================
+  - nom: materiel_utilise_lignes
+    type: json
+    obligatoire: false
+    description: |
+      Liste structuree du materiel utilise (pour facturation automatique).
+      Format: [
+        {
+          "produit_id": "uuid",
+          "designation": "Cable 2.5mm2",
+          "quantite": 10,
+          "unite": "m",
+          "prix_unitaire": 2.50,
+          "prix_total": 25.00,
+          "notes": "Remplacement cable defectueux"
+        }
+      ]
+
+  # =========================================================================
+  # VALIDATION CLIENT
+  # =========================================================================
+  - nom: avis_client
+    type: number
+    obligatoire: false
+    description: Note de satisfaction client (1 a 5)
+
+  - nom: appreciation_client
+    type: textarea
+    obligatoire: false
+    description: Commentaire du client
+    autocompletion: true
+
+  - nom: signature_client
+    type: text
+    obligatoire: false
+    description: Signature client (base64 PNG)
+
+  - nom: nom_signataire
+    type: text
+    obligatoire: false
+    description: Nom du signataire
+    autocompletion: true
+
+  - nom: date_signature
+    type: datetime
+    obligatoire: false
+    description: Date et heure de signature
+
+  - nom: is_signed
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Intervention signee par le client
+
+  # =========================================================================
+  # LIEN FACTURE GENEREE
+  # =========================================================================
+  - nom: facture_generee_id
+    type: relation
+    obligatoire: false
+    relation: Factures
+    description: Facture brouillon generee automatiquement
 
   # Facturation
   - nom: facturable
@@ -368,158 +474,66 @@ rapport:
       obligatoire: false
       defaut: false
 
-# Donneur d'ordre
-donneur_ordre:
-  champs:
-    - nom: code
-      type: text
-      obligatoire: true
-      description: Code donneur d'ordre
-      autocompletion: true
-
-    - nom: nom
-      type: text
-      obligatoire: true
-      description: Nom/Raison sociale
-      autocompletion: true
-
-    - nom: type
-      type: select
-      obligatoire: false
-      options: [CLIENT, FOURNISSEUR, AUTRE]
-
-    - nom: client_id
-      type: relation
-      obligatoire: false
-      relation: Clients
-      autocompletion: true
-
-    - nom: fournisseur_id
-      type: relation
-      obligatoire: false
-      relation: Fournisseurs
-      autocompletion: true
-
-    - nom: email
-      type: email
-      obligatoire: false
-      autocompletion: true
-
-    - nom: telephone
-      type: tel
-      obligatoire: false
-
-    - nom: adresse
-      type: textarea
-      obligatoire: false
-      autocompletion: true
-
-    - nom: adresse_facturation
-      type: textarea
-      obligatoire: false
-      autocompletion: true
-
-    - nom: delai_paiement
-      type: number
-      obligatoire: false
-      defaut: 30
-      description: Delai paiement (jours)
-
-    - nom: email_rapport
-      type: email
-      obligatoire: false
-      description: Email pour envoi rapports
-      autocompletion: true
-
-    # Contact commercial
-    - nom: contact_commercial_civilite
-      type: select
-      obligatoire: false
-      options: [Mr, Mme, Melle]
-
-    - nom: contact_commercial_nom
-      type: text
-      obligatoire: false
-      autocompletion: true
-
-    - nom: contact_commercial_email
-      type: email
-      obligatoire: false
-      autocompletion: true
-
-    - nom: contact_commercial_telephone
-      type: tel
-      obligatoire: false
-
-    # Contact comptabilite
-    - nom: contact_comptabilite_civilite
-      type: select
-      obligatoire: false
-      options: [Mr, Mme, Melle]
-
-    - nom: contact_comptabilite_nom
-      type: text
-      obligatoire: false
-      autocompletion: true
-
-    - nom: contact_comptabilite_email
-      type: email
-      obligatoire: false
-      autocompletion: true
-
-    - nom: contact_comptabilite_telephone
-      type: tel
-      obligatoire: false
-
-    # Contact technique
-    - nom: contact_technique_civilite
-      type: select
-      obligatoire: false
-      options: [Mr, Mme, Melle]
-
-    - nom: contact_technique_nom
-      type: text
-      obligatoire: false
-      autocompletion: true
-
-    - nom: contact_technique_email
-      type: email
-      obligatoire: false
-      autocompletion: true
-
-    - nom: contact_technique_telephone
-      type: tel
-      obligatoire: false
-
-    - nom: is_active
-      type: boolean
-      obligatoire: false
-      defaut: true
-
 workflow:
+  # Planification
   DRAFT -> A_PLANIFIER: auto
   A_PLANIFIER -> PLANIFIEE: si intervenant_id et date_prevue_debut
-  PLANIFIEE -> EN_COURS: action demarrer
-  EN_COURS -> TERMINEE: action terminer
+
+  # Workflow technicien mobile (10 etapes)
+  PLANIFIEE -> SUR_SITE: action arrivee_sur_site
+  SUR_SITE -> EN_COURS: action demarrer_intervention
+  EN_COURS -> TRAVAUX_TERMINES: action terminer_travaux
+  TRAVAUX_TERMINES -> TERMINEE: action signer_client
+
+  # Gestion blocages
   EN_COURS -> BLOQUEE: action bloquer
   BLOQUEE -> EN_COURS: action debloquer
+
+  # Annulation (sauf si terminee)
   "* -> ANNULEE": sauf TERMINEE
 
 actions:
+  # Planification
   - planifier
   - assigner_technicien
+
+  # Workflow technicien mobile
   - arrivee_sur_site
   - demarrer_intervention
-  - terminer_intervention
+  - prendre_photos_avant
+  - prendre_photos_apres
+  - saisir_materiel
+  - saisir_rapport
+  - terminer_travaux
+  - signer_client
+
+  # Gestion
   - bloquer
   - debloquer
-  - generer_rapport
-  - signer_rapport
-  - envoyer_rapport
-  - creer_facture
   - annuler
+
+  # Facturation
+  - creer_facture_brouillon
+  - generer_rapport
+  - envoyer_rapport
+
+  # Timer
   - ajouter_temps
   - demarrer_timer
+
+# =========================================================================
+# HOOK: Creation automatique facture brouillon
+# =========================================================================
+hooks:
+  apres_signature:
+    - action: creer_facture_brouillon
+      condition: "facturable = true AND is_signed = true"
+      description: "Cree une facture en brouillon avec main d'oeuvre + materiel"
+      parametres:
+        statut_facture: DRAFT
+        inclure_main_oeuvre: true
+        inclure_materiel: true
+        lier_intervention: true
 
 marceau:
   alertes:
@@ -614,35 +628,76 @@ mobile:
           placeholder: "Décrivez les travaux effectués..."
     
     # -------------------------------------------------------------------------
-    # ÉTAPE 4: Matériel utilisé
+    # ÉTAPE 4: Matériel utilisé (liste articles + texte libre)
     # -------------------------------------------------------------------------
     - etape: 4
       id: materiel
       titre: "🔩 Matériel utilisé"
       bouton: "Suivant"
       champs_obligatoires:
-        - nom: materiel_utilise
-          label: "Matériel utilisé"
-          type: textarea
-          placeholder: "Listez le matériel utilisé (sera ajouté à la facture)..."
+        - nom: materiel_utilise_lignes
+          label: "Articles utilisés"
+          type: article_selector
+          source: Produits
+          champs_ligne:
+            - produit_id: relation
+            - designation: text
+            - quantite: number
+            - prix_unitaire: number
+            - prix_total: computed
           ajouter_facture: true
+          description: "Selectionnez les articles du catalogue"
+        - nom: materiel_utilise
+          label: "Autre matériel (texte libre)"
+          type: textarea
+          placeholder: "Materiel non catalogue, fournitures diverses..."
+          obligatoire: false
       options:
-        - peut_passer: true  # Peut passer si pas de matériel
-    
+        - peut_passer: true  # Peut passer si pas de materiel
+
     # -------------------------------------------------------------------------
-    # ÉTAPE 5: Validation client
+    # ÉTAPE 5: Rapport des travaux
     # -------------------------------------------------------------------------
     - etape: 5
+      id: rapport_travaux
+      titre: "📝 Rapport des travaux"
+      bouton: "Suivant"
+      champs_obligatoires:
+        - nom: travaux_realises
+          label: "Travaux réalisés"
+          type: textarea
+          placeholder: "Décrivez les travaux effectués..."
+        - nom: anomalies
+          label: "Anomalies constatées"
+          type: textarea
+          placeholder: "Anomalies, problèmes rencontrés..."
+          obligatoire: false
+        - nom: recommandations
+          label: "Recommandations"
+          type: textarea
+          placeholder: "Recommandations pour le client..."
+          obligatoire: false
+
+    # -------------------------------------------------------------------------
+    # ÉTAPE 6: Validation client (notation + signature)
+    # -------------------------------------------------------------------------
+    - etape: 6
       id: validation_client
       titre: "✍️ Validation client"
       bouton: "Faire signer"
-      statut_cible: A_VALIDER
+      statut_cible: TERMINEE
       affichage_recap:
         - nom: reference
           label: "N° Intervention"
         - nom: travaux_realises
           label: "Travaux réalisés"
+        - nom: materiel_utilise_lignes
+          label: "Matériel utilisé"
       champs_obligatoires:
+        - nom: nom_signataire
+          label: "Nom du signataire"
+          type: text
+          placeholder: "Nom et prénom..."
         - nom: avis_client
           label: "Avis du client"
           type: rating
@@ -657,40 +712,13 @@ mobile:
           label: "Signature du client"
           type: signature
           description: "Faites signer le client sur l'écran"
-    
-    # -------------------------------------------------------------------------
-    # ÉTAPE 6: Envoi du rapport
-    # -------------------------------------------------------------------------
-    - etape: 6
-      id: rapport
-      titre: "📄 Rapport d'intervention"
-      bouton: "Envoyer le rapport"
-      statut_cible: TERMINEE
-      destinataire:
-        choix: true
-        options:
-          - donneur_ordre
-          - client
-        defaut: donneur_ordre
-      contenu_rapport:
-        - reference_donneur_ordre
-        - numero_intervention
-        - heure_arrivee
-        - duree_presence
-        - nom_client
-        - adresse_intervention
-        - constat_arrivee
-        - travaux_realises
-        - materiel_utilise
-        - photos_avant
-        - photos_apres
-        - signature_client
-        - avis_client
-        - appreciation_client
-      format:
-        - pdf: true
-        - email: true
-      message_fin: "Intervention terminée ! Le rapport a été envoyé."
+      enregistrements:
+        - date_signature: auto
+        - is_signed: true
+      actions_post:
+        - creer_facture_brouillon
+        - generer_rapport_pdf
+      message_fin: "Intervention terminée ! La facture brouillon a été créée."
 
   # Configuration des fonctionnalités
   features:

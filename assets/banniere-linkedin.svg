@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1584 396">
+  <!-- Fond dégradé bleu -->
+  <defs>
+    <linearGradient id="bgGradientLI" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2A45B0"/>
+      <stop offset="100%" style="stop-color:#3454D1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1584" height="396" fill="url(#bgGradientLI)"/>
+
+  <!-- Points décoratifs -->
+  <circle cx="100" cy="80" r="6" fill="#6B9FFF" opacity="0.4"/>
+  <circle cx="1450" cy="100" r="10" fill="#6B9FFF" opacity="0.3"/>
+  <circle cx="1380" cy="320" r="8" fill="#6B9FFF" opacity="0.4"/>
+  <circle cx="180" cy="300" r="12" fill="#6B9FFF" opacity="0.3"/>
+
+  <!-- Logo A+ (cercle) à gauche -->
+  <circle cx="200" cy="198" r="90" fill="#FFFFFF"/>
+  <circle cx="200" cy="198" r="82" fill="#3454D1"/>
+  <circle cx="258" cy="138" r="10" fill="#6B9FFF"/>
+  <text x="175" y="235"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="800"
+        font-size="95"
+        fill="#FFFFFF">A</text>
+  <text x="248" y="200"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="700"
+        font-size="50"
+        fill="#FFFFFF">+</text>
+
+  <!-- Texte AZALPLUS -->
+  <text x="340" y="175"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="800"
+        font-size="72"
+        fill="#FFFFFF">AZALPLUS</text>
+
+  <!-- Tagline -->
+  <text x="340" y="240"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="500"
+        font-size="32"
+        fill="#FFFFFF"
+        opacity="0.9">ERP 100% gratuit pour les TPE</text>
+
+  <!-- Ligne décorative -->
+  <rect x="340" y="265" width="300" height="3" rx="1.5" fill="#6B9FFF" opacity="0.6"/>
+
+  <!-- Hashtag -->
+  <text x="340" y="310"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="600"
+        font-size="24"
+        fill="#6B9FFF">#Zaliers</text>
+
+  <!-- Slogan droit -->
+  <text x="1250" y="210"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="700"
+        font-size="28"
+        fill="#FFFFFF"
+        opacity="0.8"
+        text-anchor="middle">La révolution</text>
+  <text x="1250" y="250"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="700"
+        font-size="28"
+        fill="#FFFFFF"
+        opacity="0.8"
+        text-anchor="middle">ERP est en marche</text>
+</svg>

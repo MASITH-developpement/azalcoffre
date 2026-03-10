@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200">
+  <!-- Fond -->
+  <rect width="1200" height="1200" fill="#FFFFFF"/>
+
+  <!-- Header bleu -->
+  <rect x="0" y="0" width="1200" height="300" fill="#3454D1"/>
+  <text x="600" y="120" font-family="Inter, Arial" font-weight="800" font-size="48" fill="#FFFFFF" text-anchor="middle">C'EST MAINTENANT</text>
+
+  <!-- Logo -->
+  <circle cx="600" cy="220" r="50" fill="#FFFFFF"/>
+  <circle cx="600" cy="220" r="45" fill="#3454D1"/>
+  <text x="585" y="240" font-family="Inter, Arial" font-weight="800" font-size="50" fill="#FFFFFF">A</text>
+  <text x="620" y="225" font-family="Inter, Arial" font-weight="700" font-size="25" fill="#FFFFFF">+</text>
+
+  <!-- Titre -->
+  <text x="600" y="400" font-family="Inter, Arial" font-weight="800" font-size="72" fill="#3454D1" text-anchor="middle">AZALPLUS</text>
+  <text x="600" y="460" font-family="Inter, Arial" font-weight="500" font-size="36" fill="#666666" text-anchor="middle">ERP 100% gratuit pour les TPE</text>
+
+  <!-- Liste features -->
+  <text x="150" y="560" font-family="Inter, Arial" font-weight="600" font-size="32" fill="#333333">✓ Facturation illimitée</text>
+  <text x="150" y="620" font-family="Inter, Arial" font-weight="600" font-size="32" fill="#333333">✓ Devis illimités</text>
+  <text x="150" y="680" font-family="Inter, Arial" font-weight="600" font-size="32" fill="#333333">✓ Gestion clients</text>
+  <text x="650" y="560" font-family="Inter, Arial" font-weight="600" font-size="32" fill="#333333">✓ Stock &amp; catalogue</text>
+  <text x="650" y="620" font-family="Inter, Arial" font-weight="600" font-size="32" fill="#333333">✓ Comptabilité</text>
+  <text x="650" y="680" font-family="Inter, Arial" font-weight="600" font-size="32" fill="#333333">✓ Paiements instantanés</text>
+
+  <!-- Ligne -->
+  <rect x="100" y="740" width="1000" height="3" fill="#E5E5E5"/>
+
+  <!-- Zéros -->
+  <text x="300" y="870" font-family="Inter, Arial" font-weight="800" font-size="48" fill="#3454D1" text-anchor="middle">0€</text>
+  <text x="300" y="920" font-family="Inter, Arial" font-weight="500" font-size="24" fill="#666666" text-anchor="middle">abonnement</text>
+
+  <text x="600" y="870" font-family="Inter, Arial" font-weight="800" font-size="48" fill="#3454D1" text-anchor="middle">0</text>
+  <text x="600" y="920" font-family="Inter, Arial" font-weight="500" font-size="24" fill="#666666" text-anchor="middle">limite</text>
+
+  <text x="900" y="870" font-family="Inter, Arial" font-weight="800" font-size="48" fill="#3454D1" text-anchor="middle">0</text>
+  <text x="900" y="920" font-family="Inter, Arial" font-weight="500" font-size="24" fill="#666666" text-anchor="middle">mauvaise surprise</text>
+
+  <!-- Footer -->
+  <rect x="0" y="1000" width="1200" height="200" fill="#3454D1"/>
+  <text x="600" y="1070" font-family="Inter, Arial" font-weight="700" font-size="36" fill="#FFFFFF" text-anchor="middle">Les 100 premiers Zaliers sont accompagnés</text>
+  <rect x="400" y="1100" width="400" height="60" rx="30" fill="#FFFFFF"/>
+  <text x="600" y="1142" font-family="Inter, Arial" font-weight="700" font-size="28" fill="#3454D1" text-anchor="middle">Créer mon compte</text>
+</svg>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche Call Powens - AZALPLUS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            padding: 20px;
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 18pt;
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 13pt;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            background: #f0f0f0;
+            padding: 5px 10px;
+        }
+        h3 {
+            font-size: 11pt;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .header-info div {
+            flex: 1;
+        }
+        .header-info label {
+            font-weight: bold;
+        }
+        .header-info .line {
+            border-bottom: 1px solid #333;
+            display: inline-block;
+            width: 150px;
+            margin-left: 5px;
+        }
+        blockquote {
+            background: #f9f9f9;
+            border-left: 3px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #e0e0e0;
+            width: 60%;
+        }
+        td {
+            width: 40%;
+        }
+        .checkbox {
+            font-family: monospace;
+        }
+        .notes {
+            border: 1px solid #333;
+            min-height: 150px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .notes-line {
+            border-bottom: 1px solid #ccc;
+            height: 25px;
+            margin-bottom: 5px;
+        }
+        .scenario {
+            background: #fff8e0;
+            border: 1px solid #cca;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .impression {
+            margin: 10px 0;
+        }
+        .impression label {
+            display: block;
+            margin: 5px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+        @media print {
+            body {
+                padding: 10px;
+            }
+            h2 {
+                page-break-after: avoid;
+            }
+            table {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h1>FICHE CALL POWENS</h1>
+
+<div class="header-info">
+    <div>
+        <label>Date :</label><span class="line"></span><br><br>
+        <label>Heure :</label> 8h00
+    </div>
+    <div>
+        <label>Interlocuteur :</label><span class="line"></span><br><br>
+        <label>Fonction :</label><span class="line"></span>
+    </div>
+</div>
+
+<h2>PRÉSENTATION AZALPLUS (2 min)</h2>
+
+<blockquote>
+    "MASITH Développement édite AZALPLUS, un ERP gratuit pour TPE.<br>
+    L'ERP est 100% gratuit. On se rémunère sur les flux financiers.<br>
+    On veut intégrer un paiement par virement Open Banking dans chaque facture."
+</blockquote>
+
+<p><strong>Volume projeté :</strong></p>
+<ul>
+    <li>500 TPE année 1 → 5 000 TPE à 3 ans</li>
+    <li>15 000 → 150 000 paiements/mois</li>
+    <li>Ticket moyen : 300-500€</li>
+</ul>
+
+<h2>1. MODÈLE ÉCONOMIQUE</h2>
+
+<table>
+    <tr>
+        <th>Question</th>
+        <th>Réponse</th>
+    </tr>
+    <tr>
+        <td>Comment fonctionne votre modèle "revenus partagés" ?</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Puis-je ajouter une marge sur chaque transaction ?</td>
+        <td><span class="checkbox">☐ Oui ☐ Non</span></td>
+    </tr>
+    <tr>
+        <td>Si oui, comment ? (%, fixe, intégré ou séparé)</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Quel est votre tarif de base ?</td>
+        <td>______% ou ______€/tx</td>
+    </tr>
+    <tr>
+        <td>Tarif dégressif sur volume ?</td>
+        <td><span class="checkbox">☐ Oui ☐ Non</span></td>
+    </tr>
+</table>
+
+<h2>2. FONCTIONNEMENT TECHNIQUE</h2>
+
+<table>
+    <tr>
+        <th>Question</th>
+        <th>Réponse</th>
+    </tr>
+    <tr>
+        <td>Comment fonctionne le paiement côté client ?</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Délai de réception des fonds pour la TPE ?</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Banques couvertes en France ?</td>
+        <td>______%</td>
+    </tr>
+    <tr>
+        <td>Taux de succès des paiements ?</td>
+        <td>______%</td>
+    </tr>
+</table>
+
+<h2>3. INTÉGRATION</h2>
+
+<table>
+    <tr>
+        <th>Question</th>
+        <th>Réponse</th>
+    </tr>
+    <tr>
+        <td>API REST disponible ?</td>
+        <td><span class="checkbox">☐ Oui ☐ Non</span></td>
+    </tr>
+    <tr>
+        <td>Documentation publique ?</td>
+        <td><span class="checkbox">☐ Oui ☐ Non</span></td>
+    </tr>
+    <tr>
+        <td>Sandbox / environnement de test ?</td>
+        <td><span class="checkbox">☐ Oui ☐ Non</span></td>
+    </tr>
+    <tr>
+        <td>Délai d'intégration estimé ?</td>
+        <td>______ semaines</td>
+    </tr>
+    <tr>
+        <td>Accompagnement technique inclus ?</td>
+        <td><span class="checkbox">☐ Oui ☐ Non</span></td>
+    </tr>
+</table>
+
+<h2>4. COMMERCIAL / PARTENARIAT</h2>
+
+<table>
+    <tr>
+        <th>Question</th>
+        <th>Réponse</th>
+    </tr>
+    <tr>
+        <td>Frais d'activation / setup ?</td>
+        <td>______€</td>
+    </tr>
+    <tr>
+        <td>Frais mensuels fixes ?</td>
+        <td>______€/mois</td>
+    </tr>
+    <tr>
+        <td>Programme partenaire / intégrateur ?</td>
+        <td><span class="checkbox">☐ Oui ☐ Non</span></td>
+    </tr>
+    <tr>
+        <td>Contrat minimum ?</td>
+        <td>______ mois</td>
+    </tr>
+    <tr>
+        <td>Exclusivité demandée ?</td>
+        <td><span class="checkbox">☐ Oui ☐ Non</span></td>
+    </tr>
+</table>
+
+<h2>5. SCÉNARIO À VALIDER</h2>
+
+<div class="scenario">
+    <p><em>"Mon client TPE envoie une facture de 500€.<br>
+    Son client clique sur 'Payer'.<br>
+    Il est redirigé vers sa banque, valide le virement.<br>
+    La TPE reçoit 500€ moins les frais.</em></p>
+    <p><strong>Question : puis-je configurer les frais à 1.5% (dont 0.5% pour moi) ?"</strong></p>
+</div>
+
+<table>
+    <tr>
+        <th>C'est possible ?</th>
+        <td><span class="checkbox">☐ Oui ☐ Non</span></td>
+    </tr>
+    <tr>
+        <th>Comment techniquement ?</th>
+        <td></td>
+    </tr>
+</table>
+
+<h2>NOTES LIBRES</h2>
+
+<div class="notes">
+    <div class="notes-line"></div>
+    <div class="notes-line"></div>
+    <div class="notes-line"></div>
+    <div class="notes-line"></div>
+    <div class="notes-line"></div>
+    <div class="notes-line"></div>
+    <div class="notes-line"></div>
+    <div class="notes-line"></div>
+</div>
+
+<h2>PROCHAINES ÉTAPES CONVENUES</h2>
+
+<table>
+    <tr>
+        <th>Action</th>
+        <th>Qui</th>
+        <th>Délai</th>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
+
+<h2>IMPRESSION GÉNÉRALE</h2>
+
+<div class="impression">
+    <label><span class="checkbox">☐</span> Très positif — on avance</label>
+    <label><span class="checkbox">☐</span> Positif — à creuser</label>
+    <label><span class="checkbox">☐</span> Neutre — attendre d'autres options</label>
+    <label><span class="checkbox">☐</span> Négatif — chercher ailleurs</label>
+</div>
+
+<p><strong>Contact après call :</strong></p>
+<p>Nom : _________________ Email : _________________ Tél : _________________</p>
+
+<div class="footer">
+    MASITH Développement — AZALPLUS — Call Powens
+</div>
+
+</body>
+</html>

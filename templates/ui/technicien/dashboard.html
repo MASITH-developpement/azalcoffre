@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2563eb">
+    <title>Tableau de bord - Technicien</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            padding-top: var(--safe-top);
+            padding-bottom: calc(80px + var(--safe-bottom));
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px 16px 24px;
+            border-radius: 0 0 24px 24px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .user-info h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .user-info p {
+            font-size: 13px;
+            opacity: 0.85;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* KPIs */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .kpi-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+
+        /* Content */
+        .content {
+            padding: 16px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin: 20px 0 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title a {
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Intervention Cards */
+        .intervention-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .intervention-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid var(--primary);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .intervention-card:active {
+            transform: scale(0.98);
+        }
+
+        .intervention-card.urgent {
+            border-left-color: var(--danger);
+        }
+
+        .intervention-card.en-cours {
+            border-left-color: var(--success);
+            background: linear-gradient(to right, rgba(34,197,94,0.05), white);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .card-ref {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--gray-900);
+        }
+
+        .card-status {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .status-planifiee { background: #dbeafe; color: #1e40af; }
+        .status-sur-site { background: #fef3c7; color: #92400e; }
+        .status-en-cours { background: #d1fae5; color: #065f46; }
+        .status-travaux-termines { background: #e0e7ff; color: #3730a3; }
+        .status-terminee { background: #e5e7eb; color: #374151; }
+
+        .card-client {
+            font-size: 14px;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .card-address {
+            font-size: 13px;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .card-time {
+            font-size: 13px;
+            color: var(--warning);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-priority {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .priority-urgent { background: #fef2f2; color: #dc2626; }
+        .priority-high { background: #fff7ed; color: #ea580c; }
+        .priority-normal { background: var(--gray-100); color: var(--gray-600); }
+
+        /* Action Buttons */
+        .action-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            padding: 8px 16px calc(8px + var(--safe-bottom));
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 11px;
+            border-radius: 8px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .nav-item-icon {
+            font-size: 22px;
+        }
+
+        /* Refresh indicator */
+        .refresh-indicator {
+            display: none;
+            text-align: center;
+            padding: 8px;
+            color: var(--primary);
+            font-size: 13px;
+        }
+
+        .refresh-indicator.visible {
+            display: block;
+        }
+
+        /* Offline badge */
+        .offline-badge {
+            display: none;
+            position: fixed;
+            top: calc(var(--safe-top) + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--warning);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .offline-badge.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-badge" id="offlineBadge">Mode hors-ligne</div>
+
+    <header class="header">
+        <div class="header-top">
+            <div class="user-info">
+                <h1>Bonjour, {{ user.prenom }}</h1>
+                <p>{{ date_jour }}</p>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="refreshData()" title="Actualiser">
+                    <span>&#x21bb;</span>
+                </button>
+                <button class="icon-btn" onclick="openProfile()" title="Profil">
+                    <span>&#x1F464;</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpiToday">{{ interventions_aujourdhui }}</div>
+                <div class="kpi-label">Aujourd'hui</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpiWeek">{{ interventions_semaine }}</div>
+                <div class="kpi-label">Cette semaine</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpiEnCours">{{ interventions_en_cours }}</div>
+                <div class="kpi-label">En cours</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpiHeures">{{ heures_saisies_semaine }}h</div>
+                <div class="kpi-label">Heures saisies</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="refresh-indicator" id="refreshIndicator">
+            Actualisation...
+        </div>
+
+        <h2 class="section-title">
+            Interventions du jour
+            <a href="/ui/technicien/interventions">Voir tout</a>
+        </h2>
+
+        <div class="intervention-list" id="interventionList">
+            {% if interventions %}
+                {% for intervention in interventions %}
+                <div class="intervention-card {% if intervention.priorite == 'URGENT' %}urgent{% endif %} {% if intervention.statut in ['SUR_SITE', 'EN_COURS'] %}en-cours{% endif %}"
+                     onclick="openIntervention('{{ intervention.id }}')">
+                    <div class="card-header">
+                        <span class="card-ref">{{ intervention.reference }}</span>
+                        <span class="card-status status-{{ intervention.statut|lower|replace('_', '-') }}">
+                            {{ intervention.statut|replace('_', ' ') }}
+                        </span>
+                    </div>
+                    <div class="card-client">{{ intervention.client_nom }}</div>
+                    {% if intervention.adresse_ligne1 %}
+                    <div class="card-address">
+                        <span>&#x1F4CD;</span>
+                        {{ intervention.adresse_ligne1 }}{% if intervention.ville %}, {{ intervention.ville }}{% endif %}
+                    </div>
+                    {% endif %}
+                    <div class="card-footer">
+                        {% if intervention.date_prevue_debut %}
+                        <span class="card-time">
+                            <span>&#x23F0;</span>
+                            {{ intervention.date_prevue_debut|format_time }}
+                        </span>
+                        {% else %}
+                        <span></span>
+                        {% endif %}
+                        {% if intervention.priorite != 'NORMAL' %}
+                        <span class="card-priority priority-{{ intervention.priorite|lower }}">
+                            {{ intervention.priorite }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    {% if intervention.statut == 'PLANIFIEE' %}
+                    <div class="action-row">
+                        <button class="btn btn-secondary" onclick="event.stopPropagation(); navigateTo('{{ intervention.id }}')">
+                            &#x1F4CD; Guidage
+                        </button>
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); marquerArrivee('{{ intervention.id }}')">
+                            &#x2714; Arrivee
+                        </button>
+                    </div>
+                    {% elif intervention.statut == 'SUR_SITE' %}
+                    <div class="action-row">
+                        <button class="btn btn-success" onclick="event.stopPropagation(); demarrerIntervention('{{ intervention.id }}')">
+                            &#x25B6; Demarrer
+                        </button>
+                    </div>
+                    {% elif intervention.statut == 'EN_COURS' %}
+                    <div class="action-row">
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); openIntervention('{{ intervention.id }}')">
+                            &#x1F4F7; Continuer
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#x2705;</div>
+                    <p>Aucune intervention aujourd'hui</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="/ui/technicien/dashboard" class="nav-item active">
+            <span class="nav-item-icon">&#x1F3E0;</span>
+            <span>Accueil</span>
+        </a>
+        <a href="/ui/technicien/interventions" class="nav-item">
+            <span class="nav-item-icon">&#x1F527;</span>
+            <span>Interventions</span>
+        </a>
+        <a href="/ui/technicien/temps" class="nav-item">
+            <span class="nav-item-icon">&#x23F1;</span>
+            <span>Temps</span>
+        </a>
+        <a href="/ui/technicien/profil" class="nav-item">
+            <span class="nav-item-icon">&#x1F464;</span>
+            <span>Profil</span>
+        </a>
+    </nav>
+
+    <script>
+        // Configuration API
+        const API_BASE = '/api/v1/technicien';
+
+        // Gestion offline
+        let isOnline = navigator.onLine;
+
+        window.addEventListener('online', () => {
+            isOnline = true;
+            document.getElementById('offlineBadge').classList.remove('visible');
+            syncOfflineData();
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            document.getElementById('offlineBadge').classList.add('visible');
+        });
+
+        // Rafraichir les donnees
+        async function refreshData() {
+            const indicator = document.getElementById('refreshIndicator');
+            indicator.classList.add('visible');
+
+            try {
+                const response = await fetch(`${API_BASE}/dashboard`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateDashboard(data);
+                    // Sauvegarder pour offline
+                    localStorage.setItem('dashboard_cache', JSON.stringify(data));
+                }
+            } catch (error) {
+                console.error('Erreur refresh:', error);
+                // Charger depuis le cache
+                const cached = localStorage.getItem('dashboard_cache');
+                if (cached) {
+                    updateDashboard(JSON.parse(cached));
+                }
+            }
+
+            indicator.classList.remove('visible');
+        }
+
+        function updateDashboard(data) {
+            document.getElementById('kpiToday').textContent = data.interventions_aujourdhui;
+            document.getElementById('kpiWeek').textContent = data.interventions_semaine;
+            document.getElementById('kpiEnCours').textContent = data.interventions_en_cours;
+            document.getElementById('kpiHeures').textContent = data.heures_saisies_semaine + 'h';
+            // TODO: Mettre a jour la liste des interventions
+        }
+
+        // Actions
+        function openIntervention(id) {
+            window.location.href = `/ui/technicien/intervention/${id}`;
+        }
+
+        function navigateTo(id) {
+            window.location.href = `/ui/technicien/intervention/${id}/navigation`;
+        }
+
+        async function marquerArrivee(id) {
+            if (!confirm('Confirmer votre arrivee sur site ?')) return;
+
+            try {
+                // Obtenir la position GPS
+                let gps = null;
+                if (navigator.geolocation) {
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000
+                        });
+                    }).catch(() => null);
+
+                    if (position) {
+                        gps = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                    }
+                }
+
+                const response = await fetch(`${API_BASE}/intervention/${id}/arrivee`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({ gps })
+                });
+
+                if (response.ok) {
+                    window.location.href = `/ui/technicien/intervention/${id}`;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Erreur');
+                }
+            } catch (error) {
+                // Mode offline: sauvegarder l'action
+                saveOfflineAction('arrivee', id, {});
+                alert('Action enregistree (synchronisation au retour du reseau)');
+            }
+        }
+
+        async function demarrerIntervention(id) {
+            window.location.href = `/ui/technicien/intervention/${id}?action=demarrer`;
+        }
+
+        // Gestion du token
+        function getToken() {
+            return localStorage.getItem('auth_token') || '';
+        }
+
+        // Actions offline
+        function saveOfflineAction(action, interventionId, data) {
+            const actions = JSON.parse(localStorage.getItem('offline_actions') || '[]');
+            actions.push({
+                action,
+                interventionId,
+                data,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('offline_actions', JSON.stringify(actions));
+        }
+
+        async function syncOfflineData() {
+            const actions = JSON.parse(localStorage.getItem('offline_actions') || '[]');
+            if (actions.length === 0) return;
+
+            for (const action of actions) {
+                try {
+                    await fetch(`${API_BASE}/intervention/${action.interventionId}/${action.action}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${getToken()}`
+                        },
+                        body: JSON.stringify(action.data)
+                    });
+                } catch (error) {
+                    console.error('Erreur sync:', error);
+                    return; // Arreter si une erreur se produit
+                }
+            }
+
+            localStorage.setItem('offline_actions', '[]');
+            refreshData();
+        }
+
+        // Profil
+        function openProfile() {
+            window.location.href = '/ui/technicien/profil';
+        }
+
+        // Pull to refresh (iOS style)
+        let startY = 0;
+        let pulling = false;
+
+        document.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0) {
+                startY = e.touches[0].pageY;
+                pulling = true;
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (pulling && e.touches[0].pageY - startY > 80) {
+                refreshData();
+                pulling = false;
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            pulling = false;
+        });
+
+        // Init
+        if (!isOnline) {
+            document.getElementById('offlineBadge').classList.add('visible');
+        }
+    </script>
+</body>
+</html>

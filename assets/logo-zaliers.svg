@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Cercle bleu roi -->
+  <circle cx="256" cy="256" r="256" fill="#3454D1"/>
+
+  <!-- Point accent bleu clair -->
+  <circle cx="390" cy="110" r="24" fill="#6B9FFF"/>
+
+  <!-- Lettre Z -->
+  <text x="256" y="340"
+        font-family="Inter, Montserrat, Arial, sans-serif"
+        font-weight="800"
+        font-size="300"
+        fill="#FFFFFF"
+        text-anchor="middle">Z</text>
+</svg>

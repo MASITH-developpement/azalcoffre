@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2563eb">
+    <title>Intervention {{ intervention.reference }} - Technicien</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            padding-top: var(--safe-top);
+            padding-bottom: calc(100px + var(--safe-bottom));
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gray-100);
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .header-ref {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .header-status {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        .status-planifiee { background: #dbeafe; color: #1e40af; }
+        .status-sur-site { background: #fef3c7; color: #92400e; }
+        .status-en-cours { background: #d1fae5; color: #065f46; }
+        .status-travaux-termines { background: #e0e7ff; color: #3730a3; }
+        .status-terminee { background: #e5e7eb; color: #374151; }
+
+        /* Progress Steps */
+        .progress-bar {
+            display: flex;
+            padding: 16px;
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            overflow-x: auto;
+            gap: 8px;
+        }
+
+        .step {
+            flex: 1;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .step-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            color: var(--gray-500);
+            margin: 0 auto 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .step.done .step-dot {
+            background: var(--success);
+            color: white;
+        }
+
+        .step.active .step-dot {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+        }
+
+        .step-label {
+            font-size: 10px;
+            color: var(--gray-500);
+        }
+
+        .step.active .step-label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Content */
+        .content {
+            padding: 16px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title-icon {
+            font-size: 18px;
+        }
+
+        /* Info rows */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .info-value {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-900);
+            text-align: right;
+        }
+
+        .info-value a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Description */
+        .description-box {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--gray-700);
+        }
+
+        /* Photo Grid */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .photo-item {
+            aspect-ratio: 1;
+            background: var(--gray-200);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-add {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px dashed var(--gray-300);
+            background: white;
+        }
+
+        .photo-add-icon {
+            font-size: 32px;
+            color: var(--gray-400);
+        }
+
+        .photo-add-text {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+
+        /* Materiel List */
+        .materiel-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .materiel-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: 10px;
+        }
+
+        .materiel-info {
+            flex: 1;
+        }
+
+        .materiel-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .materiel-qty {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .materiel-price {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .materiel-delete {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #fef2f2;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+        }
+
+        /* Rating */
+        .rating-stars {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 16px 0;
+        }
+
+        .star {
+            font-size: 36px;
+            cursor: pointer;
+            color: var(--gray-300);
+            transition: color 0.2s;
+        }
+
+        .star.active {
+            color: #fbbf24;
+        }
+
+        /* Signature Pad */
+        .signature-pad {
+            border: 2px solid var(--gray-300);
+            border-radius: 12px;
+            background: white;
+            height: 200px;
+            position: relative;
+        }
+
+        .signature-pad canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+
+        .signature-clear {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 6px 12px;
+            background: var(--gray-100);
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* Textarea */
+        .textarea {
+            width: 100%;
+            border: 1px solid var(--gray-300);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Input */
+        .input {
+            width: 100%;
+            border: 1px solid var(--gray-300);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Search */
+        .search-input {
+            width: 100%;
+            border: 1px solid var(--gray-300);
+            border-radius: 10px;
+            padding: 12px 12px 12px 40px;
+            font-size: 14px;
+            background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") 12px center no-repeat;
+        }
+
+        .search-results {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            margin-top: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-100);
+            cursor: pointer;
+        }
+
+        .search-result-item:hover {
+            background: var(--gray-50);
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Bottom Actions */
+        .bottom-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 12px 16px calc(12px + var(--safe-bottom));
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-secondary { background: var(--gray-200); color: var(--gray-700); }
+        .btn-danger { background: var(--danger); color: white; }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: flex-end;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-height: 90vh;
+            border-radius: 24px 24px 0 0;
+            padding: 16px 16px calc(16px + var(--safe-bottom));
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--gray-100);
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* Hide sections by step */
+        .step-section { display: none; }
+        .step-section.active { display: block; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-top">
+            <button class="back-btn" onclick="goBack()">&#x2190;</button>
+            <div class="header-info">
+                <div class="header-ref">{{ intervention.reference }}</div>
+                <span class="header-status status-{{ intervention.statut|lower|replace('_', '-') }}" id="statusBadge">
+                    {{ intervention.statut|replace('_', ' ') }}
+                </span>
+            </div>
+            <button class="back-btn" onclick="openNavigation()">&#x1F4CD;</button>
+        </div>
+    </header>
+
+    <div class="progress-bar">
+        <div class="step {% if current_step >= 1 %}done{% endif %} {% if current_step == 1 %}active{% endif %}" data-step="1">
+            <div class="step-dot">{% if current_step > 1 %}&#x2713;{% else %}1{% endif %}</div>
+            <div class="step-label">Arrivee</div>
+        </div>
+        <div class="step {% if current_step >= 2 %}done{% endif %} {% if current_step == 2 %}active{% endif %}" data-step="2">
+            <div class="step-dot">{% if current_step > 2 %}&#x2713;{% else %}2{% endif %}</div>
+            <div class="step-label">Debut</div>
+        </div>
+        <div class="step {% if current_step >= 3 %}done{% endif %} {% if current_step == 3 %}active{% endif %}" data-step="3">
+            <div class="step-dot">{% if current_step > 3 %}&#x2713;{% else %}3{% endif %}</div>
+            <div class="step-label">Photos avant</div>
+        </div>
+        <div class="step {% if current_step >= 4 %}done{% endif %} {% if current_step == 4 %}active{% endif %}" data-step="4">
+            <div class="step-dot">{% if current_step > 4 %}&#x2713;{% else %}4{% endif %}</div>
+            <div class="step-label">Photos apres</div>
+        </div>
+        <div class="step {% if current_step >= 5 %}done{% endif %} {% if current_step == 5 %}active{% endif %}" data-step="5">
+            <div class="step-dot">{% if current_step > 5 %}&#x2713;{% else %}5{% endif %}</div>
+            <div class="step-label">Materiel</div>
+        </div>
+        <div class="step {% if current_step >= 6 %}done{% endif %} {% if current_step == 6 %}active{% endif %}" data-step="6">
+            <div class="step-dot">{% if current_step > 6 %}&#x2713;{% else %}6{% endif %}</div>
+            <div class="step-label">Rapport</div>
+        </div>
+        <div class="step {% if current_step >= 7 %}done{% endif %} {% if current_step == 7 %}active{% endif %}" data-step="7">
+            <div class="step-dot">{% if current_step > 7 %}&#x2713;{% else %}7{% endif %}</div>
+            <div class="step-label">Signature</div>
+        </div>
+    </div>
+
+    <main class="content">
+        <!-- Info Client -->
+        <div class="card">
+            <div class="card-title">
+                <span class="card-title-icon">&#x1F464;</span>
+                Client
+            </div>
+            <div class="info-row">
+                <span class="info-label">Nom</span>
+                <span class="info-value">{{ intervention.client_nom }}</span>
+            </div>
+            {% if intervention.telephone_contact %}
+            <div class="info-row">
+                <span class="info-label">Tel contact</span>
+                <span class="info-value">
+                    <a href="tel:{{ intervention.telephone_contact }}">{{ intervention.telephone_contact }}</a>
+                </span>
+            </div>
+            {% endif %}
+            {% if intervention.adresse_ligne1 %}
+            <div class="info-row">
+                <span class="info-label">Adresse</span>
+                <span class="info-value">
+                    {{ intervention.adresse_ligne1 }}<br>
+                    {{ intervention.code_postal }} {{ intervention.ville }}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Probleme a traiter -->
+        {% if intervention.description %}
+        <div class="card">
+            <div class="card-title">
+                <span class="card-title-icon">&#x26A0;</span>
+                Probleme a traiter
+            </div>
+            <div class="description-box">
+                {{ intervention.description }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- STEP 3: Photos Avant -->
+        <div class="step-section {% if current_step == 3 %}active{% endif %}" data-section="3">
+            <div class="card">
+                <div class="card-title">
+                    <span class="card-title-icon">&#x1F4F7;</span>
+                    Photos AVANT intervention (min. 2)
+                </div>
+                <div class="photo-grid" id="photosAvant">
+                    {% for photo in intervention.photos_avant or [] %}
+                    <div class="photo-item">
+                        <img src="{{ photo.url or photo.data }}" alt="Photo avant">
+                    </div>
+                    {% endfor %}
+                    <div class="photo-item photo-add" onclick="openCamera('avant')">
+                        <span class="photo-add-icon">&#x1F4F7;</span>
+                        <span class="photo-add-text">Ajouter</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4: Photos Apres -->
+        <div class="step-section {% if current_step == 4 %}active{% endif %}" data-section="4">
+            <div class="card">
+                <div class="card-title">
+                    <span class="card-title-icon">&#x1F4F7;</span>
+                    Photos APRES intervention (min. 2)
+                </div>
+                <div class="photo-grid" id="photosApres">
+                    {% for photo in intervention.photos_apres or [] %}
+                    <div class="photo-item">
+                        <img src="{{ photo.url or photo.data }}" alt="Photo apres">
+                    </div>
+                    {% endfor %}
+                    <div class="photo-item photo-add" onclick="openCamera('apres')">
+                        <span class="photo-add-icon">&#x1F4F7;</span>
+                        <span class="photo-add-text">Ajouter</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 5: Materiel -->
+        <div class="step-section {% if current_step == 5 %}active{% endif %}" data-section="5">
+            <div class="card">
+                <div class="card-title">
+                    <span class="card-title-icon">&#x1F527;</span>
+                    Materiel utilise
+                </div>
+
+                <input type="text" class="search-input" id="searchProduit"
+                       placeholder="Rechercher un article..."
+                       oninput="searchProduit(this.value)">
+
+                <div class="search-results" id="searchResults" style="display: none;"></div>
+
+                <div class="materiel-list" id="materielList" style="margin-top: 16px;">
+                    {% for mat in intervention.materiel_utilise_lignes or [] %}
+                    <div class="materiel-item" data-id="{{ mat.produit_id }}">
+                        <div class="materiel-info">
+                            <div class="materiel-name">{{ mat.designation }}</div>
+                            <div class="materiel-qty">{{ mat.quantite }} {{ mat.unite }}</div>
+                        </div>
+                        <div class="materiel-price">{{ mat.prix_total }} EUR</div>
+                        <button class="materiel-delete" onclick="removeMateriel(this)">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <textarea class="textarea" id="materielTexte" rows="3" style="margin-top: 12px;"
+                          placeholder="Autre materiel (texte libre)...">{{ intervention.materiel_utilise }}</textarea>
+            </div>
+        </div>
+
+        <!-- STEP 6: Rapport -->
+        <div class="step-section {% if current_step == 6 %}active{% endif %}" data-section="6">
+            <div class="card">
+                <div class="card-title">
+                    <span class="card-title-icon">&#x1F4DD;</span>
+                    Rapport des travaux
+                </div>
+                <textarea class="textarea" id="travauxRealises" rows="5"
+                          placeholder="Decrivez les travaux realises...">{{ intervention.travaux_realises }}</textarea>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Anomalies constatees (optionnel)</div>
+                <textarea class="textarea" id="anomalies" rows="3"
+                          placeholder="Anomalies, problemes...">{{ intervention.anomalies }}</textarea>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Recommandations (optionnel)</div>
+                <textarea class="textarea" id="recommandations" rows="3"
+                          placeholder="Recommandations pour le client...">{{ intervention.recommandations }}</textarea>
+            </div>
+        </div>
+
+        <!-- STEP 7: Signature -->
+        <div class="step-section {% if current_step == 7 %}active{% endif %}" data-section="7">
+            <div class="card">
+                <div class="card-title">
+                    <span class="card-title-icon">&#x2B50;</span>
+                    Satisfaction client
+                </div>
+                <div class="rating-stars" id="ratingStars">
+                    <span class="star" data-value="1" onclick="setRating(1)">&#x2606;</span>
+                    <span class="star" data-value="2" onclick="setRating(2)">&#x2606;</span>
+                    <span class="star" data-value="3" onclick="setRating(3)">&#x2606;</span>
+                    <span class="star" data-value="4" onclick="setRating(4)">&#x2606;</span>
+                    <span class="star" data-value="5" onclick="setRating(5)">&#x2606;</span>
+                </div>
+                <textarea class="textarea" id="appreciation" rows="2"
+                          placeholder="Commentaire du client (optionnel)..."></textarea>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="card-title-icon">&#x270D;</span>
+                    Signature du client
+                </div>
+                <input type="text" class="input" id="nomSignataire"
+                       placeholder="Nom et prenom du signataire" style="margin-bottom: 12px;">
+                <div class="signature-pad" id="signaturePad">
+                    <canvas id="signatureCanvas"></canvas>
+                    <button class="signature-clear" onclick="clearSignature()">Effacer</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="bottom-actions">
+        {% if intervention.statut == 'PLANIFIEE' %}
+        <button class="btn btn-primary" onclick="marquerArrivee()">
+            &#x2714; Marquer l'arrivee
+        </button>
+        {% elif intervention.statut == 'SUR_SITE' %}
+        <button class="btn btn-success" onclick="demarrerIntervention()">
+            &#x25B6; Demarrer l'intervention
+        </button>
+        {% elif intervention.statut == 'EN_COURS' %}
+        <button class="btn btn-secondary" onclick="saveProgress()">
+            &#x1F4BE; Sauvegarder
+        </button>
+        <button class="btn btn-primary" onclick="nextStep()">
+            Suivant &#x27A1;
+        </button>
+        {% elif intervention.statut == 'TRAVAUX_TERMINES' %}
+        <button class="btn btn-success" onclick="signerIntervention()">
+            &#x270D; Faire signer
+        </button>
+        {% elif intervention.statut == 'TERMINEE' %}
+        <button class="btn btn-secondary" onclick="goBack()">
+            Retour au dashboard
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Modal Camera -->
+    <div class="modal" id="cameraModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Ajouter une photo</span>
+                <button class="modal-close" onclick="closeCameraModal()">&times;</button>
+            </div>
+            <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none"
+                   onchange="handlePhotoCapture(event)">
+            <button class="btn btn-primary" style="width:100%; margin-bottom:12px;"
+                    onclick="document.getElementById('photoInput').click()">
+                &#x1F4F7; Prendre une photo
+            </button>
+            <input type="file" id="galleryInput" accept="image/*" style="display:none"
+                   onchange="handlePhotoCapture(event)">
+            <button class="btn btn-secondary" style="width:100%;"
+                    onclick="document.getElementById('galleryInput').click()">
+                &#x1F5BC; Choisir depuis la galerie
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = '/api/v1/technicien';
+        const interventionId = '{{ intervention.id }}';
+        let currentStep = {{ current_step }};
+        let currentRating = 0;
+        let photoType = 'avant';
+        let materielLignes = {{ (intervention.materiel_utilise_lignes or [])|tojson|safe }};
+
+        // Navigation
+        function goBack() {
+            window.location.href = '/ui/technicien/dashboard';
+        }
+
+        function openNavigation() {
+            window.location.href = `/ui/technicien/intervention/${interventionId}/navigation`;
+        }
+
+        // Actions workflow
+        async function marquerArrivee() {
+            try {
+                let gps = await getGPS();
+                const response = await fetchAPI(`/intervention/${interventionId}/arrivee`, 'POST', { gps });
+                if (response.success) {
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Erreur: ' + error.message);
+            }
+        }
+
+        async function demarrerIntervention() {
+            const constat = prompt('Constat a l\'arrivee (optionnel):');
+            try {
+                let gps = await getGPS();
+                const response = await fetchAPI(`/intervention/${interventionId}/demarrer`, 'POST', {
+                    gps,
+                    constat_arrivee: constat
+                });
+                if (response.success) {
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Erreur: ' + error.message);
+            }
+        }
+
+        async function saveProgress() {
+            // Sauvegarder le materiel
+            const texteLibre = document.getElementById('materielTexte').value;
+            await fetchAPI(`/intervention/${interventionId}/materiel`, 'POST', {
+                lignes: materielLignes,
+                texte_libre: texteLibre
+            });
+
+            // Sauvegarder le rapport
+            const travaux = document.getElementById('travauxRealises')?.value;
+            const anomalies = document.getElementById('anomalies')?.value;
+            const recommandations = document.getElementById('recommandations')?.value;
+
+            if (travaux) {
+                await fetchAPI(`/intervention/${interventionId}/rapport`, 'POST', {
+                    travaux_realises: travaux,
+                    anomalies,
+                    recommandations
+                });
+            }
+
+            alert('Progres sauvegarde');
+        }
+
+        function nextStep() {
+            // Valider l'etape actuelle
+            if (currentStep === 3) {
+                const photosAvant = document.querySelectorAll('#photosAvant .photo-item:not(.photo-add)');
+                if (photosAvant.length < 2) {
+                    alert('Veuillez prendre au moins 2 photos AVANT');
+                    return;
+                }
+            } else if (currentStep === 4) {
+                const photosApres = document.querySelectorAll('#photosApres .photo-item:not(.photo-add)');
+                if (photosApres.length < 2) {
+                    alert('Veuillez prendre au moins 2 photos APRES');
+                    return;
+                }
+            } else if (currentStep === 6) {
+                const travaux = document.getElementById('travauxRealises').value;
+                if (!travaux.trim()) {
+                    alert('Veuillez decrire les travaux realises');
+                    return;
+                }
+                // Terminer les travaux
+                terminerTravaux();
+                return;
+            }
+
+            // Passer a l'etape suivante
+            currentStep++;
+            updateStepUI();
+        }
+
+        async function terminerTravaux() {
+            await saveProgress();
+            try {
+                const response = await fetchAPI(`/intervention/${interventionId}/terminer`, 'POST', {});
+                if (response.success) {
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Erreur: ' + error.message);
+            }
+        }
+
+        async function signerIntervention() {
+            const nom = document.getElementById('nomSignataire').value;
+            if (!nom.trim()) {
+                alert('Veuillez entrer le nom du signataire');
+                return;
+            }
+
+            const signature = getSignatureData();
+            if (!signature) {
+                alert('Veuillez faire signer le client');
+                return;
+            }
+
+            if (currentRating === 0) {
+                alert('Veuillez indiquer la satisfaction client');
+                return;
+            }
+
+            try {
+                const response = await fetchAPI(`/intervention/${interventionId}/signer`, 'POST', {
+                    nom_signataire: nom,
+                    signature: signature,
+                    avis_client: currentRating,
+                    appreciation: document.getElementById('appreciation').value
+                });
+
+                if (response.success) {
+                    alert('Intervention terminee ! ' +
+                          (response.facture_id ? 'Facture brouillon creee.' : ''));
+                    window.location.href = '/ui/technicien/dashboard';
+                }
+            } catch (error) {
+                alert('Erreur: ' + error.message);
+            }
+        }
+
+        function updateStepUI() {
+            // Mettre a jour les sections visibles
+            document.querySelectorAll('.step-section').forEach(section => {
+                section.classList.remove('active');
+                if (parseInt(section.dataset.section) === currentStep) {
+                    section.classList.add('active');
+                }
+            });
+
+            // Mettre a jour la barre de progression
+            document.querySelectorAll('.step').forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                step.classList.remove('done', 'active');
+                if (stepNum < currentStep) {
+                    step.classList.add('done');
+                } else if (stepNum === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        // Camera
+        function openCamera(type) {
+            photoType = type;
+            document.getElementById('cameraModal').classList.add('open');
+        }
+
+        function closeCameraModal() {
+            document.getElementById('cameraModal').classList.remove('open');
+        }
+
+        async function handlePhotoCapture(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Convertir en base64
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const base64 = e.target.result;
+
+                try {
+                    let gps = await getGPS();
+                    const response = await fetchAPI(`/intervention/${interventionId}/photos`, 'POST', {
+                        type: photoType,
+                        data: base64,
+                        gps
+                    });
+
+                    if (response.success) {
+                        // Ajouter la photo a l'UI
+                        const container = document.getElementById(photoType === 'avant' ? 'photosAvant' : 'photosApres');
+                        const addBtn = container.querySelector('.photo-add');
+                        const photoDiv = document.createElement('div');
+                        photoDiv.className = 'photo-item';
+                        photoDiv.innerHTML = `<img src="${base64}" alt="Photo ${photoType}">`;
+                        container.insertBefore(photoDiv, addBtn);
+                    }
+                } catch (error) {
+                    alert('Erreur upload: ' + error.message);
+                }
+
+                closeCameraModal();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Recherche produits
+        let searchTimeout;
+        async function searchProduit(query) {
+            clearTimeout(searchTimeout);
+            if (query.length < 2) {
+                document.getElementById('searchResults').style.display = 'none';
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetchAPI(`/produits/search?q=${encodeURIComponent(query)}&limit=10`, 'GET');
+                    displaySearchResults(response);
+                } catch (error) {
+                    console.error('Erreur recherche:', error);
+                }
+            }, 300);
+        }
+
+        function displaySearchResults(produits) {
+            const container = document.getElementById('searchResults');
+            if (!produits || produits.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.innerHTML = produits.map(p => `
+                <div class="search-result-item" onclick="addMateriel('${p.id}', '${p.nom}', ${p.prix_vente}, '${p.unite}')">
+                    <div style="font-weight: 500;">${p.nom}</div>
+                    <div style="font-size: 12px; color: var(--gray-500);">
+                        ${p.code} - ${p.prix_vente} EUR / ${p.unite}
+                    </div>
+                </div>
+            `).join('');
+            container.style.display = 'block';
+        }
+
+        function addMateriel(produitId, designation, prixUnitaire, unite) {
+            const qte = prompt('Quantite:', '1');
+            if (!qte) return;
+
+            const quantite = parseFloat(qte);
+            const prixTotal = quantite * prixUnitaire;
+
+            materielLignes.push({
+                produit_id: produitId,
+                designation,
+                quantite,
+                unite,
+                prix_unitaire: prixUnitaire,
+                prix_total: prixTotal
+            });
+
+            updateMaterielUI();
+            document.getElementById('searchProduit').value = '';
+            document.getElementById('searchResults').style.display = 'none';
+        }
+
+        function removeMateriel(btn) {
+            const item = btn.closest('.materiel-item');
+            const id = item.dataset.id;
+            materielLignes = materielLignes.filter(m => m.produit_id !== id);
+            item.remove();
+        }
+
+        function updateMaterielUI() {
+            const container = document.getElementById('materielList');
+            container.innerHTML = materielLignes.map(mat => `
+                <div class="materiel-item" data-id="${mat.produit_id}">
+                    <div class="materiel-info">
+                        <div class="materiel-name">${mat.designation}</div>
+                        <div class="materiel-qty">${mat.quantite} ${mat.unite}</div>
+                    </div>
+                    <div class="materiel-price">${mat.prix_total.toFixed(2)} EUR</div>
+                    <button class="materiel-delete" onclick="removeMateriel(this)">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        // Rating
+        function setRating(value) {
+            currentRating = value;
+            document.querySelectorAll('.star').forEach((star, index) => {
+                star.classList.toggle('active', index < value);
+                star.innerHTML = index < value ? '&#x2605;' : '&#x2606;';
+            });
+        }
+
+        // Signature
+        let signatureCanvas, signatureCtx, isDrawing = false;
+
+        function initSignature() {
+            signatureCanvas = document.getElementById('signatureCanvas');
+            if (!signatureCanvas) return;
+
+            signatureCtx = signatureCanvas.getContext('2d');
+
+            // Ajuster la taille du canvas
+            const rect = signatureCanvas.parentElement.getBoundingClientRect();
+            signatureCanvas.width = rect.width - 4;
+            signatureCanvas.height = rect.height - 4;
+
+            signatureCtx.strokeStyle = '#000';
+            signatureCtx.lineWidth = 2;
+            signatureCtx.lineCap = 'round';
+
+            // Events tactiles
+            signatureCanvas.addEventListener('touchstart', startDrawing);
+            signatureCanvas.addEventListener('touchmove', draw);
+            signatureCanvas.addEventListener('touchend', stopDrawing);
+
+            // Events souris
+            signatureCanvas.addEventListener('mousedown', startDrawing);
+            signatureCanvas.addEventListener('mousemove', draw);
+            signatureCanvas.addEventListener('mouseup', stopDrawing);
+            signatureCanvas.addEventListener('mouseleave', stopDrawing);
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            signatureCtx.beginPath();
+            const pos = getPos(e);
+            signatureCtx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const pos = getPos(e);
+            signatureCtx.lineTo(pos.x, pos.y);
+            signatureCtx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function getPos(e) {
+            const rect = signatureCanvas.getBoundingClientRect();
+            const touch = e.touches ? e.touches[0] : e;
+            return {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+        }
+
+        function clearSignature() {
+            signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+        }
+
+        function getSignatureData() {
+            // Verifier si le canvas est vide
+            const data = signatureCanvas.toDataURL('image/png');
+            const blank = document.createElement('canvas');
+            blank.width = signatureCanvas.width;
+            blank.height = signatureCanvas.height;
+            if (data === blank.toDataURL('image/png')) {
+                return null;
+            }
+            return data;
+        }
+
+        // GPS
+        async function getGPS() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    resolve(null);
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                    () => resolve(null),
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            });
+        }
+
+        // API Helper
+        async function fetchAPI(endpoint, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+                }
+            };
+            if (body && method !== 'GET') {
+                options.body = JSON.stringify(body);
+            }
+
+            const response = await fetch(`${API_BASE}${endpoint}`, options);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || 'Erreur serveur');
+            }
+            return data;
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            initSignature();
+            updateStepUI();
+        });
+    </script>
+</body>
+</html>

@@ -15,7 +15,7 @@ précédentes. Pour les nouvelles intégrations, utilisez l'API v1
 - Validation Pydantic stricte
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Body
 from fastapi.responses import StreamingResponse
 from typing import List, Dict, Any, Optional
 from uuid import UUID
@@ -38,6 +38,89 @@ from .notifications import EmailService, EmailConfigurationError, EmailSendError
 from .workflows import WorkflowEngine
 from .adresse import AdresseService, SiretService, AdresseResult, EntrepriseResult
 from .activity import ActivityLogger, ActivityType, ActivityContext, create_activity_context
+
+
+# =============================================================================
+# Auto-numbering configuration
+# =============================================================================
+AUTO_NUMBER_CONFIG = {
+    # Format: module_name -> (prefix, field_name, include_year)
+    "interventions": ("INT", "reference", True),
+    "clients": ("CLI", "code", False),
+    "fournisseurs": ("FOU", "code", False),
+    "donneur_ordre": ("DO", "code", False),
+    "devis": ("DEV", "numero", True),
+    "factures": ("FAC", "numero", True),
+    "avoirs": ("AVO", "numero", True),
+    "bons_livraison": ("BL", "numero", True),
+    "commandes": ("CMD", "numero", True),
+    "projets": ("PRJ", "code", False),
+    "contrats": ("CTR", "numero", True),
+    "produits": ("PRD", "code", False),
+    "tickets": ("TKT", "numero", True),
+}
+
+
+def generate_auto_number(module_name: str, tenant_id: UUID) -> Optional[str]:
+    """
+    Génère automatiquement un numéro unique pour un module.
+    Format: PREFIX-YYYY-XXXXX ou PREFIX-XXXXX selon la config.
+    """
+    config = AUTO_NUMBER_CONFIG.get(module_name.lower())
+    if not config:
+        return None
+
+    prefix, field_name, include_year = config
+    year = datetime.now().year
+
+    # Récupérer le dernier numéro pour ce module/tenant
+    with Database.get_session() as session:
+        from sqlalchemy import text
+
+        if include_year:
+            # Chercher le dernier numéro de l'année en cours
+            pattern = f"{prefix}-{year}-%"
+            sql = text(f"""
+                SELECT {field_name} FROM azalplus.{module_name}
+                WHERE tenant_id = :tenant_id
+                AND {field_name} LIKE :pattern
+                AND deleted_at IS NULL
+                ORDER BY {field_name} DESC
+                LIMIT 1
+            """)
+            result = session.execute(sql, {"tenant_id": str(tenant_id), "pattern": pattern})
+        else:
+            # Chercher le dernier numéro global
+            pattern = f"{prefix}-%"
+            sql = text(f"""
+                SELECT {field_name} FROM azalplus.{module_name}
+                WHERE tenant_id = :tenant_id
+                AND {field_name} LIKE :pattern
+                AND deleted_at IS NULL
+                ORDER BY {field_name} DESC
+                LIMIT 1
+            """)
+            result = session.execute(sql, {"tenant_id": str(tenant_id), "pattern": pattern})
+
+        row = result.fetchone()
+
+        if row and row[0]:
+            # Extraire le numéro séquentiel
+            last_number = row[0]
+            try:
+                # Format: PREFIX-YYYY-XXXXX ou PREFIX-XXXXX
+                parts = last_number.split("-")
+                seq = int(parts[-1]) + 1
+            except (ValueError, IndexError):
+                seq = 1
+        else:
+            seq = 1
+
+        # Générer le nouveau numéro
+        if include_year:
+            return f"{prefix}-{year}-{seq:05d}"
+        else:
+            return f"{prefix}-{seq:05d}"
 from .recurring import RecurringService, RecurringTask
 from .validation import Validator, ValidationResult, get_validation_schema
 
@@ -192,6 +275,61 @@ class GenericCRUDRouter:
             )
             return {"items": items, "total": len(items)}
 
+        # =================================================================
+        # BULK ROUTES - MUST BE BEFORE /{item_id} ROUTES
+        # =================================================================
+
+        # BULK UPDATE - PATCH /{module}/bulk
+        @router.patch(f"/{module_name}/bulk", tags=[module_name])
+        async def bulk_update(
+            data: Dict[str, Any] = Body(...),
+            tenant_id: UUID = Depends(get_current_tenant),
+            user_id: UUID = Depends(get_current_user_id),
+            user: dict = Depends(require_auth)
+        ):
+            """Met à jour plusieurs enregistrements."""
+            ids = data.get("ids", [])
+            updates = data.get("updates", {})
+            if not ids:
+                return {"success": 0, "failed": 0, "errors": [{"error": "Aucun ID fourni"}]}
+            if not updates:
+                return {"success": 0, "failed": 0, "errors": [{"error": "Aucune mise a jour fournie"}]}
+            success = 0
+            failed = 0
+            errors = []
+            for item_id in ids:
+                try:
+                    Database.update(self.table_name, tenant_id, UUID(item_id), updates, user_id)
+                    success += 1
+                except Exception as e:
+                    failed += 1
+                    errors.append({"id": item_id, "error": str(e)})
+            return {"success": success, "failed": failed, "errors": errors}
+
+        # BULK DELETE - DELETE /{module}/bulk
+        @router.delete(f"/{module_name}/bulk", tags=[module_name])
+        async def bulk_delete(
+            data: Dict[str, Any] = Body(...),
+            tenant_id: UUID = Depends(get_current_tenant),
+            user_id: UUID = Depends(get_current_user_id),
+            user: dict = Depends(require_auth)
+        ):
+            """Supprime plusieurs enregistrements."""
+            ids = data.get("ids", [])
+            if not ids:
+                return {"success": 0, "failed": 0, "errors": [{"error": "Aucun ID fourni"}]}
+            success = 0
+            failed = 0
+            errors = []
+            for item_id in ids:
+                try:
+                    Database.soft_delete(self.table_name, tenant_id, UUID(item_id))
+                    success += 1
+                except Exception as e:
+                    failed += 1
+                    errors.append({"id": item_id, "error": str(e)})
+            return {"success": success, "failed": failed, "errors": errors}
+
         # GET
         @router.get(f"/{module_name}/{{item_id}}", tags=[module_name])
         async def get_item(
@@ -217,6 +355,16 @@ class GenericCRUDRouter:
             """Crée un enregistrement."""
             # Validation des donnees avant insertion
             data_dict = data.model_dump(exclude_unset=True)
+
+            # Auto-generate reference/code/numero if configured
+            config = AUTO_NUMBER_CONFIG.get(self.table_name.lower())
+            if config:
+                prefix, field_name, include_year = config
+                # Ne générer que si le champ n'est pas fourni ou est vide
+                if not data_dict.get(field_name):
+                    auto_number = generate_auto_number(self.table_name, tenant_id)
+                    if auto_number:
+                        data_dict[field_name] = auto_number
 
             # Injection automatique de user_id si le module a ce champ et qu'il n'est pas fourni
             if "user_id" in self.module.champs and "user_id" not in data_dict and user_id:

@@ -118,6 +118,8 @@ class ThemeManager:
     --bp-wide: {bp_wide};
     /* Touch target minimum size */
     --touch-min: {touch_min};
+    /* Curseur main jaune pour éléments cliquables */
+    --cursor-yellow-hand: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath fill='%23FFD700' stroke='%23DAA520' stroke-width='1' d='M14.5 4c0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5v7h1c.8 0 1.5.7 1.5 1.5v7c0 2.5-2 4.5-4.5 4.5h-3c-2.5 0-4.5-2-4.5-4.5v-4l-1.8-3.5c-.4-.8-.1-1.7.7-2.1.8-.4 1.7-.1 2.1.7l1.5 3V6.5c0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5v5h1.5V4z'/%3E%3C/svg%3E") 8 0, pointer;
 }}
 
 *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -126,15 +128,27 @@ body {{
     font-family: {typo.get("police", "sans-serif")};
     font-size: {typo.get("taille_base", "14px")};
     line-height: 1.5;
-    color: var(--gray-800);
-    background: var(--gray-100);
+    color: var(--gray-900);
+    background: var(--gray-50);
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
 }}
 
-a {{ color: var(--primary); text-decoration: none; }}
+a {{ color: var(--primary); text-decoration: none; cursor: var(--cursor-yellow-hand); }}
 a:hover {{ color: var(--primary-dark); }}
+
+/* ==========================================================================
+   CURSOR MAIN JAUNE - Éléments cliquables
+   ========================================================================== */
+a, button, [role="button"], [onclick], .btn, .nav-item, .stat-card,
+.user-box, .card-header.clickable, .table tbody tr, .doc-tab,
+.header-notif, .mobile-search-btn, .sidebar-close, .hamburger,
+.checkbox-wrapper, .radio-wrapper, .badge.clickable, .dropdown-item,
+input[type="checkbox"], input[type="radio"], input[type="submit"],
+input[type="button"], select, .select, label[for], .clickable {{
+    cursor: var(--cursor-yellow-hand);
+}}
 
 /* ==========================================================================
    MOBILE-FIRST LAYOUT (Base styles for mobile)
@@ -155,15 +169,15 @@ a:hover {{ color: var(--primary-dark); }}
     height: var(--touch-min);
     background: transparent;
     border: none;
-    cursor: pointer;
+    cursor: var(--cursor-yellow-hand);
     padding: 8px;
     border-radius: var(--radius);
-    color: var(--gray-700);
+    color: var(--gray-800);
     -webkit-tap-highlight-color: transparent;
 }}
 .mobile-menu-toggle:hover,
 .mobile-menu-toggle:active {{
-    background: var(--gray-100);
+    background: var(--gray-200);
 }}
 .mobile-menu-toggle svg,
 .mobile-menu-toggle i {{
@@ -184,7 +198,7 @@ a:hover {{ color: var(--primary-dark); }}
     display: block;
     height: 2px;
     width: 100%;
-    background: var(--gray-700);
+    background: var(--gray-800);
     border-radius: 1px;
     transition: all 0.3s ease;
 }}
@@ -252,7 +266,7 @@ a:hover {{ color: var(--primary-dark); }}
     border: none;
     border-radius: var(--radius);
     color: var(--white);
-    cursor: pointer;
+    cursor: var(--cursor-yellow-hand);
     font-size: 20px;
 }}
 .sidebar-close:hover {{
@@ -265,10 +279,16 @@ a:hover {{ color: var(--primary-dark); }}
     padding-right: 48px;
     display: flex;
     align-items: center;
+    gap: 10px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     font-size: 18px;
     font-weight: 700;
     color: var(--white);
+}}
+.sidebar-logo-icon {{
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
 }}
 
 .sidebar-nav {{
@@ -300,6 +320,7 @@ a:hover {{ color: var(--primary-dark); }}
     font-weight: 500;
     transition: all 0.15s;
     -webkit-tap-highlight-color: transparent;
+    cursor: var(--cursor-yellow-hand);
 }}
 
 .nav-item:hover {{ background: {c.get("sidebar_hover", "#334155")}; color: {c.get("sidebar_texte_actif", "#FFFFFF")}; }}
@@ -315,6 +336,7 @@ a:hover {{ color: var(--primary-dark); }}
     padding: 10px;
     border-radius: 6px;
     min-height: var(--touch-min);
+    cursor: var(--cursor-yellow-hand);
 }}
 .user-box:hover {{ background: {c.get("sidebar_hover", "#334155")}; }}
 .user-avatar {{
@@ -343,8 +365,8 @@ a:hover {{ color: var(--primary-dark); }}
 
 .main-header {{
     height: var(--header-height);
-    background: var(--white);
-    border-bottom: 1px solid var(--gray-200);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    border-bottom: none;
     padding: 0 {esp.get("md", "16px")};
     display: flex;
     align-items: center;
@@ -365,7 +387,7 @@ a:hover {{ color: var(--primary-dark); }}
 .page-title {{
     font-size: {typo.get("taille_grande", "16px")};
     font-weight: 600;
-    color: var(--gray-900);
+    color: var(--gray-800);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -375,7 +397,8 @@ a:hover {{ color: var(--primary-dark); }}
 .header-search {{
     display: none;
     align-items: center;
-    background: var(--gray-100);
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
     border-radius: var(--radius);
     padding: 8px 12px;
     width: 100%;
@@ -387,10 +410,10 @@ a:hover {{ color: var(--primary-dark); }}
     outline: none;
     font-size: 14px;
     width: 100%;
-    color: var(--gray-700);
+    color: var(--white);
     min-height: 24px;
 }}
-.header-search input::placeholder {{ color: var(--gray-400); }}
+.header-search input::placeholder {{ color: rgba(255,255,255,0.6); }}
 
 /* Mobile search button */
 .mobile-search-btn {{
@@ -399,11 +422,11 @@ a:hover {{ color: var(--primary-dark); }}
     justify-content: center;
     width: var(--touch-min);
     height: var(--touch-min);
-    background: var(--gray-100);
-    border: none;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
     border-radius: var(--radius);
-    color: var(--gray-600);
-    cursor: pointer;
+    color: var(--white);
+    cursor: var(--cursor-yellow-hand);
 }}
 
 .header-actions {{
@@ -420,12 +443,13 @@ a:hover {{ color: var(--primary-dark); }}
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--gray-100);
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
     border-radius: var(--radius);
-    cursor: pointer;
-    border: none;
+    cursor: var(--cursor-yellow-hand);
+    color: var(--white);
 }}
-.header-notif:hover {{ background: var(--gray-200); }}
+.header-notif:hover {{ background: rgba(255,255,255,0.25); }}
 .notif-badge {{
     position: absolute;
     top: 4px;
@@ -450,10 +474,11 @@ a:hover {{ color: var(--primary-dark); }}
    CARDS - Mobile optimized
    ========================================================================== */
 .card {{
-    background: var(--white);
+    background: var(--gray-100);
     border-radius: {card.get("rayon", "12px")};
     border: 1px solid var(--gray-200);
     margin-bottom: {esp.get("md", "16px")};
+    box-shadow: var(--shadow-sm);
 }}
 .card-header {{
     padding: {esp.get("md", "16px")};
@@ -469,7 +494,7 @@ a:hover {{ color: var(--primary-dark); }}
     flex-wrap: wrap;
     gap: 8px;
 }}
-.card-title {{ font-size: 15px; font-weight: 600; color: var(--gray-900); }}
+.card-title {{ font-size: 15px; font-weight: 600; color: var(--gray-800); }}
 .card-body {{ padding: {esp.get("md", "16px")}; }}
 
 /* ==========================================================================
@@ -486,7 +511,7 @@ a:hover {{ color: var(--primary-dark); }}
     font-weight: 500;
     border-radius: {btn.get("rayon", "6px")};
     border: none;
-    cursor: pointer;
+    cursor: var(--cursor-yellow-hand);
     transition: all 0.15s;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -495,10 +520,22 @@ a:hover {{ color: var(--primary-dark); }}
 .btn-primary {{ background: var(--primary); color: var(--white); }}
 .btn-primary:hover {{ background: var(--primary-dark); }}
 .btn-primary:active {{ transform: scale(0.98); }}
-.btn-secondary {{ background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-300); }}
-.btn-secondary:hover {{ background: var(--gray-50); }}
+.btn-secondary {{ background: var(--gray-100); color: var(--gray-900); border: 1px solid var(--gray-300); }}
+.btn-secondary:hover {{ background: var(--gray-200); }}
 .btn-success {{ background: var(--success); color: var(--white); }}
 .btn-danger {{ background: var(--error); color: var(--white); }}
+/* Bouton blanc pour header bleu */
+.btn-white {{ background: var(--white); color: var(--primary); font-weight: 600; }}
+.btn-white:hover {{ background: rgba(255,255,255,0.9); }}
+/* Bouton header (sur fond bleu gradient) */
+.main-header .btn-primary {{
+    background: var(--white);
+    color: var(--primary);
+    font-weight: 600;
+}}
+.main-header .btn-primary:hover {{
+    background: rgba(255,255,255,0.9);
+}}
 .btn-sm {{ padding: 8px 12px; font-size: 13px; min-height: 36px; }}
 .btn-lg {{ padding: 14px 24px; font-size: 15px; min-height: 52px; }}
 
@@ -521,7 +558,7 @@ a:hover {{ color: var(--primary-dark); }}
     display: block;
     font-size: {typo.get("taille_petite", "13px")};
     font-weight: 500;
-    color: var(--gray-700);
+    color: var(--gray-600);
     margin-bottom: 6px;
 }}
 .input, .select, textarea {{
@@ -529,10 +566,10 @@ a:hover {{ color: var(--primary-dark); }}
     padding: 12px;
     min-height: var(--touch-min);
     font-size: 16px;
-    border: 1px solid var(--gray-300);
+    border: 1px solid var(--gray-200);
     border-radius: {inp.get("rayon", "6px")};
-    background: var(--white);
-    color: var(--gray-800);
+    background: var(--gray-50);
+    color: var(--gray-900);
     transition: all 0.15s;
     -webkit-appearance: none;
     appearance: none;
@@ -575,7 +612,7 @@ a:hover {{ color: var(--primary-dark); }}
     gap: 10px;
     min-height: var(--touch-min);
     padding: 8px 0;
-    cursor: pointer;
+    cursor: var(--cursor-yellow-hand);
 }}
 .checkbox-wrapper input[type="checkbox"],
 .radio-wrapper input[type="radio"] {{
@@ -612,16 +649,20 @@ a:hover {{ color: var(--primary-dark); }}
 }}
 .table td {{
     padding: {tbl.get("padding", "12px 14px")};
-    border-bottom: 1px solid var(--gray-100);
-    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-800);
     font-size: {typo.get("taille_petite", "13px")};
 }}
 .table tbody tr {{
-    cursor: pointer;
-    transition: background 0.1s;
+    cursor: var(--cursor-yellow-hand);
+    transition: all 0.15s;
+    background: var(--gray-100);
 }}
-.table tbody tr:hover {{ background: {tbl.get("ligne_hover", "var(--gray-50)")}; }}
-.table tbody tr:active {{ background: var(--gray-100); }}
+.table tbody tr:hover {{
+    background: var(--gray-200);
+    transform: translateX(2px);
+}}
+.table tbody tr:active {{ background: var(--gray-200); }}
 
 /* Responsive table - Card view on mobile */
 .table-responsive {{
@@ -638,7 +679,7 @@ a:hover {{ color: var(--primary-dark); }}
 .table-responsive tr {{
     display: flex;
     flex-direction: column;
-    background: var(--white);
+    background: var(--gray-100);
     border: 1px solid var(--gray-200);
     border-radius: var(--radius);
     padding: {esp.get("md", "16px")};
@@ -674,17 +715,19 @@ a:hover {{ color: var(--primary-dark); }}
     font-weight: 500;
     border-radius: {badge.get("rayon", "4px")};
 }}
-.badge-gray {{ background: var(--gray-100); color: var(--gray-600); }}
-.badge-blue {{ background: var(--primary-light); color: var(--primary); }}
-.badge-green {{ background: var(--success-light); color: var(--success); }}
-.badge-yellow {{ background: var(--warning-light); color: #B45309; }}
-.badge-red {{ background: var(--error-light); color: var(--error); }}
+/* Badges avec fond semi-transparent (style vidéo démo) */
+.badge-gray {{ background: rgba(100, 116, 139, 0.2); color: #94a3b8; }}
+.badge-blue, .badge-primary {{ background: rgba(52, 84, 209, 0.2); color: #6B9FFF; }}
+.badge-green {{ background: rgba(16, 185, 129, 0.2); color: #34d399; }}
+.badge-yellow {{ background: rgba(251, 191, 36, 0.2); color: #fbbf24; }}
+.badge-red {{ background: rgba(239, 68, 68, 0.2); color: #f87171; }}
 
-.status-brouillon {{ background: var(--gray-100); color: var(--gray-600); }}
-.status-envoye, .status-planifie {{ background: var(--info-light); color: var(--info); }}
-.status-accepte, .status-valide, .status-termine {{ background: var(--success-light); color: var(--success); }}
-.status-refuse, .status-annule {{ background: var(--error-light); color: var(--error); }}
-.status-en-cours, .status-a-planifier {{ background: var(--warning-light); color: #B45309; }}
+.status-brouillon {{ background: rgba(100, 116, 139, 0.2); color: #94a3b8; }}
+.status-envoye, .status-planifie {{ background: rgba(59, 130, 246, 0.2); color: #60a5fa; }}
+.status-accepte, .status-valide, .status-termine {{ background: rgba(16, 185, 129, 0.2); color: #34d399; }}
+.status-refuse, .status-annule {{ background: rgba(239, 68, 68, 0.2); color: #f87171; }}
+.status-en-cours, .status-a-planifier {{ background: rgba(251, 191, 36, 0.2); color: #fbbf24; }}
+.status-en-cours, .status-a-planifier {{ background: var(--warning-light); color: var(--warning); }}
 
 /* ==========================================================================
    STATS CARDS - 2 columns on mobile
@@ -696,13 +739,15 @@ a:hover {{ color: var(--primary-dark); }}
     margin-bottom: {esp.get("lg", "24px")};
 }}
 .stat-card {{
-    background: var(--white);
+    background: var(--gray-100);
     border-radius: var(--radius-lg);
     border: 1px solid var(--gray-200);
     padding: {esp.get("md", "16px")};
     text-decoration: none;
+    transition: all 0.2s;
+    cursor: var(--cursor-yellow-hand);
 }}
-.stat-card:hover {{ box-shadow: var(--shadow); }}
+.stat-card:hover {{ box-shadow: var(--shadow); border-color: var(--primary); }}
 .stat-card:active {{ transform: scale(0.98); }}
 .stat-icon {{
     width: 36px; height: 36px;
@@ -713,19 +758,68 @@ a:hover {{ color: var(--primary-dark); }}
     font-size: 18px;
     margin-bottom: 10px;
 }}
-.stat-icon.blue {{ background: var(--primary-light); }}
-.stat-icon.green {{ background: var(--success-light); }}
-.stat-icon.yellow {{ background: var(--warning-light); }}
-.stat-icon.red {{ background: var(--error-light); }}
+/* Stat icons avec fond semi-transparent (style vidéo démo) */
+.stat-icon.blue {{ background: rgba(52, 84, 209, 0.15); color: #6B9FFF; }}
+.stat-icon.green {{ background: rgba(16, 185, 129, 0.15); color: #34d399; }}
+.stat-icon.yellow {{ background: rgba(251, 191, 36, 0.15); color: #fbbf24; }}
+.stat-icon.red {{ background: rgba(239, 68, 68, 0.15); color: #f87171; }}
 .stat-value {{ font-size: 20px; font-weight: 700; color: var(--gray-900); }}
 .stat-label {{ font-size: 11px; color: var(--gray-500); margin-top: 2px; }}
+
+/* ==========================================================================
+   LIST ITEMS - Style vidéo démo AZALPLUS
+   ========================================================================== */
+.list-container {{
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}}
+.list-item {{
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--gray-50);
+    gap: 15px;
+    transition: all 0.15s;
+    cursor: var(--cursor-yellow-hand);
+}}
+.list-item:last-child {{
+    border-bottom: none;
+}}
+.list-item:hover {{
+    background: var(--gray-200);
+}}
+.list-item-info {{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}}
+.list-item-title {{
+    color: var(--gray-900);
+    font-weight: 600;
+    font-size: 14px;
+}}
+.list-item-subtitle {{
+    color: var(--gray-500);
+    font-size: 12px;
+}}
+.list-item-amount {{
+    color: var(--gray-900);
+    font-weight: 600;
+    font-size: 14px;
+}}
+.list-item.highlight {{
+    background: rgba(52, 84, 209, 0.1);
+    border: 1px dashed var(--primary);
+}}
 
 /* ==========================================================================
    EMPTY STATE
    ========================================================================== */
 .empty-state {{ text-align: center; padding: 40px 20px; }}
 .empty-icon {{ font-size: 48px; opacity: 0.4; margin-bottom: 16px; }}
-.empty-title {{ font-size: 16px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }}
+.empty-title {{ font-size: 16px; font-weight: 600; color: var(--gray-900); margin-bottom: 6px; }}
 .empty-text {{ font-size: 14px; color: var(--gray-500); margin-bottom: 16px; }}
 
 /* ==========================================================================
@@ -742,13 +836,13 @@ a:hover {{ color: var(--primary-dark); }}
 .login-box {{
     width: 100%;
     max-width: {login.get("carte_largeur", "380px")};
-    background: var(--white);
+    background: var(--gray-100);
     border-radius: {login.get("carte_rayon", "12px")};
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
 }}
 .login-header {{ padding: 24px 20px 16px; text-align: center; }}
-.login-logo {{ font-size: 22px; font-weight: 700; color: var(--primary); }}
-.login-subtitle {{ font-size: 13px; color: var(--gray-500); margin-top: 4px; }}
+.login-logo {{ font-size: 22px; font-weight: 700; color: var(--primary-light); }}
+.login-subtitle {{ font-size: 13px; color: var(--gray-600); margin-top: 4px; }}
 .login-body {{ padding: 0 20px 24px; }}
 .login-error {{
     background: var(--error-light);
@@ -769,7 +863,7 @@ a:hover {{ color: var(--primary-dark); }}
     background: none;
     border: none;
     color: var(--gray-400);
-    cursor: pointer;
+    cursor: var(--cursor-yellow-hand);
     font-size: 16px;
     padding: 8px;
     min-width: var(--touch-min);
@@ -805,14 +899,14 @@ a:hover {{ color: var(--primary-dark); }}
     font-size: 13px;
     font-weight: 500;
     color: var(--gray-500);
-    cursor: pointer;
+    cursor: var(--cursor-yellow-hand);
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
     white-space: nowrap;
     flex-shrink: 0;
 }}
 .doc-tab:hover {{ color: var(--gray-700); }}
-.doc-tab.active {{ color: var(--primary); border-bottom-color: var(--primary); }}
+.doc-tab.active {{ color: var(--primary-light); border-bottom-color: var(--primary); }}
 .doc-actions {{
     display: flex;
     flex-direction: column;
@@ -825,6 +919,13 @@ a:hover {{ color: var(--primary-dark); }}
     padding: 8px 0;
 }}
 .doc-total-row span:last-child {{ font-weight: 500; }}
+
+/* Form fields container - 2 columns layout */
+.form-fields-container {{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}}
 
 /* ==========================================================================
    UTILITIES
@@ -912,6 +1013,11 @@ a:hover {{ color: var(--primary-dark); }}
 
     /* Doc row 2 columns */
     .doc-row {{
+        grid-template-columns: 1fr 1fr;
+    }}
+
+    /* Form fields container 2 columns */
+    .form-fields-container {{
         grid-template-columns: 1fr 1fr;
     }}
 
@@ -1167,7 +1273,7 @@ a:hover {{ color: var(--primary-dark); }}
     border: 1px solid var(--gray-300);
     background: var(--white);
     color: var(--gray-700);
-    cursor: pointer;
+    cursor: var(--cursor-yellow-hand);
     transition: all 0.15s;
 }}
 
@@ -1795,3 +1901,26 @@ async def get_theme_css():
     """Sert le CSS généré depuis theme.yml."""
     css = ThemeManager.get_css()
     return Response(content=css, media_type="text/css")
+
+
+@theme_router.get("/manifest.json")
+async def get_manifest():
+    """Sert le manifest.json pour PWA."""
+    from pathlib import Path
+    manifest_path = Path(__file__).parent.parent / "static" / "manifest.json"
+    if manifest_path.exists():
+        return Response(content=manifest_path.read_text(), media_type="application/json")
+    # Manifest par défaut si le fichier n'existe pas
+    return Response(content='{"name":"AzalPlus","short_name":"AzalPlus","display":"standalone"}', media_type="application/json")
+
+
+@theme_router.get("/icons/{icon_name}")
+async def get_icon(icon_name: str):
+    """Sert les icônes PWA."""
+    from pathlib import Path
+    from fastapi.responses import FileResponse
+    icon_path = Path(__file__).parent.parent / "static" / "icons" / icon_name
+    if icon_path.exists() and icon_path.suffix in [".png", ".ico", ".svg"]:
+        return FileResponse(icon_path)
+    # Icône transparente 1x1 par défaut
+    return Response(content="", status_code=404)

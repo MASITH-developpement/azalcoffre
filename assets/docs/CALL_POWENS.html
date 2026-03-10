@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Fiche Call Powens - AZALPLUS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            padding: 40px;
+            max-width: 210mm;
+            margin: 0 auto;
+            background: #fff;
+            color: #1a1a1a;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #2563eb;
+        }
+
+        .header h1 {
+            font-size: 24pt;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 12pt;
+            color: #64748b;
+        }
+
+        .meta-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .meta-info .field {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .meta-info label {
+            font-weight: 600;
+            color: #475569;
+            min-width: 100px;
+        }
+
+        .meta-info .value {
+            flex: 1;
+            border-bottom: 2px dotted #cbd5e1;
+            min-height: 24px;
+            padding: 2px 8px;
+        }
+
+        h2 {
+            font-size: 14pt;
+            font-weight: 700;
+            color: #1e40af;
+            margin: 30px 0 15px 0;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 4px solid #2563eb;
+            border-radius: 0 8px 8px 0;
+        }
+
+        h3 {
+            font-size: 12pt;
+            font-weight: 600;
+            color: #334155;
+            margin: 20px 0 12px 0;
+        }
+
+        .pitch-box {
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+            border: 1px solid #fde047;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            font-style: italic;
+        }
+
+        .pitch-box p {
+            margin-bottom: 10px;
+            color: #713f12;
+        }
+
+        .volume-list {
+            list-style: none;
+            margin: 15px 0;
+            padding: 0;
+        }
+
+        .volume-list li {
+            padding: 6px 0 6px 25px;
+            position: relative;
+        }
+
+        .volume-list li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 10.5pt;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #334155;
+            width: 55%;
+        }
+
+        td {
+            background: #fff;
+            min-height: 40px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #94a3b8;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .scenario-box {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .scenario-box p {
+            margin-bottom: 8px;
+            color: #166534;
+        }
+
+        .scenario-box .question {
+            font-weight: 700;
+            color: #14532d;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #86efac;
+        }
+
+        .notes-section {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            min-height: 200px;
+            background: repeating-linear-gradient(
+                transparent,
+                transparent 27px,
+                #e2e8f0 27px,
+                #e2e8f0 28px
+            );
+        }
+
+        .impression-section {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .impression-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .impression-option:last-child {
+            border-bottom: none;
+        }
+
+        .impression-option.positive {
+            color: #166534;
+        }
+
+        .impression-option.neutral {
+            color: #92400e;
+        }
+
+        .impression-option.negative {
+            color: #991b1b;
+        }
+
+        .contact-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .contact-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .contact-field label {
+            font-weight: 600;
+            font-size: 10pt;
+            color: #64748b;
+        }
+
+        .contact-field .input {
+            border-bottom: 2px solid #cbd5e1;
+            min-height: 28px;
+            padding: 4px;
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            color: #64748b;
+            font-size: 9pt;
+        }
+
+        .footer .company {
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        @media print {
+            body {
+                padding: 20px;
+                font-size: 10pt;
+            }
+
+            h2 {
+                page-break-after: avoid;
+            }
+
+            table {
+                page-break-inside: avoid;
+            }
+
+            .notes-section {
+                min-height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>FICHE CALL POWENS</h1>
+    <div class="subtitle">Paiement Open Banking - Partenariat Intégrateur</div>
+</div>
+
+<div class="meta-info">
+    <div class="field">
+        <label>Date :</label>
+        <div class="value"></div>
+    </div>
+    <div class="field">
+        <label>Interlocuteur :</label>
+        <div class="value"></div>
+    </div>
+    <div class="field">
+        <label>Heure :</label>
+        <div class="value">8h00</div>
+    </div>
+    <div class="field">
+        <label>Fonction :</label>
+        <div class="value"></div>
+    </div>
+</div>
+
+<h2>PRÉSENTATION AZALPLUS (2 min)</h2>
+
+<div class="pitch-box">
+    <p><strong>« MASITH Développement édite AZALPLUS, un ERP gratuit pour TPE.</strong></p>
+    <p>L'ERP est 100% gratuit. On se rémunère sur les flux financiers.</p>
+    <p>On veut intégrer un paiement par virement Open Banking dans chaque facture. »</p>
+</div>
+
+<p><strong>Volume projeté :</strong></p>
+<ul class="volume-list">
+    <li><strong>500 TPE</strong> année 1 → <strong>5 000 TPE</strong> à 3 ans</li>
+    <li><strong>15 000 → 150 000</strong> paiements/mois</li>
+    <li>Ticket moyen : <strong>300-500€</strong></li>
+</ul>
+
+<h2>1. MODÈLE ÉCONOMIQUE</h2>
+
+<table>
+    <tr>
+        <th>Comment fonctionne votre modèle "revenus partagés" ?</th>
+        <td></td>
+    </tr>
+    <tr>
+        <th>Puis-je ajouter une marge sur chaque transaction ?</th>
+        <td>
+            <div class="checkbox-group">
+                <span class="checkbox-item"><span class="checkbox"></span> Oui</span>
+                <span class="checkbox-item"><span class="checkbox"></span> Non</span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <th>Si oui, comment ? (%, fixe, intégré ou séparé)</th>
+        <td></td>
+    </tr>
+    <tr>
+        <th>Quel est votre tarif de base ?</th>
+        <td>________% ou ________€/tx</td>
+    </tr>
+    <tr>
+        <th>Tarif dégressif sur volume ?</th>
+        <td>
+            <div class="checkbox-group">
+                <span class="checkbox-item"><span class="checkbox"></span> Oui</span>
+                <span class="checkbox-item"><span class="checkbox"></span> Non</span>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<h2>2. FONCTIONNEMENT TECHNIQUE</h2>
+
+<table>
+    <tr>
+        <th>Comment fonctionne le paiement côté client final ?</th>
+        <td></td>
+    </tr>
+    <tr>
+        <th>Délai de réception des fonds pour la TPE ?</th>
+        <td></td>
+    </tr>
+    <tr>
+        <th>Banques couvertes en France ?</th>
+        <td>________%</td>
+    </tr>
+    <tr>
+        <th>Taux de succès des paiements ?</th>
+        <td>________%</td>
+    </tr>
+</table>
+
+<h2>3. INTÉGRATION</h2>
+
+<table>
+    <tr>
+        <th>API REST disponible ?</th>
+        <td>
+            <div class="checkbox-group">
+                <span class="checkbox-item"><span class="checkbox"></span> Oui</span>
+                <span class="checkbox-item"><span class="checkbox"></span> Non</span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <th>Documentation publique ?</th>
+        <td>
+            <div class="checkbox-group">
+                <span class="checkbox-item"><span class="checkbox"></span> Oui</span>
+                <span class="checkbox-item"><span class="checkbox"></span> Non</span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <th>Sandbox / environnement de test ?</th>
+        <td>
+            <div class="checkbox-group">
+                <span class="checkbox-item"><span class="checkbox"></span> Oui</span>
+                <span class="checkbox-item"><span class="checkbox"></span> Non</span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <th>Délai d'intégration estimé ?</th>
+        <td>________ semaines</td>
+    </tr>
+    <tr>
+        <th>Accompagnement technique inclus ?</th>
+        <td>
+            <div class="checkbox-group">
+                <span class="checkbox-item"><span class="checkbox"></span> Oui</span>
+                <span class="checkbox-item"><span class="checkbox"></span> Non</span>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<h2>4. COMMERCIAL / PARTENARIAT</h2>
+
+<table>
+    <tr>
+        <th>Frais d'activation / setup ?</th>
+        <td>________€</td>
+    </tr>
+    <tr>
+        <th>Frais mensuels fixes ?</th>
+        <td>________€/mois</td>
+    </tr>
+    <tr>
+        <th>Programme partenaire / intégrateur ?</th>
+        <td>
+            <div class="checkbox-group">
+                <span class="checkbox-item"><span class="checkbox"></span> Oui</span>
+                <span class="checkbox-item"><span class="checkbox"></span> Non</span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <th>Contrat minimum ?</th>
+        <td>________ mois</td>
+    </tr>
+    <tr>
+        <th>Exclusivité demandée ?</th>
+        <td>
+            <div class="checkbox-group">
+                <span class="checkbox-item"><span class="checkbox"></span> Oui</span>
+                <span class="checkbox-item"><span class="checkbox"></span> Non</span>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<h2>5. SCÉNARIO À VALIDER</h2>
+
+<div class="scenario-box">
+    <p>« Mon client TPE envoie une facture de <strong>500€</strong>.</p>
+    <p>Son client clique sur <strong>'Payer'</strong>.</p>
+    <p>Il est redirigé vers sa banque, valide le virement.</p>
+    <p>La TPE reçoit <strong>500€ moins les frais</strong>. »</p>
+    <p class="question">→ Puis-je configurer les frais à 1.5% (dont 0.5% pour moi) ?</p>
+</div>
+
+<table>
+    <tr>
+        <th>C'est possible ?</th>
+        <td>
+            <div class="checkbox-group">
+                <span class="checkbox-item"><span class="checkbox"></span> Oui</span>
+                <span class="checkbox-item"><span class="checkbox"></span> Non</span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <th>Comment techniquement ?</th>
+        <td></td>
+    </tr>
+</table>
+
+<h2>NOTES LIBRES</h2>
+
+<div class="notes-section"></div>
+
+<h2>PROCHAINES ÉTAPES CONVENUES</h2>
+
+<table>
+    <tr>
+        <th style="width:50%">Action</th>
+        <th style="width:25%">Qui</th>
+        <th style="width:25%">Délai</th>
+    </tr>
+    <tr>
+        <td style="height:40px"></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td style="height:40px"></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td style="height:40px"></td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
+
+<h2>IMPRESSION GÉNÉRALE</h2>
+
+<div class="impression-section">
+    <div class="impression-option positive">
+        <span class="checkbox"></span>
+        <span><strong>Très positif</strong> — on avance</span>
+    </div>
+    <div class="impression-option positive">
+        <span class="checkbox"></span>
+        <span><strong>Positif</strong> — à creuser</span>
+    </div>
+    <div class="impression-option neutral">
+        <span class="checkbox"></span>
+        <span><strong>Neutre</strong> — attendre d'autres options</span>
+    </div>
+    <div class="impression-option negative">
+        <span class="checkbox"></span>
+        <span><strong>Négatif</strong> — chercher ailleurs</span>
+    </div>
+</div>
+
+<h3>Contact après call :</h3>
+
+<div class="contact-section">
+    <div class="contact-field">
+        <label>Nom</label>
+        <div class="input"></div>
+    </div>
+    <div class="contact-field">
+        <label>Email</label>
+        <div class="input"></div>
+    </div>
+    <div class="contact-field">
+        <label>Téléphone</label>
+        <div class="input"></div>
+    </div>
+</div>
+
+<div class="footer">
+    <span class="company">MASITH Développement</span> — AZALPLUS — Call Powens
+</div>
+
+</body>
+</html>
