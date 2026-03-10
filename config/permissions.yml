@@ -85,6 +85,26 @@ roles:
       - lire
     peut_exporter: false
 
+  debugger:
+    nom: "Debugger"
+    description: "Accès au module debug uniquement (sous-traitants QA)"
+    modules: []  # Aucun module métier
+    routes:
+      - /debug/*
+      - /api/debug/*
+    actions:
+      - soumettre_bug
+      - voir_tests
+      - valider_tests
+      - chat_simon
+    restrictions:
+      - "aucun accès aux modules métier"
+      - "aucun accès au code source"
+      - "aucun export de données"
+    peut_exporter: false
+    peut_importer: false
+    peut_voir_code: false
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Actions disponibles
 # ─────────────────────────────────────────────────────────────────────────────

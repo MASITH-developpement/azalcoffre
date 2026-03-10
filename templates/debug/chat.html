@@ -1,0 +1,106 @@
+{% extends "debug/base.html" %}
+
+{% block title %}Chat - Bug {{ bug.numero }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <a href="/debug/bugs/{{ bug.id }}" style="color: var(--gray-500); text-decoration: none;">&larr; Retour au bug</a>
+    <h2 style="margin-top: 0.5rem;">Discussion avec Simon - {{ bug.numero }}</h2>
+    <p style="color: var(--gray-500);">{{ bug.titre }}</p>
+</div>
+
+<div class="card">
+    <!-- Zone de chat -->
+    <div class="chat-container" id="chat-container">
+        <div class="chat-message simon">
+            <div class="chat-sender">Simon</div>
+            <div class="chat-bubble">
+                Bonjour ! Je suis Simon, votre assistant QA. Je vais vous aider à clarifier ce bug et proposer des tests de vérification.
+
+                Pouvez-vous me donner plus de détails sur le problème rencontré ?
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire d'envoi -->
+    <form id="chat-form" style="display: flex; gap: 0.5rem;">
+        <input type="text" id="message-input" class="form-input" style="flex: 1;"
+               placeholder="Décrivez le problème ou répondez à Simon..." required>
+        <button type="submit" class="btn btn-primary" id="send-btn">Envoyer</button>
+    </form>
+</div>
+
+<div class="alert alert-info">
+    <strong>Rappel :</strong> Simon propose uniquement des tests de vérification. Il ne peut pas donner de solutions techniques.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const bugId = '{{ bug.id }}';
+    const chatContainer = document.getElementById('chat-container');
+
+    function addMessage(role, message) {
+        const div = document.createElement('div');
+        div.className = `chat-message ${role}`;
+        div.innerHTML = `
+            <div class="chat-sender">${role === 'user' ? 'Vous' : 'Simon'}</div>
+            <div class="chat-bubble">${escapeHtml(message)}</div>
+        `;
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML.replace(/\n/g, '<br>');
+    }
+
+    async function loadHistory() {
+        try {
+            const data = await apiCall(`/api/debug/bugs/${bugId}/chat`);
+            // Effacer le message initial si on a un historique
+            if (data.messages.length > 0) {
+                chatContainer.innerHTML = '';
+                data.messages.forEach(msg => addMessage(msg.role, msg.message));
+            }
+        } catch (e) {
+            console.error('Erreur chargement historique:', e);
+        }
+    }
+
+    document.getElementById('chat-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const input = document.getElementById('message-input');
+        const btn = document.getElementById('send-btn');
+        const message = input.value.trim();
+
+        if (!message) return;
+
+        // Afficher le message utilisateur
+        addMessage('user', message);
+        input.value = '';
+        btn.disabled = true;
+        btn.textContent = 'Envoi...';
+
+        try {
+            const result = await apiCall(`/api/debug/bugs/${bugId}/chat`, 'POST', { message });
+            addMessage('simon', result.message);
+
+            // Si Simon a proposé des tests
+            if (result.tests && result.tests.length > 0) {
+                addMessage('simon', `J'ai proposé ${result.tests.length} test(s). Vous pouvez les voir sur la page du bug.`);
+            }
+        } catch (error) {
+            addMessage('simon', `Erreur: ${error.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Envoyer';
+        }
+    });
+
+    loadHistory();
+</script>
+{% endblock %}

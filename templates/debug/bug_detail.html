@@ -1,0 +1,163 @@
+{% extends "debug/base.html" %}
+
+{% block title %}Bug {{ bug.numero }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div>
+        <a href="/debug/" style="color: var(--gray-500); text-decoration: none;">&larr; Retour</a>
+        <h2 style="margin-top: 0.5rem;">{{ bug.numero }}</h2>
+    </div>
+    <span class="badge badge-{{ bug.statut }}">{{ bug.statut }}</span>
+</div>
+
+<!-- Infos bug -->
+<div class="card">
+    <h3 class="card-title">{{ bug.titre }}</h3>
+    <p style="margin-top: 1rem; white-space: pre-wrap;">{{ bug.description }}</p>
+
+    {% if bug.logs_texte %}
+    <div style="margin-top: 1rem; padding: 1rem; background: var(--gray-100); border-radius: 6px; font-family: monospace; font-size: 0.8rem; overflow-x: auto;">
+        {{ bug.logs_texte }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Actions -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Actions</span>
+    </div>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <button class="btn btn-primary" id="btn-analyze" onclick="analyzeReq()">
+            Demander analyse à Simon
+        </button>
+        <a href="/debug/bugs/{{ bug.id }}/chat" class="btn btn-outline">
+            Discuter avec Simon
+        </a>
+        <button class="btn btn-danger" onclick="closeBug()">
+            Fermer le bug
+        </button>
+    </div>
+</div>
+
+<!-- Tests -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Tests de vérification</span>
+        <span id="tests-summary"></span>
+    </div>
+
+    <div id="tests-list">
+        <p style="color: var(--gray-500);">Aucun test proposé. Cliquez sur "Demander analyse à Simon".</p>
+    </div>
+
+    <div id="more-tests-section" style="display: none; margin-top: 1rem;">
+        <button class="btn btn-outline" onclick="requestMoreTests()">
+            Demander tests supplémentaires
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const bugId = '{{ bug.id }}';
+
+    async function loadTests() {
+        try {
+            const data = await apiCall(`/api/debug/bugs/${bugId}/tests`);
+            const container = document.getElementById('tests-list');
+            const summary = document.getElementById('tests-summary');
+
+            if (data.tests.length === 0) {
+                container.innerHTML = '<p style="color: var(--gray-500);">Aucun test proposé. Cliquez sur "Demander analyse à Simon".</p>';
+                summary.textContent = '';
+                document.getElementById('more-tests-section').style.display = 'none';
+                return;
+            }
+
+            summary.textContent = `${data.ok} OK / ${data.ko} KO / ${data.pending} en attente`;
+
+            container.innerHTML = data.tests.map(test => `
+                <div class="test-item ${test.statut}">
+                    <div style="display: flex; justify-content: space-between;">
+                        <strong>Test ${test.numero}</strong>
+                        <span class="badge badge-${test.statut === 'ok' ? 'resolved' : test.statut === 'ko' ? 'new' : 'analyzing'}">
+                            ${test.statut.toUpperCase()}
+                        </span>
+                    </div>
+                    <p style="margin: 0.5rem 0;"><strong>Action :</strong> ${test.action}</p>
+                    <p style="margin: 0.5rem 0;"><strong>Résultat attendu :</strong> ${test.resultat_attendu}</p>
+                    ${test.commentaire ? `<p style="margin: 0.5rem 0; color: var(--danger);"><strong>Commentaire :</strong> ${test.commentaire}</p>` : ''}
+
+                    ${test.statut === 'pending' ? `
+                    <div class="test-actions">
+                        <button class="btn btn-success" onclick="validateTest('${test.id}', 'ok')">OK</button>
+                        <button class="btn btn-danger" onclick="promptKO('${test.id}')">KO</button>
+                    </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            // Afficher "Demander tests supplémentaires" si des tests KO
+            document.getElementById('more-tests-section').style.display = data.ko > 0 ? 'block' : 'none';
+
+        } catch (e) {
+            console.error('Erreur chargement tests:', e);
+        }
+    }
+
+    async function analyzeReq() {
+        const btn = document.getElementById('btn-analyze');
+        btn.disabled = true;
+        btn.textContent = 'Analyse en cours...';
+
+        try {
+            await apiCall(`/api/debug/bugs/${bugId}/analyze`, 'POST');
+            loadTests();
+        } catch (e) {
+            alert('Erreur: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Demander analyse à Simon';
+        }
+    }
+
+    async function validateTest(testId, statut, commentaire = null) {
+        try {
+            await apiCall(`/api/debug/tests/${testId}`, 'PUT', { statut, commentaire });
+            loadTests();
+        } catch (e) {
+            alert('Erreur: ' + e.message);
+        }
+    }
+
+    function promptKO(testId) {
+        const commentaire = prompt('Décrivez ce qui ne fonctionne pas (optionnel):');
+        validateTest(testId, 'ko', commentaire);
+    }
+
+    async function requestMoreTests() {
+        try {
+            await apiCall(`/api/debug/bugs/${bugId}/more-tests`, 'POST');
+            loadTests();
+        } catch (e) {
+            alert('Erreur: ' + e.message);
+        }
+    }
+
+    async function closeBug() {
+        if (!confirm('Êtes-vous sûr de vouloir fermer ce bug ?')) return;
+
+        try {
+            await apiCall(`/api/debug/bugs/${bugId}/close`, 'POST');
+            window.location.href = '/debug/';
+        } catch (e) {
+            alert('Erreur: ' + e.message);
+        }
+    }
+
+    loadTests();
+</script>
+{% endblock %}

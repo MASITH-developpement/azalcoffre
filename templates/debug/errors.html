@@ -1,0 +1,92 @@
+{% extends "debug/base.html" %}
+
+{% block title %}Erreurs système{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Erreurs système (Mode Replay)</h2>
+
+<div class="alert alert-info">
+    Sélectionnez une erreur pour créer un bug et demander à Simon de proposer des tests de non-régression.
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Erreurs récentes</span>
+        <button class="btn btn-outline" onclick="loadErrors()">Actualiser</button>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Niveau</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="errors-list">
+            <tr><td colspan="5" style="text-align: center;">Chargement...</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const levelBadge = {
+        'ERROR': 'badge-new',
+        'CRITICAL': 'badge-new',
+        'WARNING': 'badge-analyzing'
+    };
+
+    async function loadErrors() {
+        try {
+            const data = await apiCall('/api/debug/errors?limit=50');
+            const tbody = document.getElementById('errors-list');
+
+            if (data.items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Aucune erreur récente</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.items.map(err => `
+                <tr>
+                    <td><span class="badge ${levelBadge[err.niveau] || 'badge-closed'}">${err.niveau}</span></td>
+                    <td>${err.action}</td>
+                    <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        ${err.description || '-'}
+                    </td>
+                    <td>${new Date(err.created_at).toLocaleString('fr-FR')}</td>
+                    <td>
+                        <button class="btn btn-primary" onclick="createBugFromError('${err.id}', '${err.action}')">
+                            Créer bug
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error('Erreur chargement erreurs:', e);
+            document.getElementById('errors-list').innerHTML =
+                '<tr><td colspan="5" style="text-align: center; color: red;">Erreur de chargement</td></tr>';
+        }
+    }
+
+    async function createBugFromError(errorId, action) {
+        const titre = prompt('Titre du bug (optionnel):', `Erreur: ${action}`);
+        if (titre === null) return; // Annulé
+
+        try {
+            const result = await apiCall('/api/debug/bugs/replay', 'POST', {
+                guardian_log_id: errorId,
+                titre: titre || null
+            });
+            window.location.href = `/debug/bugs/${result.id}`;
+        } catch (e) {
+            alert('Erreur: ' + e.message);
+        }
+    }
+
+    loadErrors();
+</script>
+{% endblock %}

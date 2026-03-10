@@ -1,0 +1,143 @@
+{% extends "debug/base.html" %}
+
+{% block title %}Dashboard Debug{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Dashboard Debug</h2>
+
+<!-- Stats -->
+<div class="stats-grid" id="stats">
+    <div class="stat-card">
+        <div class="stat-value" id="stat-total">-</div>
+        <div class="stat-label">Total bugs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="stat-nouveaux">-</div>
+        <div class="stat-label">Nouveaux</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="stat-en-test">-</div>
+        <div class="stat-label">En test</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="stat-resolus">-</div>
+        <div class="stat-label">Résolus</div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Bugs</span>
+        <div style="display: flex; gap: 0.5rem;">
+            <select id="filter-statut" class="form-input" style="width: auto;">
+                <option value="">Tous les statuts</option>
+                <option value="nouveau">Nouveau</option>
+                <option value="tests_proposes">Tests proposés</option>
+                <option value="en_test">En test</option>
+                <option value="resolu">Résolu</option>
+                <option value="ferme">Fermé</option>
+            </select>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="filter-mes-bugs">
+                Mes bugs uniquement
+            </label>
+            <a href="/debug/new" class="btn btn-primary">+ Nouveau bug</a>
+        </div>
+    </div>
+
+    <table class="table" id="bugs-table">
+        <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Titre</th>
+                <th>Source</th>
+                <th>Statut</th>
+                <th>Tests</th>
+                <th>Date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="bugs-list">
+            <tr><td colspan="7" style="text-align: center;">Chargement...</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const statusBadgeClass = {
+        'nouveau': 'badge-new',
+        'en_analyse': 'badge-analyzing',
+        'tests_proposes': 'badge-testing',
+        'en_test': 'badge-testing',
+        'resolu': 'badge-resolved',
+        'ferme': 'badge-closed'
+    };
+
+    const statusLabel = {
+        'nouveau': 'Nouveau',
+        'en_analyse': 'En analyse',
+        'tests_proposes': 'Tests proposés',
+        'en_test': 'En test',
+        'resolu': 'Résolu',
+        'ferme': 'Fermé'
+    };
+
+    async function loadStats() {
+        try {
+            const stats = await apiCall('/api/debug/stats');
+            document.getElementById('stat-total').textContent = stats.total_bugs;
+            document.getElementById('stat-nouveaux').textContent = stats.bugs_nouveaux;
+            document.getElementById('stat-en-test').textContent = stats.bugs_en_test;
+            document.getElementById('stat-resolus').textContent = stats.bugs_resolus;
+        } catch (e) {
+            console.error('Erreur chargement stats:', e);
+        }
+    }
+
+    async function loadBugs() {
+        const statut = document.getElementById('filter-statut').value;
+        const mesBugs = document.getElementById('filter-mes-bugs').checked;
+
+        let url = '/api/debug/bugs?limit=50';
+        if (statut) url += `&statut=${statut}`;
+        if (mesBugs) url += '&mes_bugs=true';
+
+        try {
+            const data = await apiCall(url);
+            const tbody = document.getElementById('bugs-list');
+
+            if (data.items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Aucun bug trouvé</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.items.map(bug => `
+                <tr>
+                    <td><strong>${bug.numero}</strong></td>
+                    <td>${bug.titre}</td>
+                    <td>${bug.source}</td>
+                    <td><span class="badge ${statusBadgeClass[bug.statut]}">${statusLabel[bug.statut]}</span></td>
+                    <td>${bug.tests_ok}/${bug.tests_count}</td>
+                    <td>${new Date(bug.created_at).toLocaleDateString('fr-FR')}</td>
+                    <td>
+                        <a href="/debug/bugs/${bug.id}" class="btn btn-outline">Voir</a>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error('Erreur chargement bugs:', e);
+            document.getElementById('bugs-list').innerHTML =
+                '<tr><td colspan="7" style="text-align: center; color: red;">Erreur de chargement</td></tr>';
+        }
+    }
+
+    document.getElementById('filter-statut').addEventListener('change', loadBugs);
+    document.getElementById('filter-mes-bugs').addEventListener('change', loadBugs);
+
+    loadStats();
+    loadBugs();
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "debug/base.html" %}
+
+{% block title %}Nouveau bug{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Signaler un bug</h2>
+
+<div class="card">
+    <form id="bug-form">
+        <div class="form-group">
+            <label class="form-label" for="titre">Titre du bug *</label>
+            <input type="text" id="titre" class="form-input" required
+                   placeholder="Ex: Le bouton Valider ne fonctionne pas sur la page Factures"
+                   minlength="5" maxlength="200">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="description">Description détaillée *</label>
+            <textarea id="description" class="form-textarea" required
+                      placeholder="Décrivez le bug en détail :&#10;- Qu'est-ce que vous faisiez ?&#10;- Qu'est-ce qui s'est passé ?&#10;- Qu'est-ce qui aurait dû se passer ?"
+                      minlength="20"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="logs">Logs ou messages d'erreur (optionnel)</label>
+            <textarea id="logs" class="form-textarea"
+                      placeholder="Collez ici les messages d'erreur ou logs si vous en avez"
+                      style="font-family: monospace; font-size: 0.8rem;"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="screenshot">URL du screenshot (optionnel)</label>
+            <input type="url" id="screenshot" class="form-input"
+                   placeholder="https://...">
+        </div>
+
+        <div id="error-message" class="alert alert-error" style="display: none;"></div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="/debug/" class="btn btn-outline">Annuler</a>
+            <button type="submit" class="btn btn-primary" id="submit-btn">
+                Soumettre le bug
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="background: #f0f9ff;">
+    <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Comment ça marche ?</h3>
+    <ol style="margin-left: 1.5rem; color: var(--gray-700);">
+        <li>Décrivez le bug le plus précisément possible</li>
+        <li>Simon analysera votre bug et proposera des tests de vérification</li>
+        <li>Exécutez chaque test et indiquez s'il passe (OK) ou échoue (KO)</li>
+        <li>Si des tests échouent, le bug sera automatiquement corrigé</li>
+    </ol>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('bug-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const btn = document.getElementById('submit-btn');
+        const errorDiv = document.getElementById('error-message');
+
+        btn.disabled = true;
+        btn.textContent = 'Envoi en cours...';
+        errorDiv.style.display = 'none';
+
+        try {
+            const data = {
+                titre: document.getElementById('titre').value,
+                description: document.getElementById('description').value,
+                logs_texte: document.getElementById('logs').value || null,
+                screenshot_url: document.getElementById('screenshot').value || null
+            };
+
+            const result = await apiCall('/api/debug/bugs', 'POST', data);
+
+            // Rediriger vers le bug créé
+            window.location.href = `/debug/bugs/${result.id}`;
+
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Soumettre le bug';
+        }
+    });
+</script>
+{% endblock %}

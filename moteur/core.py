@@ -64,6 +64,18 @@ async def lifespan(app: FastAPI):
     _autopilot = AutoPilot(storage=autopilot_storage)
     _autopilot.initialize()
 
+    # Initialiser AutoFixer (corrections automatiques)
+    from .autopilot import AutoFixer
+    AutoFixer.initialize(Database.get_session)
+
+    # Initialiser ClaudeFixer (corrections par IA)
+    try:
+        from .autopilot.claude_fixer import ClaudeFixer
+        if ClaudeFixer.initialize():
+            logger.info("claude_fixer_ready")
+    except ImportError:
+        logger.debug("claude_fixer_not_available")
+
     # Vérifier la configuration de l'encryption
     verify_encryption_setup()
 
@@ -76,6 +88,10 @@ async def lifespan(app: FastAPI):
 
     # Initialize icons manager
     IconManager.initialize()
+
+    # Initialize debug tables (Simon QA)
+    from .debug import DebugService
+    await DebugService.init_tables()
 
     # Routes already registered at import time (before include_router)
 
@@ -182,6 +198,7 @@ async def timing_middleware(request: Request, call_next: Callable):
 # Paths exemptés du WAF (reçoivent des données qui ressemblent à des attaques)
 GUARDIAN_EXEMPT_PATHS = [
     "/guardian/frontend-error",  # Reçoit des stack traces, code JS, etc.
+    "/api/v1/technicien/intervention/",  # Upload photos base64, signatures
 ]
 
 @app.middleware("http")
@@ -263,6 +280,7 @@ from .stock_router import stock_router
 from .workflows_api import workflows_router
 from .mobile_api import router_mobile
 from .sync_api import router_sync
+from .technicien_api import router_technicien
 from .planning_optimizer import router as planning_router
 
 # IMPORTANT: Charger les modules YAML AVANT d'enregistrer les routes
@@ -320,6 +338,9 @@ app.include_router(workflows_router, prefix="/api", tags=["Workflows"])
 # Mobile API
 app.include_router(router_mobile, prefix="/api", tags=["Mobile"])
 
+# Technicien Mobile API
+app.include_router(router_technicien, prefix="/api/v1", tags=["Technicien Mobile"])
+
 # Planning Optimizer
 app.include_router(planning_router, tags=["Planning"])
 
@@ -333,6 +354,22 @@ if notification_router:
 # Push Notifications
 if push_router:
     app.include_router(push_router, prefix="/api", tags=["Push Notifications"])
+
+# Generated Endpoints (Auto-created by Guardian)
+try:
+    from .generated_endpoints import generated_router
+    app.include_router(generated_router, prefix="/api", tags=["Generated"])
+except ImportError:
+    pass
+
+# Recent Items Tracker
+from .activity import recent_router
+app.include_router(recent_router, prefix="/api", tags=["Recent"])
+
+# Debug Module (Simon QA Assistant)
+from .debug import debug_api_router, debug_ui_router
+app.include_router(debug_api_router, tags=["Debug API"])
+app.include_router(debug_ui_router, tags=["Debug UI"])
 
 # =============================================================================
 # Route /api/utilisateurs (alias pour les selects UI)
@@ -417,6 +454,11 @@ static_path = Path(__file__).parent.parent / "assets"
 if static_path.exists():
     app.mount("/assets", StaticFiles(directory=str(static_path)), name="assets")
 
+# Static files (manifest.json, icons, etc.)
+static_public_path = Path(__file__).parent.parent / "static"
+if static_public_path.exists():
+    app.mount("/static", StaticFiles(directory=str(static_public_path)), name="static")
+
 # =============================================================================
 # Login page (public)
 # =============================================================================
@@ -427,6 +469,94 @@ async def login_page():
     if template_path.exists():
         return HTMLResponse(content=template_path.read_text())
     return HTMLResponse(content="<h1>Login</h1>")
+
+# =============================================================================
+# Waitlist page (public)
+# =============================================================================
+@app.get("/waitlist", response_class=HTMLResponse)
+async def waitlist_page():
+    """Page d'inscription à la liste d'attente."""
+    template_path = Path(__file__).parent.parent / "templates" / "waitlist.html"
+    if template_path.exists():
+        return HTMLResponse(content=template_path.read_text())
+    return HTMLResponse(content="<h1>Waitlist</h1>")
+
+@app.get("/inscription", response_class=HTMLResponse)
+async def inscription_page():
+    """Alias pour la page waitlist."""
+    return await waitlist_page()
+
+@app.post("/api/public/waitlist")
+async def waitlist_register(request: Request):
+    """Enregistrer une inscription à la waitlist."""
+    from moteur.db import Database
+    from uuid import UUID
+    from datetime import datetime
+
+    # Tenant système pour les inscriptions publiques
+    SYSTEM_TENANT = UUID("00000000-0000-0000-0000-000000000000")
+
+    try:
+        data = await request.json()
+
+        # Validation basique
+        email = data.get("email", "").strip().lower()
+        prenom = data.get("prenom", "").strip()
+
+        if not email or "@" not in email:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Email invalide"}
+            )
+
+        if not prenom:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Prénom requis"}
+            )
+
+        # Vérifier si l'email existe déjà
+        existing = Database.query(
+            "waitlist",
+            SYSTEM_TENANT,
+            filters={"email": email},
+            limit=1
+        )
+        if existing:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Tu es déjà inscrit ! On te préviendra bientôt."}
+            )
+
+        # Préparer les données
+        waitlist_data = {
+            "email": email,
+            "prenom": prenom,
+            "activite": data.get("activite", ""),
+            "source": data.get("source", ""),
+            "utm_source": data.get("utm_source", ""),
+            "utm_campaign": data.get("utm_campaign", ""),
+            "utm_content": data.get("utm_content", ""),
+            "inscrit_le": datetime.now().isoformat(),
+            "converti": False
+        }
+
+        # Insérer dans la base
+        result = Database.insert("waitlist", SYSTEM_TENANT, waitlist_data)
+
+        logger.info("waitlist_inscription", email=email, source=data.get("utm_source", "direct"))
+
+        return JSONResponse(
+            status_code=201,
+            content={"message": "Inscription réussie", "id": str(result.get("id"))}
+        )
+
+    except Exception as e:
+        logger.error("waitlist_error", error=str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Erreur serveur. Réessaie plus tard."}
+        )
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -444,6 +574,40 @@ async def favicon():
 # =============================================================================
 # Exception handlers
 # =============================================================================
+from fastapi.exceptions import RequestValidationError
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Gestion des erreurs de validation avec logging pour Guardian."""
+    errors = exc.errors()
+    path = request.url.path
+
+    # Log détaillé pour Guardian
+    logger.warning("validation_error",
+                  path=path,
+                  method=request.method,
+                  errors=errors)
+
+    # Construire un message utile
+    error_messages = []
+    for err in errors:
+        loc = " -> ".join(str(l) for l in err.get("loc", []))
+        msg = err.get("msg", "")
+        error_messages.append(f"{loc}: {msg}")
+
+    # Envoyer à AutoPilot pour apprentissage
+    autopilot = get_autopilot()
+    if autopilot:
+        error_log = f"ValidationError on {path}\n" + "\n".join(error_messages)
+        autopilot.analyze(error_log)
+
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": error_messages,
+            "validation_errors": errors
+        }
+    )
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -468,18 +632,26 @@ async def general_exception_handler(request: Request, exc: Exception):
     print(f"EXCEPTION on {request.url.path}: {exc}", file=sys.stderr)
     logger.error("exception_traceback", path=request.url.path, error=str(exc))
 
-    # === AUTOPILOT: Analyse ASYNCHRONE (ne bloque pas la réponse) ===
+    # === AUTOFIXER + CLAUDEFIXER: Correction ASYNCHRONE ===
     async def analyze_in_background():
-        """Analyse l'erreur en arrière-plan - invisible pour le client."""
+        """Analyse et corrige l'erreur en arrière-plan - invisible pour le client."""
         try:
             await Guardian.log_error(request, exc)
 
+            # 1. Essayer AutoFixer d'abord (corrections automatiques)
+            from .autopilot import AutoFixer
+            logger.info("backend_error_to_autofixer", path=request.url.path, error_type=type(exc).__name__)
+
+            success, message = AutoFixer.try_fix(error_log)
+            if success:
+                logger.info("backend_error_fixed", path=request.url.path, message=message)
+                return  # Corrigé!
+
+            # 2. Si AutoFixer échoue, AutoPilot analyse
             if _autopilot:
-                # Analyser l'erreur
                 proposal = _autopilot.analyze(error_log)
 
                 if proposal:
-                    # Si confiance très haute (pattern déjà validé), auto-appliquer
                     if proposal.confidence >= 0.95:
                         result = _autopilot.validate(
                             proposal.id,
@@ -492,13 +664,11 @@ async def general_exception_handler(request: Request, exc: Exception):
                                        file=proposal.file_path,
                                        confidence=proposal.confidence)
                     else:
-                        # En attente de validation Claude
                         logger.info("autopilot_fix_pending",
                                    id=proposal.id,
                                    error_type=proposal.error_type,
                                    confidence=proposal.confidence)
         except Exception as autopilot_error:
-            # AutoPilot ne doit jamais faire planter l'app
             logger.warning("autopilot_analysis_failed", error=str(autopilot_error))
 
     # Lancer l'analyse en arrière-plan (fire-and-forget)
