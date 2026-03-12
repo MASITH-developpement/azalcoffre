@@ -588,16 +588,18 @@ input[type="checkbox"] {
 }
 
 .o-notebook-header.active {
-    color: var(--white);
-    background: var(--primary);
+    color: var(--gray-900);
+    background: var(--primary-light);
+    border: 2px solid var(--primary);
+    border-bottom: none;
     font-weight: 600;
-    box-shadow: 0 -2px 6px rgba(113, 75, 103, 0.3);
+    box-shadow: 0 -2px 6px rgba(113, 75, 103, 0.2);
     z-index: 1;
 }
 
 .o-notebook-header.active:hover {
-    background: var(--primary-dark);
-    color: var(--white);
+    background: var(--primary-light);
+    color: var(--gray-900);
 }
 
 .o-notebook-content {
@@ -648,10 +650,12 @@ input[type="checkbox"] {
 }
 
 .doc-tab.active {
-    color: var(--white);
-    background: var(--primary);
+    color: var(--gray-900);
+    background: var(--primary-light);
+    border: 2px solid var(--primary);
+    border-bottom: none;
     font-weight: 600;
-    box-shadow: 0 -2px 6px rgba(113, 75, 103, 0.3);
+    box-shadow: 0 -2px 6px rgba(113, 75, 103, 0.2);
 }
 
 /* =============================================================================

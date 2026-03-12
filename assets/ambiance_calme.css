@@ -544,16 +544,18 @@ select,
 }
 
 .o-notebook-header.active {
-    color: var(--white);
-    background: var(--accent);
+    color: var(--gray-900);
+    background: var(--info-light);
+    border: 2px solid var(--accent);
+    border-bottom: none;
     font-weight: 600;
-    box-shadow: 0 -2px 6px rgba(35, 131, 226, 0.25);
+    box-shadow: 0 -2px 6px rgba(35, 131, 226, 0.15);
     z-index: 1;
 }
 
 .o-notebook-header.active:hover {
-    background: #1a73d1;
-    color: var(--white);
+    background: var(--info-light);
+    color: var(--gray-900);
 }
 
 .o-notebook-content {
@@ -601,10 +603,12 @@ select,
 }
 
 .doc-tab.active {
-    color: var(--white);
-    background: var(--accent);
+    color: var(--gray-900);
+    background: var(--info-light);
+    border: 2px solid var(--accent);
+    border-bottom: none;
     font-weight: 600;
-    box-shadow: 0 -2px 6px rgba(35, 131, 226, 0.25);
+    box-shadow: 0 -2px 6px rgba(35, 131, 226, 0.15);
 }
 
 /* Formulaire Odoo - 2 colonnes */
