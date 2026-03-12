@@ -2814,7 +2814,9 @@ async def technicien_dashboard(
         for cid in client_ids:
             client = Database.get("clients", tenant_id, cid)
             if client:
-                clients[cid] = client.get("name", client.get("legal_name", ""))
+                nom = client.get("nom") or client.get("name") or client.get("raison_sociale") or ""
+                prenom = client.get("prenom", "")
+                clients[cid] = f"{nom} {prenom}".strip() if prenom else nom
 
     for intv in interventions_today:
         intv["client_nom"] = clients.get(intv.get("client_id"), "Client inconnu")
@@ -2897,9 +2899,16 @@ async def technicien_intervention_detail(
 
     # Enrichir avec client
     client = Database.get("clients", tenant_id, intervention.get("client_id"))
-    intervention["client_nom"] = client.get("name", client.get("legal_name", "")) if client else "Client inconnu"
-    intervention["client_telephone"] = client.get("phone") if client else None
-    intervention["client_email"] = client.get("email") if client else None
+    if client:
+        nom = client.get("nom") or client.get("name") or client.get("raison_sociale") or ""
+        prenom = client.get("prenom", "")
+        intervention["client_nom"] = f"{nom} {prenom}".strip() if prenom else nom
+        intervention["client_telephone"] = client.get("telephone") or client.get("phone")
+        intervention["client_email"] = client.get("email")
+    else:
+        intervention["client_nom"] = "Client inconnu"
+        intervention["client_telephone"] = None
+        intervention["client_email"] = None
 
     # Determiner l'etape courante
     statut = intervention.get("statut", "DRAFT")
@@ -3216,7 +3225,13 @@ async def technicien_interventions_list(
         try:
             client = Database.get("clients", tenant_id, cid)
             if client:
-                clients[cid] = client.get("name", client.get("legal_name", ""))
+                # Essayer plusieurs champs possibles pour le nom
+                nom = client.get("nom") or client.get("name") or client.get("raison_sociale") or client.get("legal_name") or ""
+                prenom = client.get("prenom", "")
+                if prenom:
+                    clients[cid] = f"{nom} {prenom}".strip()
+                else:
+                    clients[cid] = nom
         except Exception:
             pass
 
@@ -3460,14 +3475,18 @@ async def module_list(
             related_item = Database.get_by_id(related_module.lower(), tenant_id, value)
             if related_item:
                 # Chercher un champ de nom dans l'ordre de préférence
-                display_name = (
-                    related_item.get('name') or
-                    related_item.get('nom') or
-                    related_item.get('raison_sociale') or
-                    related_item.get('code') or
-                    related_item.get('reference') or
-                    str(value)[:8] + "..."
-                )
+                nom = related_item.get('nom') or related_item.get('name') or related_item.get('raison_sociale') or ""
+                prenom = related_item.get('prenom', "")
+                if nom and prenom:
+                    display_name = f"{nom} {prenom}"
+                elif nom:
+                    display_name = nom
+                else:
+                    display_name = (
+                        related_item.get('code') or
+                        related_item.get('reference') or
+                        str(value)[:8] + "..."
+                    )
                 relation_cache[cache_key] = display_name
                 return display_name
         except Exception:
@@ -5087,6 +5106,1189 @@ def get_icon_url(icon_name: str) -> str:
     return f"/assets/icons/{icon_name}.svg"
 
 
+def generate_intervention_wizard() -> str:
+    """Génère le wizard Typeform pour création d'interventions."""
+    return '''
+    <!-- Wizard Typeform Interventions -->
+    <style>
+    .wizard-overlay {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        z-index: 2000;
+        display: none;
+        flex-direction: column;
+    }
+    .wizard-overlay.open { display: flex; }
+
+    .wizard-progress {
+        height: 4px;
+        background: rgba(255,255,255,0.2);
+    }
+    .wizard-progress-bar {
+        height: 100%;
+        background: white;
+        transition: width 0.3s ease;
+        width: 12.5%;
+    }
+
+    .wizard-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 10;
+    }
+    .wizard-close:hover { background: rgba(255,255,255,0.3); }
+
+    .wizard-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 24px;
+        max-width: 500px;
+        margin: 0 auto;
+        width: 100%;
+        overflow-y: auto;
+    }
+
+    .wizard-question {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 24px;
+        line-height: 1.3;
+    }
+
+    .wizard-subtitle {
+        font-size: 14px;
+        color: rgba(255,255,255,0.7);
+        margin-top: -16px;
+        margin-bottom: 24px;
+    }
+
+    .wizard-input {
+        background: white;
+        border: none;
+        border-radius: 12px;
+        padding: 16px 20px;
+        font-size: 18px;
+        width: 100%;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        margin-bottom: 12px;
+    }
+    .wizard-input:focus {
+        outline: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .wizard-textarea {
+        background: white;
+        border: none;
+        border-radius: 12px;
+        padding: 16px 20px;
+        font-size: 16px;
+        width: 100%;
+        min-height: 120px;
+        resize: vertical;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .wizard-cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .wizard-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 3px solid transparent;
+    }
+    .wizard-card:hover { transform: translateY(-2px); }
+    .wizard-card:active { transform: scale(0.95); }
+    .wizard-card.selected {
+        border-color: #4ade80;
+        box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+    }
+    .wizard-card-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+    .wizard-card-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .wizard-option-btn {
+        background: rgba(255,255,255,0.95);
+        border: none;
+        border-radius: 12px;
+        padding: 16px 20px;
+        font-size: 16px;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        margin-bottom: 8px;
+        transition: transform 0.2s;
+    }
+    .wizard-option-btn:hover { transform: translateX(4px); }
+    .wizard-option-btn.selected {
+        background: white;
+        box-shadow: 0 0 0 3px #4ade80;
+    }
+
+    .wizard-client-result {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 8px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .wizard-client-result:hover { transform: translateX(4px); }
+    .wizard-client-result.selected { box-shadow: 0 0 0 3px #4ade80; }
+    .wizard-client-name { font-weight: 600; color: #333; }
+    .wizard-client-info { font-size: 13px; color: #666; margin-top: 4px; }
+
+    .wizard-quick-btns {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .wizard-quick-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        border-radius: 20px;
+        padding: 8px 16px;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .wizard-quick-btn:hover { background: rgba(255,255,255,0.3); }
+    .wizard-quick-btn.selected { background: white; color: #764ba2; }
+
+    .wizard-time-btns {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .wizard-time-btn {
+        background: rgba(255,255,255,0.15);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 8px;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .wizard-time-btn:hover { background: rgba(255,255,255,0.25); }
+    .wizard-time-btn.selected { background: white; color: #764ba2; font-weight: 600; }
+
+    .wizard-selected-item {
+        background: rgba(74, 222, 128, 0.2);
+        border: 2px solid #4ade80;
+        border-radius: 8px;
+        padding: 12px 16px;
+        color: white;
+        margin-top: 12px;
+        font-weight: 500;
+    }
+
+    .wizard-summary {
+        background: rgba(255,255,255,0.95);
+        border-radius: 16px;
+        padding: 20px;
+        color: #333;
+    }
+    .wizard-summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .wizard-summary-row:last-child { border-bottom: none; }
+    .wizard-summary-label { color: #666; font-size: 14px; }
+    .wizard-summary-value { font-weight: 600; }
+
+    .wizard-nav {
+        padding: 16px 24px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        display: flex;
+        gap: 12px;
+    }
+    .wizard-btn {
+        flex: 1;
+        padding: 16px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s, opacity 0.2s;
+    }
+    .wizard-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .wizard-btn-next { background: white; color: #764ba2; }
+    .wizard-btn-next:hover:not(:disabled) { transform: translateY(-2px); }
+    .wizard-btn-back { background: rgba(255,255,255,0.2); color: white; }
+
+    .wizard-loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(118,75,162,0.3);
+        border-top-color: #764ba2;
+        border-radius: 50%;
+        animation: wizard-spin 0.8s linear infinite;
+    }
+    @keyframes wizard-spin {
+        to { transform: rotate(360deg); }
+    }
+    </style>
+
+    <div id="interventionWizard" class="wizard-overlay">
+        <div class="wizard-progress">
+            <div class="wizard-progress-bar" id="wizardProgress"></div>
+        </div>
+
+        <button class="wizard-close" onclick="closeWizard()">&times;</button>
+
+        <div class="wizard-content" id="wizardContent">
+            <!-- Contenu dynamique -->
+        </div>
+
+        <div class="wizard-nav">
+            <button class="wizard-btn wizard-btn-back" id="wizardBack" onclick="wizardBack()">Retour</button>
+            <button class="wizard-btn wizard-btn-next" id="wizardNext" onclick="wizardNext()">Suivant</button>
+        </div>
+    </div>
+
+    <script>
+    // État du wizard
+    var wizardState = {
+        currentStep: 0,
+        data: {},
+        clientData: null,
+        clientResults: []
+    };
+
+    var WIZARD_STEPS = [
+        { id: 'client', question: 'Pour quel client ?', type: 'client' },
+        { id: 'donneur', question: 'Qui demande l\\'intervention ?', type: 'donneur' },
+        { id: 'facture', question: 'Qui sera facturé ?', type: 'facture' },
+        { id: 'refext', question: 'Référence externe ?', type: 'refext' },
+        { id: 'type', question: "Quel type d'intervention ?", type: 'cards', field: 'type_intervention',
+          options: [
+            { value: 'INSTALLATION', label: 'Installation', icon: '🔧' },
+            { value: 'MAINTENANCE', label: 'Maintenance', icon: '🛠️' },
+            { value: 'REPARATION', label: 'Réparation', icon: '🔩' },
+            { value: 'INSPECTION', label: 'Inspection', icon: '🔍' },
+            { value: 'AUTRE', label: 'Autre', icon: '📋' }
+          ]},
+        { id: 'priority', question: 'Quelle priorité ?', type: 'cards', field: 'priorite',
+          options: [
+            { value: 'LOW', label: 'Basse', icon: '🟢' },
+            { value: 'NORMAL', label: 'Normale', icon: '🔵' },
+            { value: 'HIGH', label: 'Haute', icon: '🟠' },
+            { value: 'URGENT', label: 'Urgente', icon: '🔴' }
+          ]},
+        { id: 'description', question: 'Décrivez le problème', type: 'description' },
+        { id: 'address', question: "Lieu de l'intervention ?", type: 'address' },
+        { id: 'contact', question: 'Contact sur place différent du client ?', type: 'contact' },
+        { id: 'technicien', question: 'Quel technicien assigner ?', type: 'technicien' },
+        { id: 'schedule', question: 'Quand planifier ?', type: 'schedule' },
+        { id: 'confirm', question: 'Confirmer la création', type: 'summary' }
+    ];
+
+    function openInterventionWizard() {
+        wizardState = {
+            currentStep: 0,
+            data: {
+                donneurSameAsClient: true,  // Par défaut, le client est le demandeur
+                factureSameAsClient: true,  // Par défaut, on facture le client
+                contactDifferent: false,    // Par défaut, le contact est le client
+                heure_intervention: '09:00' // Heure par défaut
+            },
+            clientData: null,
+            clientResults: []
+        };
+        document.getElementById('interventionWizard').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        renderWizardStep();
+    }
+
+    function closeWizard() {
+        document.getElementById('interventionWizard').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function renderWizardStep() {
+        var step = WIZARD_STEPS[wizardState.currentStep];
+        var container = document.getElementById('wizardContent');
+        var progress = ((wizardState.currentStep + 1) / WIZARD_STEPS.length) * 100;
+        document.getElementById('wizardProgress').style.width = progress + '%';
+
+        var html = '<div class="wizard-question">' + step.question + '</div>';
+
+        switch(step.type) {
+            case 'client': html += renderClientStep(); break;
+            case 'donneur': html += renderDonneurStep(); break;
+            case 'facture': html += renderFactureStep(); break;
+            case 'refext': html += renderRefExtStep(); break;
+            case 'cards': html += renderCardsStep(step); break;
+            case 'description': html += renderDescriptionStep(); break;
+            case 'address': html += renderAddressStep(); break;
+            case 'contact': html += renderContactStep(); break;
+            case 'technicien': html += renderTechnicienStep(); break;
+            case 'schedule': html += renderScheduleStep(); break;
+            case 'summary': html += renderSummaryStep(); break;
+        }
+
+        container.innerHTML = html;
+        updateWizardNav();
+
+        // Focus premier input
+        var firstInput = container.querySelector('input, textarea');
+        if (firstInput) setTimeout(function() { firstInput.focus(); }, 100);
+    }
+
+    function renderClientStep() {
+        var html = '<input type="text" class="wizard-input" id="wizardClientSearch" placeholder="Rechercher un client..." oninput="searchClients(this.value)">';
+        html += '<button type="button" class="wizard-option-btn" onclick="showQuickClientModal()" style="margin-top:12px;text-align:center;">➕ Créer un nouveau client</button>';
+        html += '<div id="wizardClientResults">';
+        if (wizardState.clientResults.length > 0) {
+            wizardState.clientResults.forEach(function(c) {
+                var selected = wizardState.data.client_id === c.id ? 'selected' : '';
+                html += '<div class="wizard-client-result ' + selected + '" onclick="selectClient(\\'' + c.id + '\\')">';
+                html += '<div class="wizard-client-name">' + (c.nom || c.raison_sociale || 'Client') + '</div>';
+                html += '<div class="wizard-client-info">' + (c.ville || '') + (c.telephone ? ' • ' + c.telephone : '') + '</div>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+        // Modal création client rapide
+        html += '<div id="quickClientModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;overflow-y:auto;">';
+        html += '<div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:450px;margin:40px auto;max-height:90vh;overflow-y:auto;">';
+        html += '<h3 style="margin:0 0 16px;color:#333;">Nouveau client</h3>';
+
+        // Infos client
+        html += '<input type="text" class="wizard-input" id="quickClientNom" placeholder="Nom du client *" style="margin-bottom:12px;">';
+        html += '<input type="tel" class="wizard-input" id="quickClientTel" placeholder="Téléphone" style="margin-bottom:12px;">';
+        html += '<input type="email" class="wizard-input" id="quickClientEmail" placeholder="Email" style="margin-bottom:16px;">';
+
+        // Adresse client
+        html += '<div style="color:#666;font-size:13px;margin-bottom:8px;font-weight:600;">Adresse du client</div>';
+        html += '<input type="text" class="wizard-input" id="quickClientAdresse1" placeholder="Adresse" style="margin-bottom:8px;">';
+        html += '<input type="text" class="wizard-input" id="quickClientAdresse2" placeholder="Adresse ligne 2 (optionnel)" style="margin-bottom:8px;">';
+        html += '<div style="display:flex;gap:8px;margin-bottom:16px;">';
+        html += '<input type="text" class="wizard-input" id="quickClientCp" placeholder="Code postal" style="width:120px;">';
+        html += '<input type="text" class="wizard-input" id="quickClientVille" placeholder="Ville" style="flex:1;">';
+        html += '</div>';
+
+        // Question : adresse d\\'intervention ?
+        html += '<div style="background:#f5f3ff;border-radius:12px;padding:16px;margin-bottom:16px;">';
+        html += '<div style="color:#333;font-weight:600;margin-bottom:12px;">📍 Lieu d\\'intervention</div>';
+        html += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;">';
+        html += '<input type="radio" name="interventionLieu" id="lieuMeme" checked onchange="toggleInterventionFields()">';
+        html += '<span>Même adresse que le client</span>';
+        html += '</label>';
+        html += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">';
+        html += '<input type="radio" name="interventionLieu" id="lieuAutre" onchange="toggleInterventionFields()">';
+        html += '<span>Adresse différente</span>';
+        html += '</label>';
+        html += '</div>';
+
+        // Champs adresse intervention (masqués par défaut)
+        html += '<div id="interventionFieldsContainer" style="display:none;margin-bottom:16px;">';
+        html += '<div style="color:#666;font-size:13px;margin-bottom:8px;font-weight:600;">Adresse d\\'intervention</div>';
+        html += '<input type="text" class="wizard-input" id="quickIntervAdresse" placeholder="Adresse intervention" style="margin-bottom:8px;">';
+        html += '<div style="display:flex;gap:8px;margin-bottom:8px;">';
+        html += '<input type="text" class="wizard-input" id="quickIntervCp" placeholder="Code postal" style="width:120px;">';
+        html += '<input type="text" class="wizard-input" id="quickIntervVille" placeholder="Ville" style="flex:1;">';
+        html += '</div>';
+        html += '<input type="text" class="wizard-input" id="quickIntervContact" placeholder="Nom du contact sur place" style="margin-bottom:8px;">';
+        html += '<input type="tel" class="wizard-input" id="quickIntervTel" placeholder="Téléphone contact" style="margin-bottom:8px;">';
+        html += '</div>';
+
+        html += '<div style="display:flex;gap:12px;">';
+        html += '<button onclick="hideQuickClientModal()" style="flex:1;padding:12px;border-radius:8px;border:1px solid #ddd;background:white;cursor:pointer;">Annuler</button>';
+        html += '<button onclick="createQuickClient()" style="flex:1;padding:12px;border-radius:8px;border:none;background:#764ba2;color:white;cursor:pointer;font-weight:600;">Créer</button>';
+        html += '</div></div></div>';
+        return html;
+    }
+
+    function toggleInterventionFields() {
+        var container = document.getElementById('interventionFieldsContainer');
+        var lieuAutre = document.getElementById('lieuAutre');
+        if (container && lieuAutre) {
+            container.style.display = lieuAutre.checked ? 'block' : 'none';
+        }
+    }
+
+    function showQuickClientModal() {
+        var modal = document.getElementById('quickClientModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.getElementById('quickClientNom').focus();
+        }
+    }
+
+    function hideQuickClientModal() {
+        var modal = document.getElementById('quickClientModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    async function createQuickClient() {
+        var nom = document.getElementById('quickClientNom').value.trim();
+        var tel = document.getElementById('quickClientTel').value.trim();
+        var email = document.getElementById('quickClientEmail').value.trim();
+        var adresse1 = document.getElementById('quickClientAdresse1').value.trim();
+        var adresse2 = document.getElementById('quickClientAdresse2').value.trim();
+        var cp = document.getElementById('quickClientCp').value.trim();
+        var ville = document.getElementById('quickClientVille').value.trim();
+
+        if (!nom) {
+            alert('Le nom est requis');
+            return;
+        }
+
+        try {
+            var res = await fetch('/api/clients', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nom: nom,
+                    telephone: tel,
+                    email: email,
+                    adresse1: adresse1,
+                    adresse2: adresse2,
+                    cp: cp,
+                    ville: ville
+                })
+            });
+
+            if (res.ok) {
+                var client = await res.json();
+                // Enrichir avec les données saisies (au cas où l'API ne les retourne pas)
+                client.adresse1 = adresse1;
+                client.adresse2 = adresse2;
+                client.cp = cp;
+                client.ville = ville;
+                client.telephone = tel;
+                client.contact_name = nom;
+
+                hideQuickClientModal();
+
+                // Sélectionner automatiquement le nouveau client
+                wizardState.data.client_id = client.id;
+                wizardState.data.client_nom = client.nom;
+                wizardState.clientData = client;
+                wizardState.clientResults = [client];
+
+                // Gérer l'adresse d'intervention
+                var lieuAutre = document.getElementById('lieuAutre');
+                if (lieuAutre && lieuAutre.checked) {
+                    // Adresse intervention différente
+                    wizardState.data.useClientAddress = false;
+                    wizardState.data.adresse_ligne1 = document.getElementById('quickIntervAdresse').value.trim();
+                    wizardState.data.code_postal = document.getElementById('quickIntervCp').value.trim();
+                    wizardState.data.ville = document.getElementById('quickIntervVille').value.trim();
+                    // Contact sur place
+                    wizardState.data.contactDifferent = true;
+                    wizardState.data.contact_sur_place = document.getElementById('quickIntervContact').value.trim();
+                    wizardState.data.telephone_contact = document.getElementById('quickIntervTel').value.trim();
+                } else {
+                    // Même adresse que le client
+                    wizardState.data.useClientAddress = true;
+                    wizardState.data.adresse_ligne1 = adresse1;
+                    wizardState.data.code_postal = cp;
+                    wizardState.data.ville = ville;
+                    // Contact = client
+                    wizardState.data.contactDifferent = false;
+                    wizardState.data.contact_sur_place = nom;
+                    wizardState.data.telephone_contact = tel;
+                }
+
+                renderWizardStep();
+            } else {
+                var err = await res.json();
+                alert('Erreur: ' + (err.detail || 'Création échouée'));
+            }
+        } catch(e) {
+            alert('Erreur: ' + e.message);
+        }
+    }
+
+    // === DONNEUR D'ORDRE ===
+    function renderDonneurStep() {
+        var html = '<div class="wizard-subtitle">Qui a demandé cette intervention ?</div>';
+        html += '<button class="wizard-option-btn ' + (wizardState.data.donneurSameAsClient ? 'selected' : '') + '" onclick="setDonneurSameAsClient(true)">';
+        html += '👤 Le client lui-même (' + (wizardState.data.client_nom || 'Client') + ')';
+        html += '</button>';
+        html += '<button class="wizard-option-btn ' + (wizardState.data.donneurSameAsClient === false ? 'selected' : '') + '" onclick="setDonneurSameAsClient(false)">';
+        html += '🏢 Autre donneur d\\'ordre';
+        html += '</button>';
+
+        if (wizardState.data.donneurSameAsClient === false) {
+            html += '<div style="margin-top:16px;">';
+            html += '<input type="text" class="wizard-input" id="wizardDonneurSearch" placeholder="Rechercher un donneur d\\'ordre..." oninput="searchDonneurs(this.value)">';
+            html += '<div id="wizardDonneurResults"></div>';
+            if (wizardState.data.donneur_ordre_nom) {
+                html += '<div class="wizard-selected-item">✓ ' + wizardState.data.donneur_ordre_nom + '</div>';
+            }
+            html += '</div>';
+        }
+        return html;
+    }
+
+    function setDonneurSameAsClient(same) {
+        wizardState.data.donneurSameAsClient = same;
+        if (same) {
+            wizardState.data.donneur_ordre_id = null;
+            wizardState.data.donneur_ordre_nom = null;
+        }
+        renderWizardStep();
+        updateWizardNav();
+    }
+
+    var donneurSearchTimeout;
+    function searchDonneurs(query) {
+        clearTimeout(donneurSearchTimeout);
+        if (query.length < 2) {
+            document.getElementById('wizardDonneurResults').innerHTML = '';
+            return;
+        }
+        donneurSearchTimeout = setTimeout(async function() {
+            try {
+                var res = await fetch('/api/donneur_ordre?search=' + encodeURIComponent(query) + '&limit=5', { credentials: 'include' });
+                if (!res.ok) return;
+                var data = await res.json();
+                var items = data.donneur_ordre || data.items || (Array.isArray(data) ? data : []);
+                var html = '';
+                items.forEach(function(d) {
+                    html += '<div class="wizard-client-result" onclick="selectDonneur(\\'' + d.id + '\\', \\'' + (d.nom || d.raison_sociale || '').replace(/'/g, "\\\\'") + '\\')">';
+                    html += '<div class="wizard-client-name">' + (d.nom || d.raison_sociale || 'Donneur') + '</div>';
+                    html += '</div>';
+                });
+                document.getElementById('wizardDonneurResults').innerHTML = html;
+            } catch(e) { console.error(e); }
+        }, 300);
+    }
+
+    function selectDonneur(id, nom) {
+        wizardState.data.donneur_ordre_id = id;
+        wizardState.data.donneur_ordre_nom = nom;
+        renderWizardStep();
+        updateWizardNav();
+    }
+
+    // === QUI SERA FACTURE ===
+    function renderFactureStep() {
+        var html = '<div class="wizard-subtitle">Qui recevra la facture ?</div>';
+        html += '<button class="wizard-option-btn ' + (wizardState.data.factureSameAsClient ? 'selected' : '') + '" onclick="setFactureSameAsClient(true)">';
+        html += '👤 Le client (' + (wizardState.data.client_nom || 'Client') + ')';
+        html += '</button>';
+        html += '<button class="wizard-option-btn ' + (wizardState.data.factureSameAsClient === false ? 'selected' : '') + '" onclick="setFactureSameAsClient(false)">';
+        html += '🏢 Un autre client/tiers';
+        html += '</button>';
+
+        if (wizardState.data.factureSameAsClient === false) {
+            html += '<div style="margin-top:16px;">';
+            html += '<input type="text" class="wizard-input" id="wizardFactureSearch" placeholder="Rechercher le client à facturer..." oninput="searchFactureClient(this.value)">';
+            html += '<div id="wizardFactureResults"></div>';
+            if (wizardState.data.facture_client_nom) {
+                html += '<div class="wizard-selected-item">✓ ' + wizardState.data.facture_client_nom + '</div>';
+            }
+            html += '</div>';
+        }
+        return html;
+    }
+
+    function setFactureSameAsClient(same) {
+        wizardState.data.factureSameAsClient = same;
+        if (same) {
+            wizardState.data.facture_autre_client_id = null;
+            wizardState.data.facture_client_nom = null;
+        }
+        renderWizardStep();
+        updateWizardNav();
+    }
+
+    var factureSearchTimeout;
+    function searchFactureClient(query) {
+        clearTimeout(factureSearchTimeout);
+        if (query.length < 2) {
+            document.getElementById('wizardFactureResults').innerHTML = '';
+            return;
+        }
+        factureSearchTimeout = setTimeout(async function() {
+            try {
+                var res = await fetch('/api/clients?search=' + encodeURIComponent(query) + '&limit=5', { credentials: 'include' });
+                if (!res.ok) return;
+                var data = await res.json();
+                var items = data.clients || data.items || (Array.isArray(data) ? data : []);
+                var html = '';
+                items.forEach(function(c) {
+                    html += '<div class="wizard-client-result" onclick="selectFactureClient(\\'' + c.id + '\\', \\'' + (c.nom || c.raison_sociale || '').replace(/'/g, "\\\\'") + '\\')">';
+                    html += '<div class="wizard-client-name">' + (c.nom || c.raison_sociale || 'Client') + '</div>';
+                    html += '<div class="wizard-client-info">' + (c.ville || '') + '</div>';
+                    html += '</div>';
+                });
+                document.getElementById('wizardFactureResults').innerHTML = html;
+            } catch(e) { console.error(e); }
+        }, 300);
+    }
+
+    function selectFactureClient(id, nom) {
+        wizardState.data.facture_autre_client_id = id;
+        wizardState.data.facture_client_nom = nom;
+        renderWizardStep();
+        updateWizardNav();
+    }
+
+    // === REFERENCE EXTERNE ===
+    function renderRefExtStep() {
+        var html = '<div class="wizard-subtitle">Numéro de référence externe (bon de commande, etc.)</div>';
+        var refVal = wizardState.data.reference_externe || '';
+        html += '<input type="text" class="wizard-input" id="wizardRefExt" placeholder="Ex: BC-2026-001, REF12345..." value="' + refVal + '">';
+        html += '<div style="color:rgba(255,255,255,0.7);font-size:13px;margin-top:12px;">Optionnel - Laissez vide si non applicable</div>';
+        return html;
+    }
+
+    // === TECHNICIEN ===
+    function renderTechnicienStep() {
+        var html = '<div class="wizard-subtitle">Sélectionnez le technicien qui interviendra</div>';
+
+        // Option: pas de technicien assigné
+        html += '<button class="wizard-option-btn ' + (!wizardState.data.intervenant_id ? 'selected' : '') + '" onclick="selectTechnicien(null, null)">';
+        html += '📋 Pas encore assigné';
+        html += '</button>';
+
+        // Liste des techniciens
+        html += '<div id="wizardTechnicienList" style="margin-top:12px;">';
+        if (wizardState.techniciens && wizardState.techniciens.length > 0) {
+            wizardState.techniciens.forEach(function(t) {
+                var selected = wizardState.data.intervenant_id === t.id ? 'selected' : '';
+                html += '<button class="wizard-option-btn ' + selected + '" onclick="selectTechnicien(\\'' + t.id + '\\', \\'' + (t.nom || '').replace(/'/g, "\\\\'") + '\\')">';
+                html += '👷 ' + (t.prenom ? t.prenom + ' ' : '') + (t.nom || t.email || 'Technicien');
+                html += '</button>';
+            });
+        } else {
+            html += '<div style="color:rgba(255,255,255,0.7);font-size:14px;">Chargement des techniciens...</div>';
+            // Charger les techniciens
+            loadTechniciens();
+        }
+        html += '</div>';
+
+        // Afficher temps de trajet estimé si technicien et adresse
+        if (wizardState.data.intervenant_id && wizardState.data.ville) {
+            html += '<div class="wizard-trajet-info" style="margin-top:16px;background:rgba(255,255,255,0.15);padding:12px;border-radius:8px;">';
+            html += '<span style="opacity:0.8;">🚗 Temps de trajet estimé :</span> ';
+            html += '<strong>' + (wizardState.data.temps_trajet_estime || '~30') + ' min</strong>';
+            html += '</div>';
+        }
+
+        return html;
+    }
+
+    async function loadTechniciens() {
+        try {
+            var res = await fetch('/api/utilisateurs?role=technicien&limit=50', { credentials: 'include' });
+            if (!res.ok) {
+                // Essayer avec tous les utilisateurs
+                res = await fetch('/api/utilisateurs?limit=50', { credentials: 'include' });
+            }
+            if (res.ok) {
+                var data = await res.json();
+                wizardState.techniciens = data.items || data.utilisateurs || (Array.isArray(data) ? data : []);
+                renderWizardStep();
+            }
+        } catch(e) {
+            console.error('Erreur chargement techniciens:', e);
+        }
+    }
+
+    function selectTechnicien(id, nom) {
+        wizardState.data.intervenant_id = id;
+        wizardState.data.intervenant_nom = nom;
+
+        // Calculer temps de trajet estimé (simulation basique)
+        if (id && wizardState.data.ville) {
+            // En production, appeler une API de calcul de distance
+            wizardState.data.temps_trajet_estime = Math.floor(Math.random() * 45) + 15; // 15-60 min
+        } else {
+            wizardState.data.temps_trajet_estime = null;
+        }
+
+        renderWizardStep();
+        updateWizardNav();
+    }
+
+    var searchTimeout;
+    function searchClients(query) {
+        clearTimeout(searchTimeout);
+        if (query.length < 2) {
+            wizardState.clientResults = [];
+            document.getElementById('wizardClientResults').innerHTML = '';
+            return;
+        }
+        searchTimeout = setTimeout(async function() {
+            try {
+                var res = await fetch('/api/clients?search=' + encodeURIComponent(query) + '&limit=5', { credentials: 'include' });
+                if (!res.ok) {
+                    console.error('Search clients error:', res.status);
+                    wizardState.clientResults = [];
+                    renderClientResults();
+                    return;
+                }
+                var data = await res.json();
+                // Handle different API response formats
+                wizardState.clientResults = data.clients || data.items || (Array.isArray(data) ? data : []);
+                renderClientResults();
+            } catch(e) {
+                console.error('Search clients exception:', e);
+                wizardState.clientResults = [];
+                renderClientResults();
+            }
+        }, 300);
+    }
+
+    function renderClientResults() {
+        var html = '';
+        wizardState.clientResults.forEach(function(c) {
+            var selected = wizardState.data.client_id === c.id ? 'selected' : '';
+            html += '<div class="wizard-client-result ' + selected + '" onclick="selectClient(\\'' + c.id + '\\')">';
+            html += '<div class="wizard-client-name">' + (c.nom || c.raison_sociale || 'Client') + '</div>';
+            html += '<div class="wizard-client-info">' + (c.ville || '') + (c.telephone ? ' • ' + c.telephone : '') + '</div>';
+            html += '</div>';
+        });
+        document.getElementById('wizardClientResults').innerHTML = html;
+    }
+
+    async function selectClient(id) {
+        wizardState.data.client_id = id;
+        var client = wizardState.clientResults.find(function(c) { return c.id === id; });
+        if (client) {
+            wizardState.data.client_nom = client.nom || client.raison_sociale;
+            // Charger données complètes
+            try {
+                var res = await fetch('/api/clients/' + id, { credentials: 'include' });
+                wizardState.clientData = await res.json();
+            } catch(e) { console.error(e); }
+        }
+        renderClientResults();
+        updateWizardNav();
+    }
+
+    function renderCardsStep(step) {
+        var html = '<div class="wizard-cards">';
+        step.options.forEach(function(opt) {
+            var selected = wizardState.data[step.field] === opt.value ? 'selected' : '';
+            html += '<div class="wizard-card ' + selected + '" onclick="selectCard(\\'' + step.field + '\\', \\'' + opt.value + '\\')">';
+            html += '<div class="wizard-card-icon">' + opt.icon + '</div>';
+            html += '<div class="wizard-card-label">' + opt.label + '</div>';
+            html += '</div>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function selectCard(field, value) {
+        wizardState.data[field] = value;
+        renderWizardStep();
+    }
+
+    function renderDescriptionStep() {
+        var titre = wizardState.data.titre || '';
+        var desc = wizardState.data.description || '';
+        return '<input type="text" class="wizard-input" id="wizardTitre" placeholder="Titre court (ex: Panne chauffage)" value="' + titre + '">' +
+               '<textarea class="wizard-textarea" id="wizardDescription" placeholder="Description détaillée du problème...">' + desc + '</textarea>';
+    }
+
+    function renderAddressStep() {
+        var html = '';
+        if (wizardState.clientData && wizardState.clientData.adresse1) {
+            html += '<div class="wizard-subtitle">Adresse du client disponible</div>';
+            html += '<button class="wizard-option-btn ' + (wizardState.data.useClientAddress ? 'selected' : '') + '" onclick="useClientAddress(true)">';
+            html += '📍 ' + wizardState.clientData.adresse1 + ', ' + (wizardState.clientData.cp || '') + ' ' + (wizardState.clientData.ville || '');
+            html += '</button>';
+            html += '<button class="wizard-option-btn ' + (wizardState.data.useClientAddress === false ? 'selected' : '') + '" onclick="useClientAddress(false)">✏️ Autre adresse</button>';
+
+            if (wizardState.data.useClientAddress === false) {
+                html += renderAddressFields();
+            }
+        } else {
+            html += renderAddressFields();
+        }
+        return html;
+    }
+
+    function renderAddressFields() {
+        var a1 = wizardState.data.adresse_ligne1 || '';
+        var cp = wizardState.data.code_postal || '';
+        var ville = wizardState.data.ville || '';
+        return '<input type="text" class="wizard-input" id="wizardAdresse" placeholder="Adresse" value="' + a1 + '">' +
+               '<div style="display:flex;gap:12px;">' +
+               '<input type="text" class="wizard-input" id="wizardCp" placeholder="Code postal" value="' + cp + '" style="width:120px;">' +
+               '<input type="text" class="wizard-input" id="wizardVille" placeholder="Ville" value="' + ville + '" style="flex:1;">' +
+               '</div>';
+    }
+
+    function useClientAddress(use) {
+        wizardState.data.useClientAddress = use;
+        if (use && wizardState.clientData) {
+            wizardState.data.adresse_ligne1 = wizardState.clientData.adresse1;
+            wizardState.data.code_postal = wizardState.clientData.cp;
+            wizardState.data.ville = wizardState.clientData.ville;
+        }
+        renderWizardStep();
+    }
+
+    function renderContactStep() {
+        var html = '<div class="wizard-subtitle">Le contact sur place est-il différent du client ?</div>';
+
+        // Par défaut, le contact est le client
+        if (wizardState.data.contactDifferent === undefined) {
+            wizardState.data.contactDifferent = false;
+            // Pré-remplir avec les infos du client
+            if (wizardState.clientData) {
+                wizardState.data.contact_sur_place = wizardState.clientData.contact_name || wizardState.clientData.nom;
+                wizardState.data.telephone_contact = wizardState.clientData.telephone;
+            }
+        }
+
+        html += '<button class="wizard-option-btn ' + (!wizardState.data.contactDifferent ? 'selected' : '') + '" onclick="setContactDifferent(false)">';
+        html += '👤 Non, c\\'est le client';
+        if (wizardState.clientData) {
+            html += '<br><small style="opacity:0.7;">' + (wizardState.clientData.contact_name || wizardState.clientData.nom || '') + '</small>';
+        }
+        html += '</button>';
+
+        html += '<button class="wizard-option-btn ' + (wizardState.data.contactDifferent ? 'selected' : '') + '" onclick="setContactDifferent(true)">';
+        html += '✏️ Oui, autre personne';
+        html += '</button>';
+
+        if (wizardState.data.contactDifferent) {
+            html += '<div style="margin-top:16px;">';
+            var nom = wizardState.data.contact_sur_place || '';
+            var tel = wizardState.data.telephone_contact || '';
+            html += '<input type="text" class="wizard-input" id="wizardContactNom" placeholder="Nom du contact sur place" value="' + nom + '">';
+            html += '<input type="tel" class="wizard-input" id="wizardContactTel" placeholder="Téléphone" value="' + tel + '">';
+            html += '</div>';
+        }
+        return html;
+    }
+
+    function setContactDifferent(different) {
+        wizardState.data.contactDifferent = different;
+        if (!different && wizardState.clientData) {
+            // Utiliser le contact du client
+            wizardState.data.contact_sur_place = wizardState.clientData.contact_name || wizardState.clientData.nom;
+            wizardState.data.telephone_contact = wizardState.clientData.telephone;
+        } else if (different) {
+            // Vider pour saisie manuelle
+            wizardState.data.contact_sur_place = '';
+            wizardState.data.telephone_contact = '';
+        }
+        renderWizardStep();
+    }
+
+    function renderScheduleStep() {
+        var html = '<div class="wizard-quick-btns">';
+        var today = new Date().toISOString().split('T')[0];
+        var tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+        html += '<button class="wizard-quick-btn ' + (wizardState.data.date_intervention === today ? 'selected' : '') + '" onclick="setQuickDate(\\'' + today + '\\')">Aujourd\\'hui</button>';
+        html += '<button class="wizard-quick-btn ' + (wizardState.data.date_intervention === tomorrow ? 'selected' : '') + '" onclick="setQuickDate(\\'' + tomorrow + '\\')">Demain</button>';
+        html += '<button class="wizard-quick-btn ' + (wizardState.data.date_intervention === 'later' ? 'selected' : '') + '" onclick="setQuickDate(\\'later\\')">À planifier</button>';
+        html += '</div>';
+
+        var dateVal = wizardState.data.date_intervention || '';
+        var heureVal = wizardState.data.heure_intervention || '09:00';
+        var dureeVal = wizardState.data.duree_prevue_minutes || 60;
+
+        html += '<div style="color:white;margin:16px 0 8px;font-size:14px;">Date</div>';
+        html += '<input type="date" class="wizard-input" id="wizardDate" value="' + (dateVal === 'later' ? '' : dateVal) + '">';
+
+        html += '<div style="color:white;margin:16px 0 8px;font-size:14px;">Heure de début</div>';
+        html += '<div class="wizard-time-btns">';
+        ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'].forEach(function(h) {
+            var sel = heureVal === h ? 'selected' : '';
+            html += '<button class="wizard-time-btn ' + sel + '" onclick="setQuickTime(\\'' + h + '\\')">' + h + '</button>';
+        });
+        html += '</div>';
+        html += '<input type="time" class="wizard-input" id="wizardTime" value="' + heureVal + '" style="margin-top:8px;">';
+
+        html += '<div style="color:white;margin:16px 0 8px;font-size:14px;">Durée estimée</div>';
+        html += '<select class="wizard-input" id="wizardDuree" style="background:white;">';
+        [30, 60, 90, 120, 180, 240, 480].forEach(function(d) {
+            var selected = dureeVal == d ? 'selected' : '';
+            var label = d < 60 ? d + ' min' : (d/60) + 'h';
+            html += '<option value="' + d + '" ' + selected + '>' + label + '</option>';
+        });
+        html += '</select>';
+        return html;
+    }
+
+    function setQuickDate(date) {
+        wizardState.data.date_intervention = date;
+        if (date === 'later') {
+            wizardState.data.date_prevue_debut = null;
+        }
+        renderWizardStep();
+    }
+
+    function setQuickTime(time) {
+        wizardState.data.heure_intervention = time;
+        var timeInput = document.getElementById('wizardTime');
+        if (timeInput) timeInput.value = time;
+        renderWizardStep();
+    }
+
+    function renderSummaryStep() {
+        var d = wizardState.data;
+        var html = '<div class="wizard-summary">';
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Client</span><span class="wizard-summary-value">' + (d.client_nom || '-') + '</span></div>';
+
+        // Donneur d'ordre
+        var donneurLabel = d.donneurSameAsClient ? 'Le client' : (d.donneur_ordre_nom || '-');
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Demandeur</span><span class="wizard-summary-value">' + donneurLabel + '</span></div>';
+
+        // Qui sera facturé
+        var factureLabel = d.factureSameAsClient ? 'Le client' : (d.facture_client_nom || '-');
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Facturé à</span><span class="wizard-summary-value">' + factureLabel + '</span></div>';
+
+        // Référence externe
+        if (d.reference_externe) {
+            html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Réf. externe</span><span class="wizard-summary-value">' + d.reference_externe + '</span></div>';
+        }
+
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Type</span><span class="wizard-summary-value">' + (d.type_intervention || 'AUTRE') + '</span></div>';
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Priorité</span><span class="wizard-summary-value">' + (d.priorite || 'NORMAL') + '</span></div>';
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Titre</span><span class="wizard-summary-value">' + (d.titre || '-') + '</span></div>';
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Adresse</span><span class="wizard-summary-value">' + (d.adresse_ligne1 || '-') + ', ' + (d.ville || '') + '</span></div>';
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Contact</span><span class="wizard-summary-value">' + (d.contact_sur_place || '-') + (d.telephone_contact ? ' • ' + d.telephone_contact : '') + '</span></div>';
+
+        // Technicien
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Technicien</span><span class="wizard-summary-value">' + (d.intervenant_nom || 'Non assigné') + '</span></div>';
+
+        // Date et heure
+        var dateLabel = 'Non planifiée';
+        if (d.date_prevue_debut) {
+            var dt = new Date(d.date_prevue_debut);
+            dateLabel = dt.toLocaleDateString('fr-FR') + ' à ' + (d.heure_intervention || '09:00');
+        }
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Date/Heure</span><span class="wizard-summary-value">' + dateLabel + '</span></div>';
+
+        // Temps de trajet si assigné
+        if (d.intervenant_id && d.temps_trajet_estime) {
+            html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Trajet</span><span class="wizard-summary-value">~' + d.temps_trajet_estime + ' min</span></div>';
+        }
+
+        // Durée
+        var dureeLabel = (d.duree_prevue_minutes || 60) < 60 ? (d.duree_prevue_minutes || 60) + ' min' : ((d.duree_prevue_minutes || 60)/60) + 'h';
+        html += '<div class="wizard-summary-row"><span class="wizard-summary-label">Durée</span><span class="wizard-summary-value">' + dureeLabel + '</span></div>';
+
+        html += '</div>';
+        return html;
+    }
+
+    function updateWizardNav() {
+        var backBtn = document.getElementById('wizardBack');
+        var nextBtn = document.getElementById('wizardNext');
+        var step = WIZARD_STEPS[wizardState.currentStep];
+
+        backBtn.style.display = wizardState.currentStep === 0 ? 'none' : 'block';
+
+        if (step.id === 'confirm') {
+            nextBtn.textContent = 'Créer l\\'intervention';
+        } else {
+            nextBtn.textContent = 'Suivant';
+        }
+
+        // Validation
+        var isValid = validateWizardStep();
+        nextBtn.disabled = !isValid;
+    }
+
+    function validateWizardStep() {
+        var step = WIZARD_STEPS[wizardState.currentStep];
+        switch(step.id) {
+            case 'client': return !!wizardState.data.client_id;
+            case 'donneur':
+                // Valide si "même que client" ou si un donneur est sélectionné
+                return wizardState.data.donneurSameAsClient === true ||
+                       (wizardState.data.donneurSameAsClient === false && wizardState.data.donneur_ordre_id);
+            case 'facture':
+                // Valide si "même que client" ou si un client facture est sélectionné
+                return wizardState.data.factureSameAsClient === true ||
+                       (wizardState.data.factureSameAsClient === false && wizardState.data.facture_autre_client_id);
+            case 'type': return !!wizardState.data.type_intervention;
+            case 'priority': return !!wizardState.data.priorite;
+            default: return true;
+        }
+    }
+
+    function saveWizardStepData() {
+        var step = WIZARD_STEPS[wizardState.currentStep];
+        switch(step.id) {
+            case 'refext':
+                var refEl = document.getElementById('wizardRefExt');
+                if (refEl) wizardState.data.reference_externe = refEl.value.trim();
+                break;
+            case 'description':
+                var titreEl = document.getElementById('wizardTitre');
+                var descEl = document.getElementById('wizardDescription');
+                if (titreEl) wizardState.data.titre = titreEl.value;
+                if (descEl) wizardState.data.description = descEl.value;
+                break;
+            case 'address':
+                if (!wizardState.data.useClientAddress) {
+                    var a = document.getElementById('wizardAdresse');
+                    var cp = document.getElementById('wizardCp');
+                    var v = document.getElementById('wizardVille');
+                    if (a) wizardState.data.adresse_ligne1 = a.value;
+                    if (cp) wizardState.data.code_postal = cp.value;
+                    if (v) wizardState.data.ville = v.value;
+                }
+                break;
+            case 'contact':
+                if (wizardState.data.contactDifferent) {
+                    var nom = document.getElementById('wizardContactNom');
+                    var tel = document.getElementById('wizardContactTel');
+                    if (nom) wizardState.data.contact_sur_place = nom.value;
+                    if (tel) wizardState.data.telephone_contact = tel.value;
+                }
+                break;
+            case 'schedule':
+                var dateEl = document.getElementById('wizardDate');
+                var timeEl = document.getElementById('wizardTime');
+                var dureeEl = document.getElementById('wizardDuree');
+                if (dateEl && dateEl.value) {
+                    var time = timeEl ? timeEl.value : '09:00';
+                    wizardState.data.date_prevue_debut = dateEl.value + 'T' + time + ':00';
+                    wizardState.data.heure_intervention = time;
+                } else {
+                    wizardState.data.date_prevue_debut = null;
+                }
+                if (dureeEl) wizardState.data.duree_prevue_minutes = parseInt(dureeEl.value);
+                break;
+        }
+    }
+
+    async function wizardNext() {
+        saveWizardStepData();
+
+        if (wizardState.currentStep === WIZARD_STEPS.length - 1) {
+            await submitWizard();
+            return;
+        }
+
+        wizardState.currentStep++;
+        renderWizardStep();
+    }
+
+    function wizardBack() {
+        if (wizardState.currentStep > 0) {
+            saveWizardStepData();
+            wizardState.currentStep--;
+            renderWizardStep();
+        }
+    }
+
+    async function submitWizard() {
+        var btn = document.getElementById('wizardNext');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="wizard-loading"></span>';
+
+        var d = wizardState.data;
+        var payload = {
+            client_id: d.client_id,
+            // Donneur d'ordre : si même que client, on ne met pas de donneur_ordre_id
+            donneur_ordre_id: d.donneurSameAsClient ? null : (d.donneur_ordre_id || null),
+            // Référence externe
+            reference_externe: d.reference_externe || null,
+            // Technicien assigné
+            intervenant_id: d.intervenant_id || null,
+            // Temps de trajet estimé
+            temps_trajet_estime: d.temps_trajet_estime || null,
+            type_intervention: d.type_intervention || 'AUTRE',
+            priorite: d.priorite || 'NORMAL',
+            titre: d.titre || '',
+            description: d.description || '',
+            adresse_ligne1: d.adresse_ligne1 || '',
+            code_postal: d.code_postal || '',
+            ville: d.ville || '',
+            contact_sur_place: d.contact_sur_place || '',
+            telephone_contact: d.telephone_contact || '',
+            date_prevue_debut: d.date_prevue_debut || null,
+            duree_prevue_minutes: d.duree_prevue_minutes || null,
+            statut: d.intervenant_id ? 'PLANIFIEE' : 'DRAFT'  // Si technicien assigné, passer en PLANIFIEE
+        };
+
+        // Ajouter note si client facturé différent
+        if (!d.factureSameAsClient && d.facture_client_nom) {
+            payload.notes_internes = (payload.notes_internes || '') + '\\n[Facturer à: ' + d.facture_client_nom + ']';
+        }
+
+        try {
+            var res = await fetch('/api/interventions', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                var result = await res.json();
+                closeWizard();
+                window.location.href = '/ui/interventions/' + result.id;
+            } else {
+                var err = await res.json();
+                alert('Erreur: ' + (err.detail || 'Création échouée'));
+                btn.disabled = false;
+                btn.textContent = 'Créer l\\'intervention';
+            }
+        } catch(e) {
+            alert('Erreur: ' + e.message);
+            btn.disabled = false;
+            btn.textContent = 'Créer l\\'intervention';
+        }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        var wizard = document.getElementById('interventionWizard');
+        if (!wizard || !wizard.classList.contains('open')) return;
+
+        if (e.key === 'Escape') {
+            closeWizard();
+        } else if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            var nextBtn = document.getElementById('wizardNext');
+            if (nextBtn && !nextBtn.disabled) wizardNext();
+        }
+    });
+    </script>
+    '''
+
+
 def generate_list_with_bulk_actions(
     module_name: str,
     module_display_name: str,
@@ -5120,13 +6322,22 @@ def generate_list_with_bulk_actions(
         </div>
         '''
 
+    # Bouton spécial wizard pour interventions
+    is_interventions = module_name.lower() == 'interventions'
+    if is_interventions:
+        nouveau_btn = '<button class="btn btn-primary" onclick="openInterventionWizard()">+ Nouveau</button>'
+        wizard_html = generate_intervention_wizard()
+    else:
+        nouveau_btn = f'<a href="/ui/{module_name}/nouveau" class="btn btn-primary">+ Nouveau</a>'
+        wizard_html = ''
+
     return f'''
     <div class="list-container">
         <div class="list-toolbar">
             <div class="search-box">
                 <input type="text" id="search-input" placeholder="Rechercher..." class="form-control">
             </div>
-            <a href="/ui/{module_name}/nouveau" class="btn btn-primary">+ Nouveau</a>
+            {nouveau_btn}
         </div>
 
         {bulk_actions_html}
@@ -5241,6 +6452,7 @@ def generate_list_with_bulk_actions(
             }}
         }}
     </script>
+    {wizard_html}
     '''
 
 
@@ -5363,7 +6575,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     }})();
     </script>
     <script src="/assets/js/error-reporter.js"></script>
-    <link rel="stylesheet" href="/assets/style.css?v=6198">
+    <link rel="stylesheet" href="/assets/style.css?v=9001">
     <script>
     // Notification bell - defined early so onclick works
     var notifPanelOpen = false;
