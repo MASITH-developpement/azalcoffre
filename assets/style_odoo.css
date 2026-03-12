@@ -1,0 +1,1231 @@
+/* =============================================================================
+   AZALPLUS - Design Style Odoo Complet
+   Mise en page ERP : formulaires 2 colonnes, onglets, chatter
+   ============================================================================= */
+
+:root {
+    /* Couleurs Odoo */
+    --primary: #714B67;
+    --primary-dark: #5C3D54;
+    --primary-light: #F3EDF2;
+    --primary-50: #FAF7F9;
+    --accent: #00A09D;
+
+    /* Sidebar Odoo */
+    --sidebar-bg: #714B67;
+    --sidebar-hover: #5C3D54;
+    --sidebar-text: #FFFFFF;
+    --sidebar-text-muted: rgba(255,255,255,0.7);
+
+    /* Status */
+    --success: #28A745;
+    --success-light: #D4EDDA;
+    --warning: #FFC107;
+    --warning-light: #FFF3CD;
+    --error: #DC3545;
+    --error-light: #F8D7DA;
+    --info: #17A2B8;
+    --info-light: #D1ECF1;
+
+    /* Neutres Odoo */
+    --white: #FFFFFF;
+    --gray-50: #FAFAFA;
+    --gray-100: #F1F1F1;
+    --gray-200: #DEE2E6;
+    --gray-300: #CED4DA;
+    --gray-400: #ADB5BD;
+    --gray-500: #6C757D;
+    --gray-600: #495057;
+    --gray-700: #343A40;
+    --gray-800: #212529;
+    --gray-900: #111111;
+
+    /* Layout Odoo */
+    --sidebar-width: 240px;
+    --sidebar-collapsed: 50px;
+    --header-height: 46px;
+    --control-panel-height: 50px;
+    --tabs-height: 38px;
+    --radius: 3px;
+    --radius-lg: 4px;
+
+    /* Ombres Odoo - très subtiles */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Reset */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--gray-700);
+    background: var(--gray-100);
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { color: var(--primary-dark); }
+
+/* =============================================================================
+   LAYOUT ODOO
+   ============================================================================= */
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar Odoo - Violette */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.sidebar-logo {
+    height: 46px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--sidebar-text);
+    background: rgba(0,0,0,0.15);
+}
+
+.sidebar-logo-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 8px 0;
+    overflow-y: auto;
+}
+
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+.nav-section {
+    margin-bottom: 4px;
+}
+
+.nav-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--sidebar-text-muted);
+    padding: 12px 16px 6px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    margin: 1px 6px;
+    border-radius: var(--radius);
+    color: var(--sidebar-text);
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.1s;
+}
+
+.nav-item:hover {
+    background: var(--sidebar-hover);
+}
+
+.nav-item.active {
+    background: rgba(255,255,255,0.15);
+}
+
+.nav-icon {
+    width: 18px;
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.85;
+}
+
+/* User Odoo */
+.sidebar-user {
+    padding: 8px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.user-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: var(--radius);
+}
+
+.user-box:hover { background: var(--sidebar-hover); }
+
+.user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: var(--sidebar-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.user-name { font-size: 12px; font-weight: 500; color: var(--sidebar-text); }
+.user-email { font-size: 10px; color: var(--sidebar-text-muted); }
+
+/* Main Wrapper Odoo */
+.main-wrapper {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--gray-100);
+}
+
+/* Header Odoo - Control Panel */
+.main-header {
+    height: var(--header-height);
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-search {
+    display: flex;
+    align-items: center;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    padding: 0 8px;
+    max-width: 280px;
+}
+
+.header-search input {
+    border: none;
+    background: transparent;
+    padding: 5px 0;
+    font-size: 12px;
+    width: 100%;
+    outline: none;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-notif {
+    position: relative;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--gray-500);
+    padding: 4px;
+}
+
+.notif-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--error);
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 4px;
+    border-radius: 8px;
+}
+
+/* =============================================================================
+   CONTROL PANEL ODOO (barre d'actions)
+   ============================================================================= */
+
+.control-panel {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--control-panel-height);
+}
+
+.control-panel-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.control-panel-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Breadcrumb Odoo */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.breadcrumb a {
+    color: var(--gray-600);
+}
+
+.breadcrumb a:hover {
+    color: var(--primary);
+}
+
+.breadcrumb-separator {
+    color: var(--gray-400);
+}
+
+.breadcrumb-current {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+/* =============================================================================
+   TABS ODOO (onglets formulaire)
+   ============================================================================= */
+
+.tabs-container {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 16px;
+}
+
+.tabs {
+    display: flex;
+    gap: 0;
+    height: var(--tabs-height);
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 100%;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.tab:hover {
+    color: var(--gray-800);
+    background: var(--gray-50);
+}
+
+.tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: transparent;
+}
+
+/* =============================================================================
+   PAGE TITLE ODOO
+   ============================================================================= */
+
+.page-header {
+    background: var(--white);
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.page-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0;
+}
+
+.page-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.main-content {
+    flex: 1;
+    padding: 16px;
+}
+
+/* =============================================================================
+   FORMULAIRE ODOO - 2 COLONNES
+   ============================================================================= */
+
+.o-form-sheet, .form-sheet {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 16px 24px;
+    max-width: 1200px;
+}
+
+/* Sheet header avec avatar */
+.o-form-sheet-header {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.o-form-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    color: var(--gray-400);
+    flex-shrink: 0;
+}
+
+.o-form-title {
+    flex: 1;
+}
+
+.o-form-title h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 8px;
+}
+
+/* Smart buttons Odoo */
+.o-smart-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.o-smart-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 16px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    background: var(--white);
+    cursor: pointer;
+    transition: all 0.1s;
+    min-width: 80px;
+}
+
+.o-smart-button:hover {
+    background: var(--gray-50);
+    border-color: var(--primary);
+}
+
+.o-smart-button-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.o-smart-button-label {
+    font-size: 11px;
+    color: var(--gray-600);
+}
+
+/* Groupe 2 colonnes Odoo */
+.o-group, .form-group-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 32px;
+}
+
+.o-group-col {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ligne de formulaire Odoo */
+.o-field-row, .form-row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 8px;
+    align-items: start;
+    margin-bottom: 8px;
+    min-height: 32px;
+}
+
+.o-field-label, .label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+    text-align: right;
+    padding-top: 6px;
+    padding-right: 8px;
+}
+
+.o-field-label.required::after {
+    content: " *";
+    color: var(--error);
+}
+
+/* Champs Odoo */
+.o-field-widget {
+    min-height: 30px;
+}
+
+.o-field-char, .o-field-text, .input, .select, textarea,
+input[type="text"], input[type="email"], input[type="number"],
+input[type="date"], input[type="tel"], select {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 13px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    background: var(--white);
+    color: var(--gray-700);
+    transition: all 0.1s;
+    min-height: 30px;
+}
+
+.o-field-char:focus, .o-field-text:focus,
+.input:focus, .select:focus, textarea:focus,
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary-light);
+}
+
+textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* Checkbox Odoo */
+.o-field-boolean {
+    display: flex;
+    align-items: center;
+    height: 30px;
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+}
+
+/* =============================================================================
+   NOTEBOOK ODOO (onglets dans formulaire)
+   ============================================================================= */
+
+.o-notebook {
+    margin-top: 20px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.o-notebook-headers {
+    display: flex;
+    gap: 2px;
+    padding: 8px 12px 0;
+    background: var(--gray-100);
+    border-bottom: none;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.o-notebook-header {
+    position: relative;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-600);
+    cursor: pointer;
+    background: var(--gray-200);
+    border: none;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    min-width: 80px;
+    text-align: center;
+}
+
+.o-notebook-header:hover {
+    color: var(--gray-800);
+    background: var(--gray-300);
+    text-decoration: none;
+}
+
+.o-notebook-header.active {
+    color: var(--white);
+    background: var(--primary);
+    font-weight: 600;
+    box-shadow: 0 -2px 6px rgba(113, 75, 103, 0.3);
+    z-index: 1;
+}
+
+.o-notebook-header.active:hover {
+    background: var(--primary-dark);
+    color: var(--white);
+}
+
+.o-notebook-content {
+    padding: 20px;
+    background: var(--white);
+    display: none;
+    border: 1px solid var(--gray-200);
+    border-top: 3px solid var(--primary);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.o-notebook-content.active {
+    display: block;
+}
+
+/* =============================================================================
+   DOC-TABS (onglets documents/lignes)
+   ============================================================================= */
+
+.doc-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 8px 12px 0;
+    margin-bottom: 0;
+    border-bottom: none;
+    background: var(--gray-100);
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.doc-tab {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-600);
+    cursor: pointer;
+    background: var(--gray-200);
+    border: none;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.15s ease;
+    min-width: 80px;
+    text-align: center;
+}
+
+.doc-tab:hover {
+    color: var(--gray-800);
+    background: var(--gray-300);
+}
+
+.doc-tab.active {
+    color: var(--white);
+    background: var(--primary);
+    font-weight: 600;
+    box-shadow: 0 -2px 6px rgba(113, 75, 103, 0.3);
+}
+
+/* =============================================================================
+   CHATTER ODOO (colonne droite)
+   ============================================================================= */
+
+.o-form-with-chatter {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+}
+
+.o-chatter {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    height: fit-content;
+    position: sticky;
+    top: 70px;
+}
+
+.o-chatter-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.o-chatter-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    background: var(--white);
+    cursor: pointer;
+}
+
+.o-chatter-btn:hover {
+    background: var(--gray-50);
+}
+
+.o-chatter-btn.primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+.o-chatter-messages {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.o-message {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.o-message:last-child {
+    border-bottom: none;
+}
+
+.o-message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.o-message-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.o-message-author {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--gray-800);
+}
+
+.o-message-date {
+    font-size: 11px;
+    color: var(--gray-500);
+}
+
+.o-message-content {
+    font-size: 13px;
+    color: var(--gray-700);
+    line-height: 1.5;
+}
+
+/* =============================================================================
+   CARDS ODOO
+   ============================================================================= */
+
+.card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--gray-50);
+}
+
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.card-body {
+    padding: 16px;
+}
+
+/* =============================================================================
+   BUTTONS ODOO
+   ============================================================================= */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: var(--white);
+    color: var(--gray-700);
+    border-color: var(--gray-300);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-100);
+}
+
+.btn-success {
+    background: var(--success);
+    border-color: var(--success);
+    color: var(--white);
+}
+
+.btn-danger {
+    background: var(--error);
+    border-color: var(--error);
+    color: var(--white);
+}
+
+.btn-link {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    padding: 5px 8px;
+}
+
+.btn-link:hover { text-decoration: underline; }
+
+.btn-sm { padding: 3px 8px; font-size: 12px; }
+.btn-lg { padding: 8px 16px; font-size: 14px; }
+
+.btn-icon {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+}
+
+/* =============================================================================
+   TABLES ODOO (liste)
+   ============================================================================= */
+
+.o-list-view {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-600);
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    white-space: nowrap;
+}
+
+.table th.sortable {
+    cursor: pointer;
+}
+
+.table th.sortable:hover {
+    background: var(--gray-100);
+}
+
+.table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 13px;
+    color: var(--gray-700);
+}
+
+.table tbody tr {
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.table tbody tr:hover {
+    background: var(--primary-50);
+}
+
+.table tbody tr.selected {
+    background: var(--primary-light);
+}
+
+/* Checkbox colonne */
+.table .o-list-record-selector {
+    width: 40px;
+    text-align: center;
+}
+
+/* =============================================================================
+   KANBAN ODOO
+   ============================================================================= */
+
+.o-kanban-view {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    overflow-x: auto;
+}
+
+.o-kanban-column {
+    min-width: 280px;
+    max-width: 280px;
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    padding: 8px;
+}
+
+.o-kanban-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+
+.o-kanban-column-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gray-700);
+}
+
+.o-kanban-column-count {
+    background: var(--gray-300);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.o-kanban-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: box-shadow 0.1s;
+}
+
+.o-kanban-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* =============================================================================
+   BADGES ODOO
+   ============================================================================= */
+
+.badge, .o-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 3px;
+}
+
+.badge-gray { background: var(--gray-200); color: var(--gray-700); }
+.badge-purple { background: var(--primary-light); color: var(--primary); }
+.badge-green { background: var(--success-light); color: var(--success); }
+.badge-yellow { background: var(--warning-light); color: #856404; }
+.badge-red { background: var(--error-light); color: var(--error); }
+.badge-blue { background: var(--info-light); color: var(--info); }
+
+/* Status badges */
+.status-brouillon { background: var(--gray-200); color: var(--gray-700); }
+.status-envoye, .status-planifie { background: var(--info-light); color: var(--info); }
+.status-accepte, .status-valide, .status-termine { background: var(--success-light); color: var(--success); }
+.status-refuse, .status-annule { background: var(--error-light); color: var(--error); }
+.status-en-cours, .status-a-planifier { background: var(--warning-light); color: #856404; }
+.status-paye { background: #D4EDDA; color: #155724; }
+
+/* =============================================================================
+   STATS ODOO
+   ============================================================================= */
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.stat-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.stat-icon.purple { background: var(--primary-light); color: var(--primary); }
+.stat-icon.green { background: var(--success-light); color: var(--success); }
+.stat-icon.yellow { background: var(--warning-light); color: #856404; }
+.stat-icon.red { background: var(--error-light); color: var(--error); }
+.stat-icon.blue { background: var(--info-light); color: var(--info); }
+
+.stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--gray-500);
+}
+
+/* =============================================================================
+   EMPTY STATE
+   ============================================================================= */
+
+.empty-state, .o-nocontent {
+    text-align: center;
+    padding: 48px 24px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+}
+
+.empty-icon { font-size: 48px; opacity: 0.4; margin-bottom: 16px; }
+.empty-title { font-size: 16px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px; }
+.empty-text { font-size: 13px; color: var(--gray-500); margin-bottom: 16px; }
+
+/* =============================================================================
+   LOGIN PAGE ODOO
+   ============================================================================= */
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    padding: 20px;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 400px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.login-header {
+    padding: 32px 32px 24px;
+    text-align: center;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.login-logo {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.login-subtitle {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-top: 8px;
+}
+
+.login-body {
+    padding: 24px 32px 32px;
+}
+
+.login-body .form-group {
+    margin-bottom: 16px;
+}
+
+.login-body .label {
+    text-align: left;
+    padding: 0;
+    margin-bottom: 6px;
+}
+
+.login-error {
+    background: var(--error-light);
+    color: var(--error);
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+}
+
+.login-body .btn-primary {
+    width: 100%;
+    padding: 10px;
+}
+
+.password-field { position: relative; }
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+}
+
+/* =============================================================================
+   ALERTS
+   ============================================================================= */
+
+.alert, .o-notification {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-info { background: var(--info-light); color: #0C5460; border: 1px solid #BEE5EB; }
+.alert-success { background: var(--success-light); color: #155724; border: 1px solid #C3E6CB; }
+.alert-warning { background: var(--warning-light); color: #856404; border: 1px solid #FFEEBA; }
+.alert-danger { background: var(--error-light); color: #721C24; border: 1px solid #F5C6CB; }
+
+/* =============================================================================
+   UTILITIES
+   ============================================================================= */
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 4px; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+
+.text-sm { font-size: 12px; }
+.text-muted { color: var(--gray-500); }
+.font-medium { font-weight: 500; }
+.font-bold { font-weight: 600; }
+
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 12px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+.hidden { display: none; }
+.w-full { width: 100%; }
+
+/* =============================================================================
+   RESPONSIVE
+   ============================================================================= */
+
+@media (max-width: 1200px) {
+    .o-form-with-chatter {
+        grid-template-columns: 1fr;
+    }
+    .o-chatter {
+        position: static;
+    }
+}
+
+@media (max-width: 1024px) {
+    .o-group, .form-group-2col {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: var(--sidebar-collapsed);
+    }
+    .sidebar .nav-item span:last-child,
+    .sidebar .nav-title,
+    .sidebar .user-name,
+    .sidebar .user-email,
+    .sidebar-logo span {
+        display: none;
+    }
+    .main-wrapper {
+        margin-left: var(--sidebar-collapsed);
+    }
+    .o-field-row, .form-row {
+        grid-template-columns: 1fr;
+    }
+    .o-field-label, .label {
+        text-align: left;
+        padding: 0 0 4px 0;
+    }
+}
