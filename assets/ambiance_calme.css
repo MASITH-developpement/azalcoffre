@@ -513,8 +513,8 @@ select,
 
 .o-notebook-headers {
     display: flex;
-    gap: 0;
-    padding: 0;
+    gap: 8px;
+    padding: 0 16px;
     background: var(--white);
     border-bottom: 1px solid var(--gray-200);
     flex-wrap: wrap;
@@ -523,7 +523,7 @@ select,
 
 .o-notebook-header {
     position: relative;
-    padding: 12px 20px;
+    padding: 12px 16px;
     font-size: var(--font-size-base);
     font-weight: 500;
     color: var(--gray-500);
@@ -531,8 +531,25 @@ select,
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
     transition: all 0.15s ease;
     text-decoration: none;
+    white-space: nowrap;
+}
+
+.o-notebook-header::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 16px;
+    background: var(--gray-200);
+}
+
+.o-notebook-header:last-child::after {
+    display: none;
 }
 
 .o-notebook-header:hover {
@@ -563,8 +580,8 @@ select,
 /* DOC-TABS (onglets documents/lignes) - Style simple */
 .doc-tabs {
     display: flex;
-    gap: 0;
-    padding: 0;
+    gap: 8px;
+    padding: 0 16px;
     margin-bottom: 0;
     border-bottom: 1px solid var(--gray-200);
     background: var(--white);
@@ -572,7 +589,8 @@ select,
 }
 
 .doc-tab {
-    padding: 12px 20px;
+    position: relative;
+    padding: 12px 16px;
     font-size: var(--font-size-base);
     font-weight: 500;
     color: var(--gray-500);
@@ -580,7 +598,24 @@ select,
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
     transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.doc-tab::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 16px;
+    background: var(--gray-200);
+}
+
+.doc-tab:last-child::after {
+    display: none;
 }
 
 .doc-tab:hover {
