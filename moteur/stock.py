@@ -22,6 +22,7 @@ import structlog
 
 from .db import Database
 from .tenant import get_current_tenant
+from .constants import get_statuts, get_statut_defaut, get
 
 logger = structlog.get_logger()
 
@@ -60,14 +61,22 @@ class SousTypeMouvement(str, Enum):
 
 
 class StatutMouvement(str, Enum):
-    """Statuts de mouvement."""
+    """Statuts de mouvement.
+
+    DEPRECATED: Utiliser get_statuts("mouvements_stock") depuis moteur.constants
+    Ces valeurs doivent correspondre à config/constants.yml > statuts.mouvements_stock
+    """
     BROUILLON = "BROUILLON"
     VALIDE = "VALIDE"
     ANNULE = "ANNULE"
 
 
 class StatutStock(str, Enum):
-    """Statuts de stock."""
+    """Statuts de stock.
+
+    DEPRECATED: Utiliser get_statuts("stock") depuis moteur.constants
+    Ces valeurs doivent correspondre à config/constants.yml > statuts.stock
+    """
     EN_STOCK = "EN_STOCK"
     STOCK_BAS = "STOCK_BAS"
     RUPTURE = "RUPTURE"

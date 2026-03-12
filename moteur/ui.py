@@ -15,10 +15,11 @@ import structlog
 
 from .parser import ModuleParser, ModuleDefinition, FieldDefinition
 from .auth import get_current_user, require_auth
-from .tenant import get_current_tenant
+from .tenant import get_current_tenant, SYSTEM_TENANT_ID
 from .db import Database
 from .config import settings
 from .reports import ReportEngine
+from .constants import get_tva_options, get_tva
 from datetime import date, timedelta
 
 logger = structlog.get_logger()
@@ -42,77 +43,125 @@ jinja_env = Environment(
 ui_router = APIRouter()
 
 # =============================================================================
+# TVA Helpers (chargés depuis config/constants.yml)
+# =============================================================================
+def _get_tva_select_options() -> str:
+    """Génère les options HTML pour le select TVA."""
+    tva_options = get_tva_options("france")
+    # Trier par taux décroissant (normal en premier)
+    sorted_tva = sorted(tva_options.items(), key=lambda x: x[1], reverse=True)
+    options_html = ""
+    for nom, taux in sorted_tva:
+        options_html += f'<option value="{taux}">{taux}%</option>'
+    # Ajouter 0% pour exonéré
+    options_html += '<option value="0">0%</option>'
+    return options_html
+
+def _get_tva_default_rate() -> float:
+    """Retourne le taux TVA par défaut (normal)."""
+    return get_tva("france", "normal")
+
+# Cache des valeurs TVA pour éviter les appels répétés
+_TVA_OPTIONS_HTML = None
+_TVA_DEFAULT_RATE = None
+
+def get_tva_options_html() -> str:
+    """Retourne les options HTML TVA (avec cache)."""
+    global _TVA_OPTIONS_HTML
+    if _TVA_OPTIONS_HTML is None:
+        _TVA_OPTIONS_HTML = _get_tva_select_options()
+    return _TVA_OPTIONS_HTML
+
+def get_tva_default() -> float:
+    """Retourne le taux TVA par défaut (avec cache)."""
+    global _TVA_DEFAULT_RATE
+    if _TVA_DEFAULT_RATE is None:
+        _TVA_DEFAULT_RATE = _get_tva_default_rate()
+    return _TVA_DEFAULT_RATE
+
+# =============================================================================
 # Helpers
 # =============================================================================
-def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = False, module_name: str = "") -> str:
-    """Génère le HTML d'un champ de formulaire."""
+def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = False, module_name: str = "", odoo_style: bool = True) -> str:
+    """Génère le HTML d'un champ de formulaire style Odoo (label à gauche, input à droite)."""
+    import html as html_module
 
     field_id = f"field_{field.nom}"
-    required = "required" if field.requis else ""
+    required_attr = "required" if field.requis else ""
+    required_class = "required" if field.requis else ""
     label = field.label or field.nom.replace("_", " ").title()
     placeholder = getattr(field, 'placeholder', None) or ""
     help_text = f'<small class="form-help">{field.aide}</small>' if field.aide else ""
-    custom_class = "custom-field" if is_custom or getattr(field, 'is_custom', False) else ""
-    groupe = getattr(field, 'groupe', None) or ""
+
+    # Échapper la valeur pour HTML
+    escaped_value = html_module.escape(str(value)) if value is not None else ""
 
     # Type de champ
     if field.type == "texte long" or field.type == "textarea":
         return f'''
-        <div class="form-group {custom_class}" data-groupe="{groupe}">
-            <label class="label" for="{field_id}">{label}</label>
-            <textarea class="input" id="{field_id}" name="{field.nom}" rows="4" {required} placeholder="{placeholder}">{value or ''}</textarea>
-            {help_text}
+        <div class="o-field-row" style="grid-template-columns: 150px 1fr;">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <textarea class="o-field-text" id="{field_id}" name="{field.nom}" rows="3" {required_attr} placeholder="{placeholder}">{escaped_value}</textarea>
+                {help_text}
+            </div>
         </div>
         '''
 
-    elif field.type == "enum" and field.enum_values:
+    elif field.type in ["enum", "select"] and field.enum_values:
         options = "".join([
             f'<option value="{v}" {"selected" if v == value else ""}>{v}</option>'
             for v in field.enum_values
         ])
         return f'''
-        <div class="form-group">
-            <label class="label" for="{field_id}">{label}</label>
-            <select class="input" id="{field_id}" name="{field.nom}" {required}>
-                <option value="">-- Sélectionner --</option>
-                {options}
-            </select>
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <select class="o-field-char" id="{field_id}" name="{field.nom}" {required_attr}>
+                    <option value="">-- Sélectionner --</option>
+                    {options}
+                </select>
+            </div>
         </div>
         '''
 
     elif field.type == "oui/non" or field.type == "booleen":
         checked = "checked" if value else ""
         return f'''
-        <div class="form-group">
-            <label class="flex items-center gap-2">
+        <div class="o-field-row">
+            <label class="o-field-label" for="{field_id}">{label}</label>
+            <div class="o-field-widget o-field-boolean">
                 <input type="checkbox" id="{field_id}" name="{field.nom}" {checked}>
-                <span>{label}</span>
-            </label>
+            </div>
         </div>
         '''
 
     elif field.type == "date":
         return f'''
-        <div class="form-group">
-            <label class="label" for="{field_id}">{label}</label>
-            <div class="datetime-picker-wrapper">
-                <input type="text" class="input datetime-picker" id="{field_id}" name="{field.nom}"
-                       value="{value or ''}" {required} readonly
-                       onclick="openDateTimePicker(this, 'date')" placeholder="Sélectionner une date...">
-                <span class="datetime-picker-icon" onclick="openDateTimePicker(document.getElementById('{field_id}'), 'date')">📅</span>
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <div class="datetime-picker-wrapper">
+                    <input type="text" class="o-field-char datetime-picker" id="{field_id}" name="{field.nom}"
+                           value="{escaped_value}" {required_attr} readonly
+                           onclick="openDateTimePicker(this, 'date')" placeholder="Sélectionner...">
+                    <span class="datetime-picker-icon" onclick="openDateTimePicker(document.getElementById('{field_id}'), 'date')">📅</span>
+                </div>
             </div>
         </div>
         '''
 
     elif field.type == "datetime":
         return f'''
-        <div class="form-group">
-            <label class="label" for="{field_id}">{label}</label>
-            <div class="datetime-picker-wrapper">
-                <input type="text" class="input datetime-picker" id="{field_id}" name="{field.nom}"
-                       value="{value or ''}" {required} readonly
-                       onclick="openDateTimePicker(this, 'datetime')" placeholder="Sélectionner date et heure...">
-                <span class="datetime-picker-icon" onclick="openDateTimePicker(document.getElementById('{field_id}'), 'datetime')">📅</span>
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <div class="datetime-picker-wrapper">
+                    <input type="text" class="o-field-char datetime-picker" id="{field_id}" name="{field.nom}"
+                           value="{escaped_value}" {required_attr} readonly
+                           onclick="openDateTimePicker(this, 'datetime')" placeholder="Sélectionner...">
+                    <span class="datetime-picker-icon" onclick="openDateTimePicker(document.getElementById('{field_id}'), 'datetime')">📅</span>
+                </div>
             </div>
         </div>
         '''
@@ -122,18 +171,22 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         min_attr = f'min="{field.min}"' if field.min is not None else ""
         max_attr = f'max="{field.max}"' if field.max is not None else ""
         return f'''
-        <div class="form-group">
-            <label class="label" for="{field_id}">{label}</label>
-            <input type="number" class="input" id="{field_id}" name="{field.nom}"
-                   step="{step}" {min_attr} {max_attr} value="{value or ''}" {required}>
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <input type="number" class="o-field-char" id="{field_id}" name="{field.nom}"
+                       step="{step}" {min_attr} {max_attr} value="{escaped_value}" {required_attr}>
+            </div>
         </div>
         '''
 
     elif field.type == "email":
         return f'''
-        <div class="form-group">
-            <label class="label" for="{field_id}">{label}</label>
-            <input type="email" class="input" id="{field_id}" name="{field.nom}" value="{value or ''}" {required}>
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <input type="email" class="o-field-char" id="{field_id}" name="{field.nom}" value="{escaped_value}" {required_attr}>
+            </div>
         </div>
         '''
 
@@ -149,16 +202,21 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         elif field.nom == "donneur_ordre_id":
             autofill_config = 'data-autofill="adresse_ligne1:adresse_ligne1,adresse_ligne2:adresse_ligne2,ville:ville,code_postal:code_postal,contact_sur_place:contact_principal,telephone_contact:telephone,email_contact:email"'
 
+        # Valeur actuelle pour pré-sélection
+        current_value = value or ""
+
         return f'''
-        <div class="form-group">
-            <label class="label" for="{field_id}">{label}</label>
-            <div class="select-with-create">
-                <select class="input" id="{field_id}" name="{field.nom}" data-link="{linked_module}" {autofill_config} {required} onchange="handleRelationAutofill(this)">
-                    <option value="">-- Sélectionner --</option>
-                </select>
-                <button type="button" class="btn-create-inline" onclick="openFullCreatePage('{linked_module_lower}', '{field_id}')" title="Créer nouveau">
-                    +
-                </button>
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <div class="select-with-create">
+                    <select class="o-field-char" id="{field_id}" name="{field.nom}" data-link="{linked_module}" data-current-value="{current_value}" {autofill_config} {required_attr} onchange="handleRelationAutofill(this)">
+                        <option value="">-- Sélectionner --</option>
+                    </select>
+                    <button type="button" class="btn-create-inline" onclick="openFullCreatePage('{linked_module_lower}', '{field_id}')" title="Créer nouveau">
+                        +
+                    </button>
+                </div>
             </div>
         </div>
         '''
@@ -170,23 +228,27 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         if has_autocompletion:
             # Input avec autocomplétion IA
             return f'''
-            <div class="form-group autocomplete-container">
-                <label class="label" for="{field_id}">{label}</label>
-                <div class="autocomplete-wrapper">
-                    <input type="text" class="input autocomplete-input" id="{field_id}" name="{field.nom}"
-                           value="{value or ''}" {required}
-                           data-autocomplete="true" data-module="{module_name}" data-champ="{field.nom}"
-                           autocomplete="off">
-                    <div class="autocomplete-suggestions" id="{field_id}_suggestions"></div>
-                    <span class="autocomplete-indicator" title="Autocomplétion IA">✨</span>
+            <div class="o-field-row">
+                <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+                <div class="o-field-widget autocomplete-container">
+                    <div class="autocomplete-wrapper">
+                        <input type="text" class="o-field-char autocomplete-input" id="{field_id}" name="{field.nom}"
+                               value="{escaped_value}" {required_attr}
+                               data-autocomplete="true" data-module="{module_name}" data-champ="{field.nom}"
+                               autocomplete="off">
+                        <div class="autocomplete-suggestions" id="{field_id}_suggestions"></div>
+                        <span class="autocomplete-indicator" title="Autocomplétion IA">✨</span>
+                    </div>
                 </div>
             </div>
             '''
         else:
             return f'''
-            <div class="form-group">
-                <label class="label" for="{field_id}">{label}</label>
-                <input type="text" class="input" id="{field_id}" name="{field.nom}" value="{value or ''}" {required}>
+            <div class="o-field-row">
+                <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+                <div class="o-field-widget">
+                    <input type="text" class="o-field-char" id="{field_id}" name="{field.nom}" value="{escaped_value}" {required_attr}>
+                </div>
             </div>
             '''
 
@@ -859,7 +921,17 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
     html = generate_layout(
         title="Style des documents",
         content='''
-        <div class="card">
+        <!-- Onglets -->
+        <div class="tabs-container" style="background: var(--white); border-radius: var(--radius-lg) var(--radius-lg) 0 0; margin-bottom: 0;">
+            <div class="tabs">
+                <a href="#" class="tab active" onclick="showTab('documents', this)">Style Documents</a>
+                <a href="#" class="tab" onclick="showTab('ambiance', this)">Ambiance</a>
+            </div>
+        </div>
+
+        <!-- Tab Documents -->
+        <div id="tab-documents" class="tab-content">
+        <div class="card" style="border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
             <div class="card-header">
                 <h2 class="card-title">Personnaliser le style des devis et factures</h2>
             </div>
@@ -998,6 +1070,147 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
                 alert('Thème enregistré ! (à implémenter avec API)');
             }
         </script>
+        </div>
+        </div>
+
+        <!-- Tab Ambiance -->
+        <div id="tab-ambiance" class="tab-content" style="display: none;">
+        <div class="card" style="border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+            <div class="card-header">
+                <h2 class="card-title">Choisir l'ambiance de l'interface</h2>
+            </div>
+            <div class="card-body">
+                <p style="color: var(--gray-600); margin-bottom: 24px;">Sélectionnez l'ambiance visuelle qui correspond à votre style de travail</p>
+
+                <div class="style-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+
+                    <!-- Ambiance Énergique -->
+                    <div class="style-card" data-style="energique" onclick="selectStyle('energique', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%); border-radius: 8px;"></div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Énergique</h3>
+                                <span style="font-size: 12px; color: var(--gray-500);">Linear, Vercel</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-600);">Contrastes forts, accents vifs, sidebar sombre. Pour les équipes dynamiques.</p>
+                        <div style="margin-top: 12px; display: flex; gap: 6px;">
+                            <span style="width: 20px; height: 20px; background: #8B5CF6; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #0F0F0F; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #FAFAFA; border-radius: 4px; border: 1px solid #ddd;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Ambiance Calme -->
+                    <div class="style-card" data-style="calme" onclick="selectStyle('calme', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 48px; height: 48px; background: #F7F6F3; border: 2px solid #EBEAE6; border-radius: 8px;"></div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Calme</h3>
+                                <span style="font-size: 12px; color: var(--gray-500);">Notion, Basecamp</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-600);">Tons neutres, beaucoup de blanc, minimaliste. Pour la concentration.</p>
+                        <div style="margin-top: 12px; display: flex; gap: 6px;">
+                            <span style="width: 20px; height: 20px; background: #37352F; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #F7F6F3; border-radius: 4px; border: 1px solid #ddd;"></span>
+                            <span style="width: 20px; height: 20px; background: #FFFFFF; border-radius: 4px; border: 1px solid #ddd;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Ambiance Premium -->
+                    <div class="style-card" data-style="premium" onclick="selectStyle('premium', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 48px; height: 48px; background: linear-gradient(180deg, #0A2540 0%, #635BFF 100%); border-radius: 8px;"></div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Premium</h3>
+                                <span style="font-size: 12px; color: var(--gray-500);">Stripe, Mercury</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-600);">Dégradés subtils, ombres douces, sophistiqué. Pour une image haut de gamme.</p>
+                        <div style="margin-top: 12px; display: flex; gap: 6px;">
+                            <span style="width: 20px; height: 20px; background: #635BFF; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #0A2540; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #F6F9FC; border-radius: 4px; border: 1px solid #ddd;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Ambiance Corporate -->
+                    <div class="style-card" data-style="corporate" onclick="selectStyle('corporate', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 48px; height: 48px; background: #032D60; border-radius: 8px;"></div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Corporate</h3>
+                                <span style="font-size: 12px; color: var(--gray-500);">Salesforce</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-600);">Bleu dominant, structuré, professionnel. Pour les entreprises établies.</p>
+                        <div style="margin-top: 12px; display: flex; gap: 6px;">
+                            <span style="width: 20px; height: 20px; background: #0176D3; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #032D60; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #F3F3F3; border-radius: 4px; border: 1px solid #ddd;"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="flex justify-end gap-2" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200);">
+                    <button class="btn btn-primary" onclick="applyStyle()">Appliquer l'ambiance</button>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <script>
+            let selectedStyle = null;
+
+            function showTab(tabName, element) {
+                event.preventDefault();
+                document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.getElementById('tab-' + tabName).style.display = 'block';
+                element.classList.add('active');
+            }
+
+            function selectStyle(style, element) {
+                selectedStyle = style;
+                document.querySelectorAll('.style-card').forEach(card => {
+                    card.style.borderColor = 'var(--gray-200)';
+                    const badge = card.querySelector('div > div:last-of-type > span');
+                    if (badge) badge.textContent = '';
+                });
+                element.style.borderColor = 'var(--primary)';
+                element.style.boxShadow = '0 0 0 3px rgba(113, 75, 103, 0.15)';
+                const badge = element.querySelector('div > div:last-of-type > span');
+                if (badge) badge.textContent = 'Sélectionné';
+            }
+
+            async function applyStyle() {
+                if (!selectedStyle) {
+                    alert('Veuillez sélectionner une ambiance');
+                    return;
+                }
+                try {
+                    const response = await fetch('/api/admin/ambiance', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ ambiance: selectedStyle })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        alert('Ambiance "' + selectedStyle + '" appliquée ! La page va se recharger.');
+                        window.location.reload();
+                    } else {
+                        const err = await response.json();
+                        alert('Erreur: ' + (err.detail || 'Erreur inconnue'));
+                    }
+                } catch(e) {
+                    alert('Erreur: ' + e.message);
+                }
+            }
+        </script>
         ''',
         user=user,
         modules=get_all_modules()
@@ -1010,10 +1223,21 @@ async def modules_settings(request: Request, user: dict = Depends(require_auth))
     """Page de configuration des modules actifs pour l'utilisateur."""
 
     # Get all available modules
+    from .guardian import CREATEUR_EMAIL
+
+    # Vérifier si l'utilisateur est le créateur
+    user_email = user.get("email", "")
+    is_createur = user_email == CREATEUR_EMAIL
+
     all_modules = []
     for name in ModuleParser.list_all():
         module = ModuleParser.get(name)
         if module and module.actif:
+            # Filtrer les modules createur_only
+            module_acces = getattr(module, 'acces', None)
+            if module_acces == 'createur_only' and not is_createur:
+                continue  # Ne pas afficher ce module aux non-créateurs
+
             all_modules.append({
                 "name": name,
                 "label": module.nom or name.capitalize(),
@@ -1149,7 +1373,7 @@ async def modules_settings(request: Request, user: dict = Depends(require_auth))
 
             async function saveModules() {{
                 const checkboxes = document.querySelectorAll('.module-checkbox:checked');
-                const enabledModules = Array.from(checkboxes).map(cb => cb.dataset.id);
+                const enabledModules = Array.from(checkboxes).map(cb => cb.value);
 
                 console.log('Saving modules:', enabledModules);
 
@@ -1879,19 +2103,19 @@ async def calendar_view(
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: var(--primary-color, #2563EB);
-            color: white;
+            background: white;
+            color: #1e3a5f;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             text-decoration: none;
             transition: transform 0.2s, box-shadow 0.2s;
             z-index: 100;
         }
         .fab-create:hover {
             transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
         }
         .fab-create:active {
             transform: scale(0.95);
@@ -1902,10 +2126,11 @@ async def calendar_view(
             }
         }
         .calendar-container {
-            background: white;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
             border-radius: 12px;
             padding: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: white;
         }
         .calendar-header {
             display: flex;
@@ -1914,61 +2139,107 @@ async def calendar_view(
             margin-bottom: 24px;
             flex-wrap: wrap;
             gap: 16px;
+            color: white;
+        }
+        .calendar-header h2 {
+            color: white;
         }
         .calendar-nav {
             display: flex;
             align-items: center;
             gap: 8px;
         }
+        .calendar-nav .btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .calendar-nav .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
         .calendar-views {
             display: flex;
             gap: 8px;
         }
-        .calendar-views .btn.active {
-            background: var(--primary-color, #2563EB);
+        .calendar-views .btn {
+            background: rgba(255, 255, 255, 0.15);
             color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        .calendar-weekdays {
+        .calendar-views .btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        .calendar-views .btn.active {
+            background: white;
+            color: #1e3a5f;
+        }
+        .calendar-actions .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .calendar-actions .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .calendar-actions .btn-primary {
+            background: white;
+            color: #1e3a5f;
+        }
+        .calendar-actions .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 4px;
-            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px;
+        }
+        .calendar-weekdays {
+            display: contents;
         }
         .calendar-weekdays > div {
             text-align: center;
             font-weight: 600;
-            color: var(--gray-600, #666);
-            padding: 8px;
+            font-size: 0.85rem;
+            color: white;
+            padding: 12px 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
         }
         .calendar-days {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
+            display: contents;
         }
         .calendar-day {
-            aspect-ratio: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
             padding: 8px;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.15s;
-            min-height: 80px;
+            min-height: 70px;
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
         }
         .calendar-day:hover {
-            background: var(--gray-100, #f3f4f6);
+            background: rgba(255, 255, 255, 0.15);
         }
         .calendar-day.today {
-            background: var(--primary-color, #2563EB);
+            background: rgba(255, 255, 255, 0.3);
             color: white;
+            font-weight: bold;
         }
         .calendar-day.other-month {
-            color: var(--gray-400, #9ca3af);
+            color: rgba(255, 255, 255, 0.4);
         }
         .calendar-day.selected {
-            border: 2px solid var(--primary-color, #2563EB);
+            border: 2px solid white;
+            background: rgba(255, 255, 255, 0.2);
         }
         .calendar-day .day-number {
             font-weight: 600;
@@ -1979,34 +2250,74 @@ async def calendar_view(
             margin-top: 4px;
         }
         .event-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--success-color, #10B981);
-            display: inline-block;
-            margin: 1px;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            background: #f97316;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+        /* Couleurs de charge de travail */
+        .calendar-day.workload-light {
+            background: rgba(34, 197, 94, 0.3) !important; /* vert */
+        }
+        .calendar-day.workload-moderate {
+            background: rgba(234, 179, 8, 0.4) !important; /* jaune */
+        }
+        .calendar-day.workload-busy {
+            background: rgba(249, 115, 22, 0.5) !important; /* orange */
+        }
+        .calendar-day.workload-heavy {
+            background: rgba(239, 68, 68, 0.5) !important; /* rouge */
+        }
+        .calendar-day.workload-overload {
+            background: rgba(185, 28, 28, 0.7) !important; /* rouge foncé */
+        }
+        .calendar-day .workload-hours {
+            font-size: 9px;
+            color: rgba(255,255,255,0.9);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+        .calendar-day .workload-travel {
+            font-size: 8px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 1px;
         }
         .calendar-events {
             margin-top: 24px;
             padding-top: 24px;
-            border-top: 1px solid var(--gray-200, #e5e7eb);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        .calendar-events h3 {
+            color: white;
         }
         .events-list .event-item {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 12px;
-            background: var(--gray-50, #f9fafb);
+            background: rgba(255, 255, 255, 0.15);
             border-radius: 8px;
             margin-bottom: 8px;
+            color: white;
         }
         .event-time {
             font-weight: 600;
-            color: var(--gray-600, #666);
+            color: rgba(255, 255, 255, 0.8);
             min-width: 60px;
         }
         .event-title {
             flex: 1;
+            color: white;
+        }
+        .calendar-container .text-muted {
+            color: rgba(255, 255, 255, 0.7) !important;
         }
     </style>
 
@@ -2017,7 +2328,7 @@ async def calendar_view(
         const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
-        function renderCalendar() {
+        function renderMainCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
 
@@ -2054,7 +2365,7 @@ async def calendar_view(
                 }
 
                 day.innerHTML = `<span class="day-number">${i}</span>`;
-                day.addEventListener('click', () => selectDate(year, month, i));
+                day.addEventListener('click', () => selectMainDate(year, month, i));
                 daysContainer.appendChild(day);
             }
 
@@ -2070,37 +2381,222 @@ async def calendar_view(
             }
         }
 
-        function selectDate(year, month, day) {
+        function selectMainDate(year, month, day) {
             selectedDate = new Date(year, month, day);
-            renderCalendar();
+            renderMainCalendar();
             loadEvents(selectedDate);
         }
 
-        function loadEvents(date) {
+        async function loadEvents(date) {
             const eventsList = document.getElementById('events-list');
             const dateStr = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
             eventsList.innerHTML = `
                 <p class="text-muted">Événements du ${dateStr}</p>
                 <div class="event-item">
-                    <span class="event-time">09:00</span>
+                    <span class="event-time">⏳</span>
                     <span class="event-title">Chargement...</span>
                 </div>
             `;
 
-            // TODO: Fetch real events from API
+            // Formater les dates pour l'API (début et fin de journée)
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const startOfDay = `${year}-${month}-${day}T00:00:00`;
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const endOfDay = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, '0')}-${String(nextDay.getDate()).padStart(2, '0')}T00:00:00`;
+
+            try {
+                // Charger agenda ET interventions
+                const [agendaRes, interventionsRes] = await Promise.all([
+                    fetch(`/api/agenda?date_debut_gte=${encodeURIComponent(startOfDay)}&date_debut_lt=${encodeURIComponent(endOfDay)}&order_by=date_debut&order_dir=asc&limit=50`, { credentials: 'include' }),
+                    fetch(`/api/interventions?date_prevue_debut_gte=${encodeURIComponent(startOfDay)}&date_prevue_debut_lt=${encodeURIComponent(endOfDay)}&order_by=date_prevue_debut&order_dir=asc&limit=50`, { credentials: 'include' })
+                ]);
+
+                const response = agendaRes; // Pour compatibilité
+
+                // Combiner les résultats agenda + interventions
+                const agendaData = agendaRes.ok ? await agendaRes.json() : { items: [] };
+                const interventionsData = interventionsRes.ok ? await interventionsRes.json() : { items: [] };
+
+                const agendaEvents = (agendaData.items || []).map(e => ({ ...e, _type: 'agenda' }));
+                const interventionEvents = (interventionsData.items || []).map(e => ({ ...e, _type: 'intervention', titre: e.reference || e.objet || 'Intervention', date_debut: e.date_prevue_debut }));
+
+                const events = [...agendaEvents, ...interventionEvents].sort((a, b) =>
+                    new Date(a.date_debut || 0) - new Date(b.date_debut || 0)
+                );
+
+                if (events.length === 0) {
+                    eventsList.innerHTML = `
+                        <p class="text-muted">Événements du ${dateStr}</p>
+                        <p style="color: var(--gray-500); text-align: center; padding: 20px;">
+                            Aucun événement ce jour
+                        </p>
+                    `;
+                    return;
+                }
+
+                let html = `<p class="text-muted">Événements du ${dateStr}</p>`;
+                events.forEach(event => {
+                    const startTime = event.date_debut ? new Date(event.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    const statusClass = event.statut === 'TERMINE' ? 'done' : event.statut === 'ANNULE' ? 'cancelled' : '';
+                    const moduleUrl = event._type === 'intervention' ? 'interventions' : 'agenda';
+                    const typeLabel = event._type === 'intervention' ? '🔧' : '📅';
+                    html += `
+                        <a href="/ui/${moduleUrl}/${event.id}" class="event-item ${statusClass}" style="text-decoration: none; color: inherit;">
+                            <span class="event-time">${typeLabel} ${startTime}</span>
+                            <span class="event-title">${event.titre || 'Sans titre'}</span>
+                            <span class="event-status" style="font-size: 11px; color: var(--gray-500);">${event.statut || ''}</span>
+                        </a>
+                    `;
+                });
+                eventsList.innerHTML = html;
+            } catch (err) {
+                console.error('Erreur chargement événements:', err);
+                eventsList.innerHTML = `
+                    <p class="text-muted">Événements du ${dateStr}</p>
+                    <p style="color: var(--red-500); text-align: center;">Erreur de chargement</p>
+                `;
+            }
+        }
+
+        // Charger les événements du mois pour afficher les indicateurs et couleurs de charge
+        async function loadMonthEvents() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1; // API attend 1-12
+
+            try {
+                // Appeler l'API de calcul de charge avec temps de trajet dynamique
+                const response = await fetch(`/api/calendar/workload?year=${year}&month=${month}`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const workload = data.workload || {};
+
+                // Appliquer les couleurs et indicateurs sur les jours
+                const days = document.querySelectorAll('.calendar-day:not(.other-month)');
+                days.forEach(dayEl => {
+                    const dayNum = parseInt(dayEl.querySelector('.day-number')?.textContent);
+                    if (!dayNum) return;
+
+                    // Supprimer les anciennes classes de charge
+                    dayEl.classList.remove('workload-light', 'workload-moderate', 'workload-busy', 'workload-heavy', 'workload-overload');
+
+                    const dayData = workload[dayNum];
+                    if (!dayData) return;
+
+                    const totalMinutes = dayData.total_minutes || 0;
+                    const travelMinutes = dayData.travel_minutes || 0;
+                    const workMinutes = dayData.work_minutes || 0;
+                    const eventCount = dayData.events_count || 0;
+                    const totalHours = totalMinutes / 60;
+
+                    if (totalMinutes > 0) {
+                        // Appliquer la classe de couleur selon la charge
+                        if (totalHours <= 2) {
+                            dayEl.classList.add('workload-light');
+                        } else if (totalHours <= 4) {
+                            dayEl.classList.add('workload-moderate');
+                        } else if (totalHours <= 6) {
+                            dayEl.classList.add('workload-busy');
+                        } else if (totalHours <= 8) {
+                            dayEl.classList.add('workload-heavy');
+                        } else {
+                            dayEl.classList.add('workload-overload');
+                        }
+
+                        // Afficher les heures et le détail trajet/travail
+                        let indicator = dayEl.querySelector('.day-events');
+                        if (!indicator) {
+                            indicator = document.createElement('div');
+                            indicator.className = 'day-events';
+                            dayEl.appendChild(indicator);
+                        }
+
+                        const hoursDisplay = totalHours >= 1 ? `${totalHours.toFixed(1)}h` : `${Math.round(totalMinutes)}m`;
+                        const travelDisplay = travelMinutes > 0 ? `🚗${Math.round(travelMinutes)}m` : '';
+
+                        indicator.innerHTML = `
+                            <span class="event-dot">${eventCount}</span>
+                            <div class="workload-hours">${hoursDisplay}</div>
+                            ${travelDisplay ? `<div class="workload-travel">${travelDisplay}</div>` : ''}
+                        `;
+                    }
+                });
+            } catch (err) {
+                console.error('Erreur chargement charge du mois:', err);
+                // Fallback: charger les événements sans calcul de trajet
+                await loadMonthEventsSimple();
+            }
+        }
+
+        // Fallback simple sans calcul de trajet
+        async function loadMonthEventsSimple() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01T00:00:00`;
+            const nextMonth = new Date(year, month + 1, 1);
+            const endDate = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01T00:00:00`;
+
+            try {
+                const [agendaRes, interventionsRes] = await Promise.all([
+                    fetch(`/api/agenda?date_debut_gte=${encodeURIComponent(startDate)}&date_debut_lt=${encodeURIComponent(endDate)}&limit=100`, { credentials: 'include' }),
+                    fetch(`/api/interventions?date_prevue_debut_gte=${encodeURIComponent(startDate)}&date_prevue_debut_lt=${encodeURIComponent(endDate)}&limit=100`, { credentials: 'include' })
+                ]);
+
+                const agendaData = agendaRes.ok ? await agendaRes.json() : { items: [] };
+                const interventionsData = interventionsRes.ok ? await interventionsRes.json() : { items: [] };
+                const events = [...(agendaData.items || []), ...(interventionsData.items || [])];
+
+                const eventsByDay = {};
+                events.forEach(event => {
+                    const eventDate = event.date_debut || event.date_prevue_debut;
+                    if (eventDate) {
+                        const eventDay = new Date(eventDate).getDate();
+                        eventsByDay[eventDay] = (eventsByDay[eventDay] || 0) + 1;
+                    }
+                });
+
+                const days = document.querySelectorAll('.calendar-day:not(.other-month)');
+                days.forEach(dayEl => {
+                    const dayNum = parseInt(dayEl.querySelector('.day-number')?.textContent);
+                    if (dayNum && eventsByDay[dayNum]) {
+                        let indicator = dayEl.querySelector('.day-events');
+                        if (!indicator) {
+                            indicator = document.createElement('div');
+                            indicator.className = 'day-events';
+                            dayEl.appendChild(indicator);
+                        }
+                        indicator.innerHTML = `<span class="event-dot">${eventsByDay[dayNum]}</span>`;
+                    }
+                });
+            } catch (err) {
+                console.error('Erreur chargement événements du mois:', err);
+            }
         }
 
         document.getElementById('prev-month').addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() - 1);
-            renderCalendar();
+            renderMainCalendar();
+            loadMonthEvents();
         });
 
         document.getElementById('next-month').addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() + 1);
-            renderCalendar();
+            renderMainCalendar();
+            loadMonthEvents();
         });
 
-        renderCalendar();
+        // Initialisation
+        renderMainCalendar();
+        loadMonthEvents();
+        loadEvents(selectedDate);
 
         // ===========================================
         // Optimisation Planning
@@ -2912,11 +3408,18 @@ async def module_list(
     if not module:
         raise HTTPException(status_code=404, detail="Module non trouvé")
 
+    # Pour les modules createur_only, utiliser SYSTEM_TENANT_ID
+    query_tenant_id = SYSTEM_TENANT_ID if module.acces == "createur_only" else tenant_id
+
     # Récupérer les données
-    items = Database.query(module_name, tenant_id, limit=50)
+    items = Database.query(module_name, query_tenant_id, limit=50)
 
     # Colonnes à afficher (max 5)
-    display_fields = list(module.champs.keys())[:5]
+    # Utiliser liste_colonnes si défini dans le YAML, sinon les 5 premiers champs
+    if hasattr(module, 'liste_colonnes') and module.liste_colonnes:
+        display_fields = [f for f in module.liste_colonnes if f in module.champs]
+    else:
+        display_fields = list(module.champs.keys())[:5]
 
     # Vérifier si le module a un champ statut
     has_status = "statut" in module.champs
@@ -3233,101 +3736,106 @@ def organize_fields_into_sections(module) -> dict:
 
 
 def generate_sectioned_form(module_name: str, sections: dict, module) -> str:
-    """Génère un formulaire avec sections et onglets style Odoo."""
+    """Génère un formulaire style Odoo avec 2 colonnes et onglets."""
 
     section_names = list(sections.keys())
 
-    # Générer les onglets
+    # Générer les onglets Odoo
     tabs_html = ""
     for i, section_name in enumerate(section_names):
         active = "active" if i == 0 else ""
-        tabs_html += f'<button class="doc-tab {active}" onclick="showSection(\'{i}\')">{section_name}</button>'
+        tabs_html += f'<a href="#" class="o-notebook-header {active}" onclick="showSection(\'{i}\', event)">{section_name}</a>'
 
-    # Générer le contenu des sections
+    # Générer le contenu des sections en 2 colonnes
     sections_html = ""
     for i, (section_name, fields) in enumerate(sections.items()):
         display = "block" if i == 0 else "none"
-        fields_in_section = ""
 
-        # Créer des lignes de 2 champs
-        field_pairs = []
-        current_pair = []
-        for nom, field in fields:
+        # Séparer les champs en 2 colonnes
+        col1_fields = []
+        col2_fields = []
+        full_width_fields = []
+
+        for idx, (nom, field) in enumerate(fields):
             # Les textareas prennent toute la largeur
             if field.type in ["textarea", "texte long"]:
-                if current_pair:
-                    field_pairs.append(current_pair)
-                    current_pair = []
-                field_pairs.append([(nom, field, True)])  # True = full width
+                full_width_fields.append((nom, field))
+            elif idx % 2 == 0:
+                col1_fields.append((nom, field))
             else:
-                current_pair.append((nom, field, False))
-                if len(current_pair) == 2:
-                    field_pairs.append(current_pair)
-                    current_pair = []
-        if current_pair:
-            field_pairs.append(current_pair)
+                col2_fields.append((nom, field))
 
-        # Générer le HTML
-        for pair in field_pairs:
-            if len(pair) == 1 and pair[0][2]:  # Full width textarea
-                nom, field, _ = pair[0]
-                fields_in_section += f'''
-                <div class="doc-row" style="grid-template-columns: 1fr;">
-                    <div class="doc-field">
-                        {get_field_html(field, module_name=module_name)}
-                    </div>
-                </div>'''
-            else:
-                row_fields = ""
-                for nom, field, _ in pair:
-                    row_fields += f'''
-                    <div class="doc-field">
-                        {get_field_html(field, module_name=module_name)}
-                    </div>'''
-                fields_in_section += f'''
-                <div class="doc-row">
-                    {row_fields}
-                </div>'''
+        # Générer colonne 1
+        col1_html = ""
+        for nom, field in col1_fields:
+            col1_html += get_field_html(field, module_name=module_name)
+
+        # Générer colonne 2
+        col2_html = ""
+        for nom, field in col2_fields:
+            col2_html += get_field_html(field, module_name=module_name)
+
+        # Champs pleine largeur (textareas)
+        full_width_html = ""
+        for nom, field in full_width_fields:
+            full_width_html += f'''
+            <div style="grid-column: 1 / -1;">
+                {get_field_html(field, module_name=module_name)}
+            </div>'''
 
         sections_html += f'''
-        <div class="section-content" id="section-{i}" style="display: {display};">
-            {fields_in_section}
+        <div class="o-notebook-content" id="section-{i}" style="display: {display};">
+            <div class="o-group">
+                <div class="o-group-col">
+                    {col1_html}
+                </div>
+                <div class="o-group-col">
+                    {col2_html}
+                </div>
+            </div>
+            {full_width_html}
         </div>'''
 
     return f'''
-    <div class="card">
-        <div class="card-header">
-            <div class="flex items-center gap-2">
-                <span class="badge badge-gray">Nouveau</span>
-            </div>
-            <div class="flex gap-2">
-                <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
-                <button type="button" id="submit-btn" onclick="submitForm()" class="btn btn-primary">Enregistrer</button>
+    <!-- Control Panel Odoo -->
+    <div class="control-panel">
+        <div class="control-panel-left">
+            <div class="breadcrumb">
+                <a href="/ui/{module_name}">{module.nom_affichage}</a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">Nouveau</span>
             </div>
         </div>
+        <div class="control-panel-right">
+            <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
+            <button type="button" id="submit-btn" onclick="submitForm()" class="btn btn-primary">Enregistrer</button>
+        </div>
+    </div>
 
-        <form id="create-form" class="card-body">
-            <div class="doc-section">
-                <div class="doc-tabs">
+    <!-- Form Sheet Odoo -->
+    <div class="o-form-sheet">
+        <form id="create-form">
+            <!-- Notebook (onglets) -->
+            <div class="o-notebook">
+                <div class="o-notebook-headers">
                     {tabs_html}
                 </div>
-                <div style="margin-top: 20px;">
-                    {sections_html}
-                </div>
+                {sections_html}
             </div>
         </form>
     </div>
 
     <script>
-    function showSection(index) {{
+    function showSection(index, event) {{
+        if (event) event.preventDefault();
         // Cacher toutes les sections
-        document.querySelectorAll('.section-content').forEach(s => s.style.display = 'none');
+        document.querySelectorAll('.o-notebook-content').forEach(s => s.style.display = 'none');
         // Désactiver tous les onglets
-        document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.o-notebook-header').forEach(t => t.classList.remove('active'));
         // Afficher la section sélectionnée
         document.getElementById('section-' + index).style.display = 'block';
         // Activer l'onglet sélectionné
-        document.querySelectorAll('.doc-tab')[index].classList.add('active');
+        document.querySelectorAll('.o-notebook-header')[index].classList.add('active');
     }}
     </script>
     ''' + generate_form_scripts(module_name)
@@ -3502,12 +4010,13 @@ def generate_form_scripts(module_name: str) -> str:
     }}
 
     document.addEventListener('DOMContentLoaded', function() {{
-        // Récupérer le token depuis l'URL
+        // Récupérer le token depuis l'URL ou localStorage
         const urlParams = new URLSearchParams(window.location.search);
-        const authToken = urlParams.get('token') || '';
+        const authToken = urlParams.get('token') || localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
 
         document.querySelectorAll('select[data-link]').forEach(async select => {{
             const linkedModule = select.dataset.link;
+            const currentValue = select.dataset.currentValue || '';
             try {{
                 const response = await fetch(`/api/${{linkedModule.toLowerCase()}}`, {{
                     credentials: 'include',
@@ -3525,6 +4034,10 @@ def generate_form_scripts(module_name: str) -> str:
                         const opt = document.createElement('option');
                         opt.value = item.id;
                         opt.textContent = item.nom || item.name || item.raison_sociale || item.titre || item.numero || item.code || item.email || item.id;
+                        // Sélectionner si c'est la valeur actuelle
+                        if (currentValue && item.id === currentValue) {{
+                            opt.selected = true;
+                        }}
                         select.appendChild(opt);
                     }});
                 }}
@@ -3553,7 +4066,7 @@ def generate_form_scripts(module_name: str) -> str:
 
         try {{
             const urlParams = new URLSearchParams(window.location.search);
-            const authToken = urlParams.get('token') || '';
+            const authToken = urlParams.get('token') || localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
 
             const response = await fetch(`/api/${{linkedModule.toLowerCase()}}/${{selectedId}}`, {{
                 credentials: 'include',
@@ -3769,6 +4282,11 @@ def generate_document_form(module, module_name: str) -> str:
     }
     doc_type = doc_types.get(module_name.lower(), module.nom_affichage)
 
+    # Charger les taux TVA depuis constants.yml
+    tva_options_html = get_tva_options_html()
+    tva_default = get_tva_default()
+    tva_default_decimal = tva_default / 100  # 0.20 pour 20%
+
     return f'''
     <div class="card">
         <div class="card-header">
@@ -3860,7 +4378,7 @@ def generate_document_form(module, module_name: str) -> str:
                     <span id="total-ht">0,00 €</span>
                 </div>
                 <div class="doc-total-row">
-                    <span>TVA 20%</span>
+                    <span id="tva-label">TVA {tva_default}%</span>
                     <span id="total-tva">0,00 €</span>
                 </div>
                 <div class="doc-total-row" style="font-weight: 700; font-size: 18px;">
@@ -3885,7 +4403,7 @@ def generate_document_form(module, module_name: str) -> str:
             <td><input type="text" class="input" placeholder="Nom du produit" onchange="calculerTotaux()"></td>
             <td><input type="number" class="input" value="0" step="0.01" style="width:80px" onchange="calculerTotaux()"></td>
             <td><input type="number" class="input" value="1" style="width:60px" onchange="calculerTotaux()"></td>
-            <td><select class="input" style="width:100px"><option value="20">20%</option><option value="10">10%</option><option value="0">0%</option></select></td>
+            <td><select class="input" style="width:100px" onchange="calculerTotaux()">{tva_options_html}</select></td>
             <td class="montant">0,00 €</td>
             <td><button class="btn btn-sm" onclick="this.closest('tr').remove(); calculerTotaux();">✕</button></td>
         `;
@@ -3895,23 +4413,31 @@ def generate_document_form(module, module_name: str) -> str:
 
     function calculerTotaux() {{
         let totalHT = 0;
+        let totalTVA = 0;
         document.querySelectorAll('#lignes-table tr').forEach(tr => {{
             const inputs = tr.querySelectorAll('input');
+            const tvaSelect = tr.querySelector('select');
             if (inputs.length >= 3) {{
                 const prix = parseFloat(inputs[1].value) || 0;
                 const qte = parseFloat(inputs[2].value) || 0;
-                const montant = prix * qte;
-                totalHT += montant;
-                tr.querySelector('.montant').textContent = montant.toFixed(2) + ' €';
+                const tauxTVA = parseFloat(tvaSelect?.value) || {tva_default};
+                const montantHT = prix * qte;
+                const montantTVA = montantHT * (tauxTVA / 100);
+                totalHT += montantHT;
+                totalTVA += montantTVA;
+                tr.querySelector('.montant').textContent = montantHT.toFixed(2) + ' €';
             }}
         }});
 
-        const tva = totalHT * 0.20;
-        const ttc = totalHT + tva;
+        const ttc = totalHT + totalTVA;
 
         document.getElementById('total-ht').textContent = totalHT.toFixed(2) + ' €';
-        document.getElementById('total-tva').textContent = tva.toFixed(2) + ' €';
+        document.getElementById('total-tva').textContent = totalTVA.toFixed(2) + ' €';
         document.getElementById('total-ttc').textContent = ttc.toFixed(2) + ' €';
+
+        // Mettre à jour le label TVA si taux mixtes
+        const tvaLabel = document.getElementById('tva-label');
+        if (tvaLabel) tvaLabel.textContent = 'TVA';
     }}
 
     function collectDocumentData() {{
@@ -3934,7 +4460,7 @@ def generate_document_form(module, module_name: str) -> str:
                 const produit = inputs[0].value;
                 const prix = parseFloat(inputs[1].value) || 0;
                 const qte = parseFloat(inputs[2].value) || 0;
-                const tauxTVA = parseFloat(tvaSelect?.value) || 20;
+                const tauxTVA = parseFloat(tvaSelect?.value) || {tva_default};
 
                 if (produit || prix > 0) {{
                     data.lignes.push({{
@@ -4075,7 +4601,7 @@ def generate_document_form(module, module_name: str) -> str:
 
         try {{
             const urlParams = new URLSearchParams(window.location.search);
-            const authToken = urlParams.get('token') || '';
+            const authToken = urlParams.get('token') || localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
 
             const response = await fetch(`/api/${{linkedModule.toLowerCase()}}/${{selectedId}}`, {{
                 credentials: 'include',
@@ -4158,16 +4684,46 @@ async def module_detail(
     if not module:
         raise HTTPException(status_code=404, detail="Module non trouvé")
 
+    # Pour les modules createur_only, utiliser SYSTEM_TENANT_ID
+    query_tenant_id = SYSTEM_TENANT_ID if module.acces == "createur_only" else tenant_id
+
     from uuid import UUID
-    item = Database.get_by_id(module_name, tenant_id, UUID(item_id))
+    item = Database.get_by_id(module_name, query_tenant_id, UUID(item_id))
     if not item:
         raise HTTPException(status_code=404, detail="Enregistrement non trouvé")
 
-    # Générer les champs avec valeurs
-    fields_html = ""
+    # Générer les champs avec valeurs - layout 2 colonnes style Odoo
+    fields_list = []
+    full_width_fields = []  # Textareas, JSON fields - pleine largeur
+
     for nom, field in module.champs.items():
         if field.type not in ["auto", "calcul"]:
-            fields_html += get_field_html(field, item.get(nom), module_name=module_name)
+            field_html = get_field_html(field, item.get(nom), module_name=module_name)
+            # Textareas et JSON en pleine largeur
+            if field.type in ["textarea", "json", "texte long", "text"] and field.nom in ["description", "notes", "commentaire", "contenu", "details"]:
+                full_width_fields.append(field_html)
+            elif field.type in ["textarea", "json"]:
+                full_width_fields.append(field_html)
+            else:
+                fields_list.append(field_html)
+
+    # Diviser en 2 colonnes
+    mid = (len(fields_list) + 1) // 2
+    col1_html = "".join(fields_list[:mid])
+    col2_html = "".join(fields_list[mid:])
+    full_width_html = "".join(full_width_fields)
+
+    fields_html = f'''
+    <div class="o-group">
+        <div class="o-group-col">
+            {col1_html}
+        </div>
+        <div class="o-group-col">
+            {col2_html}
+        </div>
+    </div>
+    {f'<div class="o-group-full">{full_width_html}</div>' if full_width_html else ''}
+    '''
 
     # Statut et workflow
     statut_html = ""
@@ -4232,12 +4788,8 @@ async def module_detail(
                 </div>
             </div>
 
-            <form id="edit-form" class="card-body">
-                <div class="doc-section">
-                    <div class="form-fields-container">
-                        {fields_html}
-                    </div>
-                </div>
+            <form id="edit-form" class="card-body o-form-sheet">
+                {fields_html}
             </form>
 
             <div class="card-footer flex justify-between no-print">
@@ -4289,9 +4841,36 @@ async def module_detail(
             const formData = new FormData(form);
             const data = {{}};
 
+            // Champs qui attendent des types spécifiques
+            const numberFields = ['duree_reelle_minutes', 'geoloc_arrivee_lat', 'geoloc_arrivee_lng', 'avis_client', 'montant_ht', 'montant_ttc', 'quantite', 'prix_unitaire', 'taux_tva', 'remise', 'total_ht', 'total_ttc', 'latitude', 'longitude', 'note'];
+            const jsonFields = ['photos_avant', 'photos_apres', 'materiel_utilise_lignes', 'metadata', 'config', 'options', 'donnees'];
+            const listFields = ['tags', 'etiquettes', 'categories'];
+            const boolFields = ['is_signed', 'facturable', 'is_active', 'archived', 'urgent', 'prioritaire'];
+
             // Convertir FormData en objet, gérer les checkboxes
             formData.forEach((value, key) => {{
-                data[key] = value;
+                // Nettoyer les chaînes vides selon le type de champ
+                if (value === '' || value === null || value === undefined) {{
+                    if (numberFields.includes(key)) {{
+                        data[key] = null;
+                    }} else if (jsonFields.includes(key)) {{
+                        data[key] = {{}};
+                    }} else if (listFields.includes(key)) {{
+                        data[key] = [];
+                    }} else if (boolFields.includes(key)) {{
+                        data[key] = false;
+                    }} else {{
+                        data[key] = null;
+                    }}
+                }} else {{
+                    // Convertir les nombres
+                    if (numberFields.includes(key)) {{
+                        const num = parseFloat(value);
+                        data[key] = isNaN(num) ? null : num;
+                    }} else {{
+                        data[key] = value;
+                    }}
+                }}
             }});
 
             // Gérer les checkboxes non cochées
@@ -4721,6 +5300,14 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     user_name = user.get('nom', user.get('email', 'U'))
     initials = ''.join([n[0].upper() for n in user_name.split()[:2]]) if user_name else 'U'
 
+    # Modules JSON for Command Palette
+    import json as json_module
+    modules_for_palette = [
+        {"nom": m.get("nom", ""), "icone": get_icon(m.get("icone", "file")), "menu": m.get("menu", "Général")}
+        for m in modules
+    ]
+    modules_json = json_module.dumps(modules_for_palette, ensure_ascii=False)
+
     return f'''
 <!DOCTYPE html>
 <html lang="fr">
@@ -4776,7 +5363,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     }})();
     </script>
     <script src="/assets/js/error-reporter.js"></script>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/assets/style.css?v=6198">
     <script>
     // Notification bell - defined early so onclick works
     var notifPanelOpen = false;
@@ -4861,6 +5448,11 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                 </div>
             </nav>
 
+            <!-- Toggle sidebar -->
+            <div class="sidebar-toggle" onclick="toggleSidebar()" title="Réduire/Agrandir le menu">
+                <span id="sidebar-toggle-icon">◀</span>
+            </div>
+
             <div class="sidebar-user">
                 <div class="user-box">
                     <div class="user-avatar">{initials}</div>
@@ -4901,7 +5493,27 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                             <p class="notif-empty">Chargement...</p>
                         </div>
                     </div>
-                    <a href="/ui/Devis/nouveau" class="btn btn-primary">+ Ajouter</a>
+                    <div class="add-dropdown">
+                        <button class="btn btn-primary" onclick="toggleAddDropdown(event)">
+                            + Ajouter <span style="margin-left:4px;font-size:10px;">▼</span>
+                        </button>
+                        <div class="add-dropdown-content" id="add-dropdown">
+                            <div class="add-dropdown-section" id="add-current-section" style="display:none">
+                                <div class="add-dropdown-title">Page actuelle</div>
+                                <a href="#" class="add-dropdown-item" id="add-current-link">
+                                    <span id="add-current-icon">📄</span>
+                                    <span>Nouveau <span id="add-current-name"></span></span>
+                                </a>
+                            </div>
+                            <div class="add-dropdown-section">
+                                <div class="add-dropdown-title">Création rapide</div>
+                                <a href="/ui/Clients/nouveau" class="add-dropdown-item">👤 Nouveau Client</a>
+                                <a href="/ui/Factures/nouveau" class="add-dropdown-item">🧾 Nouvelle Facture</a>
+                                <a href="/ui/Devis/nouveau" class="add-dropdown-item">📝 Nouveau Devis</a>
+                                <a href="/ui/Produits/nouveau" class="add-dropdown-item">📦 Nouveau Produit</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -4913,6 +5525,205 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     </div>
 
     <style>
+        /* === NAVIGATION AMÉLIORÉE === */
+
+        /* Indicateur page active */
+        .nav-item.active {{
+            background: rgba(255,255,255,0.15);
+            border-left: 3px solid white;
+            padding-left: 13px;
+        }}
+
+        /* Sidebar collapsible */
+        .sidebar.collapsed {{
+            width: 60px;
+        }}
+        .sidebar.collapsed .nav-item span:last-child,
+        .sidebar.collapsed .nav-title,
+        .sidebar.collapsed .user-name,
+        .sidebar.collapsed .user-email,
+        .sidebar.collapsed .sidebar-logo span {{
+            display: none;
+        }}
+        .sidebar.collapsed .nav-item {{
+            justify-content: center;
+            padding: 10px;
+        }}
+        .sidebar.collapsed .nav-icon {{
+            margin: 0;
+        }}
+        .app-layout.sidebar-collapsed .main-wrapper {{
+            margin-left: 60px;
+        }}
+        .sidebar-toggle {{
+            position: absolute;
+            bottom: 80px;
+            right: -12px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary, #714B67);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1001;
+            transition: transform 0.15s;
+        }}
+        .sidebar-toggle:hover {{
+            transform: scale(1.1);
+        }}
+
+        /* Dropdown + Ajouter */
+        .add-dropdown {{
+            position: relative;
+            display: inline-block;
+        }}
+        .add-dropdown-content {{
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            min-width: 220px;
+            z-index: 1000;
+            margin-top: 8px;
+            overflow: hidden;
+        }}
+        .add-dropdown-content.open {{
+            display: block;
+        }}
+        .add-dropdown-section {{
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100, #f3f4f6);
+        }}
+        .add-dropdown-section:last-child {{
+            border-bottom: none;
+        }}
+        .add-dropdown-title {{
+            padding: 4px 16px;
+            font-size: 11px;
+            color: var(--gray-500, #6b7280);
+            text-transform: uppercase;
+            font-weight: 600;
+        }}
+        .add-dropdown-item {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            color: var(--gray-700, #374151);
+            text-decoration: none;
+            font-size: 14px;
+        }}
+        .add-dropdown-item:hover {{
+            background: var(--gray-50, #f9fafb);
+        }}
+
+        /* Command Palette */
+        .command-palette-overlay {{
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 15vh;
+        }}
+        .command-palette-overlay.open {{
+            display: flex;
+        }}
+        .command-palette {{
+            background: white;
+            border-radius: 12px;
+            width: 560px;
+            max-width: 90vw;
+            max-height: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }}
+        .command-input {{
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            border-bottom: 1px solid var(--gray-200, #e5e7eb);
+            font-size: 16px;
+            outline: none;
+        }}
+        .command-input::placeholder {{
+            color: var(--gray-400, #9ca3af);
+        }}
+        .command-results {{
+            max-height: 320px;
+            overflow-y: auto;
+        }}
+        .command-section-title {{
+            padding: 8px 20px 4px;
+            font-size: 11px;
+            color: var(--gray-500, #6b7280);
+            text-transform: uppercase;
+            font-weight: 600;
+        }}
+        .command-item {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            cursor: pointer;
+        }}
+        .command-item:hover, .command-item.selected {{
+            background: var(--gray-100, #f3f4f6);
+        }}
+        .command-item-icon {{
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }}
+        .command-item-text {{
+            flex: 1;
+        }}
+        .command-item-name {{
+            font-weight: 500;
+            color: var(--gray-800, #1f2937);
+        }}
+        .command-item-hint {{
+            font-size: 12px;
+            color: var(--gray-500, #6b7280);
+        }}
+        .command-shortcut {{
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--gray-400, #9ca3af);
+            background: var(--gray-100, #f3f4f6);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }}
+        .command-empty {{
+            padding: 24px 20px;
+            text-align: center;
+            color: var(--gray-500, #6b7280);
+        }}
+        .command-hint {{
+            padding: 8px 20px;
+            font-size: 12px;
+            color: var(--gray-400, #9ca3af);
+            border-top: 1px solid var(--gray-100, #f3f4f6);
+            display: flex;
+            gap: 16px;
+        }}
+        .command-hint kbd {{
+            background: var(--gray-100, #f3f4f6);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: inherit;
+        }}
+
         /* === STYLES GLOBAUX BOUTON CREATION INLINE === */
         .select-with-create {{
             display: flex;
@@ -6657,6 +7468,19 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     }}
     </style>
 
+    <!-- Command Palette (Ctrl+K) -->
+    <div id="command-palette" class="command-palette-overlay" onclick="closeCommandPalette(event)">
+        <div class="command-palette" onclick="event.stopPropagation()">
+            <input type="text" class="command-input" placeholder="Rechercher un module ou une action..." id="command-input" autocomplete="off">
+            <div class="command-results" id="command-results"></div>
+            <div class="command-hint">
+                <span><kbd>↑↓</kbd> naviguer</span>
+                <span><kbd>Enter</kbd> ouvrir</span>
+                <span><kbd>Esc</kbd> fermer</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Connection Modal -->
     <div id="mobile-modal" class="mobile-modal-overlay" onclick="closeMobileModal(event)">
         <div class="mobile-modal" onclick="event.stopPropagation()">
@@ -6789,6 +7613,219 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             }}
         }}
     }}
+
+    // === NAVIGATION AMÉLIORÉE ===
+
+    // Liste des modules pour la Command Palette
+    var ALL_MODULES = {modules_json};
+
+    // --- 1. Indicateur page active ---
+    function highlightActiveNavItem() {{
+        var path = window.location.pathname;
+        var parts = path.split('/');
+        var moduleName = parts[2] || '';
+
+        document.querySelectorAll('.nav-item').forEach(function(item) {{
+            var href = item.getAttribute('href') || '';
+            var hrefParts = href.split('/');
+            var itemModule = hrefParts[2] || '';
+
+            // Dashboard
+            if (path === '/ui/' && href === '/ui/') {{
+                item.classList.add('active');
+            }}
+            // Module match
+            else if (moduleName && itemModule && moduleName.toLowerCase() === itemModule.toLowerCase()) {{
+                item.classList.add('active');
+            }}
+        }});
+    }}
+
+    // --- 2. Sidebar collapsible ---
+    function toggleSidebar() {{
+        var layout = document.querySelector('.app-layout');
+        var sidebar = document.querySelector('.sidebar');
+        var icon = document.getElementById('sidebar-toggle-icon');
+
+        var isCollapsed = sidebar.classList.toggle('collapsed');
+        layout.classList.toggle('sidebar-collapsed', isCollapsed);
+        icon.textContent = isCollapsed ? '▶' : '◀';
+
+        localStorage.setItem('sidebar_collapsed', isCollapsed ? '1' : '0');
+    }}
+
+    function restoreSidebarState() {{
+        if (localStorage.getItem('sidebar_collapsed') === '1') {{
+            var sidebar = document.querySelector('.sidebar');
+            var layout = document.querySelector('.app-layout');
+            var icon = document.getElementById('sidebar-toggle-icon');
+            if (sidebar) sidebar.classList.add('collapsed');
+            if (layout) layout.classList.add('sidebar-collapsed');
+            if (icon) icon.textContent = '▶';
+        }}
+    }}
+
+    // --- 3. Dropdown + Ajouter ---
+    var addDropdownOpen = false;
+
+    function toggleAddDropdown(event) {{
+        event.stopPropagation();
+        addDropdownOpen = !addDropdownOpen;
+        document.getElementById('add-dropdown').classList.toggle('open', addDropdownOpen);
+
+        // Détecter module actuel
+        var path = window.location.pathname;
+        var parts = path.split('/');
+        if (parts[1] === 'ui' && parts[2] && parts[2] !== 'search' && parts[2] !== 'parametres') {{
+            var moduleName = parts[2];
+            var currentSection = document.getElementById('add-current-section');
+            var currentLink = document.getElementById('add-current-link');
+            var currentName = document.getElementById('add-current-name');
+            if (currentSection && currentLink && currentName) {{
+                currentSection.style.display = 'block';
+                currentLink.href = '/ui/' + moduleName + '/nouveau';
+                currentName.textContent = moduleName;
+            }}
+        }}
+    }}
+
+    // --- 4. Command Palette (Ctrl+K) ---
+    var commandPaletteOpen = false;
+    var commandSelectedIndex = 0;
+    var commandItems = [];
+
+    function openCommandPalette() {{
+        commandPaletteOpen = true;
+        document.getElementById('command-palette').classList.add('open');
+        var input = document.getElementById('command-input');
+        input.value = '';
+        input.focus();
+        renderCommandResults('');
+    }}
+
+    function closeCommandPalette(event) {{
+        if (event) event.stopPropagation();
+        commandPaletteOpen = false;
+        document.getElementById('command-palette').classList.remove('open');
+    }}
+
+    function renderCommandResults(query) {{
+        var results = document.getElementById('command-results');
+        var q = query.toLowerCase().trim();
+
+        var filtered = ALL_MODULES.filter(function(m) {{
+            return m.nom.toLowerCase().includes(q) || m.menu.toLowerCase().includes(q);
+        }}).slice(0, 10);
+
+        commandItems = filtered;
+        commandSelectedIndex = 0;
+
+        if (filtered.length === 0) {{
+            results.innerHTML = '<div class="command-empty">Aucun résultat pour "' + query + '"</div>';
+            return;
+        }}
+
+        // Grouper par menu
+        var byMenu = {{}};
+        filtered.forEach(function(m) {{
+            if (!byMenu[m.menu]) byMenu[m.menu] = [];
+            byMenu[m.menu].push(m);
+        }});
+
+        var html = '';
+        var idx = 0;
+        for (var menu in byMenu) {{
+            html += '<div class="command-section-title">' + menu + '</div>';
+            byMenu[menu].forEach(function(m) {{
+                html += '<div class="command-item ' + (idx === 0 ? 'selected' : '') + '" data-index="' + idx + '" data-module="' + m.nom + '">' +
+                    '<span class="command-item-icon">' + m.icone + '</span>' +
+                    '<div class="command-item-text">' +
+                        '<div class="command-item-name">' + m.nom + '</div>' +
+                    '</div>' +
+                    '<span class="command-shortcut">Ouvrir</span>' +
+                '</div>';
+                idx++;
+            }});
+        }}
+
+        results.innerHTML = html;
+
+        // Event listeners pour les items
+        results.querySelectorAll('.command-item').forEach(function(item) {{
+            item.addEventListener('click', function() {{
+                var mod = this.dataset.module;
+                if (mod) window.location.href = '/ui/' + mod;
+            }});
+        }});
+    }}
+
+    function updateCommandSelection() {{
+        document.querySelectorAll('.command-item').forEach(function(el, i) {{
+            el.classList.toggle('selected', i === commandSelectedIndex);
+        }});
+        // Scroll into view
+        var selected = document.querySelector('.command-item.selected');
+        if (selected) selected.scrollIntoView({{ block: 'nearest' }});
+    }}
+
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', function() {{
+        highlightActiveNavItem();
+        restoreSidebarState();
+
+        // Input listener pour Command Palette
+        var cmdInput = document.getElementById('command-input');
+        if (cmdInput) {{
+            cmdInput.addEventListener('input', function(e) {{
+                renderCommandResults(e.target.value);
+            }});
+        }}
+    }});
+
+    // Fermer dropdowns si clic ailleurs
+    document.addEventListener('click', function(e) {{
+        // Add dropdown
+        if (addDropdownOpen) {{
+            var dropdown = document.getElementById('add-dropdown');
+            if (dropdown && !dropdown.contains(e.target)) {{
+                dropdown.classList.remove('open');
+                addDropdownOpen = false;
+            }}
+        }}
+    }});
+
+    // Raccourcis clavier globaux
+    document.addEventListener('keydown', function(e) {{
+        // Ctrl+K ou Cmd+K pour Command Palette
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {{
+            e.preventDefault();
+            if (commandPaletteOpen) closeCommandPalette();
+            else openCommandPalette();
+        }}
+
+        // Escape pour fermer Command Palette
+        if (e.key === 'Escape' && commandPaletteOpen) {{
+            closeCommandPalette();
+        }}
+
+        // Navigation dans Command Palette
+        if (commandPaletteOpen) {{
+            if (e.key === 'ArrowDown') {{
+                e.preventDefault();
+                commandSelectedIndex = Math.min(commandSelectedIndex + 1, commandItems.length - 1);
+                updateCommandSelection();
+            }}
+            if (e.key === 'ArrowUp') {{
+                e.preventDefault();
+                commandSelectedIndex = Math.max(commandSelectedIndex - 1, 0);
+                updateCommandSelection();
+            }}
+            if (e.key === 'Enter' && commandItems[commandSelectedIndex]) {{
+                window.location.href = '/ui/' + commandItems[commandSelectedIndex].nom;
+            }}
+        }}
+    }});
+
     </script>
 </body>
 </html>

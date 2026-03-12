@@ -28,7 +28,8 @@ from copy import deepcopy
 
 from .db import Database
 from .parser import ModuleParser, ModuleDefinition, FieldDefinition
-from .tenant import get_current_tenant, get_current_user_id, TenantContext
+from .constants import get_statut_defaut
+from .tenant import get_current_tenant, get_current_user_id, TenantContext, SYSTEM_TENANT_ID
 from .auth import require_auth
 from .guardian import Guardian
 from .import_export import export_to_csv, import_from_csv, generate_csv_template
@@ -142,15 +143,7 @@ NAME_FIELDS = {"nom", "name", "titre", "title", "objet", "subject"}
 # Modules de type document (avec lignes, statut a reinitialiser)
 DOCUMENT_MODULES = {"devis", "facture", "factures", "commande", "commandes", "bon_livraison"}
 
-# Statuts brouillon par module
-DRAFT_STATUS = {
-    "devis": "BROUILLON",
-    "facture": "DRAFT",
-    "factures": "DRAFT",
-    "commande": "BROUILLON",
-    "commandes": "BROUILLON",
-    "bon_livraison": "BROUILLON"
-}
+# Statuts brouillon par module - chargés depuis constants.yml via get_statut_defaut()
 
 # =============================================================================
 # Router principal
@@ -248,8 +241,10 @@ class GenericCRUDRouter:
         """Enregistre les routes sur le router."""
 
         module_name = self.module.nom
+        module_acces = self.module.acces  # Capturer localement pour les closures
+        is_createur_only = (module_acces == "createur_only")
 
-        # LIST
+        # LIST avec filtres dynamiques
         @router.get(f"/{module_name}", tags=[module_name])
         async def list_items(
             request: Request,
@@ -262,11 +257,49 @@ class GenericCRUDRouter:
             include_archived: bool = Query(False, description="Inclure les enregistrements archives"),
             archived_only: bool = Query(False, description="Afficher uniquement les archives")
         ):
-            """Liste les enregistrements."""
+            """Liste les enregistrements avec filtres dynamiques.
+
+            Filtres supportes via query params:
+            - ?champ=valeur : filtre exact
+            - ?champ_gte=valeur : >= (greater than or equal)
+            - ?champ_lte=valeur : <= (less than or equal)
+            - ?champ_lt=valeur : < (less than)
+            - ?champ_gt=valeur : > (greater than)
+            """
+            # Extraire les filtres dynamiques des query params
+            filters = {}
+            reserved_params = {'skip', 'limit', 'order_by', 'order_dir', 'include_archived', 'archived_only'}
+
+            for key, value in request.query_params.items():
+                if key in reserved_params:
+                    continue
+
+                # Operateurs de comparaison
+                if key.endswith('_gte'):
+                    field = key[:-4]
+                    filters[f"{field}__gte"] = value
+                elif key.endswith('_lte'):
+                    field = key[:-4]
+                    filters[f"{field}__lte"] = value
+                elif key.endswith('_gt'):
+                    field = key[:-3]
+                    filters[f"{field}__gt"] = value
+                elif key.endswith('_lt'):
+                    field = key[:-3]
+                    filters[f"{field}__lt"] = value
+                else:
+                    # Filtre exact
+                    filters[key] = value
+
             order = f"{order_by} {order_dir.upper()}"
+
+            # Pour les modules createur_only, utiliser SYSTEM_TENANT_ID
+            query_tenant_id = SYSTEM_TENANT_ID if is_createur_only else tenant_id
+
             items = Database.query(
                 self.table_name,
-                tenant_id,
+                query_tenant_id,
+                filters=filters if filters else None,
                 limit=limit,
                 offset=skip,
                 order_by=order,
@@ -338,7 +371,9 @@ class GenericCRUDRouter:
             user: dict = Depends(require_auth)
         ):
             """Récupère un enregistrement."""
-            item = Database.get_by_id(self.table_name, tenant_id, item_id)
+            # Pour les modules createur_only, utiliser SYSTEM_TENANT_ID
+            query_tenant_id = SYSTEM_TENANT_ID if is_createur_only else tenant_id
+            item = Database.get_by_id(self.table_name, query_tenant_id, item_id)
             if not item:
                 raise HTTPException(status_code=404, detail="Non trouvé")
             return item
@@ -798,7 +833,7 @@ def prepare_duplicate_data(
 
         # Reinitialiser le statut pour les documents
         if key in ("statut", "status") and is_document:
-            data[key] = DRAFT_STATUS.get(module_lower, "BROUILLON")
+            data[key] = get_statut_defaut(module_lower)
             continue
 
         # Mettre a jour les dates au jour actuel

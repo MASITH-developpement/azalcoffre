@@ -26,6 +26,9 @@ logger = structlog.get_logger()
 
 # =============================================================================
 # Type Mapping YAML → SQLAlchemy
+# NOTA: Les métadonnées des types (alias, descriptions, validations) sont
+# définies dans config/constants.yml > types_champs.
+# Ce mapping contient les objets SQLAlchemy (non sérialisables en YAML).
 # =============================================================================
 TYPE_MAPPING = {
     # Texte
@@ -294,11 +297,39 @@ class Database:
             elif not include_archived:
                 query += " AND (archived = false OR archived IS NULL)"
 
-            # Filtres additionnels
+            # Filtres additionnels avec support des opérateurs
             if filters:
                 for key, value in filters.items():
-                    query += f" AND {key} = :{key}"
-                    params[key] = value
+                    # Support des opérateurs: field__gte, field__lte, field__gt, field__lt, field__like
+                    if '__' in key:
+                        field, operator = key.rsplit('__', 1)
+                        param_name = key.replace('__', '_')
+
+                        # Convertir les dates ISO en timestamp pour PostgreSQL
+                        if 'date' in field.lower() and isinstance(value, str) and 'T' in value:
+                            try:
+                                from datetime import datetime
+                                value = datetime.fromisoformat(value.replace('Z', '+00:00').replace('%3A', ':'))
+                            except:
+                                pass
+
+                        if operator == 'gte':
+                            query += f" AND {field} >= :{param_name}"
+                        elif operator == 'lte':
+                            query += f" AND {field} <= :{param_name}"
+                        elif operator == 'gt':
+                            query += f" AND {field} > :{param_name}"
+                        elif operator == 'lt':
+                            query += f" AND {field} < :{param_name}"
+                        elif operator == 'like':
+                            query += f" AND {field} ILIKE :{param_name}"
+                            value = f"%{value}%"
+                        else:
+                            query += f" AND {key} = :{param_name}"
+                        params[param_name] = value
+                    else:
+                        query += f" AND {key} = :{key}"
+                        params[key] = value
 
             # Ordre
             if order_by:
@@ -311,6 +342,11 @@ class Database:
                 query += f" LIMIT {limit}"
             if offset:
                 query += f" OFFSET {offset}"
+
+            # Debug log pour les filtres de date
+            if filters and any('date' in k.lower() for k in filters.keys()):
+                import structlog
+                structlog.get_logger().debug("db_query_debug", query=query[:200], params=str(params)[:200], filters=str(filters)[:200])
 
             result = session.execute(text(query), params)
             rows = [dict(row._mapping) for row in result]

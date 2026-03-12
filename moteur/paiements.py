@@ -21,8 +21,15 @@ import structlog
 from .db import Database
 from .tenant import get_current_tenant, get_current_user_id
 from .auth import require_auth
+from .constants import get_statuts, get_statut_defaut
 
 logger = structlog.get_logger()
+
+# Statuts de paiement (chargés depuis constants.yml)
+STATUT_EN_ATTENTE = "EN_ATTENTE"
+STATUT_VALIDE = "VALIDE"
+STATUT_ANNULE = "ANNULE"
+STATUT_REJETE = "REJETE"
 
 # Router pour les paiements
 paiements_router = APIRouter(tags=["Paiements"])
@@ -105,7 +112,7 @@ async def enregistrer_paiement(
         "numero_cheque": paiement.numero_cheque,
         "compte_bancaire": paiement.compte_bancaire,
         "notes": paiement.notes,
-        "statut": "EN_ATTENTE"
+        "statut": STATUT_EN_ATTENTE
     }
 
     new_paiement = Database.insert("paiements", tenant_id, paiement_data, user_id)
@@ -144,7 +151,7 @@ async def valider_paiement(
     if not paiement:
         raise HTTPException(status_code=404, detail="Paiement non trouve")
 
-    if paiement.get("statut") != "EN_ATTENTE":
+    if paiement.get("statut") != STATUT_EN_ATTENTE:
         raise HTTPException(status_code=400, detail="Ce paiement ne peut pas etre valide")
 
     facture_id = paiement.get("facture_id")
@@ -158,7 +165,7 @@ async def valider_paiement(
 
     # Mettre a jour le paiement
     Database.update("paiements", tenant_id, paiement_id, {
-        "statut": "VALIDE",
+        "statut": STATUT_VALIDE,
         "date_validation": datetime.now().isoformat(),
         "valide_par": str(user_id)
     }, user_id)
@@ -233,7 +240,7 @@ async def rejeter_paiement(
     if not paiement:
         raise HTTPException(status_code=404, detail="Paiement non trouve")
 
-    if paiement.get("statut") != "EN_ATTENTE":
+    if paiement.get("statut") != STATUT_EN_ATTENTE:
         raise HTTPException(status_code=400, detail="Ce paiement ne peut pas etre rejete")
 
     Database.update("paiements", tenant_id, paiement_id, {
@@ -271,11 +278,11 @@ async def annuler_paiement(
         raise HTTPException(status_code=404, detail="Paiement non trouve")
 
     statut_actuel = paiement.get("statut")
-    if statut_actuel not in ["EN_ATTENTE", "VALIDE"]:
+    if statut_actuel not in [STATUT_EN_ATTENTE, STATUT_VALIDE]:
         raise HTTPException(status_code=400, detail="Ce paiement ne peut pas etre annule")
 
     # Si le paiement etait valide, recalculer les montants de la facture
-    if statut_actuel == "VALIDE":
+    if statut_actuel == STATUT_VALIDE:
         facture_id = paiement.get("facture_id")
         if facture_id:
             facture = Database.get_by_id("factures", tenant_id, UUID(facture_id))
@@ -308,7 +315,7 @@ async def annuler_paiement(
                 }, user_id)
 
     Database.update("paiements", tenant_id, paiement_id, {
-        "statut": "ANNULE",
+        "statut": STATUT_ANNULE,
         "motif_rejet": motif,
         "date_rejet": datetime.now().isoformat()
     }, user_id)
@@ -317,7 +324,7 @@ async def annuler_paiement(
         "paiement_cancelled",
         tenant_id=str(tenant_id),
         paiement_id=str(paiement_id),
-        was_validated=(statut_actuel == "VALIDE")
+        was_validated=(statut_actuel == STATUT_VALIDE)
     )
 
     return {"success": True, "message": "Paiement annule"}
@@ -351,12 +358,12 @@ async def get_paiements_facture(
     total_valide = sum(
         float(p.get("montant", 0))
         for p in paiements
-        if p.get("statut") == "VALIDE"
+        if p.get("statut") == STATUT_VALIDE
     )
     total_en_attente = sum(
         float(p.get("montant", 0))
         for p in paiements
-        if p.get("statut") == "EN_ATTENTE"
+        if p.get("statut") == STATUT_EN_ATTENTE
     )
 
     total_ttc = float(facture.get("total", 0) or 0)
@@ -406,7 +413,7 @@ async def marquer_facture_payee(
         "date_paiement": str(date.today()),
         "mode": mode,
         "reference_transaction": reference,
-        "statut": "VALIDE",
+        "statut": STATUT_VALIDE,
         "date_validation": datetime.now().isoformat(),
         "valide_par": str(user_id),
         "notes": "Paiement cree via action rapide 'Marquer comme payee'"
@@ -517,7 +524,7 @@ async def get_paiements_en_attente(
     paiements = Database.query(
         "paiements",
         tenant_id,
-        filters={"statut": "EN_ATTENTE"},
+        filters={"statut": STATUT_EN_ATTENTE},
         order_by="date_paiement ASC",
         limit=limit
     )
@@ -575,7 +582,7 @@ async def get_resume_paiements(
     paiements_pending = Database.query(
         "paiements",
         tenant_id,
-        filters={"statut": "EN_ATTENTE"}
+        filters={"statut": STATUT_EN_ATTENTE}
     )
     total_paiements_pending = sum(float(p.get("montant", 0)) for p in paiements_pending)
 

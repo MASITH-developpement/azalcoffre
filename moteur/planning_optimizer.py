@@ -19,8 +19,12 @@ from pydantic import BaseModel
 from .auth import require_auth
 from .tenant import get_current_tenant
 from .db import Database
+from .constants import get_statuts
 
 logger = structlog.get_logger()
+
+# Constantes locales (config/constants.yml)
+STATUT_ANNULE = "ANNULE"
 
 router = APIRouter(prefix="/api/planning", tags=["Planning"])
 
@@ -163,7 +167,7 @@ async def get_existing_events(
                 "collaborateur_id": collaborateur_id,
                 "date_debut__gte": date_start.isoformat(),
                 "date_debut__lte": date_end.isoformat(),
-                "statut__ne": "ANNULE"
+                "statut__ne": STATUT_ANNULE
             }
         )
         for item in agenda_items.get("items", []):

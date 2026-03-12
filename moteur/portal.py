@@ -17,8 +17,12 @@ import structlog
 
 from .db import Database
 from .theme import ThemeManager
+from .constants import get_statut_defaut
 
 logger = structlog.get_logger()
+
+# Constantes locales (config/constants.yml)
+STATUT_BROUILLON = "BROUILLON"
 
 # =============================================================================
 # Router
@@ -130,7 +134,7 @@ def render_portal_base(title: str, content: str) -> str:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title} - AZALPLUS</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/assets/style.css?v=18">
     <style>
         .portal-container {{
             max-width: 900px;
@@ -391,7 +395,7 @@ def render_devis_view(doc: dict, message: Optional[str] = None, message_type: st
     total_ttc = doc.get("total_ttc") or (total_ht * (1 + tva / 100))
 
     # Statut
-    statut = (doc.get("statut") or "BROUILLON").upper()
+    statut = (doc.get("statut") or STATUT_BROUILLON).upper()
     statut_class = f"status-{statut.lower().replace('_', '-')}"
 
     # Dates
@@ -660,7 +664,7 @@ def render_facture_view(doc: dict) -> str:
     reste_a_payer = total_ttc - montant_paye
 
     # Statut
-    statut = (doc.get("statut") or "BROUILLON").upper()
+    statut = (doc.get("statut") or STATUT_BROUILLON).upper()
     statut_class = f"status-{statut.lower().replace('_', '-')}"
 
     # Dates

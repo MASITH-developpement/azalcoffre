@@ -1,0 +1,699 @@
+# =============================================================================
+# AZALPLUS - Constantes Centralisées
+# =============================================================================
+# Source unique de vérité pour toutes les variables du système.
+# NE PAS hardcoder de valeurs dans le code Python ou YAML des modules.
+# Utiliser: $statuts.factures ou CONSTANTS.get("statuts.factures")
+#
+# Validé par: moteur/validate_constants.py
+# =============================================================================
+
+version: "1.0.0"
+derniere_modification: "2026-03-12"
+
+# =============================================================================
+# STATUTS PAR MODULE
+# =============================================================================
+statuts:
+  # Statuts génériques (utilisables par tous les modules)
+  generiques: [BROUILLON, ACTIF, ARCHIVE, ANNULE]
+
+  # Documents commerciaux
+  devis:
+    valeurs: [BROUILLON, ENVOYE, ACCEPTE, REFUSE, EXPIRE, ANNULE]
+    defaut: BROUILLON
+
+  factures:
+    valeurs: [BROUILLON, VALIDEE, ENVOYEE, PAYEE, PARTIELLEMENT_PAYEE, EN_RETARD, ANNULEE]
+    defaut: BROUILLON
+
+  avoirs:
+    valeurs: [BROUILLON, VALIDE, REMBOURSE, IMPUTE, ANNULE]
+    defaut: BROUILLON
+
+  paiements:
+    valeurs: [EN_ATTENTE, VALIDE, REFUSE, REJETE, ANNULE]
+    defaut: EN_ATTENTE
+
+  # Abonnements et récurrence
+  abonnements:
+    valeurs: [BROUILLON, ACTIF, SUSPENDU, TERMINE, ANNULE]
+    defaut: BROUILLON
+
+  # Projets et chantiers
+  projets:
+    valeurs: [BROUILLON, PLANIFIE, EN_COURS, EN_PAUSE, TERMINE, ARCHIVE, ANNULE]
+    defaut: BROUILLON
+
+  chantiers:
+    valeurs: [BROUILLON, PREPARATION, EN_COURS, SUSPENDU, RECEPTION_PROVISOIRE, RECEPTION_DEFINITIVE, CLOS]
+    defaut: BROUILLON
+
+  # Interventions et SAV
+  interventions:
+    valeurs: [DRAFT, A_PLANIFIER, PLANIFIEE, EN_ROUTE, SUR_SITE, EN_COURS, TRAVAUX_TERMINES, BLOQUEE, TERMINEE, FACTUREE, ANNULEE]
+    defaut: DRAFT
+
+  tickets:
+    valeurs: [OUVERT, EN_COURS, EN_ATTENTE_CLIENT, RESOLU, FERME]
+    defaut: OUVERT
+
+  # Équipements et immobilisations
+  equipements:
+    valeurs: [ACTIF, EN_MAINTENANCE, HORS_SERVICE, VENDU]
+    defaut: ACTIF
+
+  immobilisations:
+    valeurs: [BROUILLON, COMMANDE, RECU, EN_SERVICE, EN_MAINTENANCE, HORS_SERVICE, AMORTI, CEDE, MIS_AU_REBUT]
+    defaut: BROUILLON
+
+  # Banque et comptabilité
+  mouvements_bancaires:
+    valeurs: [A_TRAITER, EN_COURS, RAPPROCHE, EXCLU, ERREUR]
+    defaut: A_TRAITER
+
+  # RH
+  conges:
+    valeurs: [EN_ATTENTE, DEMANDE, APPROUVE, REFUSE, ANNULE]
+    defaut: EN_ATTENTE
+
+  # RGPD
+  consentements:
+    valeurs: [ACCORDE, REFUSE, RETIRE, EXPIRE]
+    defaut: REFUSE
+
+  demandes_rgpd:
+    valeurs: [RECUE, VERIFICATION_IDENTITE, EN_COURS, COMPLETEE, REFUSEE, EXPIREE]
+    defaut: RECUE
+
+  # Stock
+  mouvements_stock:
+    valeurs: [BROUILLON, VALIDE, ANNULE]
+    defaut: BROUILLON
+
+  stock:
+    valeurs: [EN_STOCK, STOCK_BAS, RUPTURE, NON_GERE]
+    defaut: EN_STOCK
+
+# Types de mouvements de stock (non des statuts, mais utile à centraliser)
+types_mouvement_stock:
+  types: [ENTREE, SORTIE, AJUSTEMENT, TRANSFERT, INVENTAIRE]
+  sous_types:
+    entrees: [ACHAT, RETOUR_CLIENT, PRODUCTION, TRANSFERT_ENTRANT, AJUSTEMENT_POSITIF, INVENTAIRE_POSITIF]
+    sorties: [VENTE, RETOUR_FOURNISSEUR, CONSOMMATION, PERTE, CASSE, TRANSFERT_SORTANT, AJUSTEMENT_NEGATIF, INVENTAIRE_NEGATIF, INTERVENTION]
+
+# =============================================================================
+# COULEURS DES STATUTS (pour l'UI)
+# =============================================================================
+couleurs_statuts:
+  # Génériques
+  BROUILLON: gray
+  ACTIF: success
+  ARCHIVE: gray
+  ANNULE: error
+  ANNULEE: error
+
+  # Devis / Factures
+  ENVOYE: info
+  ENVOYEE: info
+  ACCEPTE: success
+  REFUSE: error
+  EXPIRE: warning
+  VALIDEE: primary
+  VALIDE: primary
+  PAYEE: success
+  PAYE: success
+  PARTIELLEMENT_PAYEE: warning
+  EN_RETARD: error
+
+  # Paiements
+  EN_ATTENTE: warning
+
+  # Projets / Chantiers
+  EN_COURS: info
+  PLANIFIE: info
+  PLANIFIEE: info
+  TERMINE: success
+  TERMINEE: success
+  SUSPENDU: warning
+  PREPARATION: info
+  RECEPTION_PROVISOIRE: warning
+  RECEPTION_DEFINITIVE: success
+  CLOS: gray
+  EN_PAUSE: warning
+
+  # Interventions
+  EN_ROUTE: info
+  FACTUREE: success
+
+  # Tickets
+  OUVERT: info
+  EN_ATTENTE_CLIENT: warning
+  RESOLU: success
+  FERME: gray
+
+  # Équipements / Immobilisations
+  HORS_SERVICE: error
+  EN_MAINTENANCE: warning
+  VENDU: gray
+  COMMANDE: info
+  RECU: success
+  EN_SERVICE: success
+  AMORTI: gray
+  CEDE: gray
+  MIS_AU_REBUT: error
+
+  # Stock
+  EN_STOCK: success
+  STOCK_BAS: warning
+  RUPTURE: error
+  NON_GERE: gray
+
+  # Banque
+  A_TRAITER: warning
+  RAPPROCHE: success
+  EXCLU: gray
+  ERREUR: error
+
+  # RH / Congés
+  DEMANDE: info
+  APPROUVE: success
+
+  # RGPD
+  ACCORDE: success
+  RETIRE: warning
+  RECUE: info
+  VERIFICATION_IDENTITE: warning
+  COMPLETEE: success
+  REFUSEE: error
+  EXPIREE: gray
+
+  # Avoirs
+  REMBOURSE: success
+  IMPUTE: info
+
+  # Paiements
+  REJETE: error
+
+  # Interventions supplémentaires
+  SUR_SITE: info
+  TRAVAUX_TERMINES: success
+  BLOQUEE: error
+  A_PLANIFIER: warning
+  DRAFT: gray
+
+  # Codes couleurs
+  codes:
+    primary: "#3454D1"
+    success: "#10b981"
+    warning: "#f59e0b"
+    error: "#ef4444"
+    info: "#3b82f6"
+    gray: "#6b7280"
+
+# =============================================================================
+# TVA
+# =============================================================================
+tva:
+  france:
+    normal: 20.0
+    intermediaire: 10.0
+    reduit: 5.5
+    super_reduit: 2.1
+    exonere: 0.0
+    defaut: 20.0
+
+  belgique:
+    normal: 21.0
+    intermediaire: 12.0
+    reduit: 6.0
+    exonere: 0.0
+    defaut: 21.0
+
+  suisse:
+    normal: 8.1
+    reduit: 2.6
+    hotellerie: 3.8
+    exonere: 0.0
+    defaut: 8.1
+
+  defaut:
+    pays: france
+    taux: 20.0
+
+# =============================================================================
+# DEVISES
+# =============================================================================
+devises:
+  EUR:
+    code: EUR
+    symbole: "€"
+    position: after
+    decimales: 2
+    nom: "Euro"
+
+  USD:
+    code: USD
+    symbole: "$"
+    position: before
+    decimales: 2
+    nom: "Dollar américain"
+
+  GBP:
+    code: GBP
+    symbole: "£"
+    position: before
+    decimales: 2
+    nom: "Livre sterling"
+
+  CHF:
+    code: CHF
+    symbole: "CHF"
+    position: after
+    decimales: 2
+    nom: "Franc suisse"
+
+  defaut: EUR
+  base: EUR
+
+# =============================================================================
+# UNITÉS DE MESURE
+# =============================================================================
+unites:
+  longueur:
+    - {code: m, nom: "Mètre", facteur: 1}
+    - {code: cm, nom: "Centimètre", facteur: 0.01}
+    - {code: mm, nom: "Millimètre", facteur: 0.001}
+    - {code: km, nom: "Kilomètre", facteur: 1000}
+
+  poids:
+    - {code: kg, nom: "Kilogramme", facteur: 1}
+    - {code: g, nom: "Gramme", facteur: 0.001}
+    - {code: t, nom: "Tonne", facteur: 1000}
+
+  volume:
+    - {code: l, nom: "Litre", facteur: 1}
+    - {code: ml, nom: "Millilitre", facteur: 0.001}
+    - {code: m3, nom: "Mètre cube", facteur: 1000}
+
+  temps:
+    - {code: h, nom: "Heure", facteur: 1}
+    - {code: min, nom: "Minute", facteur: 0.0167}
+    - {code: j, nom: "Jour", facteur: 8}
+
+  quantite:
+    - {code: u, nom: "Unité", facteur: 1}
+    - {code: pce, nom: "Pièce", facteur: 1}
+    - {code: lot, nom: "Lot", facteur: 1}
+    - {code: carton, nom: "Carton", facteur: 1}
+
+# =============================================================================
+# CONDITIONS DE PAIEMENT
+# =============================================================================
+conditions_paiement:
+  valeurs:
+    - {code: COMPTANT, nom: "Comptant", jours: 0}
+    - {code: NET_15, nom: "Net 15 jours", jours: 15}
+    - {code: NET_30, nom: "Net 30 jours", jours: 30}
+    - {code: NET_45, nom: "Net 45 jours", jours: 45}
+    - {code: NET_60, nom: "Net 60 jours", jours: 60}
+    - {code: FIN_DE_MOIS, nom: "Fin de mois", jours: 30}
+    - {code: FIN_DE_MOIS_45, nom: "Fin de mois + 45 jours", jours: 45}
+  defaut: NET_30
+
+# =============================================================================
+# MODES DE PAIEMENT
+# =============================================================================
+modes_paiement:
+  valeurs:
+    - {code: VIREMENT, nom: "Virement bancaire", icone: bank}
+    - {code: PRELEVEMENT, nom: "Prélèvement automatique", icone: credit-card}
+    - {code: CARTE, nom: "Carte bancaire", icone: credit-card}
+    - {code: CHEQUE, nom: "Chèque", icone: file-text}
+    - {code: ESPECES, nom: "Espèces", icone: banknote}
+    - {code: PAYPAL, nom: "PayPal", icone: wallet}
+  defaut: VIREMENT
+
+# =============================================================================
+# FRÉQUENCES (abonnements, récurrence)
+# =============================================================================
+frequences:
+  valeurs:
+    - {code: QUOTIDIEN, nom: "Quotidien", jours: 1}
+    - {code: HEBDOMADAIRE, nom: "Hebdomadaire", jours: 7}
+    - {code: BIMENSUEL, nom: "Bimensuel", jours: 14}
+    - {code: MENSUEL, nom: "Mensuel", jours: 30}
+    - {code: TRIMESTRIEL, nom: "Trimestriel", jours: 90}
+    - {code: SEMESTRIEL, nom: "Semestriel", jours: 180}
+    - {code: ANNUEL, nom: "Annuel", jours: 365}
+  defaut: MENSUEL
+
+# =============================================================================
+# CIVILITÉS
+# =============================================================================
+civilites:
+  - {code: M, nom: "Monsieur", abrev: "M."}
+  - {code: MME, nom: "Madame", abrev: "Mme"}
+  - {code: MLLE, nom: "Mademoiselle", abrev: "Mlle"}
+
+# =============================================================================
+# RÔLES ET PERMISSIONS
+# =============================================================================
+roles:
+  admin:
+    nom: "Administrateur"
+    niveau: 100
+    description: "Accès complet à toutes les fonctionnalités"
+
+  manager:
+    nom: "Manager"
+    niveau: 80
+    description: "Gestion des équipes et des opérations"
+
+  commercial:
+    nom: "Commercial"
+    niveau: 60
+    description: "Gestion clients, devis et ventes"
+
+  technicien:
+    nom: "Technicien"
+    niveau: 50
+    description: "Interventions et temps de travail"
+
+  comptable:
+    nom: "Comptable"
+    niveau: 60
+    description: "Facturation et comptabilité"
+
+  lecture_seule:
+    nom: "Consultation"
+    niveau: 10
+    description: "Accès en lecture uniquement"
+
+actions: [lire, creer, modifier, supprimer, exporter, importer, valider, annuler]
+
+# =============================================================================
+# TYPES DE CHAMPS (mapping YAML → SQL)
+# =============================================================================
+types_champs:
+  texte:
+    sql: "VARCHAR(255)"
+    python: str
+    alias: [text, string, varchar]
+
+  texte_court:
+    sql: "VARCHAR(100)"
+    python: str
+    alias: [short_text]
+
+  texte_long:
+    sql: TEXT
+    python: str
+    alias: [textarea, longtext, text_long]
+
+  email:
+    sql: "VARCHAR(255)"
+    python: str
+    validation: email
+
+  telephone:
+    sql: "VARCHAR(20)"
+    python: str
+    alias: [tel, phone]
+
+  url:
+    sql: "VARCHAR(500)"
+    python: str
+    alias: [uri, lien_web]
+
+  nombre:
+    sql: "NUMERIC(15, 2)"
+    python: Decimal
+    alias: [number, decimal]
+
+  entier:
+    sql: INTEGER
+    python: int
+    alias: [integer, int]
+
+  monnaie:
+    sql: "NUMERIC(15, 2)"
+    python: Decimal
+    alias: [montant, currency, amount, money]
+
+  pourcentage:
+    sql: "NUMERIC(5, 2)"
+    python: Decimal
+    alias: [percentage, percent, taux]
+
+  date:
+    sql: DATE
+    python: date
+    format: "%Y-%m-%d"
+
+  datetime:
+    sql: TIMESTAMP
+    python: datetime
+    alias: [timestamp, date_heure]
+    format: "%Y-%m-%dT%H:%M:%S"
+
+  heure:
+    sql: "VARCHAR(8)"
+    python: str
+    alias: [time, temps]
+    format: "%H:%M"
+
+  booleen:
+    sql: BOOLEAN
+    python: bool
+    alias: [boolean, bool, oui_non, "oui/non"]
+
+  uuid:
+    sql: UUID
+    python: UUID
+    alias: [id, identifier]
+
+  json:
+    sql: JSONB
+    python: dict
+    alias: [jsonb, object, objet]
+
+  liste:
+    sql: JSONB
+    python: list
+    alias: [array, tags, tableau]
+
+  fichier:
+    sql: "VARCHAR(500)"
+    python: str
+    alias: [file, attachment, document, piece_jointe]
+
+  image:
+    sql: "VARCHAR(500)"
+    python: str
+    alias: [photo, avatar]
+
+  relation:
+    sql: UUID
+    python: UUID
+    alias: [lien, foreign_key, fk, reference]
+
+  select:
+    sql: "VARCHAR(50)"
+    python: str
+    alias: [enum, choix, liste_choix]
+
+# =============================================================================
+# COLONNES SYSTÈME (automatiques sur chaque table)
+# =============================================================================
+colonnes_systeme:
+  - {nom: id, type: uuid, description: "Identifiant unique", auto: true}
+  - {nom: tenant_id, type: uuid, description: "Identifiant du tenant", auto: true, index: true}
+  - {nom: created_at, type: datetime, description: "Date de création", auto: true}
+  - {nom: updated_at, type: datetime, description: "Date de dernière modification", auto: true}
+  - {nom: created_by, type: uuid, description: "Créé par (utilisateur)", auto: true}
+  - {nom: updated_by, type: uuid, description: "Modifié par (utilisateur)", auto: true}
+  - {nom: deleted_at, type: datetime, description: "Date de suppression (soft delete)", auto: true}
+  - {nom: archived, type: booleen, description: "Archivé", defaut: false}
+  - {nom: archived_at, type: datetime, description: "Date d'archivage"}
+  - {nom: custom_fields, type: json, description: "Champs personnalisés", defaut: {}}
+
+# =============================================================================
+# LIMITES SYSTÈME
+# =============================================================================
+limites:
+  pagination:
+    defaut: 25
+    min: 1
+    max: 500
+
+  upload:
+    max_taille_mb: 50
+    extensions_images: [jpg, jpeg, png, gif, webp, svg]
+    extensions_documents: [pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv]
+    extensions_archives: [zip, rar, 7z, tar, gz]
+
+  export:
+    max_lignes: 10000
+    formats: [csv, xlsx, json, pdf]
+
+  recherche:
+    min_caracteres: 2
+    max_resultats: 100
+    max_resultats_par_table: 20
+
+  session:
+    timeout_minutes: 30
+    max_sessions_par_utilisateur: 5
+
+  mobile:
+    max_jours_offline: 7
+    max_items_par_page: 25
+    sync_batch_size: 100
+
+  rate_limit:
+    authentifie: 500
+    non_authentifie: 100
+    premium_multiplicateur: 3
+    fenetre_secondes: 60
+
+  factures:
+    max_lignes: 100
+    max_pieces_jointes: 10
+
+  mot_de_passe:
+    min_longueur: 8
+    max_tentatives: 5
+    verrouillage_minutes: 30
+
+# =============================================================================
+# FORMATS
+# =============================================================================
+formats:
+  date:
+    affichage: "%d/%m/%Y"
+    stockage: "%Y-%m-%d"
+    iso: "%Y-%m-%dT%H:%M:%S"
+
+  heure:
+    affichage: "%H:%M"
+    complet: "%H:%M:%S"
+
+  datetime:
+    affichage: "%d/%m/%Y %H:%M"
+    complet: "%d/%m/%Y %H:%M:%S"
+    iso: "%Y-%m-%dT%H:%M:%SZ"
+
+  nombre:
+    decimales: 2
+    separateur_decimal: ","
+    separateur_milliers: " "
+
+  monnaie:
+    decimales: 2
+    position_symbole: after
+
+  telephone:
+    france: "+33 X XX XX XX XX"
+    international: "+XX XXX XXX XXXX"
+
+# =============================================================================
+# MESSAGES SYSTÈME
+# =============================================================================
+messages:
+  erreurs:
+    E001: "Identifiants invalides"
+    E002: "Session expirée"
+    E003: "Accès refusé"
+    E004: "Compte verrouillé"
+    E010: "Données invalides"
+    E011: "Champ obligatoire manquant"
+    E012: "Format invalide"
+    E013: "Valeur hors limites"
+    E020: "Enregistrement non trouvé"
+    E021: "Module non trouvé"
+    E022: "Fichier non trouvé"
+    E030: "Opération non autorisée"
+    E031: "Suppression impossible (références existantes)"
+    E032: "Modification impossible (statut verrouillé)"
+    E040: "Erreur serveur"
+    E041: "Service temporairement indisponible"
+    E042: "Limite de requêtes atteinte"
+
+  succes:
+    S001: "Enregistrement créé avec succès"
+    S002: "Modifications enregistrées"
+    S003: "Enregistrement supprimé"
+    S004: "Import terminé"
+    S005: "Export terminé"
+
+  info:
+    I001: "Chargement en cours..."
+    I002: "Synchronisation en cours..."
+    I003: "Veuillez patienter..."
+
+# =============================================================================
+# SYSTÈME
+# =============================================================================
+systeme:
+  version: "1.0.0"
+  nom: "AZALPLUS"
+  description: "ERP No-Code Multi-Tenant"
+  tenant_systeme: "00000000-0000-0000-0000-000000000000"
+
+  jwt:
+    algorithme: HS256
+    expire_minutes: 1440
+    refresh_expire_jours: 7
+
+  totp:
+    expire_minutes: 5
+    longueur: 6
+
+  styles: [odoo, axo, penny, sage]
+  ambiances: [energique, calme, premium, corporate]
+
+# =============================================================================
+# RGPD
+# =============================================================================
+rgpd:
+  types_demande: [ACCES, PORTABILITE, EFFACEMENT, RECTIFICATION, LIMITATION, OPPOSITION]
+  types_consentement: [MARKETING_EMAIL, MARKETING_SMS, MARKETING_TEL, TRAITEMENT_DONNEES, PROFILAGE, NEWSLETTER, COOKIES]
+  sources_consentement: [FORMULAIRE_WEB, EMAIL, TELEPHONE, PORTAIL_CLIENT, IMPORT, API]
+  delai_reponse_jours: 30
+  retention_logs_mois: 36
+
+# =============================================================================
+# MÉTHODES D'AMORTISSEMENT (immobilisations)
+# =============================================================================
+amortissements:
+  methodes:
+    - {code: LINEAIRE, nom: "Linéaire", description: "Amortissement constant sur la durée"}
+    - {code: DEGRESSIF, nom: "Dégressif", description: "Amortissement accéléré au début"}
+    - {code: UNITES_PRODUCTION, nom: "Unités de production", description: "Basé sur l'utilisation"}
+    - {code: EXCEPTIONNEL, nom: "Exceptionnel", description: "Amortissement ponctuel"}
+  defaut: LINEAIRE
+
+# =============================================================================
+# CATÉGORIES IMMOBILISATIONS
+# =============================================================================
+categories_immobilisations:
+  - {code: TERRAIN, nom: "Terrains", duree_amortissement: 0}
+  - {code: CONSTRUCTION, nom: "Constructions", duree_amortissement: 25}
+  - {code: MATERIEL_INDUSTRIEL, nom: "Matériel industriel", duree_amortissement: 10}
+  - {code: MATERIEL_TRANSPORT, nom: "Matériel de transport", duree_amortissement: 5}
+  - {code: MATERIEL_BUREAU, nom: "Matériel de bureau", duree_amortissement: 5}
+  - {code: MATERIEL_INFORMATIQUE, nom: "Matériel informatique", duree_amortissement: 3}
+  - {code: MOBILIER, nom: "Mobilier", duree_amortissement: 10}
+  - {code: LOGICIEL, nom: "Logiciels", duree_amortissement: 3}
+  - {code: BREVET, nom: "Brevets", duree_amortissement: 20}
+
+# =============================================================================
+# FORMATS IMPORT BANCAIRE
+# =============================================================================
+formats_import_bancaire:
+  - {code: OFX, nom: "Open Financial Exchange", extension: ofx}
+  - {code: QIF, nom: "Quicken Interchange Format", extension: qif}
+  - {code: CSV, nom: "CSV générique", extension: csv}
+  - {code: MT940, nom: "SWIFT MT940", extension: sta}
+  - {code: CAMT053, nom: "ISO 20022 camt.053", extension: xml}

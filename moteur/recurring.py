@@ -25,6 +25,30 @@ import structlog
 from .db import Database
 from .notifications import EmailService
 from .pdf import PDFGenerator
+from .constants import get, get_statuts, get_statut_defaut, get_tva
+
+# Constantes locales - Statuts abonnements (config/constants.yml > statuts.abonnements)
+STATUT_ACTIF = "ACTIF"
+STATUT_BROUILLON = "BROUILLON"
+STATUT_SUSPENDU = "SUSPENDU"
+STATUT_TERMINE = "TERMINE"
+STATUT_ANNULE = "ANNULE"
+
+# Statuts factures (config/constants.yml > statuts.factures)
+STATUT_FACTURE_VALIDEE = "VALIDEE"
+
+# Fréquences (config/constants.yml > frequences)
+FREQ_HEBDOMADAIRE = "hebdomadaire"
+FREQ_MENSUEL = "mensuel"
+FREQ_TRIMESTRIEL = "trimestriel"
+FREQ_SEMESTRIEL = "semestriel"
+FREQ_ANNUEL = "annuel"
+
+# Conditions paiement par défaut (config/constants.yml > conditions_paiement)
+CONDITION_NET_30 = "NET_30"
+
+# Devise par défaut (config/constants.yml > devises)
+DEVISE_EUR = "EUR"
 
 logger = structlog.get_logger()
 
@@ -71,7 +95,7 @@ class DateCalculator:
         # Assurer que jour_facturation est dans les limites
         jour_facturation = max(1, min(jour_facturation, 28))
 
-        if frequence == "hebdomadaire":
+        if frequence == FREQ_HEBDOMADAIRE:
             # jour_facturation = jour de la semaine (1=lundi, 7=dimanche)
             jour_semaine = max(1, min(jour_facturation, 7))
             days_ahead = jour_semaine - current_date.isoweekday()
@@ -79,23 +103,23 @@ class DateCalculator:
                 days_ahead += 7
             return current_date + timedelta(days=days_ahead)
 
-        elif frequence == "mensuel":
+        elif frequence == FREQ_MENSUEL:
             next_month = current_date + relativedelta(months=1)
             # Ajuster si le jour n'existe pas dans le mois
             day = min(jour_facturation, 28)
             return next_month.replace(day=day)
 
-        elif frequence == "trimestriel":
+        elif frequence == FREQ_TRIMESTRIEL:
             next_quarter = current_date + relativedelta(months=3)
             day = min(jour_facturation, 28)
             return next_quarter.replace(day=day)
 
-        elif frequence == "semestriel":
+        elif frequence == FREQ_SEMESTRIEL:
             next_half = current_date + relativedelta(months=6)
             day = min(jour_facturation, 28)
             return next_half.replace(day=day)
 
-        elif frequence == "annuel":
+        elif frequence == FREQ_ANNUEL:
             next_year = current_date + relativedelta(years=1)
             day = min(jour_facturation, 28)
             return next_year.replace(day=day)
@@ -116,19 +140,20 @@ class DateCalculator:
 
         Args:
             invoice_date: Date de la facture
-            conditions_paiement: COMPTANT, NET_15, NET_30, etc.
+            conditions_paiement: COMPTANT, NET_15, CONDITION_NET_30, etc.
 
         Returns:
             Date d'echeance
         """
-        conditions_map = {
-            "COMPTANT": 0,
-            "NET_15": 15,
-            "NET_30": 30,
-            "NET_45": 45,
-            "NET_60": 60,
-            "FIN_DE_MOIS": None,  # Special: fin du mois suivant
-        }
+        # Charger les conditions de paiement depuis constants.yml
+        conditions_config = get("conditions_paiement", {})
+        conditions_map = {}
+        for code, config in conditions_config.items():
+            if isinstance(config, dict):
+                jours = config.get("jours")
+                conditions_map[code] = jours  # None pour FIN_DE_MOIS
+            else:
+                conditions_map[code] = config
 
         days = conditions_map.get(conditions_paiement, 30)
 
@@ -277,7 +302,7 @@ class RecurringService:
             )
 
         # Verifier que l'abonnement est actif
-        if abonnement.get("statut") != "ACTIF":
+        if abonnement.get("statut") != STATUT_ACTIF:
             return RecurringResult(
                 abonnement_id=abonnement_id,
                 tenant_id=tenant_id,
@@ -406,7 +431,7 @@ class RecurringService:
                 SELECT * FROM azalplus.abonnements
                 WHERE tenant_id = :tenant_id
                 AND deleted_at IS NULL
-                AND statut = 'ACTIF'
+                AND statut = :statut_actif
                 AND actif = true
                 AND prochaine_facture <= :reference_date
                 AND (date_fin IS NULL OR date_fin >= :reference_date)
@@ -414,7 +439,8 @@ class RecurringService:
             """)
             result = session.execute(query, {
                 "tenant_id": str(tenant_id),
-                "reference_date": reference_date.isoformat()
+                "reference_date": reference_date.isoformat(),
+                "statut_actif": STATUT_ACTIF
             })
             return [dict(row._mapping) for row in result]
 
@@ -437,7 +463,7 @@ class RecurringService:
         today = date.today()
 
         # Calculer la date d'echeance
-        conditions = abonnement.get("conditions_paiement", "NET_30")
+        conditions = abonnement.get("conditions_paiement", "CONDITION_NET_30")
         due_date = DateCalculator.calculate_due_date(today, conditions)
 
         # Construire les lignes de facture
@@ -454,7 +480,7 @@ class RecurringService:
                     "quantity": produit.get("quantity", 1),
                     "unit": produit.get("unit", "pce"),
                     "unit_price": produit.get("unit_price", 0),
-                    "tax_rate": produit.get("tax_rate", 20.0),
+                    "tax_rate": produit.get("tax_rate", get_tva()),
                     "discount_percent": 0,
                     "discount_amount": 0,
                 }
@@ -473,7 +499,7 @@ class RecurringService:
                 "quantity": 1,
                 "unit": "forfait",
                 "unit_price": abonnement.get("montant_ht", 0),
-                "tax_rate": abonnement.get("taux_tva", 20.0),
+                "tax_rate": abonnement.get("taux_tva", get_tva()),
                 "discount_percent": 0,
                 "discount_amount": 0,
                 "subtotal": abonnement.get("montant_ht", 0),
@@ -487,18 +513,18 @@ class RecurringService:
         return {
             "number": numero,
             "reference": f"ABO-{abonnement.get('reference', str(abonnement['id'])[:8])}",
-            "status": "VALIDATED",  # Auto-valide pour abonnements
+            "status": STATUT_FACTURE_VALIDEE,  # Auto-valide pour abonnements
             "customer_id": abonnement.get("client_id"),
             "date": today.isoformat(),
             "due_date": due_date.isoformat(),
             "subtotal": abonnement.get("montant_ht", 0),
             "tax_amount": abonnement.get("montant_tva", 0),
             "total": abonnement.get("montant_ttc", 0),
-            "currency": abonnement.get("currency", "EUR"),
+            "currency": abonnement.get("currency", DEVISE_EUR),
             "exchange_rate": 1.0,
             "subtotal_base": abonnement.get("montant_ht", 0),
             "total_base": abonnement.get("montant_ttc", 0),
-            "payment_terms": abonnement.get("conditions_paiement", "NET_30"),
+            "payment_terms": abonnement.get("conditions_paiement", "CONDITION_NET_30"),
             "payment_method": abonnement.get("mode_paiement"),
             "paid_amount": 0,
             "remaining_amount": abonnement.get("montant_ttc", 0),
@@ -536,7 +562,7 @@ class RecurringService:
         if not abonnement:
             raise ValueError("Abonnement non trouve")
 
-        if abonnement.get("statut") not in ["BROUILLON", "SUSPENDU"]:
+        if abonnement.get("statut") not in [STATUT_BROUILLON, STATUT_SUSPENDU]:
             raise ValueError(f"Impossible d'activer un abonnement avec statut: {abonnement.get('statut')}")
 
         # Calculer la premiere date de facturation
@@ -551,7 +577,7 @@ class RecurringService:
         )
 
         update_data = {
-            "statut": "ACTIF",
+            "statut": STATUT_ACTIF,
             "prochaine_facture": prochaine_facture.isoformat(),
         }
 
@@ -569,7 +595,7 @@ class RecurringService:
             "abonnements",
             tenant_id,
             abonnement_id,
-            {"statut": "SUSPENDU"},
+            {"statut": STATUT_SUSPENDU},
             user_id
         )
 
@@ -586,7 +612,7 @@ class RecurringService:
             tenant_id,
             abonnement_id,
             {
-                "statut": "TERMINE",
+                "statut": STATUT_TERMINE,
                 "date_fin": date.today().isoformat(),
                 "actif": False
             },
@@ -606,7 +632,7 @@ class RecurringService:
             tenant_id,
             abonnement_id,
             {
-                "statut": "ANNULE",
+                "statut": STATUT_ANNULE,
                 "actif": False
             },
             user_id
