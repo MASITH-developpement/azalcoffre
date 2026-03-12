@@ -1,0 +1,740 @@
+/* =============================================================================
+   AZALPLUS - Ambiance Pro/Corporate
+   Inspiré de Salesforce - Bleu dominant, structuré, professionnel
+   ============================================================================= */
+
+:root {
+    /* Couleurs Primaires - Bleu Corporate */
+    --primary: #0176D3;
+    --primary-dark: #014486;
+    --primary-light: #EBF5FE;
+    --primary-50: #F4FAFF;
+    --accent: #1B96FF;
+
+    /* Sidebar Corporate */
+    --sidebar-bg: #032D60;
+    --sidebar-hover: #014486;
+    --sidebar-text: #FFFFFF;
+    --sidebar-text-muted: rgba(255,255,255,0.7);
+
+    /* Status - Corporate */
+    --success: #2E844A;
+    --success-light: #E2F5E9;
+    --warning: #FE9339;
+    --warning-light: #FEF1E3;
+    --error: #BA0517;
+    --error-light: #FEE3E6;
+    --info: #0176D3;
+    --info-light: #EBF5FE;
+
+    /* Neutres - Professionnels */
+    --white: #FFFFFF;
+    --gray-50: #F3F3F3;
+    --gray-100: #E5E5E5;
+    --gray-200: #C9C9C9;
+    --gray-300: #AEAEAE;
+    --gray-400: #939393;
+    --gray-500: #706E6B;
+    --gray-600: #514F4D;
+    --gray-700: #3E3E3C;
+    --gray-800: #2B2826;
+    --gray-900: #181818;
+
+    /* Typographie - Tailles augmentées */
+    --font-size-xs: 13px;
+    --font-size-sm: 14px;
+    --font-size-base: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 20px;
+    --font-size-2xl: 24px;
+    --font-size-3xl: 32px;
+
+    /* Layout */
+    --sidebar-width: 220px;
+    --sidebar-collapsed: 48px;
+    --header-height: 54px;
+    --control-panel-height: 52px;
+    --tabs-height: 44px;
+    --radius: 4px;
+    --radius-lg: 8px;
+
+    /* Ombres - Subtiles */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
+    --shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 8px rgba(0,0,0,0.12);
+    --shadow-lg: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+/* Reset */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: var(--font-size-lg);
+    line-height: 1.5;
+    color: var(--gray-700);
+    background: var(--gray-50);
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; color: var(--primary-dark); }
+
+/* Layout */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar Corporate */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.sidebar-logo {
+    height: 50px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--sidebar-text);
+    background: rgba(0,0,0,0.15);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 8px 0;
+    overflow-y: auto;
+}
+
+.nav-section {
+    margin-bottom: 4px;
+}
+
+.nav-title {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--sidebar-text-muted);
+    padding: 14px 16px 6px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    margin: 1px 4px;
+    border-radius: var(--radius);
+    color: var(--sidebar-text);
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    transition: all 0.1s;
+}
+
+.nav-item:hover {
+    background: var(--sidebar-hover);
+}
+
+.nav-item.active {
+    background: var(--accent);
+    color: white;
+}
+
+/* Main wrapper */
+.main-wrapper {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header Corporate */
+.main-header {
+    height: var(--header-height);
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+
+.header-search {
+    display: flex;
+    align-items: center;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 0 16px;
+    width: 320px;
+}
+
+.header-search:focus-within {
+    border-color: var(--primary);
+    background: var(--white);
+    box-shadow: 0 0 0 2px rgba(1, 118, 211, 0.2);
+}
+
+.header-search input {
+    border: none;
+    background: transparent;
+    padding: 8px 0;
+    font-size: var(--font-size-lg);
+    width: 100%;
+    outline: none;
+}
+
+/* Content */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    max-width: 1400px;
+}
+
+/* Cards Corporate */
+.card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-100);
+    background: var(--gray-50);
+}
+
+.card-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Boutons Corporate */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.1s;
+    border: none;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: var(--white);
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-50);
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-destructive {
+    background: var(--error);
+    color: white;
+}
+
+/* Inputs Corporate */
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: var(--font-size-lg);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    background: var(--white);
+    transition: all 0.1s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(1, 118, 211, 0.2);
+}
+
+/* Badges Corporate */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-radius: var(--radius);
+}
+
+.badge-success { background: var(--success-light); color: var(--success); }
+.badge-warning { background: var(--warning-light); color: #9D5B00; }
+.badge-error { background: var(--error-light); color: var(--error); }
+.badge-info { background: var(--info-light); color: var(--primary); }
+
+/* Tables Corporate */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--gray-600);
+    background: var(--gray-50);
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: var(--font-size-lg);
+    color: var(--gray-700);
+}
+
+.table tr:hover {
+    background: var(--primary-50);
+}
+
+/* Tabs Corporate */
+.tabs {
+    display: flex;
+    border-bottom: 2px solid var(--gray-200);
+    background: var(--white);
+}
+
+.tab {
+    padding: 12px 20px;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--gray-500);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.tab:hover {
+    color: var(--gray-700);
+}
+
+.tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        width: var(--sidebar-collapsed);
+    }
+    .main-wrapper {
+        margin-left: var(--sidebar-collapsed);
+    }
+    .sidebar .nav-item span:last-child,
+    .sidebar .nav-title {
+        display: none;
+    }
+}
+
+/* =============================================================================
+   LOGIN PAGE
+   ============================================================================= */
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    padding: 20px;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 400px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+.login-header {
+    padding: 32px 32px 24px;
+    text-align: center;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.login-logo {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.login-subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--gray-500);
+    margin-top: 8px;
+}
+
+.login-body {
+    padding: 24px 32px 32px;
+}
+
+.login-body .form-group {
+    margin-bottom: 16px;
+}
+
+.login-body .label {
+    display: block;
+    text-align: left;
+    padding: 0;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+.login-error {
+    background: var(--error-light);
+    color: var(--error);
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    font-size: var(--font-size-lg);
+    margin-bottom: 16px;
+    display: none;
+}
+
+.login-body .btn-primary {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+.password-field { position: relative; }
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+}
+
+/* =============================================================================
+   ALERTS
+   ============================================================================= */
+
+.alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: var(--font-size-lg);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-info { background: var(--info-light); color: #0C5460; }
+.alert-success { background: var(--success-light); color: #155724; }
+.alert-warning { background: var(--warning-light); color: #856404; }
+.alert-danger { background: var(--error-light); color: #721C24; }
+
+/* =============================================================================
+   LAYOUT 2 COLONNES - OBLIGATOIRE
+   ============================================================================= */
+
+.form-fields-container,
+.doc-row,
+.detail-fields {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.form-fields-container > *,
+.doc-row > *,
+.detail-fields > * {
+    min-width: 0;
+}
+
+/* Éléments pleine largeur */
+.full-width,
+.card-header,
+.table-container,
+.doc-totals,
+.doc-actions,
+.tabs,
+.doc-tabs,
+.nav-tabs,
+table,
+[data-full-width="true"] {
+    grid-column: 1 / -1;
+}
+
+/* Préserver les selects et inputs */
+select,
+.select-wrapper,
+.form-select {
+    display: block;
+    width: 100%;
+}
+
+/* Responsive - 1 colonne sur mobile + tailles réduites */
+@media (max-width: 768px) {
+    :root {
+        --font-size-xs: 12px;
+        --font-size-sm: 13px;
+        --font-size-base: 14px;
+        --font-size-lg: 16px;
+        --font-size-xl: 18px;
+        --font-size-2xl: 20px;
+        --font-size-3xl: 26px;
+    }
+
+    .form-fields-container,
+    .doc-row,
+    .detail-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =============================================================================
+   NOTEBOOK ODOO (onglets dans formulaire)
+   ============================================================================= */
+
+.o-notebook {
+    margin-top: 20px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.o-notebook-headers {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px 0;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    flex-wrap: wrap;
+}
+
+.o-notebook-header {
+    position: relative;
+    padding: 12px 24px;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--gray-500);
+    cursor: pointer;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    transition: all 0.15s ease;
+    margin-bottom: -1px;
+    text-decoration: none;
+}
+
+.o-notebook-header:hover {
+    color: var(--gray-700);
+    background: var(--gray-100);
+    text-decoration: none;
+}
+
+.o-notebook-header.active {
+    color: var(--primary);
+    background: var(--white);
+    border-color: var(--gray-200);
+    font-weight: 600;
+}
+
+.o-notebook-header.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--white);
+}
+
+.o-notebook-content {
+    padding: 20px;
+    background: var(--white);
+    display: none;
+}
+
+.o-notebook-content.active {
+    display: block;
+}
+
+/* DOC-TABS (onglets documents/lignes) */
+.doc-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    flex-wrap: wrap;
+}
+
+.doc-tab {
+    padding: 12px 24px;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--gray-500);
+    cursor: pointer;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    transition: all 0.15s ease;
+    margin-bottom: -1px;
+}
+
+.doc-tab:hover {
+    color: var(--gray-700);
+    background: var(--gray-200);
+}
+
+.doc-tab.active {
+    color: var(--primary);
+    background: var(--white);
+    border-color: var(--gray-200);
+    font-weight: 600;
+}
+
+/* Formulaire Odoo - 2 colonnes */
+.o-form-sheet {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 20px 24px;
+    max-width: 1200px;
+}
+
+.o-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 32px;
+}
+
+.o-group-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.o-field-row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 8px;
+    align-items: start;
+    margin-bottom: 8px;
+    min-height: 32px;
+}
+
+.o-field-label {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--gray-600);
+    text-align: right;
+    padding-top: 6px;
+    padding-right: 8px;
+}
+
+.o-field-label.required::after {
+    content: " *";
+    color: var(--error);
+}
+
+/* Responsive notebook */
+@media (max-width: 1024px) {
+    .o-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .o-notebook-headers,
+    .doc-tabs {
+        padding: 8px 12px 0;
+    }
+
+    .o-notebook-header,
+    .doc-tab {
+        padding: 10px 16px;
+        font-size: var(--font-size-sm);
+    }
+
+    .o-field-row {
+        grid-template-columns: 1fr;
+    }
+
+    .o-field-label {
+        text-align: left;
+        padding: 0 0 4px 0;
+    }
+}
+
+/* =============================================================================
+   UTILITIES
+   ============================================================================= */
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-4 { gap: 16px; }
+.text-muted { color: var(--gray-500); }
+.font-medium { font-weight: 500; }
+.mb-4 { margin-bottom: 16px; }
+.mt-4 { margin-top: 16px; }
+
