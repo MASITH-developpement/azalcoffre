@@ -1,0 +1,299 @@
+# =============================================================================
+# AZALPLUS - Module Apporteurs d'Affaires
+# =============================================================================
+# Gestion des partenaires commerciaux et commissions.
+
+nom: Apporteurs
+icone: handshake
+menu: Commercial
+description: Gestion des apporteurs d'affaires et commissions
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    obligatoire: true
+    unique: true
+    description: Code apporteur
+    autocompletion: true
+
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom / Raison sociale
+    autocompletion: true
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: PARTENAIRE
+    options: [AGENT_COMMERCIAL, PARTENAIRE, PRESCRIPTEUR, REVENDEUR, AFFILIE]
+    description: Type d'apporteur
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: ACTIF
+    options: [PROSPECT, ACTIF, SUSPENDU, RESILIE]
+    description: Statut
+
+  # Contact
+  - nom: contact_nom
+    type: text
+    obligatoire: false
+    description: Nom du contact
+    autocompletion: true
+
+  - nom: email
+    type: email
+    obligatoire: true
+    description: Email
+
+  - nom: telephone
+    type: tel
+    obligatoire: false
+    description: Telephone
+
+  - nom: adresse
+    type: textarea
+    obligatoire: false
+    description: Adresse
+
+  # Entreprise
+  - nom: siret
+    type: text
+    obligatoire: false
+    description: SIRET
+    autocompletion: true
+
+  - nom: tva_intra
+    type: text
+    obligatoire: false
+    description: N° TVA intracommunautaire
+    autocompletion: true
+
+  # Contrat
+  - nom: date_debut
+    type: date
+    obligatoire: false
+    description: Date debut partenariat
+
+  - nom: date_fin
+    type: date
+    obligatoire: false
+    description: Date fin contrat
+
+  - nom: contrat_document_id
+    type: relation
+    obligatoire: false
+    relation: GED
+    description: Document contrat
+
+  # Zone / Secteur
+  - nom: zone_geographique
+    type: text
+    obligatoire: false
+    description: Zone geographique
+    autocompletion: true
+
+  - nom: secteurs_activite
+    type: tags
+    obligatoire: false
+    description: Secteurs d'activite
+
+  # Commission par defaut
+  - nom: taux_commission
+    type: number
+    obligatoire: false
+    defaut: 10
+    description: Taux de commission par defaut (%)
+
+  - nom: type_commission
+    type: select
+    obligatoire: false
+    defaut: POURCENTAGE
+    options: [POURCENTAGE, MONTANT_FIXE, PALIERS]
+    description: Type de commission
+
+  - nom: commission_sur
+    type: select
+    obligatoire: false
+    defaut: CA_HT
+    options: [CA_HT, CA_TTC, MARGE, MONTANT_FACTURE]
+    description: Base de calcul
+
+  - nom: commission_recurrente
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Commission sur renouvellements
+
+  - nom: duree_commissionnement
+    type: number
+    obligatoire: false
+    description: Duree commissionnement (mois)
+
+  # Paliers (si type = PALIERS)
+  - nom: paliers_commission
+    type: json
+    obligatoire: false
+    description: Paliers [{min, max, taux}]
+
+  # Paiement
+  - nom: iban
+    type: text
+    obligatoire: false
+    description: IBAN pour versements
+    autocompletion: true
+
+  - nom: mode_paiement
+    type: select
+    obligatoire: false
+    defaut: VIREMENT
+    options: [VIREMENT, CHEQUE, AVOIR]
+    description: Mode de paiement
+
+  - nom: frequence_paiement
+    type: select
+    obligatoire: false
+    defaut: MENSUEL
+    options: [MENSUEL, TRIMESTRIEL, ANNUEL, A_LA_DEMANDE]
+    description: Frequence paiement
+
+  - nom: seuil_minimum
+    type: number
+    obligatoire: false
+    defaut: 50
+    description: Seuil minimum pour paiement
+
+  # Statistiques
+  - nom: nb_affaires_apportees
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre d'affaires apportees
+
+  - nom: ca_genere
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: CA total genere
+
+  - nom: commissions_versees
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total commissions versees
+
+  - nom: commissions_en_attente
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Commissions en attente
+
+  # Portail
+  - nom: acces_portail
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Acces au portail partenaire
+
+  - nom: portail_user_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Compte portail
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+# Sous-entite: Affaires apportees
+affaires:
+  champs:
+    - nom: date_apport
+      type: date
+      obligatoire: true
+      description: Date d'apport
+
+    - nom: client_id
+      type: relation
+      obligatoire: true
+      relation: Clients
+      description: Client apporte
+
+    - nom: opportunite_id
+      type: relation
+      obligatoire: false
+      relation: Opportunites
+      description: Opportunite
+
+    - nom: devis_id
+      type: relation
+      obligatoire: false
+      relation: Devis
+      description: Devis
+
+    - nom: facture_id
+      type: relation
+      obligatoire: false
+      relation: Factures
+      description: Facture
+
+    - nom: montant_affaire
+      type: number
+      obligatoire: false
+      description: Montant de l'affaire
+
+    - nom: statut
+      type: select
+      obligatoire: true
+      defaut: EN_COURS
+      options: [EN_COURS, GAGNEE, PERDUE, ANNULEE]
+      description: Statut
+
+    - nom: taux_commission
+      type: number
+      obligatoire: false
+      description: Taux applique (%)
+
+    - nom: montant_commission
+      type: number
+      obligatoire: false
+      description: Montant commission
+
+    - nom: commission_payee
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Commission payee
+
+    - nom: date_paiement
+      type: date
+      obligatoire: false
+      description: Date paiement commission
+
+workflow:
+  PROSPECT -> ACTIF: activer
+  ACTIF -> SUSPENDU: suspendre
+  SUSPENDU -> ACTIF: reactiver
+  ACTIF -> RESILIE: resilier
+  SUSPENDU -> RESILIE: resilier
+
+actions:
+  - calculer_commissions
+  - generer_releve
+  - payer_commissions
+  - voir_affaires
+  - exporter_statistiques
+
+marceau:
+  alertes:
+    - si commissions_en_attente > 1000: "Commissions en attente importantes"
+    - si date_fin < aujourd'hui + 30 jours: "Contrat apporteur arrive a echeance"

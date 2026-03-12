@@ -1,0 +1,150 @@
+# =============================================================================
+# AZALPLUS - Module Parrainage
+# =============================================================================
+# Programme de parrainage clients.
+
+nom: Parrainage
+icone: gift
+menu: Marketing
+description: Programme de parrainage
+
+champs:
+  - nom: code_parrain
+    type: text
+    obligatoire: true
+    unique: true
+    description: Code parrain unique
+
+  - nom: parrain_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client parrain
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: ACTIF
+    options: [ACTIF, SUSPENDU, EXPIRE]
+    description: Statut
+
+  - nom: date_creation
+    type: date
+    obligatoire: true
+    auto: now
+    description: Date creation
+
+  - nom: date_expiration
+    type: date
+    obligatoire: false
+    description: Date expiration
+
+  - nom: recompense_parrain_type
+    type: select
+    obligatoire: false
+    defaut: CREDIT
+    options: [CREDIT, REDUCTION, VIREMENT, CADEAU]
+    description: Type recompense parrain
+
+  - nom: recompense_parrain_montant
+    type: number
+    obligatoire: false
+    defaut: 50
+    description: Montant recompense parrain
+
+  - nom: recompense_filleul_type
+    type: select
+    obligatoire: false
+    defaut: REDUCTION
+    options: [CREDIT, REDUCTION, CADEAU]
+    description: Type recompense filleul
+
+  - nom: recompense_filleul_montant
+    type: number
+    obligatoire: false
+    defaut: 20
+    description: Montant recompense filleul
+
+  - nom: nb_filleuls
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre de filleuls
+
+  - nom: nb_filleuls_convertis
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Filleuls convertis
+
+  - nom: total_recompenses
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total recompenses versees
+
+  - nom: lien_parrainage
+    type: text
+    obligatoire: false
+    readonly: true
+    description: Lien de parrainage
+
+  - nom: qr_code
+    type: text
+    obligatoire: false
+    description: QR code
+
+# Sous-entite: Filleuls
+filleuls:
+  champs:
+    - nom: filleul_id
+      type: relation
+      obligatoire: true
+      relation: Clients
+      description: Client filleul
+
+    - nom: date_inscription
+      type: date
+      obligatoire: true
+      description: Date inscription
+
+    - nom: converti
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: A effectue un achat
+
+    - nom: date_conversion
+      type: date
+      obligatoire: false
+      description: Date premiere commande
+
+    - nom: montant_premiere_commande
+      type: number
+      obligatoire: false
+      description: Montant premiere commande
+
+    - nom: recompense_parrain_versee
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Recompense parrain versee
+
+    - nom: recompense_filleul_versee
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Recompense filleul versee
+
+actions:
+  - generer_lien
+  - envoyer_invitation
+  - verser_recompenses
+  - voir_filleuls
+
+marceau:
+  alertes:
+    - si nb_filleuls_convertis > 0 et recompense_versee = false: "Recompense parrainage a verser"

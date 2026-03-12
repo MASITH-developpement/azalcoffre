@@ -1,0 +1,527 @@
+# =============================================================================
+# AZALPLUS - CRM Complet
+# =============================================================================
+# Gestion relation client: clients, contacts, leads, opportunités, affaires
+
+nom: CRM
+nom_pluriel: CRM
+icone: users
+menu: Commercial
+description: "CRM complet: clients, contacts, leads, opportunités"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: numero
+    type: text
+    libelle: "Numéro"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+    format: "CLI-{AAAA}-{####}"
+
+  - nom: type_entite
+    type: select
+    libelle: "Type"
+    obligatoire: true
+    options:
+      - CLIENT
+      - PROSPECT
+      - LEAD
+      - CONTACT
+      - PARTENAIRE
+      - FOURNISSEUR
+    defaut: PROSPECT
+
+  - nom: statut_commercial
+    type: select
+    libelle: "Statut commercial"
+    options:
+      - LEAD_FROID
+      - LEAD_TIEDE
+      - LEAD_CHAUD
+      - PROSPECT
+      - CLIENT_ACTIF
+      - CLIENT_INACTIF
+      - PERDU
+    defaut: PROSPECT
+
+  # ==========================================================================
+  # INFORMATIONS ENTREPRISE
+  # ==========================================================================
+  - nom: raison_sociale
+    type: text
+    libelle: "Raison sociale"
+    obligatoire: true
+
+  - nom: nom_commercial
+    type: text
+    libelle: "Nom commercial"
+
+  - nom: siret
+    type: text
+    libelle: "SIRET"
+
+  - nom: siren
+    type: text
+    libelle: "SIREN"
+
+  - nom: tva_intra
+    type: text
+    libelle: "TVA Intra"
+
+  - nom: code_ape
+    type: text
+    libelle: "Code APE"
+
+  - nom: forme_juridique
+    type: select
+    libelle: "Forme juridique"
+    options:
+      - SARL
+      - SAS
+      - SA
+      - EURL
+      - EI
+      - AUTO_ENTREPRENEUR
+      - ASSOCIATION
+      - AUTRE
+
+  - nom: capital_social
+    type: money
+    libelle: "Capital social"
+
+  - nom: effectif
+    type: number
+    libelle: "Effectif"
+
+  - nom: ca_annuel
+    type: money
+    libelle: "CA annuel"
+
+  - nom: secteur_activite
+    type: text
+    libelle: "Secteur d'activité"
+
+  - nom: site_web
+    type: text
+    libelle: "Site web"
+
+  # ==========================================================================
+  # ADRESSE PRINCIPALE
+  # ==========================================================================
+  - nom: adresse
+    type: textarea
+    libelle: "Adresse"
+
+  - nom: code_postal
+    type: text
+    libelle: "Code postal"
+
+  - nom: ville
+    type: text
+    libelle: "Ville"
+
+  - nom: pays
+    type: text
+    libelle: "Pays"
+    defaut: "France"
+
+  - nom: adresse_livraison
+    type: textarea
+    libelle: "Adresse livraison"
+
+  - nom: adresse_facturation
+    type: textarea
+    libelle: "Adresse facturation"
+
+  # ==========================================================================
+  # CONTACT PRINCIPAL
+  # ==========================================================================
+  - nom: contact_nom
+    type: text
+    libelle: "Nom contact"
+
+  - nom: contact_prenom
+    type: text
+    libelle: "Prénom contact"
+
+  - nom: contact_fonction
+    type: text
+    libelle: "Fonction"
+
+  - nom: contact_email
+    type: email
+    libelle: "Email"
+
+  - nom: contact_telephone
+    type: tel
+    libelle: "Téléphone"
+
+  - nom: contact_mobile
+    type: tel
+    libelle: "Mobile"
+
+  - nom: linkedin
+    type: text
+    libelle: "LinkedIn"
+
+  # ==========================================================================
+  # CONTACTS ADDITIONNELS
+  # ==========================================================================
+  - nom: contacts
+    type: json
+    libelle: "Contacts"
+    description: "Liste des contacts de l'entreprise"
+
+  # ==========================================================================
+  # COMMERCIAL
+  # ==========================================================================
+  - nom: commercial_id
+    type: relation
+    libelle: "Commercial"
+    relation: employes
+
+  - nom: equipe_commerciale
+    type: text
+    libelle: "Équipe"
+
+  - nom: origine
+    type: select
+    libelle: "Origine"
+    options:
+      - SITE_WEB
+      - SALON
+      - RECOMMANDATION
+      - PROSPECTION
+      - PUBLICITE
+      - RESEAUX_SOCIAUX
+      - PARTENAIRE
+      - AUTRE
+
+  - nom: source_detail
+    type: text
+    libelle: "Source détail"
+
+  - nom: campagne_origine
+    type: text
+    libelle: "Campagne"
+
+  # ==========================================================================
+  # QUALIFICATION LEAD
+  # ==========================================================================
+  - nom: score_lead
+    type: number
+    libelle: "Score lead"
+    defaut: 0
+
+  - nom: budget_estime
+    type: money
+    libelle: "Budget estimé"
+
+  - nom: besoin
+    type: textarea
+    libelle: "Besoin exprimé"
+
+  - nom: decision_date
+    type: date
+    libelle: "Date décision prévue"
+
+  - nom: concurrents
+    type: text
+    libelle: "Concurrents identifiés"
+
+  - nom: critere_decision
+    type: text
+    libelle: "Critères de décision"
+
+  # ==========================================================================
+  # OPPORTUNITÉS
+  # ==========================================================================
+  - nom: opportunites
+    type: json
+    libelle: "Opportunités"
+    description: "Liste des opportunités en cours"
+
+  - nom: montant_opportunites
+    type: money
+    libelle: "Montant opportunités"
+
+  - nom: probabilite_moyenne
+    type: number
+    libelle: "Probabilité moyenne (%)"
+
+  - nom: pipeline_stage
+    type: select
+    libelle: "Étape pipeline"
+    options:
+      - QUALIFICATION
+      - DECOUVERTE
+      - PROPOSITION
+      - NEGOCIATION
+      - CLOSING
+      - GAGNE
+      - PERDU
+
+  # ==========================================================================
+  # HISTORIQUE COMMERCIAL
+  # ==========================================================================
+  - nom: date_premier_contact
+    type: date
+    libelle: "Premier contact"
+
+  - nom: date_dernier_contact
+    type: date
+    libelle: "Dernier contact"
+
+  - nom: date_conversion_client
+    type: date
+    libelle: "Conversion client"
+
+  - nom: nombre_interactions
+    type: number
+    libelle: "Interactions"
+    defaut: 0
+
+  - nom: derniere_interaction
+    type: text
+    libelle: "Dernière interaction"
+
+  # ==========================================================================
+  # ACTIVITÉS
+  # ==========================================================================
+  - nom: activites
+    type: json
+    libelle: "Activités"
+    description: "Historique des activités"
+
+  - nom: prochaine_action
+    type: text
+    libelle: "Prochaine action"
+
+  - nom: date_prochaine_action
+    type: datetime
+    libelle: "Date action"
+
+  - nom: rappel
+    type: boolean
+    libelle: "Rappel actif"
+    defaut: false
+
+  # ==========================================================================
+  # CONDITIONS COMMERCIALES
+  # ==========================================================================
+  - nom: conditions_paiement
+    type: select
+    libelle: "Conditions paiement"
+    options:
+      - COMPTANT
+      - "30_JOURS"
+      - "45_JOURS"
+      - "60_JOURS"
+      - FIN_DE_MOIS
+    defaut: "30_JOURS"
+
+  - nom: mode_paiement
+    type: select
+    libelle: "Mode paiement"
+    options:
+      - VIREMENT
+      - CHEQUE
+      - CB
+      - PRELEVEMENT
+      - ESPECES
+
+  - nom: remise_generale
+    type: number
+    libelle: "Remise générale (%)"
+
+  - nom: encours_autorise
+    type: money
+    libelle: "Encours autorisé"
+
+  - nom: iban
+    type: text
+    libelle: "IBAN"
+
+  - nom: bic
+    type: text
+    libelle: "BIC"
+
+  # ==========================================================================
+  # CHIFFRES
+  # ==========================================================================
+  - nom: ca_realise
+    type: money
+    libelle: "CA réalisé"
+
+  - nom: ca_annee_precedente
+    type: money
+    libelle: "CA N-1"
+
+  - nom: encours_actuel
+    type: money
+    libelle: "Encours actuel"
+
+  - nom: impaye_total
+    type: money
+    libelle: "Impayés"
+
+  - nom: nombre_factures
+    type: number
+    libelle: "Nb factures"
+
+  - nom: nombre_devis
+    type: number
+    libelle: "Nb devis"
+
+  - nom: taux_transformation
+    type: number
+    libelle: "Taux transformation (%)"
+
+  # ==========================================================================
+  # SEGMENTATION
+  # ==========================================================================
+  - nom: segment
+    type: select
+    libelle: "Segment"
+    options:
+      - GRAND_COMPTE
+      - PME
+      - TPE
+      - PARTICULIER
+      - ADMINISTRATION
+
+  - nom: categorie
+    type: text
+    libelle: "Catégorie"
+
+  - nom: tags
+    type: tags
+    libelle: "Tags"
+
+  - nom: priorite
+    type: select
+    libelle: "Priorité"
+    options:
+      - HAUTE
+      - MOYENNE
+      - BASSE
+    defaut: MOYENNE
+
+  # ==========================================================================
+  # SATISFACTION
+  # ==========================================================================
+  - nom: nps_score
+    type: number
+    libelle: "Score NPS"
+
+  - nom: satisfaction
+    type: select
+    libelle: "Satisfaction"
+    options:
+      - TRES_SATISFAIT
+      - SATISFAIT
+      - NEUTRE
+      - INSATISFAIT
+      - TRES_INSATISFAIT
+
+  - nom: derniere_enquete
+    type: date
+    libelle: "Dernière enquête"
+
+  # ==========================================================================
+  # CONSENTEMENTS RGPD
+  # ==========================================================================
+  - nom: rgpd_consentement
+    type: boolean
+    libelle: "Consentement RGPD"
+    defaut: false
+
+  - nom: rgpd_date
+    type: datetime
+    libelle: "Date consentement"
+
+  - nom: rgpd_newsletter
+    type: boolean
+    libelle: "Newsletter"
+    defaut: false
+
+  - nom: rgpd_prospection
+    type: boolean
+    libelle: "Prospection"
+    defaut: false
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: actif
+    type: boolean
+    libelle: "Actif"
+    defaut: true
+
+  - nom: bloque
+    type: boolean
+    libelle: "Bloqué"
+    defaut: false
+
+  - nom: motif_blocage
+    type: text
+    libelle: "Motif blocage"
+
+  - nom: date_creation
+    type: datetime
+    libelle: "Date création"
+
+  - nom: cree_par
+    type: text
+    libelle: "Créé par"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Index
+index:
+  - numero
+  - raison_sociale
+  - siret
+  - type_entite
+  - commercial_id
+
+recherche:
+  - numero
+  - raison_sociale
+  - contact_nom
+  - contact_email
+  - siret
+
+affichage_liste:
+  - numero
+  - raison_sociale
+  - type_entite
+  - contact_nom
+  - commercial_id
+  - ca_realise
+  - statut_commercial
+
+workflow:
+  LEAD_FROID -> LEAD_TIEDE: "Réchauffer"
+  LEAD_TIEDE -> LEAD_CHAUD: "Qualifier"
+  LEAD_CHAUD -> PROSPECT: "Convertir prospect"
+  PROSPECT -> CLIENT_ACTIF: "Convertir client"
+  CLIENT_ACTIF -> CLIENT_INACTIF: null
+  CLIENT_INACTIF -> CLIENT_ACTIF: "Réactiver"
+  PROSPECT -> PERDU: "Marquer perdu"
+  LEAD_CHAUD -> PERDU: "Marquer perdu"
+
+actions:
+  - convertir_client
+  - creer_opportunite
+  - planifier_rdv
+  - envoyer_email
+  - ajouter_note
+  - calculer_score
+  - exporter_fiche

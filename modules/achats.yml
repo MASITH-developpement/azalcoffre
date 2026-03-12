@@ -1,0 +1,464 @@
+# =============================================================================
+# AZALPLUS - Module Achats Complet
+# =============================================================================
+# Gestion des achats: fournisseurs, commandes, réceptions, factures fournisseurs
+
+nom: Achats
+nom_pluriel: Achats
+icone: truck
+menu: Achats
+description: "Achats: fournisseurs, commandes, réceptions, factures"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: numero
+    type: text
+    libelle: "Numéro"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+
+  - nom: type_document
+    type: select
+    libelle: "Type"
+    obligatoire: true
+    options:
+      - DEMANDE_ACHAT
+      - COMMANDE
+      - RECEPTION
+      - FACTURE
+      - AVOIR
+      - RETOUR
+
+  - nom: reference_fournisseur
+    type: text
+    libelle: "Réf. fournisseur"
+
+  # ==========================================================================
+  # FOURNISSEUR
+  # ==========================================================================
+  - nom: fournisseur_id
+    type: relation
+    libelle: "Fournisseur"
+    relation: fournisseurs
+    obligatoire: true
+
+  - nom: fournisseur_nom
+    type: text
+    libelle: "Nom fournisseur"
+
+  - nom: fournisseur_adresse
+    type: textarea
+    libelle: "Adresse"
+
+  - nom: fournisseur_siret
+    type: text
+    libelle: "SIRET"
+
+  - nom: fournisseur_tva_intra
+    type: text
+    libelle: "TVA Intra"
+
+  - nom: contact_nom
+    type: text
+    libelle: "Contact"
+
+  - nom: contact_email
+    type: email
+    libelle: "Email"
+
+  - nom: contact_telephone
+    type: tel
+    libelle: "Téléphone"
+
+  # ==========================================================================
+  # DATES
+  # ==========================================================================
+  - nom: date_document
+    type: date
+    libelle: "Date"
+    obligatoire: true
+    defaut: "today"
+
+  - nom: date_livraison_souhaitee
+    type: date
+    libelle: "Livraison souhaitée"
+
+  - nom: date_livraison_confirmee
+    type: date
+    libelle: "Livraison confirmée"
+
+  - nom: date_echeance
+    type: date
+    libelle: "Échéance paiement"
+
+  # ==========================================================================
+  # LIGNES
+  # ==========================================================================
+  - nom: lignes
+    type: json
+    libelle: "Lignes"
+    description: "Détail des lignes"
+
+  - nom: nombre_lignes
+    type: number
+    libelle: "Nb lignes"
+
+  # ==========================================================================
+  # MONTANTS
+  # ==========================================================================
+  - nom: total_ht
+    type: money
+    libelle: "Total HT"
+
+  - nom: remise_globale
+    type: money
+    libelle: "Remise"
+
+  - nom: frais_port
+    type: money
+    libelle: "Frais de port"
+
+  - nom: tva_detail
+    type: json
+    libelle: "Détail TVA"
+
+  - nom: total_tva
+    type: money
+    libelle: "Total TVA"
+
+  - nom: total_ttc
+    type: money
+    libelle: "Total TTC"
+    obligatoire: true
+
+  - nom: autoliquidation
+    type: boolean
+    libelle: "Autoliquidation"
+    defaut: false
+
+  # ==========================================================================
+  # CONDITIONS
+  # ==========================================================================
+  - nom: conditions_paiement
+    type: select
+    libelle: "Conditions"
+    options:
+      - COMPTANT
+      - "30_JOURS"
+      - "45_JOURS"
+      - "60_JOURS"
+      - FIN_DE_MOIS
+
+  - nom: mode_paiement
+    type: select
+    libelle: "Mode paiement"
+    options:
+      - VIREMENT
+      - CHEQUE
+      - CB
+      - PRELEVEMENT
+
+  - nom: devise
+    type: text
+    libelle: "Devise"
+    defaut: "EUR"
+
+  # ==========================================================================
+  # DEMANDE D'ACHAT
+  # ==========================================================================
+  - nom: demandeur_id
+    type: relation
+    libelle: "Demandeur"
+    relation: employes
+
+  - nom: service_demandeur
+    type: text
+    libelle: "Service"
+
+  - nom: motif_achat
+    type: textarea
+    libelle: "Motif"
+
+  - nom: urgence
+    type: select
+    libelle: "Urgence"
+    options:
+      - NORMALE
+      - URGENTE
+      - TRES_URGENTE
+    defaut: NORMALE
+
+  - nom: budget_impute
+    type: text
+    libelle: "Budget imputé"
+
+  # ==========================================================================
+  # VALIDATION
+  # ==========================================================================
+  - nom: validation_requise
+    type: boolean
+    libelle: "Validation requise"
+    defaut: true
+
+  - nom: montant_seuil_validation
+    type: money
+    libelle: "Seuil validation"
+
+  - nom: validateur_id
+    type: relation
+    libelle: "Validateur"
+    relation: employes
+
+  - nom: date_validation
+    type: datetime
+    libelle: "Date validation"
+
+  - nom: motif_rejet
+    type: text
+    libelle: "Motif rejet"
+
+  # ==========================================================================
+  # COMMANDE
+  # ==========================================================================
+  - nom: demande_origine_id
+    type: text
+    libelle: "Demande origine"
+
+  - nom: commande_confirmee
+    type: boolean
+    libelle: "Confirmée"
+    defaut: false
+
+  - nom: date_confirmation
+    type: datetime
+    libelle: "Date confirmation"
+
+  - nom: numero_confirmation
+    type: text
+    libelle: "N° confirmation"
+
+  # ==========================================================================
+  # RÉCEPTION
+  # ==========================================================================
+  - nom: commande_origine_id
+    type: text
+    libelle: "Commande origine"
+
+  - nom: reception_complete
+    type: boolean
+    libelle: "Réception complète"
+    defaut: false
+
+  - nom: lignes_recues
+    type: json
+    libelle: "Lignes reçues"
+
+  - nom: ecarts_reception
+    type: json
+    libelle: "Écarts"
+    description: "Différences quantité/qualité"
+
+  - nom: litige
+    type: boolean
+    libelle: "Litige"
+    defaut: false
+
+  - nom: motif_litige
+    type: textarea
+    libelle: "Motif litige"
+
+  - nom: controle_qualite
+    type: boolean
+    libelle: "Contrôle qualité"
+    defaut: false
+
+  - nom: resultat_controle
+    type: select
+    libelle: "Résultat"
+    options:
+      - CONFORME
+      - NON_CONFORME
+      - PARTIEL
+
+  # ==========================================================================
+  # FACTURE FOURNISSEUR
+  # ==========================================================================
+  - nom: reception_origine_id
+    type: text
+    libelle: "Réception origine"
+
+  - nom: numero_facture_fournisseur
+    type: text
+    libelle: "N° facture fourn."
+
+  - nom: date_facture_fournisseur
+    type: date
+    libelle: "Date facture fourn."
+
+  - nom: ecart_prix
+    type: money
+    libelle: "Écart prix"
+
+  - nom: document_facture
+    type: text
+    libelle: "Document"
+
+  # ==========================================================================
+  # PAIEMENT
+  # ==========================================================================
+  - nom: paiements
+    type: json
+    libelle: "Paiements"
+
+  - nom: montant_paye
+    type: money
+    libelle: "Montant payé"
+    defaut: 0
+
+  - nom: reste_a_payer
+    type: money
+    libelle: "Reste à payer"
+
+  - nom: date_paiement
+    type: date
+    libelle: "Date paiement"
+
+  - nom: reference_paiement
+    type: text
+    libelle: "Réf. paiement"
+
+  # ==========================================================================
+  # COMPTABILITÉ
+  # ==========================================================================
+  - nom: compte_fournisseur
+    type: text
+    libelle: "Compte fournisseur"
+    defaut: "401000"
+
+  - nom: compte_charge
+    type: text
+    libelle: "Compte charge"
+    defaut: "607000"
+
+  - nom: journal
+    type: text
+    libelle: "Journal"
+    defaut: "AC"
+
+  - nom: ecriture_comptable_id
+    type: text
+    libelle: "Écriture"
+
+  - nom: integre_compta
+    type: boolean
+    libelle: "Intégré compta"
+    defaut: false
+
+  # ==========================================================================
+  # STOCK
+  # ==========================================================================
+  - nom: maj_stock
+    type: boolean
+    libelle: "MAJ stock"
+    defaut: true
+
+  - nom: entrepot_id
+    type: relation
+    libelle: "Entrepôt"
+    relation: entrepots
+
+  - nom: mouvement_stock_id
+    type: text
+    libelle: "Mouvement stock"
+
+  # ==========================================================================
+  # DOCUMENTS
+  # ==========================================================================
+  - nom: pdf_document
+    type: text
+    libelle: "PDF"
+
+  - nom: pieces_jointes
+    type: json
+    libelle: "Pièces jointes"
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - A_VALIDER
+      - VALIDE
+      - ENVOYE
+      - CONFIRME
+      - RECU_PARTIEL
+      - RECU
+      - FACTURE
+      - PAYE
+      - ANNULE
+      - LITIGE
+    defaut: BROUILLON
+
+  - nom: cree_par
+    type: text
+    libelle: "Créé par"
+
+  - nom: date_creation
+    type: datetime
+    libelle: "Date création"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Index
+index:
+  - numero
+  - fournisseur_id
+  - type_document
+  - date_document
+  - statut
+
+recherche:
+  - numero
+  - fournisseur_id
+  - reference_fournisseur
+
+affichage_liste:
+  - numero
+  - type_document
+  - fournisseur_id
+  - date_document
+  - total_ttc
+  - statut
+
+workflow:
+  BROUILLON -> A_VALIDER: "Soumettre"
+  A_VALIDER -> VALIDE: "Valider"
+  A_VALIDER -> BROUILLON: "Rejeter"
+  VALIDE -> ENVOYE: "Envoyer"
+  ENVOYE -> CONFIRME: "Confirmer"
+  CONFIRME -> RECU_PARTIEL: null
+  CONFIRME -> RECU: null
+  RECU_PARTIEL -> RECU: null
+  RECU -> FACTURE: null
+  FACTURE -> PAYE: null
+  CONFIRME -> LITIGE: "Litige"
+  BROUILLON -> ANNULE: "Annuler"
+
+actions:
+  - calculer_totaux
+  - generer_pdf
+  - envoyer_fournisseur
+  - creer_reception
+  - enregistrer_facture
+  - enregistrer_paiement
+  - exporter_compta
+  - relancer_fournisseur

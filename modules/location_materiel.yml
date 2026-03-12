@@ -1,0 +1,304 @@
+# =============================================================================
+# AZALPLUS - Module Location de Materiel
+# =============================================================================
+# Gestion de la location de materiel et equipements.
+
+nom: Location Materiel
+icone: hand-holding
+menu: Commercial
+description: Location de materiel et equipements
+
+champs:
+  # Identification
+  - nom: number
+    type: text
+    obligatoire: true
+    unique: true
+    description: Numero de location (LOC-YYYY-NNNNN)
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: RESERVATION
+    options: [RESERVATION, CONFIRMEE, EN_COURS, TERMINEE, ANNULEE, LITIGE]
+    description: Statut
+
+  # Client
+  - nom: customer_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client
+    autocompletion: true
+
+  - nom: contact_id
+    type: relation
+    obligatoire: false
+    relation: Contacts
+    description: Contact
+    autocompletion: true
+
+  # Materiel
+  - nom: equipement_id
+    type: relation
+    obligatoire: true
+    relation: Equipements
+    description: Materiel loue
+    autocompletion: true
+
+  - nom: quantite
+    type: number
+    obligatoire: true
+    defaut: 1
+    description: Quantite
+
+  # Periode
+  - nom: date_debut
+    type: datetime
+    obligatoire: true
+    description: Date/heure debut
+
+  - nom: date_fin_prevue
+    type: datetime
+    obligatoire: true
+    description: Date/heure fin prevue
+
+  - nom: date_fin_effective
+    type: datetime
+    obligatoire: false
+    description: Date/heure fin effective
+
+  - nom: duree_jours
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Duree en jours
+
+  # Tarification
+  - nom: tarif_type
+    type: select
+    obligatoire: true
+    defaut: JOURNALIER
+    options: [HORAIRE, DEMI_JOURNEE, JOURNALIER, HEBDOMADAIRE, MENSUEL, FORFAIT]
+    description: Type de tarif
+
+  - nom: tarif_unitaire
+    type: number
+    obligatoire: true
+    description: Tarif unitaire
+
+  - nom: montant_location
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Montant location HT
+
+  - nom: remise_pourcent
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Remise (%)
+
+  - nom: montant_remise
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant remise
+
+  - nom: frais_livraison
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Frais de livraison
+
+  - nom: assurance
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Assurance
+
+  - nom: total_ht
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Total HT
+
+  - nom: tva
+    type: number
+    obligatoire: false
+    readonly: true
+    description: TVA
+
+  - nom: total_ttc
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Total TTC
+
+  # Caution
+  - nom: caution_requise
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Caution requise
+
+  - nom: montant_caution
+    type: number
+    obligatoire: false
+    description: Montant caution
+
+  - nom: caution_encaissee
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Caution encaissee
+
+  - nom: mode_caution
+    type: select
+    obligatoire: false
+    options: [CHEQUE, CB, VIREMENT, ESPECES]
+    description: Mode de caution
+
+  - nom: caution_restituee
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Caution restituee
+
+  - nom: date_restitution_caution
+    type: date
+    obligatoire: false
+    description: Date restitution caution
+
+  - nom: retenue_caution
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant retenu sur caution
+
+  - nom: motif_retenue
+    type: text
+    obligatoire: false
+    description: Motif retenue
+
+  # Livraison
+  - nom: mode_remise
+    type: select
+    obligatoire: false
+    defaut: ENLEVEMENT
+    options: [ENLEVEMENT, LIVRAISON, SUR_SITE]
+    description: Mode de remise
+
+  - nom: adresse_livraison
+    type: textarea
+    obligatoire: false
+    description: Adresse de livraison
+
+  # Etat du materiel
+  - nom: etat_depart
+    type: select
+    obligatoire: false
+    defaut: BON
+    options: [NEUF, BON, USAGE, DEFAUTS_MINEURS]
+    description: Etat au depart
+
+  - nom: etat_retour
+    type: select
+    obligatoire: false
+    options: [NEUF, BON, USAGE, DEFAUTS_MINEURS, ENDOMMAGE]
+    description: Etat au retour
+
+  - nom: photos_depart
+    type: json
+    obligatoire: false
+    description: Photos etat depart
+
+  - nom: photos_retour
+    type: json
+    obligatoire: false
+    description: Photos etat retour
+
+  - nom: observations_depart
+    type: textarea
+    obligatoire: false
+    description: Observations depart
+
+  - nom: observations_retour
+    type: textarea
+    obligatoire: false
+    description: Observations retour
+
+  # Contrat
+  - nom: contrat_signe
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Contrat signe
+
+  - nom: signature_client
+    type: text
+    obligatoire: false
+    description: Signature client
+
+  - nom: conditions_generales
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: CGV acceptees
+
+  # Facturation
+  - nom: facture_id
+    type: relation
+    obligatoire: false
+    relation: Factures
+    description: Facture
+    autocompletion: true
+
+  - nom: facture_caution_id
+    type: relation
+    obligatoire: false
+    relation: Factures
+    description: Facture caution
+
+  # Penalites retard
+  - nom: retard_jours
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Jours de retard
+
+  - nom: penalite_retard
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Penalite retard
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+workflow:
+  RESERVATION -> CONFIRMEE: confirmer
+  CONFIRMEE -> EN_COURS: demarrer
+  EN_COURS -> TERMINEE: terminer
+  RESERVATION -> ANNULEE: annuler
+  CONFIRMEE -> ANNULEE: annuler
+  EN_COURS -> LITIGE: declarer_litige
+  LITIGE -> TERMINEE: resoudre_litige
+
+actions:
+  - confirmer
+  - generer_contrat
+  - etat_des_lieux_depart
+  - etat_des_lieux_retour
+  - facturer
+  - restituer_caution
+  - prolonger
+
+marceau:
+  alertes:
+    - si date_fin_prevue < aujourd'hui et status = EN_COURS: "Location en retard de retour"
+    - si caution_requise = true et caution_encaissee = false et status = CONFIRMEE: "Caution non encaissee"

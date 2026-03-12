@@ -1,7 +1,8 @@
 nom: Waitlist
 icone: users
-menu: Marketing
+menu: Système
 description: Liste d'attente pré-lancement AZALPLUS
+acces: createur_only
 
 champs:
   - nom: email
@@ -28,13 +29,25 @@ champs:
   - nom: source
     type: select
     options:
+      - Ami
       - LinkedIn
       - Facebook
       - Groupe Zaliers
+      - CMA (Chambre de Métiers)
+      - CCI (Chambre de Commerce)
+      - BGE
+      - Initiative France
+      - Réseau Entreprendre
+      - Pôle Emploi
       - Bouche à oreille
       - Recherche Google
       - Autre
     label: "Comment nous avez-vous connu ?"
+
+  - nom: ami_email
+    type: email
+    label: "Email de l'ami (parrainage)"
+    description: "Pour remercier l'ami qui a recommandé AZALPLUS"
 
   - nom: utm_source
     type: text

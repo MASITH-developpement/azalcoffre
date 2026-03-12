@@ -1,0 +1,376 @@
+# =============================================================================
+# AZALPLUS - Module Planning Complet
+# =============================================================================
+# Gestion planning: agenda, réunions, ressources, rendez-vous
+
+nom: Planning
+nom_pluriel: Planning
+icone: calendar
+menu: Planning
+description: "Planning: agenda, réunions, rendez-vous, ressources"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: numero
+    type: text
+    libelle: "Numéro"
+    unique: true
+    auto_genere: true
+    format: "EVT-{AAAA}{MM}{JJ}-{####}"
+
+  - nom: type_evenement
+    type: select
+    libelle: "Type"
+    obligatoire: true
+    options:
+      - REUNION
+      - RDV_CLIENT
+      - RDV_PROSPECT
+      - INTERVENTION
+      - FORMATION
+      - CONGE
+      - ABSENCE
+      - TACHE
+      - RAPPEL
+      - AUTRE
+    defaut: REUNION
+
+  - nom: titre
+    type: text
+    libelle: "Titre"
+    obligatoire: true
+
+  - nom: description
+    type: textarea
+    libelle: "Description"
+
+  # ==========================================================================
+  # DATES ET HEURES
+  # ==========================================================================
+  - nom: date_debut
+    type: datetime
+    libelle: "Début"
+    obligatoire: true
+
+  - nom: date_fin
+    type: datetime
+    libelle: "Fin"
+    obligatoire: true
+
+  - nom: journee_entiere
+    type: boolean
+    libelle: "Journée entière"
+    defaut: false
+
+  - nom: duree_minutes
+    type: number
+    libelle: "Durée (min)"
+
+  - nom: fuseau_horaire
+    type: text
+    libelle: "Fuseau horaire"
+    defaut: "Europe/Paris"
+
+  # ==========================================================================
+  # RÉCURRENCE
+  # ==========================================================================
+  - nom: recurrent
+    type: boolean
+    libelle: "Récurrent"
+    defaut: false
+
+  - nom: recurrence_type
+    type: select
+    libelle: "Type récurrence"
+    options:
+      - QUOTIDIEN
+      - HEBDOMADAIRE
+      - MENSUEL
+      - ANNUEL
+
+  - nom: recurrence_interval
+    type: number
+    libelle: "Intervalle"
+    defaut: 1
+
+  - nom: recurrence_jours
+    type: json
+    libelle: "Jours"
+    description: "Pour hebdomadaire"
+
+  - nom: recurrence_fin
+    type: date
+    libelle: "Fin récurrence"
+
+  - nom: recurrence_nombre
+    type: number
+    libelle: "Nb occurrences"
+
+  - nom: evenement_parent_id
+    type: text
+    libelle: "Événement parent"
+
+  # ==========================================================================
+  # ORGANISATEUR
+  # ==========================================================================
+  - nom: organisateur_id
+    type: relation
+    libelle: "Organisateur"
+    relation: employes
+    obligatoire: true
+
+  - nom: organisateur_nom
+    type: text
+    libelle: "Nom organisateur"
+
+  - nom: organisateur_email
+    type: email
+    libelle: "Email organisateur"
+
+  # ==========================================================================
+  # PARTICIPANTS
+  # ==========================================================================
+  - nom: participants
+    type: json
+    libelle: "Participants"
+    description: "Liste des participants internes"
+
+  - nom: participants_externes
+    type: json
+    libelle: "Participants externes"
+
+  - nom: nombre_participants
+    type: number
+    libelle: "Nb participants"
+
+  - nom: reponses
+    type: json
+    libelle: "Réponses"
+    description: "Accepté/Refusé/Peut-être"
+
+  # ==========================================================================
+  # LIEU
+  # ==========================================================================
+  - nom: lieu
+    type: text
+    libelle: "Lieu"
+
+  - nom: salle_id
+    type: text
+    libelle: "Salle"
+
+  - nom: adresse
+    type: textarea
+    libelle: "Adresse"
+
+  - nom: visioconference
+    type: boolean
+    libelle: "Visioconférence"
+    defaut: false
+
+  - nom: lien_visio
+    type: text
+    libelle: "Lien visio"
+
+  - nom: plateforme_visio
+    type: select
+    libelle: "Plateforme"
+    options:
+      - TEAMS
+      - ZOOM
+      - GOOGLE_MEET
+      - WEBEX
+      - AUTRE
+
+  # ==========================================================================
+  # RESSOURCES
+  # ==========================================================================
+  - nom: ressources
+    type: json
+    libelle: "Ressources"
+    description: "Salles, équipements réservés"
+
+  - nom: equipements
+    type: tags
+    libelle: "Équipements"
+
+  # ==========================================================================
+  # CONTEXTE COMMERCIAL
+  # ==========================================================================
+  - nom: client_id
+    type: relation
+    libelle: "Client"
+    relation: clients
+
+  - nom: contact_client
+    type: text
+    libelle: "Contact client"
+
+  - nom: opportunite_id
+    type: text
+    libelle: "Opportunité"
+
+  - nom: projet_id
+    type: text
+    libelle: "Projet"
+
+  # ==========================================================================
+  # PRÉPARATION
+  # ==========================================================================
+  - nom: ordre_jour
+    type: textarea
+    libelle: "Ordre du jour"
+
+  - nom: documents
+    type: json
+    libelle: "Documents"
+
+  - nom: preparation_notes
+    type: textarea
+    libelle: "Notes préparation"
+
+  # ==========================================================================
+  # COMPTE RENDU
+  # ==========================================================================
+  - nom: compte_rendu
+    type: textarea
+    libelle: "Compte rendu"
+
+  - nom: decisions
+    type: textarea
+    libelle: "Décisions"
+
+  - nom: actions_suivantes
+    type: json
+    libelle: "Actions à suivre"
+
+  - nom: compte_rendu_envoye
+    type: boolean
+    libelle: "CR envoyé"
+    defaut: false
+
+  # ==========================================================================
+  # RAPPELS
+  # ==========================================================================
+  - nom: rappel_actif
+    type: boolean
+    libelle: "Rappel"
+    defaut: true
+
+  - nom: rappel_delai
+    type: number
+    libelle: "Rappel avant (min)"
+    defaut: 15
+
+  - nom: rappels_envoyes
+    type: json
+    libelle: "Rappels envoyés"
+
+  # ==========================================================================
+  # SYNCHRONISATION
+  # ==========================================================================
+  - nom: sync_google
+    type: boolean
+    libelle: "Sync Google"
+    defaut: false
+
+  - nom: google_event_id
+    type: text
+    libelle: "Google Event ID"
+
+  - nom: sync_outlook
+    type: boolean
+    libelle: "Sync Outlook"
+    defaut: false
+
+  - nom: outlook_event_id
+    type: text
+    libelle: "Outlook Event ID"
+
+  - nom: ical_uid
+    type: text
+    libelle: "iCal UID"
+
+  # ==========================================================================
+  # CONFIDENTIALITÉ
+  # ==========================================================================
+  - nom: prive
+    type: boolean
+    libelle: "Privé"
+    defaut: false
+
+  - nom: visible_par
+    type: json
+    libelle: "Visible par"
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - PLANIFIE
+      - CONFIRME
+      - EN_COURS
+      - TERMINE
+      - ANNULE
+      - REPORTE
+    defaut: PLANIFIE
+
+  - nom: annulation_motif
+    type: text
+    libelle: "Motif annulation"
+
+  - nom: couleur
+    type: text
+    libelle: "Couleur"
+    defaut: "#3B82F6"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Index
+index:
+  - organisateur_id
+  - date_debut
+  - type_evenement
+  - statut
+  - client_id
+
+recherche:
+  - numero
+  - titre
+  - client_id
+  - organisateur_id
+
+affichage_liste:
+  - titre
+  - type_evenement
+  - date_debut
+  - duree_minutes
+  - lieu
+  - statut
+
+workflow:
+  PLANIFIE -> CONFIRME: "Confirmer"
+  CONFIRME -> EN_COURS: null
+  EN_COURS -> TERMINE: "Terminer"
+  PLANIFIE -> ANNULE: "Annuler"
+  CONFIRME -> ANNULE: "Annuler"
+  PLANIFIE -> REPORTE: "Reporter"
+  CONFIRME -> REPORTE: "Reporter"
+
+actions:
+  - inviter_participants
+  - envoyer_rappel
+  - rediger_cr
+  - envoyer_cr
+  - dupliquer
+  - reporter
+  - sync_calendrier
+  - generer_lien_visio

@@ -1,0 +1,115 @@
+# =============================================================================
+# AZALPLUS - Module Controle Qualite
+# =============================================================================
+nom: Qualite
+icone: award
+menu: Qualite
+description: Controle qualite et non-conformites
+
+champs:
+  - nom: reference
+    type: text
+    obligatoire: true
+    unique: true
+    description: Reference controle
+
+  - nom: type
+    type: select
+    obligatoire: true
+    options: [RECEPTION, EN_COURS, FINAL, AUDIT, RECLAMATION]
+    description: Type de controle
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: A_FAIRE
+    options: [A_FAIRE, EN_COURS, CONFORME, NON_CONFORME, CLOS]
+    description: Statut
+
+  - nom: produit_id
+    type: relation
+    obligatoire: false
+    relation: Produits
+    description: Produit
+
+  - nom: lot_numero
+    type: text
+    obligatoire: false
+    description: Numero de lot
+
+  - nom: quantite_controlee
+    type: number
+    obligatoire: false
+    description: Quantite controlee
+
+  - nom: quantite_conforme
+    type: number
+    obligatoire: false
+    description: Quantite conforme
+
+  - nom: taux_conformite
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Taux conformite (%)
+
+  - nom: controleur_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Controleur
+
+  - nom: date_controle
+    type: datetime
+    obligatoire: true
+    description: Date/heure controle
+
+  - nom: criteres
+    type: json
+    obligatoire: false
+    description: Criteres et resultats
+
+  - nom: defauts
+    type: json
+    obligatoire: false
+    description: Defauts constates
+
+  - nom: photos
+    type: json
+    obligatoire: false
+    description: Photos
+
+  - nom: decision
+    type: select
+    obligatoire: false
+    options: [ACCEPTE, ACCEPTE_DEROGATION, RETOUCHE, REBUT, RETOUR_FOURNISSEUR]
+    description: Decision
+
+  - nom: actions_correctives
+    type: textarea
+    obligatoire: false
+    description: Actions correctives
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+workflow:
+  A_FAIRE -> EN_COURS: demarrer
+  EN_COURS -> CONFORME: valider_conforme
+  EN_COURS -> NON_CONFORME: declarer_nc
+  NON_CONFORME -> CLOS: clore
+  CONFORME -> CLOS: clore
+
+actions:
+  - saisir_resultats
+  - declarer_nc
+  - liberer_lot
+  - bloquer_lot
+  - generer_certificat
+
+marceau:
+  alertes:
+    - si status = NON_CONFORME: "Non-conformite detectee"
+    - si taux_conformite < 95: "Taux de conformite faible"

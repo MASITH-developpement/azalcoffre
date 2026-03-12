@@ -1,0 +1,97 @@
+# =============================================================================
+# AZALPLUS - Module Conformite
+# =============================================================================
+# Suivi de la conformite reglementaire.
+
+nom: Conformite
+icone: clipboard-check
+menu: Qualite
+description: Conformite reglementaire
+
+champs:
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom de l'obligation
+    autocompletion: true
+
+  - nom: type
+    type: select
+    obligatoire: true
+    options: [RGPD, FACTURATION_ELECTRONIQUE, NF525, ANTI_FRAUDE_TVA, ARCHIVAGE, DROIT_TRAVAIL, SECURITE, ENVIRONNEMENT, AUTRE]
+    description: Type
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: A_VERIFIER
+    options: [CONFORME, PARTIELLEMENT_CONFORME, NON_CONFORME, A_VERIFIER, NON_APPLICABLE]
+    description: Statut
+
+  - nom: priorite
+    type: select
+    obligatoire: false
+    defaut: MOYENNE
+    options: [CRITIQUE, HAUTE, MOYENNE, BASSE]
+    description: Priorite
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description obligation
+
+  - nom: exigences
+    type: textarea
+    obligatoire: false
+    description: Exigences detaillees
+
+  - nom: date_echeance
+    type: date
+    obligatoire: false
+    description: Date limite conformite
+
+  - nom: date_dernier_audit
+    type: date
+    obligatoire: false
+    description: Dernier audit
+
+  - nom: date_prochain_audit
+    type: date
+    obligatoire: false
+    description: Prochain audit
+
+  - nom: responsable_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Responsable
+
+  - nom: score
+    type: number
+    obligatoire: false
+    description: Score conformite (0-100)
+
+  - nom: actions_requises
+    type: textarea
+    obligatoire: false
+    description: Actions a mener
+
+  - nom: preuves
+    type: json
+    obligatoire: false
+    description: Documents de preuve
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+actions:
+  - audit
+  - generer_rapport
+  - exporter_preuves
+
+marceau:
+  alertes:
+    - si status = NON_CONFORME et priorite = CRITIQUE: "Non-conformite critique"
+    - si date_echeance < aujourd'hui: "Echeance conformite depassee"

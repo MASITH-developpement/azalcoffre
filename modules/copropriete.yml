@@ -1,0 +1,152 @@
+# =============================================================================
+# AZALPLUS - Module Copropriete
+# =============================================================================
+nom: Copropriete
+icone: building
+menu: Immobilier
+description: Gestion de coproprietes et syndic
+
+champs:
+  - nom: reference
+    type: text
+    obligatoire: true
+    unique: true
+    description: Reference copropriete
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom residence
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: ACTIVE
+    options: [ACTIVE, EN_CREATION, DISSOUTE]
+    description: Statut
+
+  - nom: adresse
+    type: textarea
+    obligatoire: true
+    description: Adresse
+
+  - nom: code_postal
+    type: text
+    obligatoire: true
+    description: Code postal
+
+  - nom: ville
+    type: text
+    obligatoire: true
+    description: Ville
+
+  - nom: nb_lots
+    type: number
+    obligatoire: false
+    description: Nombre de lots
+
+  - nom: nb_batiments
+    type: number
+    obligatoire: false
+    defaut: 1
+    description: Nombre batiments
+
+  - nom: annee_construction
+    type: number
+    obligatoire: false
+    description: Annee construction
+
+  - nom: surface_totale
+    type: number
+    obligatoire: false
+    description: Surface totale (m2)
+
+  - nom: coproprietaires
+    type: json
+    obligatoire: false
+    description: Liste coproprietaires (lot, tantiemes, contact)
+
+  - nom: conseil_syndical
+    type: json
+    obligatoire: false
+    description: Membres conseil syndical
+
+  - nom: president_cs
+    type: text
+    obligatoire: false
+    description: President conseil syndical
+
+  - nom: budget_previsionnel
+    type: number
+    obligatoire: false
+    description: Budget previsionnel annuel
+
+  - nom: charges_courantes
+    type: number
+    obligatoire: false
+    description: Charges courantes mensuelles
+
+  - nom: fonds_travaux
+    type: number
+    obligatoire: false
+    description: Fonds travaux (art.14-2)
+
+  - nom: compte_bancaire
+    type: text
+    obligatoire: false
+    description: Compte bancaire copropriete
+
+  - nom: assurance_immeuble
+    type: text
+    obligatoire: false
+    description: Assurance immeuble
+
+  - nom: date_ag_precedente
+    type: date
+    obligatoire: false
+    description: Derniere AG
+
+  - nom: date_ag_prochaine
+    type: date
+    obligatoire: false
+    description: Prochaine AG
+
+  - nom: contrats
+    type: json
+    obligatoire: false
+    description: Contrats (gardien, ascenseur, chauffage)
+
+  - nom: travaux_votes
+    type: json
+    obligatoire: false
+    description: Travaux votes
+
+  - nom: impayes
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Total impayes
+
+  - nom: documents
+    type: json
+    obligatoire: false
+    description: Documents (reglement, carnet entretien)
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+actions:
+  - appel_fonds
+  - convoquer_ag
+  - repartir_charges
+  - generer_pv_ag
+  - relancer_impayes
+  - cloture_exercice
+
+marceau:
+  alertes:
+    - si impayes > budget_previsionnel * 0.1: "Impayes superieurs a 10%"
+    - si date_ag_prochaine < aujourd'hui + 30 jours: "AG a preparer"
+    - si fonds_travaux < budget_previsionnel * 0.05: "Fonds travaux insuffisant"

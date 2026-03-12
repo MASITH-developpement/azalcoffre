@@ -1,0 +1,557 @@
+# =============================================================================
+# AZALPLUS - Module RH Complet
+# =============================================================================
+# Gestion RH: employés, contrats, congés, temps, notes de frais, formations
+
+nom: RH
+nom_pluriel: RH
+icone: users
+menu: RH
+description: "RH: employés, contrats, congés, temps, formations"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION EMPLOYÉ
+  # ==========================================================================
+  - nom: matricule
+    type: text
+    libelle: "Matricule"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+    format: "EMP-{####}"
+
+  - nom: type_fiche
+    type: select
+    libelle: "Type"
+    options:
+      - EMPLOYE
+      - CONGE
+      - TEMPS
+      - NOTE_FRAIS
+      - FORMATION
+      - ENTRETIEN
+    defaut: EMPLOYE
+
+  # ==========================================================================
+  # ÉTAT CIVIL
+  # ==========================================================================
+  - nom: civilite
+    type: select
+    libelle: "Civilité"
+    options:
+      - M.
+      - Mme
+      - Mlle
+
+  - nom: nom
+    type: text
+    libelle: "Nom"
+    obligatoire: true
+
+  - nom: prenom
+    type: text
+    libelle: "Prénom"
+    obligatoire: true
+
+  - nom: nom_naissance
+    type: text
+    libelle: "Nom de naissance"
+
+  - nom: date_naissance
+    type: date
+    libelle: "Date naissance"
+
+  - nom: lieu_naissance
+    type: text
+    libelle: "Lieu naissance"
+
+  - nom: nationalite
+    type: text
+    libelle: "Nationalité"
+    defaut: "Française"
+
+  - nom: numero_ss
+    type: text
+    libelle: "N° Sécurité Sociale"
+
+  - nom: situation_familiale
+    type: select
+    libelle: "Situation familiale"
+    options:
+      - CELIBATAIRE
+      - MARIE
+      - PACSE
+      - DIVORCE
+      - VEUF
+
+  - nom: nombre_enfants
+    type: number
+    libelle: "Nombre d'enfants"
+    defaut: 0
+
+  # ==========================================================================
+  # COORDONNÉES
+  # ==========================================================================
+  - nom: adresse
+    type: textarea
+    libelle: "Adresse"
+
+  - nom: code_postal
+    type: text
+    libelle: "Code postal"
+
+  - nom: ville
+    type: text
+    libelle: "Ville"
+
+  - nom: telephone
+    type: tel
+    libelle: "Téléphone"
+
+  - nom: mobile
+    type: tel
+    libelle: "Mobile"
+
+  - nom: email_personnel
+    type: email
+    libelle: "Email personnel"
+
+  - nom: email_professionnel
+    type: email
+    libelle: "Email pro"
+
+  - nom: contact_urgence
+    type: text
+    libelle: "Contact urgence"
+
+  - nom: tel_urgence
+    type: tel
+    libelle: "Tél. urgence"
+
+  # ==========================================================================
+  # CONTRAT
+  # ==========================================================================
+  - nom: type_contrat
+    type: select
+    libelle: "Type contrat"
+    options:
+      - CDI
+      - CDD
+      - APPRENTISSAGE
+      - PROFESSIONNALISATION
+      - STAGE
+      - INTERIM
+
+  - nom: date_entree
+    type: date
+    libelle: "Date d'entrée"
+
+  - nom: date_anciennete
+    type: date
+    libelle: "Date ancienneté"
+
+  - nom: date_fin_contrat
+    type: date
+    libelle: "Fin contrat"
+
+  - nom: motif_fin_contrat
+    type: text
+    libelle: "Motif fin"
+
+  - nom: periode_essai_fin
+    type: date
+    libelle: "Fin période essai"
+
+  # ==========================================================================
+  # POSTE
+  # ==========================================================================
+  - nom: poste
+    type: text
+    libelle: "Poste"
+
+  - nom: service
+    type: text
+    libelle: "Service"
+
+  - nom: departement
+    type: text
+    libelle: "Département"
+
+  - nom: etablissement
+    type: text
+    libelle: "Établissement"
+
+  - nom: manager_id
+    type: relation
+    libelle: "Manager"
+    relation: employes
+
+  - nom: categorie
+    type: select
+    libelle: "Catégorie"
+    options:
+      - CADRE
+      - NON_CADRE
+      - CADRE_DIRIGEANT
+
+  - nom: coefficient
+    type: text
+    libelle: "Coefficient"
+
+  - nom: niveau
+    type: text
+    libelle: "Niveau"
+
+  - nom: echelon
+    type: text
+    libelle: "Échelon"
+
+  # ==========================================================================
+  # TEMPS DE TRAVAIL
+  # ==========================================================================
+  - nom: temps_travail
+    type: select
+    libelle: "Temps de travail"
+    options:
+      - TEMPS_PLEIN
+      - TEMPS_PARTIEL
+      - FORFAIT_JOURS
+      - FORFAIT_HEURES
+
+  - nom: horaire_hebdo
+    type: number
+    libelle: "Heures/semaine"
+    defaut: 35
+
+  - nom: horaire_mensuel
+    type: number
+    libelle: "Heures/mois"
+    defaut: 151.67
+
+  - nom: taux_activite
+    type: number
+    libelle: "Taux activité (%)"
+    defaut: 100
+
+  - nom: forfait_jours
+    type: number
+    libelle: "Forfait jours/an"
+
+  # ==========================================================================
+  # RÉMUNÉRATION
+  # ==========================================================================
+  - nom: salaire_brut
+    type: money
+    libelle: "Salaire brut"
+
+  - nom: salaire_net
+    type: money
+    libelle: "Salaire net"
+
+  - nom: taux_horaire
+    type: money
+    libelle: "Taux horaire"
+
+  - nom: prime_anciennete
+    type: money
+    libelle: "Prime ancienneté"
+
+  - nom: avantages_nature
+    type: money
+    libelle: "Avantages nature"
+
+  - nom: titres_restaurant
+    type: boolean
+    libelle: "Titres restaurant"
+    defaut: false
+
+  - nom: mutuelle
+    type: boolean
+    libelle: "Mutuelle"
+    defaut: true
+
+  - nom: prevoyance
+    type: boolean
+    libelle: "Prévoyance"
+    defaut: true
+
+  # ==========================================================================
+  # CONGÉS
+  # ==========================================================================
+  - nom: cp_acquis
+    type: number
+    libelle: "CP acquis"
+    defaut: 0
+
+  - nom: cp_pris
+    type: number
+    libelle: "CP pris"
+    defaut: 0
+
+  - nom: cp_solde
+    type: number
+    libelle: "Solde CP"
+
+  - nom: rtt_acquis
+    type: number
+    libelle: "RTT acquis"
+    defaut: 0
+
+  - nom: rtt_pris
+    type: number
+    libelle: "RTT pris"
+    defaut: 0
+
+  - nom: rtt_solde
+    type: number
+    libelle: "Solde RTT"
+
+  - nom: conges_exceptionnels
+    type: json
+    libelle: "Congés exceptionnels"
+
+  # ==========================================================================
+  # DEMANDE DE CONGÉ
+  # ==========================================================================
+  - nom: conge_type
+    type: select
+    libelle: "Type congé"
+    options:
+      - CP
+      - RTT
+      - MALADIE
+      - SANS_SOLDE
+      - MATERNITE
+      - PATERNITE
+      - EVENEMENT_FAMILIAL
+      - FORMATION
+
+  - nom: conge_date_debut
+    type: date
+    libelle: "Début congé"
+
+  - nom: conge_date_fin
+    type: date
+    libelle: "Fin congé"
+
+  - nom: conge_jours
+    type: number
+    libelle: "Jours congé"
+
+  - nom: conge_motif
+    type: text
+    libelle: "Motif"
+
+  - nom: conge_statut
+    type: select
+    libelle: "Statut congé"
+    options:
+      - DEMANDE
+      - VALIDE
+      - REFUSE
+      - ANNULE
+
+  # ==========================================================================
+  # TEMPS
+  # ==========================================================================
+  - nom: temps_date
+    type: date
+    libelle: "Date"
+
+  - nom: temps_heures
+    type: number
+    libelle: "Heures"
+
+  - nom: temps_projet
+    type: text
+    libelle: "Projet"
+
+  - nom: temps_tache
+    type: text
+    libelle: "Tâche"
+
+  - nom: temps_description
+    type: text
+    libelle: "Description"
+
+  - nom: temps_facturable
+    type: boolean
+    libelle: "Facturable"
+    defaut: true
+
+  # ==========================================================================
+  # NOTE DE FRAIS
+  # ==========================================================================
+  - nom: frais_date
+    type: date
+    libelle: "Date frais"
+
+  - nom: frais_type
+    type: select
+    libelle: "Type frais"
+    options:
+      - DEPLACEMENT
+      - REPAS
+      - HEBERGEMENT
+      - TRANSPORT
+      - FOURNITURES
+      - AUTRE
+
+  - nom: frais_montant
+    type: money
+    libelle: "Montant"
+
+  - nom: frais_tva
+    type: money
+    libelle: "TVA"
+
+  - nom: frais_description
+    type: text
+    libelle: "Description"
+
+  - nom: frais_justificatif
+    type: text
+    libelle: "Justificatif"
+
+  - nom: frais_statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - SOUMIS
+      - VALIDE
+      - REMBOURSE
+      - REFUSE
+
+  # ==========================================================================
+  # FORMATIONS
+  # ==========================================================================
+  - nom: formations
+    type: json
+    libelle: "Formations"
+
+  - nom: formation_titre
+    type: text
+    libelle: "Formation"
+
+  - nom: formation_date
+    type: date
+    libelle: "Date formation"
+
+  - nom: formation_duree
+    type: number
+    libelle: "Durée (h)"
+
+  - nom: formation_organisme
+    type: text
+    libelle: "Organisme"
+
+  - nom: formation_cout
+    type: money
+    libelle: "Coût"
+
+  # ==========================================================================
+  # ENTRETIENS
+  # ==========================================================================
+  - nom: entretiens
+    type: json
+    libelle: "Entretiens"
+
+  - nom: dernier_entretien
+    type: date
+    libelle: "Dernier entretien"
+
+  - nom: prochain_entretien
+    type: date
+    libelle: "Prochain entretien"
+
+  # ==========================================================================
+  # DOCUMENTS
+  # ==========================================================================
+  - nom: photo
+    type: text
+    libelle: "Photo"
+
+  - nom: documents
+    type: json
+    libelle: "Documents"
+
+  - nom: carte_identite
+    type: text
+    libelle: "Carte d'identité"
+
+  - nom: rib
+    type: text
+    libelle: "RIB"
+
+  # ==========================================================================
+  # BANQUE
+  # ==========================================================================
+  - nom: iban
+    type: text
+    libelle: "IBAN"
+
+  - nom: bic
+    type: text
+    libelle: "BIC"
+
+  - nom: banque
+    type: text
+    libelle: "Banque"
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - ACTIF
+      - CONGE
+      - MALADIE
+      - PREAVIS
+      - SORTI
+    defaut: ACTIF
+
+  - nom: date_sortie
+    type: date
+    libelle: "Date sortie"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Index
+index:
+  - matricule
+  - nom
+  - service
+  - type_fiche
+  - statut
+
+recherche:
+  - matricule
+  - nom
+  - prenom
+  - email_professionnel
+
+affichage_liste:
+  - matricule
+  - nom
+  - prenom
+  - poste
+  - service
+  - date_entree
+  - statut
+
+actions:
+  - creer_conge
+  - valider_conge
+  - saisir_temps
+  - creer_note_frais
+  - planifier_entretien
+  - generer_contrat
+  - generer_attestation
+  - exporter_dossier

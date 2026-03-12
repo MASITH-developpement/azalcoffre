@@ -1,757 +1,487 @@
-# AZALPLUS - Module Interventions
+# =============================================================================
+# AZALPLUS - Module Interventions/SAV Complet
+# =============================================================================
+# Gestion SAV: interventions, maintenances, équipements, garanties
+
 nom: Interventions
+nom_pluriel: Interventions
 icone: wrench
-menu: Services
-description: Gestion des interventions terrain
+menu: SAV
+description: "SAV: interventions, maintenances, équipements, garanties"
+ordre_menu: 1
 
 champs:
-  # Reference officielle
-  - nom: reference
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: numero
     type: text
+    libelle: "Numéro"
     obligatoire: true
-    description: Reference INT-YYYY-XXXX (auto-generee)
-    autocompletion: true
+    unique: true
+    auto_genere: true
+    format: "INT-{AAAA}{MM}-{####}"
 
-  # Relations principales
-  - nom: client_id
-    type: relation
-    obligatoire: true
-    relation: Clients
-    description: Client
-    autocompletion: true
+  - nom: type_fiche
+    type: select
+    libelle: "Type"
+    options:
+      - INTERVENTION
+      - MAINTENANCE
+      - EQUIPEMENT
+      - GARANTIE
+    defaut: INTERVENTION
 
-  - nom: donneur_ordre_id
-    type: relation
-    obligatoire: false
-    relation: donneur_ordre
-    description: "Donneur d'ordre"
-    autocompletion: true
-
-  - nom: projet_id
-    type: relation
-    obligatoire: false
-    relation: Projets
-    description: Projet lie
-    autocompletion: true
-
-  - nom: affaire_id
-    type: relation
-    obligatoire: false
-    relation: Affaires
-    description: Affaire liee
-    autocompletion: true
-
-  - nom: devis_id
-    type: relation
-    obligatoire: false
-    relation: Devis
-    description: Devis lie
-    autocompletion: true
-
-  - nom: facture_client_id
-    type: relation
-    obligatoire: false
-    relation: Factures
-    description: Facture client liee
-    autocompletion: true
-
-  # Informations intervention
   - nom: type_intervention
     type: select
-    obligatoire: false
-    defaut: AUTRE
-    options: [INSTALLATION, MAINTENANCE, REPARATION, INSPECTION, FORMATION, CONSULTATION, AUTRE]
-    description: Type d'intervention
+    libelle: "Type intervention"
+    options:
+      - DEPANNAGE
+      - INSTALLATION
+      - MAINTENANCE_PREVENTIVE
+      - MAINTENANCE_CURATIVE
+      - MISE_EN_SERVICE
+      - FORMATION
+      - AUDIT
+      - AUTRE
 
-  - nom: priorite
-    type: select
-    obligatoire: false
-    defaut: NORMAL
-    options: [LOW, NORMAL, HIGH, URGENT]
-    description: Priorite
-
-  - nom: reference_externe
+  - nom: objet
     type: text
-    obligatoire: false
-    description: Reference externe
-    autocompletion: true
-
-  - nom: canal_demande
-    type: select
-    obligatoire: false
-    options: [TELEPHONE, EMAIL, PORTAIL, DIRECT, CONTRAT, AUTRE]
-    description: Canal de la demande
-
-  - nom: corps_etat
-    type: select
-    obligatoire: false
-    options: [ELECTRICITE, PLOMBERIE, ELECTRICITE_PLOMBERIE]
-    description: Corps d'etat
-
-  # Description
-  - nom: titre
-    type: text
-    obligatoire: false
-    description: Titre de l'intervention
-    autocompletion: true
+    libelle: "Objet"
+    obligatoire: true
 
   - nom: description
     type: textarea
-    obligatoire: false
-    description: Description detaillee
+    libelle: "Description"
 
-  - nom: notes_internes
-    type: textarea
-    obligatoire: false
-    description: Notes internes
-
-  # Planification
-  - nom: date_prevue_debut
-    type: datetime
-    obligatoire: false
-    description: Date/heure de debut prevue
-
-  - nom: date_prevue_fin
-    type: datetime
-    obligatoire: false
-    description: Date/heure de fin prevue
-
-  - nom: duree_prevue_minutes
-    type: number
-    obligatoire: false
-    description: Duree prevue (minutes)
-
-  - nom: intervenant_id
+  # ==========================================================================
+  # CLIENT
+  # ==========================================================================
+  - nom: client_id
     type: relation
-    obligatoire: false
-    relation: Utilisateurs
-    description: Technicien assigne
-    autocompletion: true
-
-  # Temps automatique
-  - nom: date_arrivee_site
-    type: datetime
-    obligatoire: false
-    description: Horodatage arrivee sur site
-
-  - nom: date_demarrage
-    type: datetime
-    obligatoire: false
-    description: Horodatage demarrage intervention
-
-  - nom: date_fin
-    type: datetime
-    obligatoire: false
-    description: Horodatage fin intervention
-
-  - nom: duree_reelle_minutes
-    type: number
-    obligatoire: false
-    description: Duree reelle (minutes)
-
-  # Geolocalisation arrivee
-  - nom: geoloc_arrivee_lat
-    type: number
-    obligatoire: false
-    description: Latitude arrivee
-
-  - nom: geoloc_arrivee_lng
-    type: number
-    obligatoire: false
-    description: Longitude arrivee
-
-  # Statut
-  - nom: statut
-    type: select
+    libelle: "Client"
+    relation: clients
     obligatoire: true
-    defaut: DRAFT
-    options: [DRAFT, A_PLANIFIER, PLANIFIEE, SUR_SITE, EN_COURS, TRAVAUX_TERMINES, BLOQUEE, TERMINEE, ANNULEE]
-    description: Statut de l'intervention
 
-  # Adresse intervention
-  - nom: adresse_ligne1
+  - nom: contact_nom
     type: text
-    obligatoire: false
-    description: Adresse ligne 1
-    autocompletion: true
+    libelle: "Contact"
 
-  - nom: adresse_ligne2
-    type: text
-    obligatoire: false
-    description: Adresse ligne 2
-    autocompletion: true
+  - nom: contact_telephone
+    type: tel
+    libelle: "Téléphone"
 
-  - nom: ville
-    type: text
-    obligatoire: false
-    description: Ville
-    autocompletion: true
+  - nom: contact_email
+    type: email
+    libelle: "Email"
+
+  # ==========================================================================
+  # SITE D'INTERVENTION
+  # ==========================================================================
+  - nom: adresse_intervention
+    type: textarea
+    libelle: "Adresse"
 
   - nom: code_postal
     type: text
-    obligatoire: false
-    description: Code postal
-    autocompletion: true
+    libelle: "Code postal"
 
-  - nom: pays
+  - nom: ville
     type: text
-    obligatoire: false
-    defaut: France
-    description: Pays
-    autocompletion: true
+    libelle: "Ville"
 
-  # Blocage
-  - nom: motif_blocage
+  - nom: acces_site
     type: textarea
-    obligatoire: false
-    description: Motif du blocage
-    autocompletion: true
+    libelle: "Accès site"
+    description: "Codes, badges, contacts"
 
-  - nom: date_blocage
-    type: datetime
-    obligatoire: false
-    description: Date de blocage
+  # ==========================================================================
+  # ÉQUIPEMENT
+  # ==========================================================================
+  - nom: equipement_id
+    type: text
+    libelle: "Équipement"
 
-  - nom: date_deblocage
-    type: datetime
-    obligatoire: false
-    description: Date de deblocage
+  - nom: equipement_designation
+    type: text
+    libelle: "Désignation équipement"
 
-  # Contact sur place
-  - nom: contact_civilite
+  - nom: equipement_numero_serie
+    type: text
+    libelle: "N° série"
+
+  - nom: equipement_marque
+    type: text
+    libelle: "Marque"
+
+  - nom: equipement_modele
+    type: text
+    libelle: "Modèle"
+
+  - nom: date_installation
+    type: date
+    libelle: "Date installation"
+
+  - nom: date_mise_service
+    type: date
+    libelle: "Mise en service"
+
+  # ==========================================================================
+  # GARANTIE
+  # ==========================================================================
+  - nom: sous_garantie
+    type: boolean
+    libelle: "Sous garantie"
+    defaut: false
+
+  - nom: garantie_debut
+    type: date
+    libelle: "Début garantie"
+
+  - nom: garantie_fin
+    type: date
+    libelle: "Fin garantie"
+
+  - nom: type_garantie
     type: select
-    obligatoire: false
-    options: [Mr, Mme, Melle]
-    description: Civilite du contact
+    libelle: "Type garantie"
+    options:
+      - CONSTRUCTEUR
+      - ETENDUE
+      - CONTRACTUELLE
+      - AUCUNE
 
-  - nom: contact_sur_place
+  - nom: contrat_maintenance_id
     type: text
-    obligatoire: false
-    description: Nom du contact sur place
-    autocompletion: true
+    libelle: "Contrat maintenance"
 
-  - nom: telephone_contact
-    type: tel
-    obligatoire: false
-    description: Telephone du contact
+  # ==========================================================================
+  # PLANIFICATION
+  # ==========================================================================
+  - nom: date_demande
+    type: datetime
+    libelle: "Date demande"
 
-  - nom: email_contact
-    type: email
-    obligatoire: false
-    description: Email du contact
-    autocompletion: true
+  - nom: date_prevue
+    type: datetime
+    libelle: "Date prévue"
 
-  # Notes & Materiel
-  - nom: notes_client
-    type: textarea
-    obligatoire: false
-    description: Notes pour le client
+  - nom: date_debut
+    type: datetime
+    libelle: "Début réel"
 
-  - nom: materiel_necessaire
-    type: textarea
-    obligatoire: false
-    description: Materiel necessaire
-    autocompletion: true
+  - nom: date_fin
+    type: datetime
+    libelle: "Fin réelle"
 
-  - nom: materiel_utilise
-    type: textarea
-    obligatoire: false
-    description: Materiel utilise (texte libre)
-    autocompletion: true
+  - nom: duree_prevue
+    type: number
+    libelle: "Durée prévue (h)"
 
-  # =========================================================================
-  # PHOTOS INTERVENTION (workflow technicien)
-  # =========================================================================
-  - nom: photos_avant
+  - nom: duree_reelle
+    type: number
+    libelle: "Durée réelle (h)"
+
+  - nom: temps_trajet
+    type: number
+    libelle: "Temps trajet (h)"
+
+  # ==========================================================================
+  # PRIORITÉ ET SLA
+  # ==========================================================================
+  - nom: priorite
+    type: select
+    libelle: "Priorité"
+    options:
+      - CRITIQUE
+      - HAUTE
+      - NORMALE
+      - BASSE
+    defaut: NORMALE
+
+  - nom: urgence
+    type: boolean
+    libelle: "Urgence"
+    defaut: false
+
+  - nom: sla_delai
+    type: number
+    libelle: "SLA délai (h)"
+
+  - nom: sla_respecte
+    type: boolean
+    libelle: "SLA respecté"
+    defaut: true
+
+  # ==========================================================================
+  # TECHNICIEN
+  # ==========================================================================
+  - nom: technicien_id
+    type: relation
+    libelle: "Technicien"
+    relation: employes
+
+  - nom: equipe
     type: json
-    obligatoire: false
-    description: |
-      Photos avant intervention (minimum 2 recommandees).
-      Format: [{"url": "https://...", "timestamp": "2026-03-09T10:30:00", "gps": {"lat": 48.8, "lng": 2.3}}]
+    libelle: "Équipe"
 
-  - nom: photos_apres
-    type: json
-    obligatoire: false
-    description: |
-      Photos apres intervention (minimum 2 recommandees).
-      Format: [{"url": "https://...", "timestamp": "2026-03-09T12:30:00", "gps": {"lat": 48.8, "lng": 2.3}}]
+  - nom: competences_requises
+    type: tags
+    libelle: "Compétences requises"
 
-  - nom: constat_arrivee
+  # ==========================================================================
+  # DIAGNOSTIC
+  # ==========================================================================
+  - nom: symptome
     type: textarea
-    obligatoire: false
-    description: Constat a l'arrivee sur site
-    autocompletion: true
+    libelle: "Symptôme"
 
+  - nom: diagnostic
+    type: textarea
+    libelle: "Diagnostic"
+
+  - nom: cause
+    type: text
+    libelle: "Cause"
+
+  - nom: code_panne
+    type: text
+    libelle: "Code panne"
+
+  # ==========================================================================
+  # TRAVAUX RÉALISÉS
+  # ==========================================================================
   - nom: travaux_realises
     type: textarea
-    obligatoire: false
-    description: Description des travaux realises
-    autocompletion: true
+    libelle: "Travaux réalisés"
 
-  - nom: anomalies
-    type: textarea
-    obligatoire: false
-    description: Anomalies constatees
-    autocompletion: true
+  - nom: pieces_changees
+    type: json
+    libelle: "Pièces changées"
 
   - nom: recommandations
     type: textarea
-    obligatoire: false
-    description: Recommandations pour le client
-    autocompletion: true
+    libelle: "Recommandations"
 
-  # =========================================================================
-  # MATERIEL UTILISE STRUCTURE (pour facturation)
-  # =========================================================================
-  - nom: materiel_utilise_lignes
+  - nom: intervention_suivante
+    type: text
+    libelle: "Intervention suivante"
+
+  # ==========================================================================
+  # PIÈCES ET FOURNITURES
+  # ==========================================================================
+  - nom: pieces
     type: json
-    obligatoire: false
-    description: |
-      Liste structuree du materiel utilise (pour facturation automatique).
-      Format: [
-        {
-          "produit_id": "uuid",
-          "designation": "Cable 2.5mm2",
-          "quantite": 10,
-          "unite": "m",
-          "prix_unitaire": 2.50,
-          "prix_total": 25.00,
-          "notes": "Remplacement cable defectueux"
-        }
-      ]
+    libelle: "Pièces"
 
-  # =========================================================================
-  # VALIDATION CLIENT
-  # =========================================================================
-  - nom: avis_client
+  - nom: montant_pieces
+    type: money
+    libelle: "Montant pièces"
+
+  - nom: fournitures
+    type: json
+    libelle: "Fournitures"
+
+  - nom: montant_fournitures
+    type: money
+    libelle: "Montant fournitures"
+
+  # ==========================================================================
+  # MAIN D'ŒUVRE
+  # ==========================================================================
+  - nom: heures_mo
     type: number
-    obligatoire: false
-    description: Note de satisfaction client (1 a 5)
+    libelle: "Heures MO"
 
-  - nom: appreciation_client
+  - nom: taux_horaire
+    type: money
+    libelle: "Taux horaire"
+
+  - nom: montant_mo
+    type: money
+    libelle: "Montant MO"
+
+  - nom: majoration
+    type: number
+    libelle: "Majoration (%)"
+    description: "Nuit, weekend, férié"
+
+  # ==========================================================================
+  # DÉPLACEMENTS
+  # ==========================================================================
+  - nom: km_parcourus
+    type: number
+    libelle: "Km parcourus"
+
+  - nom: indemnite_km
+    type: money
+    libelle: "Indemnité km"
+
+  - nom: frais_deplacement
+    type: money
+    libelle: "Frais déplacement"
+
+  - nom: frais_hebergement
+    type: money
+    libelle: "Hébergement"
+
+  # ==========================================================================
+  # FACTURATION
+  # ==========================================================================
+  - nom: facturable
+    type: boolean
+    libelle: "Facturable"
+    defaut: true
+
+  - nom: montant_ht
+    type: money
+    libelle: "Montant HT"
+
+  - nom: tva
+    type: money
+    libelle: "TVA"
+
+  - nom: montant_ttc
+    type: money
+    libelle: "Montant TTC"
+
+  - nom: facture_id
+    type: text
+    libelle: "Facture"
+
+  - nom: facture
+    type: boolean
+    libelle: "Facturé"
+    defaut: false
+
+  # ==========================================================================
+  # RAPPORT
+  # ==========================================================================
+  - nom: rapport_intervention
     type: textarea
-    obligatoire: false
-    description: Commentaire du client
-    autocompletion: true
+    libelle: "Rapport"
+
+  - nom: photos
+    type: json
+    libelle: "Photos"
 
   - nom: signature_client
     type: text
-    obligatoire: false
-    description: Signature client (base64 PNG)
-
-  - nom: nom_signataire
-    type: text
-    obligatoire: false
-    description: Nom du signataire
-    autocompletion: true
+    libelle: "Signature client"
 
   - nom: date_signature
     type: datetime
-    obligatoire: false
-    description: Date et heure de signature
+    libelle: "Date signature"
 
-  - nom: is_signed
+  - nom: nom_signataire
+    type: text
+    libelle: "Nom signataire"
+
+  - nom: pdf_rapport
+    type: text
+    libelle: "PDF rapport"
+
+  - nom: envoye_client
     type: boolean
-    obligatoire: false
+    libelle: "Envoyé client"
     defaut: false
-    description: Intervention signee par le client
 
-  # =========================================================================
-  # LIEN FACTURE GENEREE
-  # =========================================================================
-  - nom: facture_generee_id
-    type: relation
-    obligatoire: false
-    relation: Factures
-    description: Facture brouillon generee automatiquement
+  # ==========================================================================
+  # SATISFACTION
+  # ==========================================================================
+  - nom: satisfaction_score
+    type: number
+    libelle: "Satisfaction"
 
-  # Facturation
-  - nom: facturable
+  - nom: satisfaction_commentaire
+    type: textarea
+    libelle: "Commentaire"
+
+  # ==========================================================================
+  # MAINTENANCE PRÉVENTIVE
+  # ==========================================================================
+  - nom: est_preventive
     type: boolean
-    obligatoire: false
-    defaut: true
-    description: Intervention facturable
+    libelle: "Préventive"
+    defaut: false
 
-  - nom: montant_ht
-    type: number
-    obligatoire: false
-    description: Montant HT
+  - nom: frequence_maintenance
+    type: select
+    libelle: "Fréquence"
+    options:
+      - MENSUELLE
+      - TRIMESTRIELLE
+      - SEMESTRIELLE
+      - ANNUELLE
 
-  - nom: montant_ttc
-    type: number
-    obligatoire: false
-    description: Montant TTC
+  - nom: prochaine_maintenance
+    type: date
+    libelle: "Prochaine maintenance"
 
-  # Classification
-  - nom: tags
-    type: tags
-    obligatoire: false
-    description: Tags
+  - nom: checklist
+    type: json
+    libelle: "Checklist"
 
-# Rapport d'intervention
-rapport:
-  champs:
-    - nom: reference_intervention
-      type: text
-      obligatoire: true
-      description: Reference intervention
-      autocompletion: true
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - DEMANDE
+      - PLANIFIEE
+      - EN_COURS
+      - TERMINEE
+      - A_FACTURER
+      - FACTUREE
+      - ANNULEE
+    defaut: DEMANDE
 
-    - nom: client_id
-      type: relation
-      obligatoire: true
-      relation: Clients
-      autocompletion: true
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
 
-    - nom: resume_actions
-      type: textarea
-      obligatoire: false
-      description: Resume des actions
-      autocompletion: true
+# Index
+index:
+  - numero
+  - client_id
+  - technicien_id
+  - type_fiche
+  - statut
+  - date_prevue
 
-    - nom: anomalies
-      type: textarea
-      obligatoire: false
-      description: Anomalies / observations
-      autocompletion: true
+recherche:
+  - numero
+  - objet
+  - client_id
+  - equipement_numero_serie
 
-    - nom: recommandations
-      type: textarea
-      obligatoire: false
-      description: Recommandations
-      autocompletion: true
-
-    - nom: pieces_remplacees
-      type: textarea
-      obligatoire: false
-      description: Pieces remplacees
-      autocompletion: true
-
-    - nom: temps_passe_minutes
-      type: number
-      obligatoire: false
-      description: Temps passe (minutes)
-
-    - nom: materiel_utilise
-      type: textarea
-      obligatoire: false
-      description: Materiel utilise
-      autocompletion: true
-
-    - nom: photos
-      type: json
-      obligatoire: false
-      description: Photos
-
-    # Signature client
-    - nom: signataire_civilite
-      type: select
-      obligatoire: false
-      options: [Mr, Mme, Melle]
-      description: Civilite du signataire
-
-    - nom: nom_signataire
-      type: text
-      obligatoire: false
-      autocompletion: true
-
-    - nom: signature_client
-      type: text
-      obligatoire: false
-      description: Signature client (base64)
-
-    - nom: date_signature
-      type: datetime
-      obligatoire: false
-
-    - nom: is_signed
-      type: boolean
-      obligatoire: false
-      defaut: false
-
-    - nom: is_locked
-      type: boolean
-      obligatoire: false
-      defaut: false
+affichage_liste:
+  - numero
+  - objet
+  - client_id
+  - technicien_id
+  - date_prevue
+  - priorite
+  - statut
 
 workflow:
-  # Planification
-  DRAFT -> A_PLANIFIER: auto
-  A_PLANIFIER -> PLANIFIEE: si intervenant_id et date_prevue_debut
-
-  # Workflow technicien mobile (10 etapes)
-  PLANIFIEE -> SUR_SITE: action arrivee_sur_site
-  SUR_SITE -> EN_COURS: action demarrer_intervention
-  EN_COURS -> TRAVAUX_TERMINES: action terminer_travaux
-  TRAVAUX_TERMINES -> TERMINEE: action signer_client
-
-  # Gestion blocages
-  EN_COURS -> BLOQUEE: action bloquer
-  BLOQUEE -> EN_COURS: action debloquer
-
-  # Annulation (sauf si terminee)
-  "* -> ANNULEE": sauf TERMINEE
+  DEMANDE -> PLANIFIEE: "Planifier"
+  PLANIFIEE -> EN_COURS: "Démarrer"
+  EN_COURS -> TERMINEE: "Terminer"
+  TERMINEE -> A_FACTURER: null
+  A_FACTURER -> FACTUREE: null
+  DEMANDE -> ANNULEE: "Annuler"
+  PLANIFIEE -> ANNULEE: "Annuler"
 
 actions:
-  # Planification
   - planifier
-  - assigner_technicien
-
-  # Workflow technicien mobile
-  - arrivee_sur_site
-  - demarrer_intervention
-  - prendre_photos_avant
-  - prendre_photos_apres
-  - saisir_materiel
-  - saisir_rapport
-  - terminer_travaux
-  - signer_client
-
-  # Gestion
-  - bloquer
-  - debloquer
-  - annuler
-
-  # Facturation
-  - creer_facture_brouillon
+  - affecter_technicien
+  - demarrer
+  - terminer
   - generer_rapport
+  - faire_signer
   - envoyer_rapport
-
-  # Timer
-  - ajouter_temps
-  - demarrer_timer
-
-# =========================================================================
-# HOOK: Creation automatique facture brouillon
-# =========================================================================
-hooks:
-  apres_signature:
-    - action: creer_facture_brouillon
-      condition: "facturable = true AND is_signed = true"
-      description: "Cree une facture en brouillon avec main d'oeuvre + materiel"
-      parametres:
-        statut_facture: DRAFT
-        inclure_main_oeuvre: true
-        inclure_materiel: true
-        lier_intervention: true
-
-marceau:
-  alertes:
-    - si statut = PLANIFIEE et date_prevue_debut < maintenant: "Intervention en retard"
-    - si statut = BLOQUEE: "Intervention bloquee - action requise"
-    - si statut = EN_COURS et duree_reelle_minutes > duree_prevue_minutes * 1.5: "Intervention depasse le temps prevu"
-    - si priorite = URGENT et statut in [DRAFT, A_PLANIFIER]: "Intervention urgente non planifiee"
-
-# =============================================================================
-# Configuration Mobile
-# =============================================================================
-# =============================================================================
-# Configuration Mobile - Déroulement Intervention
-# =============================================================================
-mobile:
-  enabled: true
-  
-  # Champs visibles dans la liste mobile
-  liste_champs:
-    - reference
-    - client_id
-    - statut
-    - date_prevue_debut
-    - adresse_intervention
-  
-  # ==========================================================================
-  # DÉROULEMENT INTERVENTION (workflow étape par étape)
-  # ==========================================================================
-  deroulement:
-    
-    # -------------------------------------------------------------------------
-    # ÉTAPE 1: Arrivée sur site
-    # -------------------------------------------------------------------------
-    - etape: 1
-      id: arrivee_site
-      titre: "📍 Arrivée sur site"
-      bouton: "Arrivé sur site"
-      statut_cible: SUR_SITE
-      enregistrements:
-        - heure_arrivee: auto
-        - coordonnees_gps: auto
-      champs_affiches:
-        - reference
-        - client_id
-        - adresse_intervention
-        - ville
-        - code_postal
-    
-    # -------------------------------------------------------------------------
-    # ÉTAPE 2: Démarrage intervention
-    # -------------------------------------------------------------------------
-    - etape: 2
-      id: demarrage
-      titre: "🔧 Démarrage intervention"
-      bouton: "Démarrer"
-      statut_cible: EN_COURS
-      enregistrements:
-        - heure_demarrage: auto
-      champs_obligatoires:
-        - nom: photos_avant
-          label: "Photos avant intervention"
-          type: photos
-          source: camera_ou_galerie
-          minimum: 2
-          description: "Prenez ou importez au minimum 2 photos de l'état initial"
-        - nom: constat_arrivee
-          label: "Constat en arrivant"
-          type: textarea
-          placeholder: "Décrivez l'état initial et le problème constaté..."
-    
-    # -------------------------------------------------------------------------
-    # ÉTAPE 3: Fin d'intervention
-    # -------------------------------------------------------------------------
-    - etape: 3
-      id: fin_intervention
-      titre: "✅ Fin d'intervention"
-      bouton: "Terminé"
-      statut_cible: TRAVAUX_TERMINES
-      enregistrements:
-        - heure_fin: auto
-        - duree_intervention: calculee
-      champs_obligatoires:
-        - nom: photos_apres
-          label: "Photos après intervention"
-          type: photos
-          source: camera_ou_galerie
-          minimum: 2
-          description: "Prenez au minimum 2 photos du travail terminé"
-        - nom: travaux_realises
-          label: "Travaux réalisés"
-          type: textarea
-          placeholder: "Décrivez les travaux effectués..."
-    
-    # -------------------------------------------------------------------------
-    # ÉTAPE 4: Matériel utilisé (liste articles + texte libre)
-    # -------------------------------------------------------------------------
-    - etape: 4
-      id: materiel
-      titre: "🔩 Matériel utilisé"
-      bouton: "Suivant"
-      champs_obligatoires:
-        - nom: materiel_utilise_lignes
-          label: "Articles utilisés"
-          type: article_selector
-          source: Produits
-          champs_ligne:
-            - produit_id: relation
-            - designation: text
-            - quantite: number
-            - prix_unitaire: number
-            - prix_total: computed
-          ajouter_facture: true
-          description: "Selectionnez les articles du catalogue"
-        - nom: materiel_utilise
-          label: "Autre matériel (texte libre)"
-          type: textarea
-          placeholder: "Materiel non catalogue, fournitures diverses..."
-          obligatoire: false
-      options:
-        - peut_passer: true  # Peut passer si pas de materiel
-
-    # -------------------------------------------------------------------------
-    # ÉTAPE 5: Rapport des travaux
-    # -------------------------------------------------------------------------
-    - etape: 5
-      id: rapport_travaux
-      titre: "📝 Rapport des travaux"
-      bouton: "Suivant"
-      champs_obligatoires:
-        - nom: travaux_realises
-          label: "Travaux réalisés"
-          type: textarea
-          placeholder: "Décrivez les travaux effectués..."
-        - nom: anomalies
-          label: "Anomalies constatées"
-          type: textarea
-          placeholder: "Anomalies, problèmes rencontrés..."
-          obligatoire: false
-        - nom: recommandations
-          label: "Recommandations"
-          type: textarea
-          placeholder: "Recommandations pour le client..."
-          obligatoire: false
-
-    # -------------------------------------------------------------------------
-    # ÉTAPE 6: Validation client (notation + signature)
-    # -------------------------------------------------------------------------
-    - etape: 6
-      id: validation_client
-      titre: "✍️ Validation client"
-      bouton: "Faire signer"
-      statut_cible: TERMINEE
-      affichage_recap:
-        - nom: reference
-          label: "N° Intervention"
-        - nom: travaux_realises
-          label: "Travaux réalisés"
-        - nom: materiel_utilise_lignes
-          label: "Matériel utilisé"
-      champs_obligatoires:
-        - nom: nom_signataire
-          label: "Nom du signataire"
-          type: text
-          placeholder: "Nom et prénom..."
-        - nom: avis_client
-          label: "Avis du client"
-          type: rating
-          max: 5
-          description: "Note de satisfaction (1 à 5 étoiles)"
-        - nom: appreciation_client
-          label: "Appréciation"
-          type: textarea
-          placeholder: "Commentaire du client (optionnel)..."
-          obligatoire: false
-        - nom: signature_client
-          label: "Signature du client"
-          type: signature
-          description: "Faites signer le client sur l'écran"
-      enregistrements:
-        - date_signature: auto
-        - is_signed: true
-      actions_post:
-        - creer_facture_brouillon
-        - generer_rapport_pdf
-      message_fin: "Intervention terminée ! La facture brouillon a été créée."
-
-  # Configuration des fonctionnalités
-  features:
-    geolocalisation: true
-    camera: true
-    signature: true
-    timer: true
-
-  # Mode hors-ligne complet
-  offline:
-    enabled: true
-    # Données à synchroniser pour usage offline
-    sync_data:
-      - interventions_assignees
-      - clients
-      - adresses
-    # Stocker les photos localement
-    photos_local: true
-    # Stocker les signatures localement
-    signatures_local: true
-    # File d'attente pour synchronisation
-    queue_actions: true
-    # Synchroniser automatiquement au retour connexion
-    auto_sync: true
-    # Indicateur visuel mode offline
-    show_offline_badge: true
-
-  # Notifications push
-  notifications:
-    - event: nouvelle_intervention
-      titre: "Nouvelle intervention"
-      message: "Intervention {reference} assignée"
-    - event: rappel
-      titre: "Rappel intervention"
-      message: "Intervention {reference} prévue dans 1h"
-      delai_avant: 60
+  - facturer
+  - planifier_preventive

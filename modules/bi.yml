@@ -1,0 +1,133 @@
+# =============================================================================
+# AZALPLUS - Module BI / Tableaux de Bord
+# =============================================================================
+nom: BI
+icone: chart-bar
+menu: Reporting
+description: Business Intelligence et tableaux de bord
+
+champs:
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom du tableau de bord
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: CUSTOM
+    options: [DIRIGEANT, COMMERCIAL, FINANCIER, TECHNIQUE, RH, CUSTOM]
+    description: Type
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: ACTIF
+    options: [BROUILLON, ACTIF, ARCHIVE]
+    description: Statut
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description
+
+  - nom: proprietaire_id
+    type: relation
+    obligatoire: true
+    relation: Utilisateurs
+    description: Proprietaire
+
+  - nom: partage
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Partage avec l'equipe
+
+  - nom: roles_autorises
+    type: json
+    obligatoire: false
+    description: Roles autorises
+
+  - nom: widgets
+    type: json
+    obligatoire: false
+    description: Configuration des widgets
+
+  - nom: layout
+    type: json
+    obligatoire: false
+    description: Disposition des widgets
+
+  - nom: filtres_globaux
+    type: json
+    obligatoire: false
+    description: Filtres globaux
+
+  - nom: periode_defaut
+    type: select
+    obligatoire: false
+    defaut: MOIS_COURANT
+    options: [JOUR, SEMAINE, MOIS_COURANT, TRIMESTRE, ANNEE, PERSONNALISE]
+    description: Periode par defaut
+
+  - nom: rafraichissement
+    type: select
+    obligatoire: false
+    defaut: MANUEL
+    options: [TEMPS_REEL, 5_MIN, 15_MIN, 1_HEURE, QUOTIDIEN, MANUEL]
+    description: Rafraichissement
+
+  - nom: derniere_consultation
+    type: datetime
+    obligatoire: false
+    description: Derniere consultation
+
+  - nom: nb_consultations
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de consultations
+
+  - nom: favori
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Favori
+
+  - nom: export_programme
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Export programme
+
+  - nom: export_frequence
+    type: select
+    obligatoire: false
+    options: [QUOTIDIEN, HEBDOMADAIRE, MENSUEL]
+    description: Frequence export
+
+  - nom: export_destinataires
+    type: json
+    obligatoire: false
+    description: Destinataires export
+
+actions:
+  - ajouter_widget
+  - configurer
+  - dupliquer
+  - exporter_pdf
+  - partager
+  - programmer_export
+
+# Types de widgets disponibles
+widgets_types:
+  - kpi_simple
+  - kpi_evolution
+  - graphique_barres
+  - graphique_lignes
+  - graphique_camembert
+  - tableau
+  - liste_top
+  - jauge
+  - carte_geographique
+  - calendrier_chaleur

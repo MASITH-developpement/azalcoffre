@@ -1,0 +1,157 @@
+# =============================================================================
+# AZALPLUS - Module Appels d'Offres
+# =============================================================================
+nom: Appels Offres
+icone: file-contract
+menu: Commercial
+description: Reponse aux appels d'offres
+
+champs:
+  - nom: reference
+    type: text
+    obligatoire: true
+    unique: true
+    description: Reference AO
+
+  - nom: title
+    type: text
+    obligatoire: true
+    description: Titre de l'appel d'offres
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: IDENTIFIE
+    options: [IDENTIFIE, EN_ETUDE, GO, NO_GO, EN_COURS, SOUMIS, GAGNE, PERDU, ANNULE]
+    description: Statut
+
+  - nom: type
+    type: select
+    obligatoire: false
+    options: [MARCHE_PUBLIC, PRIVE, CONSULTATION, RFQ, RFP]
+    description: Type
+
+  - nom: client_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Donneur d'ordre
+
+  - nom: source
+    type: select
+    obligatoire: false
+    options: [BOAMP, JOUE, PLACE_MARCHE, DIRECT, PROSPECTION]
+    description: Source
+
+  - nom: date_publication
+    type: date
+    obligatoire: false
+    description: Date publication
+
+  - nom: date_limite
+    type: datetime
+    obligatoire: true
+    description: Date limite reponse
+
+  - nom: date_ouverture_plis
+    type: datetime
+    obligatoire: false
+    description: Ouverture des plis
+
+  - nom: montant_estime
+    type: number
+    obligatoire: false
+    description: Montant estime
+
+  - nom: duree_marche
+    type: text
+    obligatoire: false
+    description: Duree du marche
+
+  - nom: responsable_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Responsable
+
+  - nom: equipe
+    type: json
+    obligatoire: false
+    description: Equipe projet
+
+  - nom: probabilite_gain
+    type: number
+    obligatoire: false
+    description: Probabilite de gain (%)
+
+  - nom: montant_soumis
+    type: number
+    obligatoire: false
+    description: Montant soumis
+
+  - nom: concurrents
+    type: json
+    obligatoire: false
+    description: Concurrents identifies
+
+  - nom: forces
+    type: textarea
+    obligatoire: false
+    description: Nos forces
+
+  - nom: faiblesses
+    type: textarea
+    obligatoire: false
+    description: Nos faiblesses
+
+  - nom: documents_requis
+    type: json
+    obligatoire: false
+    description: Documents requis
+
+  - nom: checklist
+    type: json
+    obligatoire: false
+    description: Checklist de reponse
+
+  - nom: motif_decision
+    type: textarea
+    obligatoire: false
+    description: Motif GO/NO GO
+
+  - nom: resultat_detail
+    type: textarea
+    obligatoire: false
+    description: Detail resultat
+
+  - nom: debrief
+    type: textarea
+    obligatoire: false
+    description: Debrief (win/loss)
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+workflow:
+  IDENTIFIE -> EN_ETUDE: etudier
+  EN_ETUDE -> GO: go
+  EN_ETUDE -> NO_GO: no_go
+  GO -> EN_COURS: demarrer
+  EN_COURS -> SOUMIS: soumettre
+  SOUMIS -> GAGNE: gagner
+  SOUMIS -> PERDU: perdre
+  TOUS -> ANNULE: annuler
+
+actions:
+  - etudier
+  - decider_go_nogo
+  - constituer_dossier
+  - soumettre
+  - analyser_resultat
+
+marceau:
+  alertes:
+    - si date_limite < aujourd'hui + 7 jours et status = EN_COURS: "AO a soumettre sous 7 jours"
+    - si status = GO et date_limite < aujourd'hui + 3 jours: "Delai critique AO"

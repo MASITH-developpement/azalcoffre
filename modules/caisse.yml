@@ -1,0 +1,358 @@
+# =============================================================================
+# AZALPLUS - Module Caisse / POS
+# =============================================================================
+# Point de vente avec conformite NF525 (anti-fraude TVA).
+# Interface tactile optimisee pour tablettes et smartphones.
+
+nom: Caisse
+icone: cash-register
+menu: Commercial
+description: Point de vente (POS) conforme NF525
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    obligatoire: true
+    unique: true
+    description: Code caisse (CAISSE-01, CAISSE-02...)
+    autocompletion: true
+
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom de la caisse
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: FERMEE
+    options: [FERMEE, OUVERTE, EN_PAUSE, EN_CLOTURE]
+    description: Statut de la caisse
+
+  # Etablissement
+  - nom: etablissement_id
+    type: relation
+    obligatoire: false
+    relation: Etablissements
+    description: Etablissement associe
+    autocompletion: true
+
+  # Caissier actuel
+  - nom: caissier_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Caissier en cours
+    autocompletion: true
+
+  # Session en cours
+  - nom: session_id
+    type: text
+    obligatoire: false
+    description: ID session active
+
+  - nom: session_opened_at
+    type: datetime
+    obligatoire: false
+    description: Heure ouverture session
+
+  # Fond de caisse
+  - nom: fond_caisse
+    type: number
+    obligatoire: false
+    defaut: 100
+    description: Fond de caisse (especes)
+
+  - nom: fond_caisse_actuel
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant actuel en caisse
+
+  # Totaux session
+  - nom: total_ventes
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total ventes session
+
+  - nom: total_especes
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total encaisse especes
+
+  - nom: total_cb
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total encaisse CB
+
+  - nom: total_cheques
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total encaisse cheques
+
+  - nom: total_autres
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total autres moyens
+
+  - nom: nombre_tickets
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre de tickets session
+
+  # Conformite NF525
+  - nom: nf525_certified
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Certification NF525
+
+  - nom: nf525_certificate_id
+    type: text
+    obligatoire: false
+    description: Numero certificat NF525
+
+  - nom: signature_key
+    type: text
+    obligatoire: false
+    description: Cle de signature (chiffree)
+
+  - nom: last_z_number
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Dernier numero Z
+
+  - nom: last_ticket_number
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Dernier numero ticket
+
+  # Equipement
+  - nom: imprimante_ticket
+    type: text
+    obligatoire: false
+    description: Imprimante thermique connectee
+    autocompletion: true
+
+  - nom: tiroir_caisse
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Tiroir caisse connecte
+
+  - nom: scanner_code_barres
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Scanner code-barres actif
+
+  - nom: terminal_cb
+    type: text
+    obligatoire: false
+    description: Terminal CB associe
+    autocompletion: true
+
+  - nom: tap_to_pay
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Encaissement NFC smartphone
+
+  # Configuration
+  - nom: mode_kiosque
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Mode plein ecran
+
+  - nom: afficher_stock
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Afficher stock disponible
+
+  - nom: autoriser_prix_negatif
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Autoriser remboursements
+
+  - nom: demander_client
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Demander client a chaque vente
+
+  - nom: ticket_par_defaut
+    type: select
+    obligatoire: false
+    defaut: TICKET
+    options: [TICKET, FACTURE_SIMPLIFIEE, FACTURE]
+    description: Type document par defaut
+
+workflow:
+  FERMEE -> OUVERTE: ouvrir_caisse
+  OUVERTE -> EN_PAUSE: pause
+  EN_PAUSE -> OUVERTE: reprendre
+  OUVERTE -> EN_CLOTURE: demarrer_cloture
+  EN_CLOTURE -> FERMEE: cloturer
+
+actions:
+  - ouvrir_caisse
+  - cloturer_caisse
+  - rapport_x
+  - rapport_z
+  - mouvement_caisse
+  - annuler_ticket
+  - reimprimer_ticket
+
+# Sous-entite: Tickets de caisse
+tickets:
+  champs:
+    - nom: number
+      type: text
+      obligatoire: true
+      unique: true
+      description: Numero ticket (sequentiel)
+
+    - nom: type
+      type: select
+      obligatoire: true
+      defaut: VENTE
+      options: [VENTE, AVOIR, ANNULATION]
+      description: Type de ticket
+
+    - nom: date
+      type: datetime
+      obligatoire: true
+      auto: now
+      description: Date/heure
+
+    - nom: caissier_id
+      type: relation
+      obligatoire: true
+      relation: Utilisateurs
+      description: Caissier
+
+    - nom: customer_id
+      type: relation
+      obligatoire: false
+      relation: Clients
+      description: Client (optionnel)
+
+    - nom: subtotal
+      type: number
+      obligatoire: true
+      description: Total HT
+
+    - nom: tax_amount
+      type: number
+      obligatoire: true
+      description: Total TVA
+
+    - nom: total
+      type: number
+      obligatoire: true
+      description: Total TTC
+
+    - nom: paiements
+      type: json
+      obligatoire: true
+      description: Ventilation paiements [{mode, montant}]
+
+    - nom: rendu_monnaie
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Rendu monnaie
+
+    - nom: signature_nf525
+      type: text
+      obligatoire: true
+      description: Signature electronique NF525
+
+    - nom: ticket_precedent_signature
+      type: text
+      obligatoire: false
+      description: Signature ticket precedent (chaine)
+
+    - nom: ticket_imprime
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Ticket imprime
+
+    - nom: email_envoye
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Ticket envoye par email
+
+    - nom: annule
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Ticket annule
+
+    - nom: motif_annulation
+      type: text
+      obligatoire: false
+      description: Motif annulation
+
+# Sous-entite: Mouvements de caisse
+mouvements:
+  champs:
+    - nom: type
+      type: select
+      obligatoire: true
+      options: [ENTREE, SORTIE]
+      description: Type mouvement
+
+    - nom: montant
+      type: number
+      obligatoire: true
+      description: Montant
+
+    - nom: motif
+      type: select
+      obligatoire: true
+      options: [FOND_CAISSE, RETRAIT_BANQUE, DEPENSE, RENDU_MONNAIE_ERREUR, AUTRE]
+      description: Motif
+
+    - nom: commentaire
+      type: text
+      obligatoire: false
+      description: Commentaire
+
+    - nom: caissier_id
+      type: relation
+      obligatoire: true
+      relation: Utilisateurs
+      description: Caissier
+
+    - nom: date
+      type: datetime
+      obligatoire: true
+      auto: now
+      description: Date/heure
+
+marceau:
+  alertes:
+    - si status = OUVERTE et session_opened_at < aujourd'hui - 1 jour: "Caisse ouverte depuis plus de 24h"
+    - si fond_caisse_actuel < 0: "Ecart de caisse negatif detecte"

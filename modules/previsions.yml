@@ -1,0 +1,218 @@
+# =============================================================================
+# AZALPLUS - Module Previsions
+# =============================================================================
+# Previsions de tresorerie, ventes et charges.
+
+nom: Previsions
+icone: chart-line
+menu: Finance
+description: Previsions financieres
+
+champs:
+  # Identification
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom de la prevision
+    autocompletion: true
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: TRESORERIE
+    options: [TRESORERIE, VENTES, CHARGES, GLOBAL]
+    description: Type de prevision
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, VALIDE, ARCHIVE]
+    description: Statut
+
+  # Periode
+  - nom: date_debut
+    type: date
+    obligatoire: true
+    description: Date debut prevision
+
+  - nom: date_fin
+    type: date
+    obligatoire: true
+    description: Date fin prevision
+
+  - nom: horizon_jours
+    type: number
+    obligatoire: false
+    description: Horizon en jours
+
+  # Tresorerie actuelle
+  - nom: solde_actuel
+    type: number
+    obligatoire: false
+    description: Solde actuel
+
+  - nom: date_solde
+    type: date
+    obligatoire: false
+    description: Date du solde
+
+  # Encaissements prevus
+  - nom: encaissements_factures
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Factures clients a encaisser
+
+  - nom: encaissements_prevus
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Autres encaissements prevus
+
+  - nom: total_encaissements
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Total encaissements
+
+  # Decaissements prevus
+  - nom: decaissements_fournisseurs
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Factures fournisseurs a payer
+
+  - nom: decaissements_salaires
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Salaires
+
+  - nom: decaissements_charges
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Charges sociales
+
+  - nom: decaissements_tva
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: TVA a payer
+
+  - nom: decaissements_loyer
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Loyer
+
+  - nom: decaissements_autres
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Autres decaissements
+
+  - nom: total_decaissements
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Total decaissements
+
+  # Solde prevu
+  - nom: solde_prevu
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Solde prevu fin de periode
+
+  - nom: solde_minimum
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Solde minimum sur la periode
+
+  - nom: date_solde_minimum
+    type: date
+    obligatoire: false
+    readonly: true
+    description: Date du solde minimum
+
+  # Alertes
+  - nom: seuil_alerte
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Seuil d'alerte tresorerie
+
+  - nom: alerte_active
+    type: boolean
+    obligatoire: false
+    defaut: false
+    readonly: true
+    description: Alerte tresorerie active
+
+  # Prevision ventes
+  - nom: ca_prevu
+    type: number
+    obligatoire: false
+    description: CA prevu
+
+  - nom: pipeline_pondere
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Pipeline commercial pondere
+
+  - nom: abonnements_recurrents
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Revenus abonnements
+
+  # Scenarios
+  - nom: scenario
+    type: select
+    obligatoire: false
+    defaut: REALISTE
+    options: [OPTIMISTE, REALISTE, PESSIMISTE]
+    description: Scenario
+
+  - nom: coefficient_scenario
+    type: number
+    obligatoire: false
+    defaut: 1
+    description: Coefficient scenario
+
+  # Detail
+  - nom: detail_prevision
+    type: json
+    obligatoire: false
+    description: Detail par jour/semaine/mois
+
+  # Notes
+  - nom: hypotheses
+    type: textarea
+    obligatoire: false
+    description: Hypotheses
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+workflow:
+  BROUILLON -> VALIDE: valider
+  VALIDE -> ARCHIVE: archiver
+
+actions:
+  - recalculer
+  - comparer_scenarios
+  - exporter_graphique
+  - generer_rapport
+  - simuler
+
+marceau:
+  alertes:
+    - si solde_minimum < seuil_alerte: "Tresorerie previsionnelle critique"
+    - si solde_minimum < 0: "Tresorerie negative prevue"

@@ -1,0 +1,125 @@
+# =============================================================================
+# AZALPLUS - Module Departements
+# =============================================================================
+# Organisation des departements/services de l'entreprise.
+
+nom: Departements
+icone: sitemap
+menu: RH
+description: Organisation des departements
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    obligatoire: true
+    unique: true
+    description: Code departement
+    autocompletion: true
+
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom du departement
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: ACTIF
+    options: [ACTIF, INACTIF]
+    description: Statut
+
+  # Hierarchie
+  - nom: parent_id
+    type: relation
+    obligatoire: false
+    relation: Departements
+    description: Departement parent
+    autocompletion: true
+
+  - nom: niveau
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Niveau hierarchique
+
+  # Responsable
+  - nom: responsable_id
+    type: relation
+    obligatoire: false
+    relation: Employes
+    description: Responsable
+    autocompletion: true
+
+  - nom: responsable_adjoint_id
+    type: relation
+    obligatoire: false
+    relation: Employes
+    description: Responsable adjoint
+    autocompletion: true
+
+  # Contact
+  - nom: email
+    type: email
+    obligatoire: false
+    description: Email departement
+
+  - nom: telephone
+    type: tel
+    obligatoire: false
+    description: Telephone
+
+  - nom: localisation
+    type: text
+    obligatoire: false
+    description: Localisation/bureau
+    autocompletion: true
+
+  # Budget
+  - nom: budget_annuel
+    type: number
+    obligatoire: false
+    description: Budget annuel
+
+  - nom: centre_cout
+    type: text
+    obligatoire: false
+    description: Centre de cout
+    autocompletion: true
+
+  # Statistiques
+  - nom: nb_employes
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre d'employes
+
+  - nom: nb_sous_departements
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre de sous-departements
+
+  # Description
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description/missions
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+actions:
+  - voir_organigramme
+  - voir_employes
+  - voir_budget
+
+marceau:
+  alertes:
+    - si responsable_id = null et nb_employes > 0: "Departement sans responsable"

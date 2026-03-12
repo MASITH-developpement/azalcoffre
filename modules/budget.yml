@@ -1,0 +1,239 @@
+# =============================================================================
+# AZALPLUS - Module Budget
+# =============================================================================
+# Gestion budgetaire avec suivi realise vs prevu.
+
+nom: Budget
+icone: chart-pie
+menu: Finance
+description: Gestion budgetaire et previsions
+
+champs:
+  # Identification
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom du budget
+    autocompletion: true
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: FONCTIONNEMENT
+    options: [FONCTIONNEMENT, INVESTISSEMENT, TRESORERIE, VENTES, PROJET]
+    description: Type de budget
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, VALIDE, EN_COURS, CLOTURE, REVISE]
+    description: Statut
+
+  # Periode
+  - nom: annee
+    type: number
+    obligatoire: true
+    description: Annee budgetaire
+
+  - nom: date_debut
+    type: date
+    obligatoire: true
+    description: Date de debut
+
+  - nom: date_fin
+    type: date
+    obligatoire: true
+    description: Date de fin
+
+  - nom: periodicite
+    type: select
+    obligatoire: true
+    defaut: MENSUEL
+    options: [MENSUEL, TRIMESTRIEL, ANNUEL]
+    description: Periodicite du suivi
+
+  # Perimetre
+  - nom: departement_id
+    type: relation
+    obligatoire: false
+    relation: Departements
+    description: Departement
+    autocompletion: true
+
+  - nom: projet_id
+    type: relation
+    obligatoire: false
+    relation: Projets
+    description: Projet
+    autocompletion: true
+
+  - nom: responsable_id
+    type: relation
+    obligatoire: true
+    relation: Utilisateurs
+    description: Responsable budget
+    autocompletion: true
+
+  # Montants globaux
+  - nom: montant_prevu
+    type: number
+    obligatoire: true
+    description: Montant total prevu
+
+  - nom: montant_realise
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Montant realise
+
+  - nom: montant_engage
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Montant engage (commandes non facturees)
+
+  - nom: reste_disponible
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Reste disponible
+
+  - nom: ecart
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Ecart prevu/realise
+
+  - nom: ecart_pourcent
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Ecart en pourcentage
+
+  # Alertes
+  - nom: seuil_alerte
+    type: number
+    obligatoire: false
+    defaut: 80
+    description: Seuil d'alerte (% consomme)
+
+  - nom: seuil_blocage
+    type: number
+    obligatoire: false
+    defaut: 100
+    description: Seuil de blocage (%)
+
+  - nom: alerte_active
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Alertes activees
+
+  # Revision
+  - nom: version
+    type: number
+    obligatoire: false
+    defaut: 1
+    description: Version du budget
+
+  - nom: budget_initial_id
+    type: relation
+    obligatoire: false
+    relation: Budget
+    description: Budget initial (si revision)
+
+  - nom: date_revision
+    type: date
+    obligatoire: false
+    description: Date de revision
+
+  - nom: motif_revision
+    type: text
+    obligatoire: false
+    description: Motif de revision
+
+  # Notes
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+# Sous-entite: Lignes budgetaires
+lignes:
+  champs:
+    - nom: poste
+      type: text
+      obligatoire: true
+      description: Poste budgetaire
+      autocompletion: true
+
+    - nom: compte_comptable
+      type: text
+      obligatoire: false
+      description: Compte comptable
+      autocompletion: true
+
+    - nom: categorie
+      type: select
+      obligatoire: true
+      options: [RECETTES, DEPENSES_FIXES, DEPENSES_VARIABLES, INVESTISSEMENT]
+      description: Categorie
+
+    - nom: montant_prevu
+      type: number
+      obligatoire: true
+      description: Montant prevu
+
+    - nom: repartition_mensuelle
+      type: json
+      obligatoire: false
+      description: Repartition par mois [{mois, montant}]
+
+    - nom: montant_realise
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      description: Montant realise
+
+    - nom: montant_engage
+      type: number
+      obligatoire: false
+      defaut: 0
+      readonly: true
+      description: Montant engage
+
+    - nom: ecart
+      type: number
+      obligatoire: false
+      readonly: true
+      description: Ecart
+
+    - nom: commentaire
+      type: text
+      obligatoire: false
+      description: Commentaire
+
+workflow:
+  BROUILLON -> VALIDE: valider
+  VALIDE -> EN_COURS: demarrer
+  EN_COURS -> REVISE: reviser
+  EN_COURS -> CLOTURE: cloturer
+  REVISE -> EN_COURS: valider_revision
+
+actions:
+  - valider
+  - reviser
+  - cloturer
+  - comparer_periodes
+  - generer_rapport
+  - exporter_excel
+  - simuler_scenario
+
+marceau:
+  alertes:
+    - si ecart_pourcent > seuil_alerte: "Budget consomme a plus de 80%"
+    - si ecart_pourcent > seuil_blocage: "Depassement budgetaire"

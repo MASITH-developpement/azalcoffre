@@ -1,129 +1,372 @@
-# AZALPLUS - Module Comptabilite
-nom: EcrituresComptables
-icone: book-open
-menu: Comptabilite
-description: Gestion des ecritures comptables
+# =============================================================================
+# AZALPLUS - Module Comptabilité Complet
+# =============================================================================
+# Gestion comptable: écritures, journaux, lettrage, rapprochement, bilan
+
+nom: Comptabilité
+nom_pluriel: Comptabilité
+icone: calculator
+menu: Comptabilité
+description: "Comptabilité: écritures, journaux, bilan, rapprochement"
+ordre_menu: 1
 
 champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
   - nom: numero
     type: text
-    obligatoire: false
-    description: Numero de l'ecriture
-    autocompletion: true
-
-  - nom: numero_piece
-    type: text
+    libelle: "Numéro"
     obligatoire: true
-    description: Numero de piece justificative
-    autocompletion: true
+    unique: true
+    auto_genere: true
+    format: "ECR-{AAAA}{MM}-{#####}"
 
-  - nom: code_journal
+  - nom: type_ecriture
     type: select
-    obligatoire: true
-    options: [VT, AC, BQ, CA, OD, AN]
-    description: Code du journal comptable
+    libelle: "Type"
+    options:
+      - ECRITURE
+      - RAPPROCHEMENT
+      - LETTRAGE
+      - CLOTURE
+      - OD
+    defaut: ECRITURE
 
-  - nom: libelle_journal
+  # ==========================================================================
+  # PIÈCE
+  # ==========================================================================
+  - nom: piece
     type: text
-    obligatoire: false
-    description: Libelle du journal
-    autocompletion: true
-
-  - nom: date_ecriture
-    type: date
+    libelle: "N° pièce"
     obligatoire: true
-    description: Date de l'ecriture
 
-  - nom: date_comptabilisation
-    type: date
-    obligatoire: false
-    description: Date de comptabilisation
-
-  - nom: periode
+  - nom: reference
     type: text
-    obligatoire: false
-    description: Periode comptable
-    autocompletion: true
+    libelle: "Référence"
 
   - nom: libelle
-    type: textarea
-    obligatoire: true
-    description: Libelle de l'ecriture
-
-  - nom: type_document
-    type: select
-    obligatoire: false
-    options: [FACTURE, AVOIR, REGLEMENT, BANQUE, PAIE, AUTRE]
-    description: Type de document d'origine
-
-  - nom: document_origine
     type: text
-    obligatoire: false
-    description: Reference du document d'origine
-    autocompletion: true
+    libelle: "Libellé"
+    obligatoire: true
 
-  - nom: total_debit
-    type: number
-    obligatoire: false
-    defaut: 0
-    description: Total des debits
+  - nom: date_piece
+    type: date
+    libelle: "Date pièce"
+    obligatoire: true
 
-  - nom: total_credit
-    type: number
-    obligatoire: false
+  - nom: date_echeance
+    type: date
+    libelle: "Échéance"
+
+  # ==========================================================================
+  # JOURNAL
+  # ==========================================================================
+  - nom: journal
+    type: select
+    libelle: "Journal"
+    obligatoire: true
+    options:
+      - VE
+      - AC
+      - BQ
+      - CA
+      - OD
+      - AN
+      - EX
+    description: "VE=Ventes, AC=Achats, BQ=Banque, CA=Caisse, OD=Opérations diverses"
+
+  - nom: journal_libelle
+    type: text
+    libelle: "Libellé journal"
+
+  # ==========================================================================
+  # COMPTE
+  # ==========================================================================
+  - nom: compte
+    type: text
+    libelle: "Compte"
+    obligatoire: true
+
+  - nom: compte_libelle
+    type: text
+    libelle: "Libellé compte"
+
+  - nom: compte_auxiliaire
+    type: text
+    libelle: "Compte auxiliaire"
+
+  - nom: tiers
+    type: text
+    libelle: "Tiers"
+
+  # ==========================================================================
+  # MONTANTS
+  # ==========================================================================
+  - nom: debit
+    type: money
+    libelle: "Débit"
     defaut: 0
-    description: Total des credits
+
+  - nom: credit
+    type: money
+    libelle: "Crédit"
+    defaut: 0
 
   - nom: devise
     type: text
-    obligatoire: false
-    defaut: EUR
-    description: Devise de l'ecriture
-    autocompletion: true
+    libelle: "Devise"
+    defaut: "EUR"
 
-  - nom: equilibre
+  - nom: montant_devise
+    type: money
+    libelle: "Montant devise"
+
+  - nom: taux_change
+    type: number
+    libelle: "Taux change"
+    defaut: 1
+
+  # ==========================================================================
+  # TVA
+  # ==========================================================================
+  - nom: tva_applicable
     type: boolean
-    obligatoire: false
-    description: Ecriture equilibree
+    libelle: "TVA applicable"
+    defaut: false
 
-  - nom: lignes
-    type: json
-    obligatoire: false
-    description: Lignes de l'ecriture comptable
+  - nom: taux_tva
+    type: number
+    libelle: "Taux TVA (%)"
 
-  - nom: statut
+  - nom: montant_tva
+    type: money
+    libelle: "Montant TVA"
+
+  - nom: regime_tva
     type: select
-    obligatoire: true
-    defaut: BROUILLON
-    options: [BROUILLON, EN_ATTENTE, COMPTABILISEE, VALIDEE, ANNULEE]
-    description: Statut de l'ecriture
+    libelle: "Régime TVA"
+    options:
+      - DEBIT
+      - ENCAISSEMENT
+
+  # ==========================================================================
+  # LETTRAGE
+  # ==========================================================================
+  - nom: lettre
+    type: text
+    libelle: "Lettre"
+
+  - nom: date_lettrage
+    type: date
+    libelle: "Date lettrage"
+
+  - nom: lettrage_partiel
+    type: boolean
+    libelle: "Lettrage partiel"
+    defaut: false
+
+  - nom: solde_lettre
+    type: money
+    libelle: "Solde lettré"
+
+  # ==========================================================================
+  # RAPPROCHEMENT BANCAIRE
+  # ==========================================================================
+  - nom: rapproche
+    type: boolean
+    libelle: "Rapproché"
+    defaut: false
+
+  - nom: date_rapprochement
+    type: date
+    libelle: "Date rapprochement"
+
+  - nom: releve_bancaire
+    type: text
+    libelle: "N° relevé"
+
+  - nom: rapprochement_id
+    type: text
+    libelle: "Rapprochement"
+
+  # ==========================================================================
+  # ANALYTIQUE
+  # ==========================================================================
+  - nom: axe_1
+    type: text
+    libelle: "Axe 1"
+
+  - nom: axe_2
+    type: text
+    libelle: "Axe 2"
+
+  - nom: axe_3
+    type: text
+    libelle: "Axe 3"
+
+  - nom: ventilation_analytique
+    type: json
+    libelle: "Ventilation"
+
+  # ==========================================================================
+  # BUDGET
+  # ==========================================================================
+  - nom: budget_id
+    type: text
+    libelle: "Budget"
+
+  - nom: ecart_budget
+    type: money
+    libelle: "Écart budget"
+
+  # ==========================================================================
+  # PÉRIODE
+  # ==========================================================================
+  - nom: exercice
+    type: text
+    libelle: "Exercice"
+
+  - nom: periode
+    type: text
+    libelle: "Période"
+    placeholder: "AAAA-MM"
+
+  - nom: cloture
+    type: boolean
+    libelle: "Clôturé"
+    defaut: false
+
+  # ==========================================================================
+  # SOURCE
+  # ==========================================================================
+  - nom: origine
+    type: select
+    libelle: "Origine"
+    options:
+      - SAISIE
+      - FACTURE
+      - PAIEMENT
+      - BANQUE
+      - IMPORT
+      - OD
+      - CLOTURE
+
+  - nom: document_origine
+    type: text
+    libelle: "Document origine"
+
+  - nom: document_id
+    type: text
+    libelle: "ID document"
+
+  # ==========================================================================
+  # VALIDATION
+  # ==========================================================================
+  - nom: brouillard
+    type: boolean
+    libelle: "Brouillard"
+    defaut: true
+
+  - nom: valide
+    type: boolean
+    libelle: "Validé"
+    defaut: false
 
   - nom: date_validation
     type: datetime
-    obligatoire: false
-    description: Date de validation
+    libelle: "Date validation"
 
-  - nom: validateur_id
-    type: relation
-    obligatoire: false
-    relation: Utilisateurs
-    description: Validateur de l'ecriture
-    autocompletion: true
+  - nom: valide_par
+    type: text
+    libelle: "Validé par"
+
+  # ==========================================================================
+  # FEC
+  # ==========================================================================
+  - nom: fec_ecriture
+    type: text
+    libelle: "EcritureNum FEC"
+
+  - nom: fec_date
+    type: date
+    libelle: "EcritureDate FEC"
+
+  - nom: fec_exporte
+    type: boolean
+    libelle: "Exporté FEC"
+    defaut: false
+
+  # ==========================================================================
+  # PIÈCES JOINTES
+  # ==========================================================================
+  - nom: justificatif
+    type: text
+    libelle: "Justificatif"
+
+  - nom: pieces_jointes
+    type: json
+    libelle: "Pièces jointes"
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - VALIDE
+      - LETTRE
+      - CLOTURE
+      - ANNULE
+    defaut: BROUILLON
 
   - nom: notes
     type: textarea
-    obligatoire: false
-    description: Notes internes
+    libelle: "Notes"
 
-actions:
-  - comptabiliser
-  - valider
-  - annuler
-  - dupliquer
-  - exporter
+# Index
+index:
+  - numero
+  - piece
+  - journal
+  - compte
+  - date_piece
+  - exercice
+  - lettre
+
+recherche:
+  - numero
+  - piece
+  - compte
+  - libelle
+
+affichage_liste:
+  - numero
+  - date_piece
+  - journal
+  - compte
+  - libelle
+  - debit
+  - credit
+  - statut
 
 workflow:
-  "BROUILLON -> EN_ATTENTE": "si equilibre"
-  "EN_ATTENTE -> COMPTABILISEE": "action comptabiliser"
-  "COMPTABILISEE -> VALIDEE": "action valider"
-  "BROUILLON -> ANNULEE": "action annuler"
+  BROUILLON -> VALIDE: "Valider"
+  VALIDE -> LETTRE: null
+  LETTRE -> CLOTURE: null
+  VALIDE -> CLOTURE: null
+  BROUILLON -> ANNULE: "Annuler"
+
+actions:
+  - valider_ecriture
+  - lettrer
+  - delettrer
+  - rapprocher
+  - generer_od
+  - cloturer_periode
+  - exporter_fec
+  - imprimer_journal
+  - balance_generale
+  - grand_livre

@@ -1,0 +1,308 @@
+# =============================================================================
+# DIGEST MENSUEL - KPIs Business
+# =============================================================================
+# Module de reporting mensuel avec tous les indicateurs clés
+# Génère automatiquement : Table + API + UI + Export
+# =============================================================================
+
+nom: digest_mensuel
+nom_affichage: Digest Mensuel
+icone: chart-bar
+menu: Reporting
+description: "Tableau de bord des KPIs mensuels de l'entreprise"
+acces: admin  # Réservé aux admins
+
+champs:
+  # === PÉRIODE ===
+  - nom: mois
+    type: date
+    obligatoire: true
+    description: "Premier jour du mois concerné"
+
+  - nom: periode_label
+    type: text
+    description: "Libellé du mois (ex: Mars 2026)"
+
+  # === COMMERCIAL ===
+  - nom: nb_devis
+    type: entier
+    defaut: 0
+    description: "Nombre de devis émis"
+
+  - nom: montant_devis
+    type: money
+    defaut: 0
+    description: "Montant total des devis"
+
+  - nom: nb_commandes
+    type: entier
+    defaut: 0
+    description: "Nombre de commandes"
+
+  - nom: montant_commandes
+    type: money
+    defaut: 0
+    description: "Montant total des commandes"
+
+  - nom: nb_factures
+    type: entier
+    defaut: 0
+    description: "Nombre de factures émises"
+
+  - nom: ca_mois
+    type: money
+    defaut: 0
+    description: "Chiffre d'affaires du mois"
+
+  - nom: panier_moyen
+    type: money
+    defaut: 0
+    description: "Panier moyen (CA / nb factures)"
+
+  # === LEADS / PROSPECTION ===
+  - nom: nb_nouveaux_leads
+    type: entier
+    defaut: 0
+    description: "Nouveaux leads/prospects"
+
+  - nom: nb_leads_convertis
+    type: entier
+    defaut: 0
+    description: "Leads convertis en clients"
+
+  - nom: taux_conversion
+    type: number
+    defaut: 0
+    description: "Taux de conversion leads (%)"
+
+  # === INTERVENTIONS ===
+  - nom: nb_interventions
+    type: entier
+    defaut: 0
+    description: "Nombre d'interventions réalisées"
+
+  - nom: heures_intervention
+    type: number
+    defaut: 0
+    description: "Total heures d'intervention"
+
+  - nom: ca_interventions
+    type: money
+    defaut: 0
+    description: "CA généré par les interventions"
+
+  # === FLOTTE / VÉHICULES ===
+  - nom: nb_vehicules
+    type: entier
+    defaut: 0
+    description: "Nombre de véhicules actifs"
+
+  - nom: km_total
+    type: entier
+    defaut: 0
+    description: "Kilomètres parcourus (total flotte)"
+
+  - nom: km_moyen_vehicule
+    type: number
+    defaut: 0
+    description: "Km moyen par véhicule"
+
+  - nom: ratio_km_intervention
+    type: number
+    defaut: 0
+    description: "Ratio km / intervention"
+
+  - nom: cout_carburant
+    type: money
+    defaut: 0
+    description: "Coût carburant du mois"
+
+  # === TRÉSORERIE ===
+  - nom: tresorerie_debut
+    type: money
+    defaut: 0
+    description: "Trésorerie début de mois"
+
+  - nom: tresorerie_fin
+    type: money
+    defaut: 0
+    description: "Trésorerie fin de mois"
+
+  - nom: evolution_tresorerie
+    type: money
+    defaut: 0
+    description: "Évolution trésorerie (fin - début)"
+
+  - nom: montant_encaisse
+    type: money
+    defaut: 0
+    description: "Montant total encaissé"
+
+  - nom: montant_decaisse
+    type: money
+    defaut: 0
+    description: "Montant total décaissé"
+
+  # === TVA ===
+  - nom: tva_collectee
+    type: money
+    defaut: 0
+    description: "TVA collectée (sur ventes)"
+
+  - nom: tva_deductible
+    type: money
+    defaut: 0
+    description: "TVA déductible (sur achats)"
+
+  - nom: tva_a_payer
+    type: money
+    defaut: 0
+    description: "TVA nette à payer (collectée - déductible)"
+
+  # === RH / MASSE SALARIALE ===
+  - nom: nb_employes
+    type: entier
+    defaut: 0
+    description: "Nombre d'employés"
+
+  - nom: masse_salariale
+    type: money
+    defaut: 0
+    description: "Masse salariale brute"
+
+  - nom: charges_sociales
+    type: money
+    defaut: 0
+    description: "Charges sociales patronales"
+
+  - nom: cout_total_rh
+    type: money
+    defaut: 0
+    description: "Coût total RH (salaires + charges)"
+
+  # === RENTABILITÉ ===
+  - nom: total_charges
+    type: money
+    defaut: 0
+    description: "Total des charges du mois"
+
+  - nom: resultat_brut
+    type: money
+    defaut: 0
+    description: "Résultat brut (CA - charges)"
+
+  - nom: taux_rentabilite
+    type: number
+    defaut: 0
+    description: "Taux de rentabilité (%)"
+
+  - nom: marge_brute
+    type: money
+    defaut: 0
+    description: "Marge brute"
+
+  - nom: taux_marge
+    type: number
+    defaut: 0
+    description: "Taux de marge (%)"
+
+  # === GRAPHIQUES (données JSON) ===
+  - nom: graph_ca_jour
+    type: json
+    description: "CA par jour [{jour, montant}]"
+
+  - nom: graph_depenses_categorie
+    type: json
+    description: "Dépenses par catégorie [{categorie, montant}]"
+
+  - nom: graph_interventions_jour
+    type: json
+    description: "Interventions par jour [{jour, count}]"
+
+  - nom: graph_rentabilite_mois
+    type: json
+    description: "Évolution rentabilité [{mois, taux}]"
+
+  - nom: graph_ca_vs_objectif
+    type: json
+    description: "CA vs Objectif [{mois, ca, objectif}]"
+
+  # === COMPARAISON ===
+  - nom: ca_mois_precedent
+    type: money
+    defaut: 0
+    description: "CA du mois précédent"
+
+  - nom: evolution_ca_pct
+    type: number
+    defaut: 0
+    description: "Évolution CA vs mois précédent (%)"
+
+  - nom: ca_meme_mois_annee_prec
+    type: money
+    defaut: 0
+    description: "CA même mois année précédente"
+
+  - nom: evolution_ca_annuel_pct
+    type: number
+    defaut: 0
+    description: "Évolution CA vs année précédente (%)"
+
+  # === MÉTADONNÉES ===
+  - nom: genere_le
+    type: datetime
+    description: "Date/heure de génération"
+
+  - nom: genere_par
+    type: relation
+    relation: utilisateurs
+    description: "Utilisateur ayant généré le digest"
+
+  - nom: envoye
+    type: boolean
+    defaut: false
+    description: "Digest envoyé par email"
+
+  - nom: envoye_le
+    type: datetime
+    description: "Date d'envoi par email"
+
+  - nom: destinataires
+    type: json
+    description: "Liste des destinataires [{email, nom}]"
+
+  - nom: notes
+    type: textarea
+    description: "Notes/commentaires sur le mois"
+
+# === ACTIONS DISPONIBLES ===
+actions:
+  - generer_digest      # Calculer tous les KPIs
+  - envoyer_email       # Envoyer par mail
+  - exporter_pdf        # Export PDF
+  - comparer_periode    # Comparer avec autre période
+
+# === RECHERCHE ===
+recherche:
+  - periode_label
+  - notes
+
+# === AFFICHAGE LISTE ===
+liste:
+  colonnes:
+    - periode_label
+    - ca_mois
+    - nb_factures
+    - taux_rentabilite
+    - evolution_ca_pct
+    - envoye
+  tri_defaut: mois
+  ordre_defaut: desc
+
+# === FILTRES ===
+filtres:
+  - nom: annee
+    type: select
+    options: [2024, 2025, 2026]
+  - nom: envoye
+    type: boolean

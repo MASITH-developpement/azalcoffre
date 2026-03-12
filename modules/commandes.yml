@@ -1,0 +1,316 @@
+# =============================================================================
+# AZALPLUS - Module Commandes Clients
+# =============================================================================
+# Gestion des commandes clients avec workflow complet.
+# Flux: Devis (accepte) -> Commande -> Bon de livraison -> Facture
+
+nom: Commandes
+icone: shopping-cart
+menu: Commercial
+description: Gestion des commandes clients
+
+champs:
+  # Identification
+  - nom: number
+    type: text
+    obligatoire: true
+    unique: true
+    description: Numero de commande (auto-genere CMD-YYYY-NNNNN)
+    autocompletion: true
+
+  - nom: reference_client
+    type: text
+    obligatoire: false
+    description: Reference commande client
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, CONFIRMEE, EN_PREPARATION, PARTIELLEMENT_LIVREE, LIVREE, FACTUREE, ANNULEE]
+    description: Statut de la commande
+
+  # Relations
+  - nom: customer_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client
+    autocompletion: true
+
+  - nom: devis_id
+    type: relation
+    obligatoire: false
+    relation: Devis
+    description: Devis d'origine
+    autocompletion: true
+
+  - nom: commercial_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Commercial responsable
+    autocompletion: true
+
+  # Dates
+  - nom: date_commande
+    type: date
+    obligatoire: true
+    defaut: aujourd'hui
+    description: Date de commande
+
+  - nom: date_livraison_souhaitee
+    type: date
+    obligatoire: false
+    description: Date de livraison souhaitee
+
+  - nom: date_livraison_prevue
+    type: date
+    obligatoire: false
+    description: Date de livraison prevue
+
+  - nom: date_livraison_effective
+    type: date
+    obligatoire: false
+    description: Date de livraison effective
+
+  # Adresses
+  - nom: adresse_livraison
+    type: textarea
+    obligatoire: false
+    description: Adresse de livraison (si differente facturation)
+
+  - nom: contact_livraison
+    type: text
+    obligatoire: false
+    description: Contact pour la livraison
+    autocompletion: true
+
+  - nom: instructions_livraison
+    type: textarea
+    obligatoire: false
+    description: Instructions speciales de livraison
+
+  # Conditions
+  - nom: payment_terms
+    type: select
+    obligatoire: false
+    defaut: NET_30
+    options: [IMMEDIATE, NET_15, NET_30, NET_45, NET_60, NET_90, END_OF_MONTH]
+    description: Conditions de paiement
+
+  - nom: mode_expedition
+    type: select
+    obligatoire: false
+    options: [STANDARD, EXPRESS, ENLEVEMENT, TRANSPORTEUR_CLIENT]
+    description: Mode d'expedition
+
+  # Totaux
+  - nom: subtotal
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total HT
+
+  - nom: discount_amount
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant remise globale
+
+  - nom: tax_amount
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total TVA
+
+  - nom: total
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Total TTC
+
+  - nom: currency
+    type: relation
+    obligatoire: false
+    relation: Devises
+    defaut: EUR
+    description: Devise
+    autocompletion: true
+
+  # Acompte
+  - nom: acompte_requis
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Acompte requis
+
+  - nom: acompte_pourcentage
+    type: number
+    obligatoire: false
+    defaut: 30
+    description: Pourcentage acompte
+
+  - nom: acompte_montant
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Montant acompte
+
+  - nom: acompte_paye
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Acompte paye
+
+  # Stock
+  - nom: stock_reserve
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Stock reserve pour cette commande
+
+  - nom: stock_suffisant
+    type: boolean
+    obligatoire: false
+    defaut: true
+    readonly: true
+    description: Stock suffisant pour toutes les lignes
+
+  # Notes
+  - nom: notes_internes
+    type: textarea
+    obligatoire: false
+    description: Notes internes (non visibles client)
+
+  - nom: notes_client
+    type: textarea
+    obligatoire: false
+    description: Notes visibles sur documents client
+
+  # Priorite
+  - nom: priorite
+    type: select
+    obligatoire: false
+    defaut: NORMALE
+    options: [BASSE, NORMALE, HAUTE, URGENTE]
+    description: Priorite de traitement
+
+  # Tracking
+  - nom: source
+    type: select
+    obligatoire: false
+    options: [SITE_WEB, TELEPHONE, EMAIL, COMMERCIAL, SALON, AUTRE]
+    description: Source de la commande
+
+# Sous-entite: Lignes de commande
+lignes:
+  champs:
+    - nom: product_id
+      type: relation
+      obligatoire: true
+      relation: Produits
+      description: Produit
+      autocompletion: true
+
+    - nom: variante_id
+      type: relation
+      obligatoire: false
+      relation: Variantes_produit
+      description: Variante produit
+      autocompletion: true
+
+    - nom: description
+      type: text
+      obligatoire: false
+      description: Description personnalisee
+      autocompletion: true
+
+    - nom: quantity
+      type: number
+      obligatoire: true
+      defaut: 1
+      description: Quantite commandee
+
+    - nom: quantity_livree
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Quantite deja livree
+
+    - nom: quantity_restante
+      type: number
+      obligatoire: false
+      readonly: true
+      description: Quantite restant a livrer
+
+    - nom: unit_price
+      type: number
+      obligatoire: true
+      description: Prix unitaire HT
+
+    - nom: discount_percent
+      type: number
+      obligatoire: false
+      defaut: 0
+      description: Remise ligne (%)
+
+    - nom: tax_id
+      type: relation
+      obligatoire: false
+      relation: Taxes
+      description: Taux de TVA
+      autocompletion: true
+
+    - nom: subtotal
+      type: number
+      obligatoire: false
+      readonly: true
+      description: Sous-total ligne HT
+
+    - nom: statut_ligne
+      type: select
+      obligatoire: false
+      defaut: A_LIVRER
+      options: [A_LIVRER, PARTIELLEMENT_LIVREE, LIVREE, ANNULEE]
+      description: Statut de la ligne
+
+    - nom: date_livraison_prevue
+      type: date
+      obligatoire: false
+      description: Date livraison prevue (si differente)
+
+    - nom: notes
+      type: text
+      obligatoire: false
+      description: Notes sur la ligne
+
+workflow:
+  BROUILLON -> CONFIRMEE: confirmer
+  CONFIRMEE -> EN_PREPARATION: preparer
+  EN_PREPARATION -> PARTIELLEMENT_LIVREE: livrer_partiel
+  EN_PREPARATION -> LIVREE: livrer
+  PARTIELLEMENT_LIVREE -> LIVREE: livrer
+  LIVREE -> FACTUREE: facturer
+  CONFIRMEE -> ANNULEE: annuler
+  EN_PREPARATION -> ANNULEE: annuler
+  BROUILLON -> ANNULEE: annuler
+
+actions:
+  - creer_depuis_devis
+  - generer_bon_livraison
+  - generer_facture
+  - reserver_stock
+  - envoyer_confirmation_email
+  - exporter_pdf
+  - dupliquer
+
+marceau:
+  alertes:
+    - si stock_suffisant = false: "Stock insuffisant pour cette commande"
+    - si status = EN_PREPARATION et date_livraison_souhaitee < aujourd'hui: "Retard de livraison"
+    - si acompte_requis = true et acompte_paye = false et status = CONFIRMEE: "Acompte en attente"

@@ -1,0 +1,262 @@
+# =============================================================================
+# AZALPLUS - Module Paiements Open Banking
+# =============================================================================
+# Integration Fintecture pour paiement instantane par virement bancaire.
+# Commission: 0.99% (Fintecture) + 0.30% (AZALPLUS) = 1.29% total
+#
+# Flux:
+# 1. Client recoit facture email avec bouton "Payer maintenant"
+# 2. Clic -> Page de paiement -> Choix banque (99% banques FR)
+# 3. Authentification bancaire (app mobile ou web)
+# 4. Confirmation virement pre-rempli
+# 5. Virement instantane (SEPA Instant) ou J+1
+# 6. Webhook -> Notification TPE "Facture payee"
+# 7. Rapprochement automatique dans AZALPLUS
+
+nom: Paiements Open Banking
+icone: credit-card
+menu: Finance
+description: Paiements instantanes par virement bancaire (Open Banking)
+
+champs:
+  # Identification
+  - nom: reference
+    type: text
+    obligatoire: true
+    unique: true
+    description: Reference unique du paiement (auto-generee)
+    autocompletion: true
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: CREATED
+    options: [CREATED, PENDING, PROCESSING, COMPLETED, FAILED, EXPIRED, REFUNDED, CANCELLED]
+    description: Statut du paiement
+
+  # Relations
+  - nom: facture_id
+    type: relation
+    obligatoire: true
+    relation: Factures
+    description: Facture a payer
+    autocompletion: true
+
+  - nom: customer_id
+    type: relation
+    obligatoire: true
+    relation: Clients
+    description: Client payeur
+    autocompletion: true
+
+  # Montants
+  - nom: amount
+    type: number
+    obligatoire: true
+    description: Montant du paiement
+
+  - nom: currency
+    type: text
+    obligatoire: true
+    defaut: EUR
+    description: Devise
+
+  - nom: commission_fintecture
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Commission Fintecture (0.99%)
+
+  - nom: commission_azalplus
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Commission AZALPLUS (0.30%)
+
+  - nom: commission_total
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Commission totale
+
+  - nom: net_amount
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Montant net apres commissions
+
+  # Provider (Fintecture)
+  - nom: provider
+    type: select
+    obligatoire: true
+    defaut: FINTECTURE
+    options: [FINTECTURE, BRIDGE, POWENS]
+    description: Provider Open Banking
+
+  - nom: provider_session_id
+    type: text
+    obligatoire: false
+    description: ID de session provider
+    autocompletion: true
+
+  - nom: provider_payment_id
+    type: text
+    obligatoire: false
+    description: ID de paiement provider
+    autocompletion: true
+
+  - nom: provider_status
+    type: text
+    obligatoire: false
+    description: Statut brut du provider
+
+  # Banque client
+  - nom: bank_name
+    type: text
+    obligatoire: false
+    description: Nom de la banque du client
+    autocompletion: true
+
+  - nom: bank_bic
+    type: text
+    obligatoire: false
+    description: BIC de la banque
+    autocompletion: true
+
+  # Dates
+  - nom: created_at
+    type: datetime
+    obligatoire: true
+    auto: now
+    description: Date de creation
+
+  - nom: initiated_at
+    type: datetime
+    obligatoire: false
+    description: Date d'initiation du paiement
+
+  - nom: completed_at
+    type: datetime
+    obligatoire: false
+    description: Date de completion
+
+  - nom: expires_at
+    type: datetime
+    obligatoire: false
+    description: Date d'expiration du lien
+
+  # Lien de paiement
+  - nom: payment_url
+    type: text
+    obligatoire: false
+    description: URL de paiement pour le client
+
+  - nom: qr_code_url
+    type: text
+    obligatoire: false
+    description: URL du QR code de paiement
+
+  - nom: short_url
+    type: text
+    obligatoire: false
+    description: URL courte pour SMS/WhatsApp
+
+  # Notifications
+  - nom: email_sent
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Email avec lien envoye
+
+  - nom: sms_sent
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: SMS avec lien envoye
+
+  - nom: reminder_count
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de relances envoyees
+
+  - nom: last_reminder_at
+    type: datetime
+    obligatoire: false
+    description: Date derniere relance
+
+  # Rapprochement
+  - nom: rapproche
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Paiement rapproche avec mouvement bancaire
+
+  - nom: mouvement_bancaire_id
+    type: relation
+    obligatoire: false
+    relation: Mouvements_bancaires
+    description: Mouvement bancaire associe
+    autocompletion: true
+
+  # Erreurs
+  - nom: error_code
+    type: text
+    obligatoire: false
+    description: Code erreur si echec
+
+  - nom: error_message
+    type: text
+    obligatoire: false
+    description: Message d'erreur
+
+  # Metadata
+  - nom: metadata
+    type: json
+    obligatoire: false
+    description: Donnees supplementaires du provider
+
+  - nom: ip_address
+    type: text
+    obligatoire: false
+    description: IP du client lors du paiement
+
+  - nom: user_agent
+    type: text
+    obligatoire: false
+    description: User agent du client
+
+workflow:
+  CREATED -> PENDING: initier
+  PENDING -> PROCESSING: traiter
+  PROCESSING -> COMPLETED: completer
+  PROCESSING -> FAILED: echouer
+  CREATED -> EXPIRED: expirer
+  CREATED -> CANCELLED: annuler
+  PENDING -> CANCELLED: annuler
+  COMPLETED -> REFUNDED: rembourser
+
+actions:
+  - generer_lien_paiement
+  - envoyer_email
+  - envoyer_sms
+  - relancer
+  - verifier_statut
+  - rembourser
+  - rapprocher
+
+# Webhooks entrants (depuis Fintecture)
+webhooks:
+  - event: payment.initiated
+    action: update_status_pending
+  - event: payment.processing
+    action: update_status_processing
+  - event: payment.completed
+    action: complete_payment
+  - event: payment.failed
+    action: mark_failed
+
+marceau:
+  alertes:
+    - si status = PENDING et created_at < aujourd'hui - 2 jours: "Paiement en attente depuis plus de 48h"
+    - si status = FAILED: "Echec de paiement - contacter le client"

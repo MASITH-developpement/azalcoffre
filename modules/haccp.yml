@@ -1,0 +1,316 @@
+# =============================================================================
+# AZALPLUS - Module HACCP
+# =============================================================================
+# Hygiene alimentaire et tracabilite pour restaurants, traiteurs, etc.
+
+nom: HACCP
+icone: temperature-half
+menu: Qualite
+description: Hygiene alimentaire et tracabilite HACCP
+
+champs:
+  # Plan HACCP
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom du point de controle
+    autocompletion: true
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: CCP
+    options: [CCP, PRP, PRPO]
+    description: Type (CCP=Point Critique, PRP=Prerequis, PRPO=Prerequis Operationnel)
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: ACTIF
+    options: [ACTIF, INACTIF, EN_REVISION]
+    description: Statut
+
+  # Danger
+  - nom: danger_type
+    type: select
+    obligatoire: true
+    options: [BIOLOGIQUE, CHIMIQUE, PHYSIQUE, ALLERGENE]
+    description: Type de danger
+
+  - nom: danger_description
+    type: textarea
+    obligatoire: true
+    description: Description du danger
+
+  - nom: etape_process
+    type: text
+    obligatoire: true
+    description: Etape du processus concernee
+    autocompletion: true
+
+  # Limites
+  - nom: limite_critique_min
+    type: number
+    obligatoire: false
+    description: Limite critique minimale
+
+  - nom: limite_critique_max
+    type: number
+    obligatoire: false
+    description: Limite critique maximale
+
+  - nom: unite
+    type: select
+    obligatoire: false
+    options: [CELSIUS, MINUTES, PH, AUTRE]
+    description: Unite de mesure
+
+  - nom: limite_cible
+    type: number
+    obligatoire: false
+    description: Valeur cible
+
+  # Surveillance
+  - nom: methode_surveillance
+    type: text
+    obligatoire: true
+    description: Methode de surveillance
+
+  - nom: frequence
+    type: select
+    obligatoire: true
+    defaut: JOURNALIER
+    options: [CONTINU, HORAIRE, JOURNALIER, HEBDOMADAIRE, MENSUEL, A_RECEPTION]
+    description: Frequence des controles
+
+  - nom: responsable_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Responsable du controle
+    autocompletion: true
+
+  # Actions correctives
+  - nom: action_corrective
+    type: textarea
+    obligatoire: true
+    description: Action corrective si depassement
+
+  - nom: action_preventive
+    type: textarea
+    obligatoire: false
+    description: Action preventive
+
+  # Documentation
+  - nom: document_reference
+    type: text
+    obligatoire: false
+    description: Document de reference
+
+  - nom: enregistrement_type
+    type: text
+    obligatoire: false
+    description: Type d'enregistrement
+
+  # Localisation
+  - nom: zone
+    type: text
+    obligatoire: false
+    description: Zone concernee
+    autocompletion: true
+
+  - nom: equipement_id
+    type: relation
+    obligatoire: false
+    relation: Equipements
+    description: Equipement concerne
+    autocompletion: true
+
+# Sous-entite: Releves de temperature
+releves_temperature:
+  champs:
+    - nom: date_releve
+      type: datetime
+      obligatoire: true
+      auto: now
+      description: Date/heure du releve
+
+    - nom: haccp_point_id
+      type: relation
+      obligatoire: true
+      relation: HACCP
+      description: Point de controle
+
+    - nom: temperature
+      type: number
+      obligatoire: true
+      description: Temperature relevee
+
+    - nom: conforme
+      type: boolean
+      obligatoire: false
+      readonly: true
+      description: Conforme aux limites
+
+    - nom: action_corrective_appliquee
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Action corrective appliquee
+
+    - nom: action_detail
+      type: text
+      obligatoire: false
+      description: Detail action corrective
+
+    - nom: releve_par
+      type: relation
+      obligatoire: true
+      relation: Utilisateurs
+      description: Releve par
+
+    - nom: sonde_id
+      type: text
+      obligatoire: false
+      description: ID sonde connectee (IoT)
+
+    - nom: photo
+      type: text
+      obligatoire: false
+      description: Photo du releve
+
+    - nom: notes
+      type: text
+      obligatoire: false
+      description: Observations
+
+# Sous-entite: Reception marchandises
+receptions_haccp:
+  champs:
+    - nom: date_reception
+      type: datetime
+      obligatoire: true
+      auto: now
+      description: Date/heure reception
+
+    - nom: fournisseur_id
+      type: relation
+      obligatoire: true
+      relation: Fournisseurs
+      description: Fournisseur
+
+    - nom: bon_livraison
+      type: text
+      obligatoire: false
+      description: N° bon de livraison
+
+    - nom: temperature_arrivee
+      type: number
+      obligatoire: false
+      description: Temperature a l'arrivee
+
+    - nom: emballage_conforme
+      type: boolean
+      obligatoire: true
+      description: Emballage conforme
+
+    - nom: dlc_respectee
+      type: boolean
+      obligatoire: true
+      description: DLC respectee
+
+    - nom: aspect_conforme
+      type: boolean
+      obligatoire: true
+      description: Aspect conforme
+
+    - nom: decision
+      type: select
+      obligatoire: true
+      defaut: ACCEPTE
+      options: [ACCEPTE, ACCEPTE_AVEC_RESERVE, REFUSE]
+      description: Decision
+
+    - nom: motif_refus
+      type: text
+      obligatoire: false
+      description: Motif de refus
+
+    - nom: controle_par
+      type: relation
+      obligatoire: true
+      relation: Utilisateurs
+      description: Controle par
+
+    - nom: photo
+      type: text
+      obligatoire: false
+      description: Photo reception
+
+# Sous-entite: Tracabilite lots
+tracabilite:
+  champs:
+    - nom: lot_numero
+      type: text
+      obligatoire: true
+      description: Numero de lot
+
+    - nom: produit
+      type: text
+      obligatoire: true
+      description: Produit
+
+    - nom: fournisseur_id
+      type: relation
+      obligatoire: true
+      relation: Fournisseurs
+      description: Fournisseur
+
+    - nom: date_reception
+      type: date
+      obligatoire: true
+      description: Date de reception
+
+    - nom: dlc
+      type: date
+      obligatoire: false
+      description: Date limite de consommation
+
+    - nom: ddm
+      type: date
+      obligatoire: false
+      description: Date de durabilite minimale
+
+    - nom: quantite_recue
+      type: number
+      obligatoire: true
+      description: Quantite recue
+
+    - nom: quantite_restante
+      type: number
+      obligatoire: false
+      description: Quantite restante
+
+    - nom: emplacement
+      type: text
+      obligatoire: false
+      description: Emplacement stockage
+
+    - nom: statut
+      type: select
+      obligatoire: true
+      defaut: EN_STOCK
+      options: [EN_STOCK, UTILISE, PERIME, RAPPEL]
+      description: Statut
+
+actions:
+  - nouveau_releve
+  - nouvelle_reception
+  - generer_rapport_journalier
+  - generer_rapport_mensuel
+  - exporter_registre
+  - alerter_peremption
+
+marceau:
+  alertes:
+    - si type = CCP et dernier_releve > aujourd'hui - 1 jour: "Releve CCP manquant"

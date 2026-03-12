@@ -1,0 +1,425 @@
+# =============================================================================
+# AZALPLUS - Module Support Complet
+# =============================================================================
+# Gestion support: tickets, réclamations, SLA, base de connaissances
+
+nom: Support
+nom_pluriel: Support
+icone: headphones
+menu: Support
+description: "Support: tickets, réclamations, SLA, FAQ"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: numero
+    type: text
+    libelle: "Numéro"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+    format: "TKT-{AAAA}{MM}-{####}"
+
+  - nom: type_demande
+    type: select
+    libelle: "Type"
+    obligatoire: true
+    options:
+      - INCIDENT
+      - DEMANDE
+      - RECLAMATION
+      - QUESTION
+      - SUGGESTION
+    defaut: DEMANDE
+
+  - nom: sujet
+    type: text
+    libelle: "Sujet"
+    obligatoire: true
+
+  - nom: description
+    type: textarea
+    libelle: "Description"
+    obligatoire: true
+
+  # ==========================================================================
+  # DEMANDEUR
+  # ==========================================================================
+  - nom: client_id
+    type: relation
+    libelle: "Client"
+    relation: clients
+
+  - nom: contact_nom
+    type: text
+    libelle: "Nom contact"
+
+  - nom: contact_email
+    type: email
+    libelle: "Email"
+
+  - nom: contact_telephone
+    type: tel
+    libelle: "Téléphone"
+
+  - nom: canal_origine
+    type: select
+    libelle: "Canal"
+    options:
+      - EMAIL
+      - TELEPHONE
+      - PORTAIL
+      - CHAT
+      - FORMULAIRE
+      - RESEAUX_SOCIAUX
+    defaut: EMAIL
+
+  # ==========================================================================
+  # CLASSIFICATION
+  # ==========================================================================
+  - nom: categorie
+    type: text
+    libelle: "Catégorie"
+
+  - nom: sous_categorie
+    type: text
+    libelle: "Sous-catégorie"
+
+  - nom: produit
+    type: text
+    libelle: "Produit concerné"
+
+  - nom: tags
+    type: tags
+    libelle: "Tags"
+
+  # ==========================================================================
+  # PRIORITÉ ET SLA
+  # ==========================================================================
+  - nom: priorite
+    type: select
+    libelle: "Priorité"
+    options:
+      - CRITIQUE
+      - HAUTE
+      - MOYENNE
+      - BASSE
+    defaut: MOYENNE
+
+  - nom: impact
+    type: select
+    libelle: "Impact"
+    options:
+      - BLOQUANT
+      - MAJEUR
+      - MINEUR
+      - COSMETIC
+
+  - nom: urgence
+    type: select
+    libelle: "Urgence"
+    options:
+      - IMMEDIATE
+      - HAUTE
+      - NORMALE
+      - BASSE
+
+  - nom: sla_id
+    type: text
+    libelle: "SLA"
+
+  - nom: sla_temps_reponse
+    type: number
+    libelle: "SLA réponse (h)"
+
+  - nom: sla_temps_resolution
+    type: number
+    libelle: "SLA résolution (h)"
+
+  - nom: sla_respecte
+    type: boolean
+    libelle: "SLA respecté"
+    defaut: true
+
+  # ==========================================================================
+  # DATES
+  # ==========================================================================
+  - nom: date_creation
+    type: datetime
+    libelle: "Date création"
+    obligatoire: true
+
+  - nom: date_echeance
+    type: datetime
+    libelle: "Échéance"
+
+  - nom: date_premiere_reponse
+    type: datetime
+    libelle: "1ère réponse"
+
+  - nom: date_resolution
+    type: datetime
+    libelle: "Résolution"
+
+  - nom: date_cloture
+    type: datetime
+    libelle: "Clôture"
+
+  - nom: temps_reponse
+    type: number
+    libelle: "Temps réponse (min)"
+
+  - nom: temps_resolution
+    type: number
+    libelle: "Temps résolution (min)"
+
+  # ==========================================================================
+  # ASSIGNATION
+  # ==========================================================================
+  - nom: assigne_a
+    type: relation
+    libelle: "Assigné à"
+    relation: employes
+
+  - nom: equipe
+    type: text
+    libelle: "Équipe"
+
+  - nom: escalade
+    type: boolean
+    libelle: "Escaladé"
+    defaut: false
+
+  - nom: niveau_escalade
+    type: number
+    libelle: "Niveau escalade"
+    defaut: 0
+
+  - nom: escalade_a
+    type: relation
+    libelle: "Escaladé à"
+    relation: employes
+
+  - nom: date_escalade
+    type: datetime
+    libelle: "Date escalade"
+
+  # ==========================================================================
+  # ÉCHANGES
+  # ==========================================================================
+  - nom: messages
+    type: json
+    libelle: "Messages"
+    description: "Historique des échanges"
+
+  - nom: nombre_messages
+    type: number
+    libelle: "Nb messages"
+    defaut: 0
+
+  - nom: dernier_message_client
+    type: datetime
+    libelle: "Dernier msg client"
+
+  - nom: dernier_message_agent
+    type: datetime
+    libelle: "Dernier msg agent"
+
+  - nom: en_attente_client
+    type: boolean
+    libelle: "Attente client"
+    defaut: false
+
+  # ==========================================================================
+  # PIÈCES JOINTES
+  # ==========================================================================
+  - nom: pieces_jointes
+    type: json
+    libelle: "Pièces jointes"
+
+  - nom: nombre_pj
+    type: number
+    libelle: "Nb PJ"
+    defaut: 0
+
+  # ==========================================================================
+  # RÉSOLUTION
+  # ==========================================================================
+  - nom: cause_racine
+    type: text
+    libelle: "Cause racine"
+
+  - nom: solution
+    type: textarea
+    libelle: "Solution"
+
+  - nom: actions_correctives
+    type: textarea
+    libelle: "Actions correctives"
+
+  - nom: article_kb
+    type: text
+    libelle: "Article KB"
+    description: "Base de connaissances liée"
+
+  # ==========================================================================
+  # SATISFACTION
+  # ==========================================================================
+  - nom: enquete_envoyee
+    type: boolean
+    libelle: "Enquête envoyée"
+    defaut: false
+
+  - nom: satisfaction_score
+    type: number
+    libelle: "Score satisfaction"
+
+  - nom: satisfaction_commentaire
+    type: textarea
+    libelle: "Commentaire satisfaction"
+
+  # ==========================================================================
+  # RÉCLAMATION
+  # ==========================================================================
+  - nom: reclamation
+    type: boolean
+    libelle: "Réclamation"
+    defaut: false
+
+  - nom: compensation
+    type: select
+    libelle: "Compensation"
+    options:
+      - AUCUNE
+      - AVOIR
+      - REMBOURSEMENT
+      - GESTE_COMMERCIAL
+      - ECHANGE
+
+  - nom: montant_compensation
+    type: money
+    libelle: "Montant compensation"
+
+  - nom: responsable_interne
+    type: boolean
+    libelle: "Responsabilité interne"
+    defaut: false
+
+  # ==========================================================================
+  # LIENS
+  # ==========================================================================
+  - nom: ticket_parent_id
+    type: text
+    libelle: "Ticket parent"
+
+  - nom: tickets_lies
+    type: json
+    libelle: "Tickets liés"
+
+  - nom: facture_id
+    type: text
+    libelle: "Facture liée"
+
+  - nom: commande_id
+    type: text
+    libelle: "Commande liée"
+
+  # ==========================================================================
+  # BASE DE CONNAISSANCES
+  # ==========================================================================
+  - nom: kb_titre
+    type: text
+    libelle: "Titre KB"
+
+  - nom: kb_contenu
+    type: textarea
+    libelle: "Contenu KB"
+
+  - nom: kb_categorie
+    type: text
+    libelle: "Catégorie KB"
+
+  - nom: kb_vues
+    type: number
+    libelle: "Vues"
+    defaut: 0
+
+  - nom: kb_utile
+    type: number
+    libelle: "Votes utile"
+    defaut: 0
+
+  - nom: kb_public
+    type: boolean
+    libelle: "Public"
+    defaut: false
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - NOUVEAU
+      - OUVERT
+      - EN_COURS
+      - EN_ATTENTE
+      - RESOLU
+      - CLOTURE
+      - REOUVERT
+    defaut: NOUVEAU
+
+  - nom: cloture_par
+    type: text
+    libelle: "Clôturé par"
+
+  - nom: notes_internes
+    type: textarea
+    libelle: "Notes internes"
+
+# Index
+index:
+  - numero
+  - client_id
+  - assigne_a
+  - statut
+  - priorite
+  - date_creation
+
+recherche:
+  - numero
+  - sujet
+  - client_id
+  - contact_email
+
+affichage_liste:
+  - numero
+  - sujet
+  - client_id
+  - priorite
+  - assigne_a
+  - statut
+  - date_creation
+
+workflow:
+  NOUVEAU -> OUVERT: "Prendre en charge"
+  OUVERT -> EN_COURS: "Traiter"
+  EN_COURS -> EN_ATTENTE: "Attendre"
+  EN_ATTENTE -> EN_COURS: "Reprendre"
+  EN_COURS -> RESOLU: "Résoudre"
+  RESOLU -> CLOTURE: "Clôturer"
+  RESOLU -> REOUVERT: "Réouvrir"
+  CLOTURE -> REOUVERT: "Réouvrir"
+
+actions:
+  - repondre
+  - assigner
+  - escalader
+  - resoudre
+  - cloturer
+  - envoyer_enquete
+  - creer_article_kb
+  - fusionner_tickets

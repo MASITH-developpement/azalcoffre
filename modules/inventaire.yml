@@ -1,0 +1,466 @@
+# =============================================================================
+# AZALPLUS - Module Inventaire Complet
+# =============================================================================
+# Gestion stock: produits, catégories, mouvements, entrepôts, inventaires
+
+nom: Inventaire
+nom_pluriel: Inventaire
+icone: package
+menu: Stock
+description: "Inventaire: produits, stock, mouvements, entrepôts"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION PRODUIT
+  # ==========================================================================
+  - nom: reference
+    type: text
+    libelle: "Référence"
+    obligatoire: true
+    unique: true
+
+  - nom: code_barre
+    type: text
+    libelle: "Code-barres"
+    unique: true
+
+  - nom: designation
+    type: text
+    libelle: "Désignation"
+    obligatoire: true
+
+  - nom: description
+    type: textarea
+    libelle: "Description"
+
+  - nom: type_article
+    type: select
+    libelle: "Type"
+    options:
+      - PRODUIT
+      - SERVICE
+      - CONSOMMABLE
+      - IMMOBILISATION
+      - KIT
+    defaut: PRODUIT
+
+  # ==========================================================================
+  # CLASSIFICATION
+  # ==========================================================================
+  - nom: categorie
+    type: text
+    libelle: "Catégorie"
+
+  - nom: sous_categorie
+    type: text
+    libelle: "Sous-catégorie"
+
+  - nom: famille
+    type: text
+    libelle: "Famille"
+
+  - nom: marque
+    type: text
+    libelle: "Marque"
+
+  - nom: fournisseur_principal
+    type: text
+    libelle: "Fournisseur principal"
+
+  - nom: tags
+    type: tags
+    libelle: "Tags"
+
+  # ==========================================================================
+  # PRIX
+  # ==========================================================================
+  - nom: prix_achat_ht
+    type: money
+    libelle: "Prix achat HT"
+
+  - nom: prix_achat_moyen
+    type: money
+    libelle: "PMP"
+
+  - nom: prix_vente_ht
+    type: money
+    libelle: "Prix vente HT"
+
+  - nom: prix_vente_ttc
+    type: money
+    libelle: "Prix vente TTC"
+
+  - nom: taux_tva
+    type: number
+    libelle: "Taux TVA (%)"
+    defaut: 20
+
+  - nom: marge_pourcent
+    type: number
+    libelle: "Marge (%)"
+
+  - nom: marge_montant
+    type: money
+    libelle: "Marge (€)"
+
+  - nom: coefficient
+    type: number
+    libelle: "Coefficient"
+
+  # ==========================================================================
+  # TARIFICATION
+  # ==========================================================================
+  - nom: tarifs
+    type: json
+    libelle: "Tarifs"
+    description: "Grille tarifaire par quantité/client"
+
+  - nom: remise_max
+    type: number
+    libelle: "Remise max (%)"
+
+  - nom: prix_promo
+    type: money
+    libelle: "Prix promo"
+
+  - nom: promo_debut
+    type: date
+    libelle: "Début promo"
+
+  - nom: promo_fin
+    type: date
+    libelle: "Fin promo"
+
+  # ==========================================================================
+  # STOCK
+  # ==========================================================================
+  - nom: gestion_stock
+    type: boolean
+    libelle: "Gérer stock"
+    defaut: true
+
+  - nom: stock_actuel
+    type: number
+    libelle: "Stock actuel"
+    defaut: 0
+
+  - nom: stock_reserve
+    type: number
+    libelle: "Stock réservé"
+    defaut: 0
+
+  - nom: stock_disponible
+    type: number
+    libelle: "Stock disponible"
+
+  - nom: stock_minimum
+    type: number
+    libelle: "Stock minimum"
+    defaut: 0
+
+  - nom: stock_maximum
+    type: number
+    libelle: "Stock maximum"
+
+  - nom: stock_securite
+    type: number
+    libelle: "Stock sécurité"
+
+  - nom: point_commande
+    type: number
+    libelle: "Point de commande"
+
+  - nom: quantite_commande
+    type: number
+    libelle: "Qté à commander"
+
+  - nom: alerte_stock
+    type: boolean
+    libelle: "Alerte stock"
+    defaut: false
+
+  # ==========================================================================
+  # MULTI-ENTREPÔTS
+  # ==========================================================================
+  - nom: stocks_entrepots
+    type: json
+    libelle: "Stocks par entrepôt"
+
+  - nom: entrepot_principal
+    type: text
+    libelle: "Entrepôt principal"
+
+  - nom: emplacement
+    type: text
+    libelle: "Emplacement"
+
+  # ==========================================================================
+  # MOUVEMENTS
+  # ==========================================================================
+  - nom: dernier_mouvement
+    type: datetime
+    libelle: "Dernier mouvement"
+
+  - nom: derniere_entree
+    type: date
+    libelle: "Dernière entrée"
+
+  - nom: derniere_sortie
+    type: date
+    libelle: "Dernière sortie"
+
+  - nom: rotation_stock
+    type: number
+    libelle: "Rotation"
+
+  - nom: cmup
+    type: money
+    libelle: "CMUP"
+
+  - nom: valeur_stock
+    type: money
+    libelle: "Valeur stock"
+
+  # ==========================================================================
+  # INVENTAIRE
+  # ==========================================================================
+  - nom: derniere_inventaire
+    type: date
+    libelle: "Dernier inventaire"
+
+  - nom: ecart_inventaire
+    type: number
+    libelle: "Écart inventaire"
+
+  - nom: inventaire_regulier
+    type: boolean
+    libelle: "Inventaire régulier"
+    defaut: false
+
+  - nom: frequence_inventaire
+    type: select
+    libelle: "Fréquence"
+    options:
+      - MENSUEL
+      - TRIMESTRIEL
+      - SEMESTRIEL
+      - ANNUEL
+
+  # ==========================================================================
+  # UNITÉS
+  # ==========================================================================
+  - nom: unite_stock
+    type: text
+    libelle: "Unité stock"
+    defaut: "Unité"
+
+  - nom: unite_achat
+    type: text
+    libelle: "Unité achat"
+
+  - nom: unite_vente
+    type: text
+    libelle: "Unité vente"
+
+  - nom: coefficient_achat
+    type: number
+    libelle: "Coef. achat"
+    defaut: 1
+
+  - nom: coefficient_vente
+    type: number
+    libelle: "Coef. vente"
+    defaut: 1
+
+  - nom: poids
+    type: number
+    libelle: "Poids (kg)"
+
+  - nom: volume
+    type: number
+    libelle: "Volume (m³)"
+
+  - nom: dimensions
+    type: text
+    libelle: "Dimensions"
+
+  # ==========================================================================
+  # APPROVISIONNEMENT
+  # ==========================================================================
+  - nom: delai_approvisionnement
+    type: number
+    libelle: "Délai appro. (j)"
+
+  - nom: reference_fournisseur
+    type: text
+    libelle: "Réf. fournisseur"
+
+  - nom: min_commande
+    type: number
+    libelle: "Qté min commande"
+
+  - nom: conditionnement
+    type: number
+    libelle: "Conditionnement"
+
+  # ==========================================================================
+  # TRAÇABILITÉ
+  # ==========================================================================
+  - nom: suivi_lot
+    type: boolean
+    libelle: "Suivi par lot"
+    defaut: false
+
+  - nom: suivi_serie
+    type: boolean
+    libelle: "Suivi N° série"
+    defaut: false
+
+  - nom: dlc
+    type: boolean
+    libelle: "Gestion DLC"
+    defaut: false
+
+  - nom: dluo
+    type: boolean
+    libelle: "Gestion DLUO"
+    defaut: false
+
+  # ==========================================================================
+  # VARIANTES
+  # ==========================================================================
+  - nom: produit_parent
+    type: boolean
+    libelle: "Produit parent"
+    defaut: false
+
+  - nom: variantes
+    type: json
+    libelle: "Variantes"
+
+  - nom: attributs
+    type: json
+    libelle: "Attributs"
+    description: "Couleur, taille, etc."
+
+  # ==========================================================================
+  # KIT / NOMENCLATURE
+  # ==========================================================================
+  - nom: est_kit
+    type: boolean
+    libelle: "Est un kit"
+    defaut: false
+
+  - nom: composants
+    type: json
+    libelle: "Composants"
+
+  - nom: cout_kit
+    type: money
+    libelle: "Coût kit"
+
+  # ==========================================================================
+  # COMPTABILITÉ
+  # ==========================================================================
+  - nom: compte_achat
+    type: text
+    libelle: "Compte achat"
+    defaut: "607000"
+
+  - nom: compte_vente
+    type: text
+    libelle: "Compte vente"
+    defaut: "707000"
+
+  - nom: compte_stock
+    type: text
+    libelle: "Compte stock"
+    defaut: "371000"
+
+  # ==========================================================================
+  # E-COMMERCE
+  # ==========================================================================
+  - nom: vente_en_ligne
+    type: boolean
+    libelle: "Vente en ligne"
+    defaut: false
+
+  - nom: visible_catalogue
+    type: boolean
+    libelle: "Visible catalogue"
+    defaut: true
+
+  - nom: url_image
+    type: text
+    libelle: "Image"
+
+  - nom: images
+    type: json
+    libelle: "Images"
+
+  - nom: description_web
+    type: textarea
+    libelle: "Description web"
+
+  - nom: mots_cles
+    type: tags
+    libelle: "Mots-clés SEO"
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: actif
+    type: boolean
+    libelle: "Actif"
+    defaut: true
+
+  - nom: en_sommeil
+    type: boolean
+    libelle: "En sommeil"
+    defaut: false
+
+  - nom: date_creation
+    type: datetime
+    libelle: "Date création"
+
+  - nom: date_modification
+    type: datetime
+    libelle: "Dernière modif."
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Index
+index:
+  - reference
+  - code_barre
+  - designation
+  - categorie
+  - fournisseur_principal
+
+recherche:
+  - reference
+  - code_barre
+  - designation
+  - marque
+
+affichage_liste:
+  - reference
+  - designation
+  - categorie
+  - stock_actuel
+  - stock_minimum
+  - prix_vente_ht
+  - actif
+
+actions:
+  - entree_stock
+  - sortie_stock
+  - transfert
+  - inventaire
+  - reapprovisionner
+  - ajuster_prix
+  - dupliquer
+  - exporter_catalogue

@@ -1,0 +1,167 @@
+# =============================================================================
+# AZALPLUS - Module Reseaux Sociaux
+# =============================================================================
+nom: Reseaux Sociaux
+icone: share-alt
+menu: Marketing
+description: Gestion reseaux sociaux et publications
+
+champs:
+  - nom: titre
+    type: text
+    obligatoire: true
+    description: Titre publication
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, PROGRAMME, PUBLIE, ARCHIVE, ECHEC]
+    description: Statut
+
+  - nom: plateformes
+    type: json
+    obligatoire: true
+    description: Plateformes cibles
+
+  - nom: contenu
+    type: textarea
+    obligatoire: true
+    description: Contenu textuel
+
+  - nom: medias
+    type: json
+    obligatoire: false
+    description: Images/videos
+
+  - nom: type_contenu
+    type: select
+    obligatoire: false
+    defaut: POST
+    options: [POST, STORY, REEL, CAROUSEL, VIDEO, ARTICLE]
+    description: Type contenu
+
+  - nom: date_publication
+    type: datetime
+    obligatoire: false
+    description: Date publication programmee
+
+  - nom: comptes_connectes
+    type: json
+    obligatoire: false
+    description: Comptes connectes
+
+  - nom: hashtags
+    type: tags
+    obligatoire: false
+    description: Hashtags
+
+  - nom: mention
+    type: json
+    obligatoire: false
+    description: Mentions
+
+  - nom: lien
+    type: text
+    obligatoire: false
+    description: Lien a inclure
+
+  - nom: utm_source
+    type: text
+    obligatoire: false
+    description: UTM source
+
+  - nom: utm_campaign
+    type: text
+    obligatoire: false
+    description: UTM campaign
+
+  - nom: campagne_id
+    type: relation
+    obligatoire: false
+    relation: Campagnes
+    description: Campagne associee
+
+  - nom: reactions
+    type: number
+    obligatoire: false
+    readonly: true
+    defaut: 0
+    description: Total reactions
+
+  - nom: commentaires
+    type: number
+    obligatoire: false
+    readonly: true
+    defaut: 0
+    description: Total commentaires
+
+  - nom: partages
+    type: number
+    obligatoire: false
+    readonly: true
+    defaut: 0
+    description: Total partages
+
+  - nom: impressions
+    type: number
+    obligatoire: false
+    readonly: true
+    defaut: 0
+    description: Impressions
+
+  - nom: clics
+    type: number
+    obligatoire: false
+    readonly: true
+    defaut: 0
+    description: Clics lien
+
+  - nom: engagement_rate
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Taux engagement (%)
+
+  - nom: meilleure_heure
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Publier a la meilleure heure
+
+  - nom: genere_par_ia
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Contenu genere par IA
+
+  - nom: auteur_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Auteur
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+workflow:
+  BROUILLON -> PROGRAMME: programmer
+  PROGRAMME -> PUBLIE: publier
+  PROGRAMME -> BROUILLON: annuler
+  PUBLIE -> ARCHIVE: archiver
+  PROGRAMME -> ECHEC: echouer
+
+actions:
+  - programmer
+  - publier_maintenant
+  - previsualiser
+  - generer_contenu_ia
+  - analyser_performance
+  - dupliquer
+
+marceau:
+  alertes:
+    - si status = ECHEC: "Publication echouee"
+    - si engagement_rate < 1 et status = PUBLIE: "Engagement faible"

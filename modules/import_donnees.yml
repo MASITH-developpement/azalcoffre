@@ -1,0 +1,127 @@
+# =============================================================================
+# AZALPLUS - Module Import de Donnees
+# =============================================================================
+nom: Import Donnees
+icone: file-import
+menu: Systeme
+description: Import de donnees depuis fichiers ou autres logiciels
+
+champs:
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom de l'import
+
+  - nom: type
+    type: select
+    obligatoire: true
+    options: [CSV, EXCEL, JSON, API_ODOO, API_PENNYLANE, API_AXONAUT, SAGE_EXPORT, CIEL_EXPORT]
+    description: Type source
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: EN_ATTENTE
+    options: [EN_ATTENTE, EN_COURS, TERMINE, ERREUR, ANNULE]
+    description: Statut
+
+  - nom: module_cible
+    type: select
+    obligatoire: true
+    options: [clients, fournisseurs, produits, factures, paiements, employes, ecritures]
+    description: Module cible
+
+  - nom: fichier_source
+    type: text
+    obligatoire: false
+    description: Fichier source
+
+  - nom: mapping
+    type: json
+    obligatoire: false
+    description: Mapping colonnes source -> destination
+
+  - nom: options
+    type: json
+    obligatoire: false
+    description: Options import
+
+  - nom: nb_lignes_total
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Lignes totales
+
+  - nom: nb_lignes_importees
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Lignes importees
+
+  - nom: nb_lignes_erreur
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Lignes en erreur
+
+  - nom: nb_doublons
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Doublons ignores
+
+  - nom: erreurs
+    type: json
+    obligatoire: false
+    description: Detail des erreurs
+
+  - nom: date_debut
+    type: datetime
+    obligatoire: false
+    description: Date debut
+
+  - nom: date_fin
+    type: datetime
+    obligatoire: false
+    description: Date fin
+
+  - nom: duree_secondes
+    type: number
+    obligatoire: false
+    description: Duree (secondes)
+
+  - nom: utilisateur_id
+    type: relation
+    obligatoire: true
+    relation: Utilisateurs
+    description: Lance par
+
+  - nom: rollback_possible
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Rollback possible
+
+  - nom: fichier_archive
+    type: text
+    obligatoire: false
+    description: Fichier source archive
+
+workflow:
+  EN_ATTENTE -> EN_COURS: demarrer
+  EN_COURS -> TERMINE: terminer
+  EN_COURS -> ERREUR: echouer
+  EN_ATTENTE -> ANNULE: annuler
+  TERMINE -> ANNULE: rollback
+
+actions:
+  - preview
+  - demarrer
+  - annuler
+  - rollback
+  - telecharger_rapport
+
+marceau:
+  alertes:
+    - si status = ERREUR: "Import en erreur"
+    - si nb_lignes_erreur > 0: "Lignes en erreur lors de l'import"

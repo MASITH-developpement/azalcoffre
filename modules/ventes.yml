@@ -1,0 +1,527 @@
+# =============================================================================
+# AZALPLUS - Module Ventes Complet
+# =============================================================================
+# Gestion des ventes: devis, commandes, factures, avoirs, BL, paiements
+
+nom: Ventes
+nom_pluriel: Ventes
+icone: shopping-cart
+menu: Commercial
+description: "Ventes: devis, factures, avoirs, BL, paiements"
+ordre_menu: 2
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: numero
+    type: text
+    libelle: "Numéro"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+
+  - nom: type_document
+    type: select
+    libelle: "Type"
+    obligatoire: true
+    options:
+      - DEVIS
+      - COMMANDE
+      - FACTURE
+      - AVOIR
+      - BON_LIVRAISON
+      - PROFORMA
+
+  - nom: reference_client
+    type: text
+    libelle: "Réf. client"
+
+  # ==========================================================================
+  # CLIENT
+  # ==========================================================================
+  - nom: client_id
+    type: relation
+    libelle: "Client"
+    relation: clients
+    obligatoire: true
+
+  - nom: client_nom
+    type: text
+    libelle: "Nom client"
+
+  - nom: client_adresse
+    type: textarea
+    libelle: "Adresse"
+
+  - nom: client_siret
+    type: text
+    libelle: "SIRET"
+
+  - nom: client_tva_intra
+    type: text
+    libelle: "TVA Intra"
+
+  - nom: contact_nom
+    type: text
+    libelle: "Contact"
+
+  - nom: contact_email
+    type: email
+    libelle: "Email"
+
+  # ==========================================================================
+  # ADRESSES
+  # ==========================================================================
+  - nom: adresse_facturation
+    type: textarea
+    libelle: "Adresse facturation"
+
+  - nom: adresse_livraison
+    type: textarea
+    libelle: "Adresse livraison"
+
+  - nom: meme_adresse
+    type: boolean
+    libelle: "Même adresse"
+    defaut: true
+
+  # ==========================================================================
+  # DATES
+  # ==========================================================================
+  - nom: date_document
+    type: date
+    libelle: "Date"
+    obligatoire: true
+    defaut: "today"
+
+  - nom: date_validite
+    type: date
+    libelle: "Validité"
+    description: "Pour devis"
+
+  - nom: date_livraison
+    type: date
+    libelle: "Date livraison"
+
+  - nom: date_echeance
+    type: date
+    libelle: "Échéance"
+
+  # ==========================================================================
+  # LIGNES
+  # ==========================================================================
+  - nom: lignes
+    type: json
+    libelle: "Lignes"
+    description: "Détail des lignes du document"
+
+  - nom: nombre_lignes
+    type: number
+    libelle: "Nb lignes"
+
+  # ==========================================================================
+  # MONTANTS HT
+  # ==========================================================================
+  - nom: total_ht
+    type: money
+    libelle: "Total HT"
+    obligatoire: true
+
+  - nom: remise_globale_pourcent
+    type: number
+    libelle: "Remise (%)"
+
+  - nom: remise_globale_montant
+    type: money
+    libelle: "Remise (€)"
+
+  - nom: total_ht_remise
+    type: money
+    libelle: "Total HT remisé"
+
+  - nom: frais_port
+    type: money
+    libelle: "Frais de port"
+
+  # ==========================================================================
+  # TVA
+  # ==========================================================================
+  - nom: tva_applicable
+    type: boolean
+    libelle: "TVA applicable"
+    defaut: true
+
+  - nom: tva_detail
+    type: json
+    libelle: "Détail TVA"
+    description: "Ventilation par taux"
+
+  - nom: tva_20
+    type: money
+    libelle: "TVA 20%"
+
+  - nom: tva_10
+    type: money
+    libelle: "TVA 10%"
+
+  - nom: tva_5_5
+    type: money
+    libelle: "TVA 5.5%"
+
+  - nom: tva_2_1
+    type: money
+    libelle: "TVA 2.1%"
+
+  - nom: total_tva
+    type: money
+    libelle: "Total TVA"
+
+  - nom: exoneration_tva
+    type: select
+    libelle: "Exonération"
+    options:
+      - AUCUNE
+      - EXPORT
+      - INTRA_UE
+      - AUTO_LIQUIDATION
+      - FRANCHISE_BASE
+
+  - nom: mention_tva
+    type: text
+    libelle: "Mention TVA"
+
+  # ==========================================================================
+  # MONTANTS TTC
+  # ==========================================================================
+  - nom: total_ttc
+    type: money
+    libelle: "Total TTC"
+    obligatoire: true
+
+  - nom: acompte
+    type: money
+    libelle: "Acompte"
+
+  - nom: reste_a_payer
+    type: money
+    libelle: "Reste à payer"
+
+  # ==========================================================================
+  # CONDITIONS
+  # ==========================================================================
+  - nom: conditions_paiement
+    type: select
+    libelle: "Conditions"
+    options:
+      - COMPTANT
+      - "30_JOURS"
+      - "45_JOURS"
+      - "60_JOURS"
+      - FIN_DE_MOIS
+    defaut: "30_JOURS"
+
+  - nom: mode_paiement
+    type: select
+    libelle: "Mode paiement"
+    options:
+      - VIREMENT
+      - CHEQUE
+      - CB
+      - PRELEVEMENT
+      - ESPECES
+
+  - nom: iban
+    type: text
+    libelle: "IBAN"
+
+  - nom: penalites_retard
+    type: number
+    libelle: "Pénalités retard (%)"
+    defaut: 10
+
+  - nom: escompte
+    type: number
+    libelle: "Escompte (%)"
+
+  # ==========================================================================
+  # COMMERCIAL
+  # ==========================================================================
+  - nom: commercial_id
+    type: relation
+    libelle: "Commercial"
+    relation: employes
+
+  - nom: commission_pourcent
+    type: number
+    libelle: "Commission (%)"
+
+  - nom: commission_montant
+    type: money
+    libelle: "Commission (€)"
+
+  # ==========================================================================
+  # DEVIS SPÉCIFIQUE
+  # ==========================================================================
+  - nom: devis_accepte
+    type: boolean
+    libelle: "Devis accepté"
+    defaut: false
+
+  - nom: date_acceptation
+    type: datetime
+    libelle: "Date acceptation"
+
+  - nom: signature_client
+    type: text
+    libelle: "Signature"
+
+  - nom: motif_refus
+    type: text
+    libelle: "Motif refus"
+
+  - nom: relances_devis
+    type: number
+    libelle: "Relances"
+    defaut: 0
+
+  # ==========================================================================
+  # FACTURE SPÉCIFIQUE
+  # ==========================================================================
+  - nom: facture_origine_id
+    type: text
+    libelle: "Facture origine"
+    description: "Pour avoirs"
+
+  - nom: devis_origine_id
+    type: text
+    libelle: "Devis origine"
+
+  - nom: commande_origine_id
+    type: text
+    libelle: "Commande origine"
+
+  - nom: bl_origine_id
+    type: text
+    libelle: "BL origine"
+
+  - nom: type_facture
+    type: select
+    libelle: "Type facture"
+    options:
+      - STANDARD
+      - ACOMPTE
+      - SITUATION
+      - SOLDE
+      - PROFORMA
+
+  - nom: numero_situation
+    type: number
+    libelle: "N° situation"
+
+  # ==========================================================================
+  # PAIEMENTS
+  # ==========================================================================
+  - nom: paiements
+    type: json
+    libelle: "Paiements"
+    description: "Liste des paiements reçus"
+
+  - nom: montant_paye
+    type: money
+    libelle: "Montant payé"
+    defaut: 0
+
+  - nom: date_paiement_complet
+    type: date
+    libelle: "Paiement complet"
+
+  - nom: retard_paiement
+    type: number
+    libelle: "Retard (jours)"
+
+  # ==========================================================================
+  # LIVRAISON
+  # ==========================================================================
+  - nom: livraison_statut
+    type: select
+    libelle: "Statut livraison"
+    options:
+      - A_LIVRER
+      - PARTIELLE
+      - LIVREE
+      - NON_APPLICABLE
+
+  - nom: date_livraison_reelle
+    type: date
+    libelle: "Livraison réelle"
+
+  - nom: transporteur
+    type: text
+    libelle: "Transporteur"
+
+  - nom: numero_suivi
+    type: text
+    libelle: "N° suivi"
+
+  # ==========================================================================
+  # COMPTABILITÉ
+  # ==========================================================================
+  - nom: compte_client
+    type: text
+    libelle: "Compte client"
+    defaut: "411000"
+
+  - nom: compte_produit
+    type: text
+    libelle: "Compte produit"
+    defaut: "706000"
+
+  - nom: journal
+    type: text
+    libelle: "Journal"
+    defaut: "VE"
+
+  - nom: ecriture_comptable_id
+    type: text
+    libelle: "Écriture"
+
+  - nom: integre_compta
+    type: boolean
+    libelle: "Intégré compta"
+    defaut: false
+
+  # ==========================================================================
+  # FACTURE ÉLECTRONIQUE
+  # ==========================================================================
+  - nom: facturx
+    type: boolean
+    libelle: "Factur-X"
+    defaut: false
+
+  - nom: facturx_profil
+    type: select
+    libelle: "Profil Factur-X"
+    options:
+      - MINIMUM
+      - BASIC
+      - EN16931
+
+  - nom: chorus_pro
+    type: boolean
+    libelle: "Chorus Pro"
+    defaut: false
+
+  - nom: chorus_statut
+    type: text
+    libelle: "Statut Chorus"
+
+  - nom: pdp_transmis
+    type: boolean
+    libelle: "Transmis PDP"
+    defaut: false
+
+  # ==========================================================================
+  # DOCUMENTS
+  # ==========================================================================
+  - nom: pdf_document
+    type: text
+    libelle: "PDF"
+
+  - nom: envoye_client
+    type: boolean
+    libelle: "Envoyé client"
+    defaut: false
+
+  - nom: date_envoi
+    type: datetime
+    libelle: "Date envoi"
+
+  - nom: pieces_jointes
+    type: json
+    libelle: "Pièces jointes"
+
+  # ==========================================================================
+  # MENTIONS LÉGALES
+  # ==========================================================================
+  - nom: conditions_generales
+    type: textarea
+    libelle: "CGV"
+
+  - nom: mentions_particulieres
+    type: textarea
+    libelle: "Mentions particulières"
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - VALIDE
+      - ENVOYE
+      - ACCEPTE
+      - REFUSE
+      - PARTIEL
+      - PAYE
+      - IMPAYE
+      - ANNULE
+    defaut: BROUILLON
+
+  - nom: date_validation
+    type: datetime
+    libelle: "Date validation"
+
+  - nom: valide_par
+    type: text
+    libelle: "Validé par"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes internes"
+
+# Index
+index:
+  - numero
+  - client_id
+  - type_document
+  - date_document
+  - statut
+
+recherche:
+  - numero
+  - client_id
+  - reference_client
+
+affichage_liste:
+  - numero
+  - type_document
+  - client_id
+  - date_document
+  - total_ttc
+  - reste_a_payer
+  - statut
+
+workflow:
+  BROUILLON -> VALIDE: "Valider"
+  VALIDE -> ENVOYE: "Envoyer"
+  ENVOYE -> ACCEPTE: "Accepter"
+  ENVOYE -> REFUSE: "Refuser"
+  ACCEPTE -> PARTIEL: null
+  ACCEPTE -> PAYE: null
+  PARTIEL -> PAYE: null
+  VALIDE -> ANNULE: "Annuler"
+  PAYE -> IMPAYE: null
+
+actions:
+  - calculer_totaux
+  - generer_pdf
+  - envoyer_client
+  - dupliquer
+  - convertir_facture
+  - enregistrer_paiement
+  - generer_avoir
+  - exporter_compta
+  - transmettre_facturx

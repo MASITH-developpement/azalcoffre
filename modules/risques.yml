@@ -1,0 +1,177 @@
+# =============================================================================
+# AZALPLUS - Module Gestion des Risques
+# =============================================================================
+# Identification et suivi des risques.
+
+nom: Risques
+icone: triangle-exclamation
+menu: Qualite
+description: Gestion des risques
+
+champs:
+  - nom: code
+    type: text
+    obligatoire: true
+    unique: true
+    description: Code risque
+
+  - nom: title
+    type: text
+    obligatoire: true
+    description: Titre du risque
+
+  - nom: categorie
+    type: select
+    obligatoire: true
+    options: [FINANCIER, OPERATIONNEL, JURIDIQUE, STRATEGIQUE, COMMERCIAL, TECHNIQUE, HUMAIN, SECURITE, ENVIRONNEMENTAL]
+    description: Categorie
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: IDENTIFIE
+    options: [IDENTIFIE, EN_ANALYSE, TRAITE, ACCEPTE, CLOS]
+    description: Statut
+
+  - nom: description
+    type: textarea
+    obligatoire: true
+    description: Description
+
+  - nom: causes
+    type: textarea
+    obligatoire: false
+    description: Causes potentielles
+
+  - nom: consequences
+    type: textarea
+    obligatoire: false
+    description: Consequences
+
+  # Evaluation
+  - nom: probabilite
+    type: select
+    obligatoire: true
+    defaut: MOYENNE
+    options: [TRES_FAIBLE, FAIBLE, MOYENNE, ELEVEE, TRES_ELEVEE]
+    description: Probabilite (1-5)
+
+  - nom: probabilite_score
+    type: number
+    obligatoire: false
+    description: Score probabilite (1-5)
+
+  - nom: impact
+    type: select
+    obligatoire: true
+    defaut: MOYEN
+    options: [NEGLIGEABLE, MINEUR, MOYEN, MAJEUR, CRITIQUE]
+    description: Impact (1-5)
+
+  - nom: impact_score
+    type: number
+    obligatoire: false
+    description: Score impact (1-5)
+
+  - nom: criticite
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Criticite (P x I)
+
+  - nom: niveau_risque
+    type: select
+    obligatoire: false
+    readonly: true
+    options: [FAIBLE, MODERE, ELEVE, CRITIQUE]
+    description: Niveau de risque
+
+  # Traitement
+  - nom: strategie
+    type: select
+    obligatoire: false
+    options: [EVITER, REDUIRE, TRANSFERER, ACCEPTER]
+    description: Strategie de traitement
+
+  - nom: actions_mitigation
+    type: textarea
+    obligatoire: false
+    description: Actions de mitigation
+
+  - nom: responsable_id
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Responsable
+
+  - nom: date_identification
+    type: date
+    obligatoire: true
+    description: Date identification
+
+  - nom: date_echeance
+    type: date
+    obligatoire: false
+    description: Date echeance traitement
+
+  - nom: cout_traitement
+    type: number
+    obligatoire: false
+    description: Cout estime traitement
+
+  # Risque residuel
+  - nom: probabilite_residuelle
+    type: number
+    obligatoire: false
+    description: Probabilite residuelle
+
+  - nom: impact_residuel
+    type: number
+    obligatoire: false
+    description: Impact residuel
+
+  - nom: criticite_residuelle
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Criticite residuelle
+
+  # Suivi
+  - nom: date_derniere_revue
+    type: date
+    obligatoire: false
+    description: Derniere revue
+
+  - nom: date_prochaine_revue
+    type: date
+    obligatoire: false
+    description: Prochaine revue
+
+  - nom: indicateurs
+    type: json
+    obligatoire: false
+    description: Indicateurs de suivi
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+workflow:
+  IDENTIFIE -> EN_ANALYSE: analyser
+  EN_ANALYSE -> TRAITE: traiter
+  EN_ANALYSE -> ACCEPTE: accepter
+  TRAITE -> CLOS: clore
+  ACCEPTE -> CLOS: clore
+
+actions:
+  - evaluer
+  - planifier_actions
+  - reviser
+  - generer_cartographie
+  - exporter_rapport
+
+marceau:
+  alertes:
+    - si niveau_risque = CRITIQUE: "Risque critique a traiter en urgence"
+    - si date_prochaine_revue < aujourd'hui: "Revue de risque en retard"

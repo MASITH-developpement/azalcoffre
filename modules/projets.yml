@@ -1,568 +1,420 @@
-# AZALPLUS - Module Projets (Gestion de Projets)
-# Base sur azalscore/app/modules/projects/models.py (Project)
+# =============================================================================
+# AZALPLUS - Module Projets Complet
+# =============================================================================
+# Gestion projets: projets, tâches, jalons, ressources, temps, chantiers
 
 nom: Projets
+nom_pluriel: Projets
 icone: folder-kanban
 menu: Projets
+description: "Projets: tâches, jalons, ressources, temps, budget"
+ordre_menu: 1
 
 champs:
-  # Identification
-  - nom: code
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: numero
     type: text
+    libelle: "Numéro"
     obligatoire: true
-    description: "Code projet unique (ex: PRJ-2026-001)"
-    autocompletion: true
+    unique: true
+    auto_genere: true
+    format: "PRJ-{AAAA}-{###}"
 
-  - nom: nom
+  - nom: type_fiche
+    type: select
+    libelle: "Type"
+    options:
+      - PROJET
+      - TACHE
+      - JALON
+      - TEMPS
+      - RESSOURCE
+    defaut: PROJET
+
+  - nom: titre
     type: text
+    libelle: "Titre"
     obligatoire: true
-    description: Nom du projet
-    autocompletion: true
 
   - nom: description
     type: textarea
-    obligatoire: false
-    description: Description detaillee du projet
+    libelle: "Description"
 
-  # Relations principales
+  # ==========================================================================
+  # CLIENT
+  # ==========================================================================
   - nom: client_id
     type: relation
-    obligatoire: false
-    relation: Clients
-    description: Client lie au projet
-    autocompletion: true
+    libelle: "Client"
+    relation: clients
 
-  - nom: responsable_id
-    type: relation
-    obligatoire: false
-    relation: Utilisateurs
-    description: Chef de projet / Responsable
-    autocompletion: true
+  - nom: contact_client
+    type: text
+    libelle: "Contact client"
 
-  - nom: sponsor_id
-    type: relation
-    obligatoire: false
-    relation: Utilisateurs
-    description: Sponsor du projet
-    autocompletion: true
+  - nom: devis_id
+    type: text
+    libelle: "Devis origine"
 
-  # Hierarchie de projets
-  - nom: parent_id
-    type: relation
-    obligatoire: false
-    relation: Projets
-    description: Projet parent (pour sous-projets)
-    autocompletion: true
+  - nom: contrat_id
+    type: text
+    libelle: "Contrat"
 
-  # Dates
-  - nom: date_debut
+  # ==========================================================================
+  # DATES
+  # ==========================================================================
+  - nom: date_debut_prevue
     type: date
-    obligatoire: false
-    description: Date de debut prevue
+    libelle: "Début prévu"
 
   - nom: date_fin_prevue
     type: date
-    obligatoire: false
-    description: Date de fin prevue
+    libelle: "Fin prévue"
 
   - nom: date_debut_reelle
     type: date
-    obligatoire: false
-    description: Date de debut reelle
+    libelle: "Début réel"
 
   - nom: date_fin_reelle
     type: date
-    obligatoire: false
-    description: Date de fin reelle
+    libelle: "Fin réelle"
 
-  # Statut et priorite
-  - nom: statut
-    type: select
-    obligatoire: true
-    defaut: brouillon
-    options: [brouillon, planifie, en_cours, en_pause, termine, annule, archive]
-    description: Statut du projet
+  - nom: duree_prevue_jours
+    type: number
+    libelle: "Durée prévue (j)"
 
-  - nom: priorite
-    type: select
-    obligatoire: false
-    defaut: moyenne
-    options: [basse, moyenne, haute, critique]
-    description: Priorite du projet
+  - nom: duree_reelle_jours
+    type: number
+    libelle: "Durée réelle (j)"
 
-  - nom: sante
-    type: select
-    obligatoire: false
-    defaut: vert
-    options: [vert, jaune, rouge]
-    description: Indicateur de sante du projet (vert=OK, jaune=attention, rouge=critique)
+  # ==========================================================================
+  # RESPONSABLES
+  # ==========================================================================
+  - nom: chef_projet_id
+    type: relation
+    libelle: "Chef de projet"
+    relation: employes
 
-  # Classification
-  - nom: categorie
-    type: text
-    obligatoire: false
-    description: Categorie du projet
-    autocompletion: true
-
-  - nom: tags
+  - nom: equipe
     type: json
-    obligatoire: false
-    description: Tags pour filtrage et organisation
+    libelle: "Équipe"
 
-  # Budget
-  - nom: budget
-    type: number
-    obligatoire: false
-    defaut: 0
-    description: Budget prevu (EUR)
+  - nom: ressources_affectees
+    type: json
+    libelle: "Ressources"
 
-  - nom: cout_reel
-    type: number
-    obligatoire: false
-    defaut: 0
-    description: Cout reel cumule (EUR)
+  # ==========================================================================
+  # BUDGET
+  # ==========================================================================
+  - nom: budget_prevu
+    type: money
+    libelle: "Budget prévu"
 
-  - nom: devise
-    type: text
-    obligatoire: false
-    defaut: EUR
-    description: Devise du budget
-    autocompletion: true
+  - nom: budget_consomme
+    type: money
+    libelle: "Budget consommé"
 
-  - nom: type_budget
-    type: select
-    obligatoire: false
-    options: [capex, opex, mixte]
-    description: Type de budget (CAPEX, OPEX, Mixte)
+  - nom: budget_reste
+    type: money
+    libelle: "Budget restant"
 
-  # Effort (heures)
+  - nom: cout_interne
+    type: money
+    libelle: "Coût interne"
+
+  - nom: cout_externe
+    type: money
+    libelle: "Coût externe"
+
+  - nom: marge_prevue
+    type: money
+    libelle: "Marge prévue"
+
+  - nom: marge_reelle
+    type: money
+    libelle: "Marge réelle"
+
+  # ==========================================================================
+  # TEMPS
+  # ==========================================================================
   - nom: heures_prevues
     type: number
-    obligatoire: false
-    defaut: 0
-    description: Heures prevues totales
+    libelle: "Heures prévues"
 
-  - nom: heures_reelles
+  - nom: heures_passees
     type: number
-    obligatoire: false
-    defaut: 0
-    description: Heures reelles cumulees
+    libelle: "Heures passées"
 
-  # Progression
-  - nom: progression
+  - nom: heures_reste
     type: number
-    obligatoire: false
-    defaut: 0
-    description: Pourcentage d'avancement (0-100)
+    libelle: "Heures restantes"
 
-  # Facturation
-  - nom: facturable
+  - nom: taux_horaire_moyen
+    type: money
+    libelle: "Taux horaire moyen"
+
+  # ==========================================================================
+  # AVANCEMENT
+  # ==========================================================================
+  - nom: avancement
+    type: number
+    libelle: "Avancement (%)"
+    defaut: 0
+
+  - nom: avancement_temps
+    type: number
+    libelle: "Avancement temps (%)"
+
+  - nom: avancement_budget
+    type: number
+    libelle: "Avancement budget (%)"
+
+  # ==========================================================================
+  # TÂCHES
+  # ==========================================================================
+  - nom: taches
+    type: json
+    libelle: "Tâches"
+
+  - nom: nombre_taches
+    type: number
+    libelle: "Nb tâches"
+
+  - nom: taches_terminees
+    type: number
+    libelle: "Tâches terminées"
+
+  - nom: projet_parent_id
+    type: text
+    libelle: "Projet parent"
+
+  - nom: tache_parent_id
+    type: text
+    libelle: "Tâche parent"
+
+  # ==========================================================================
+  # JALONS
+  # ==========================================================================
+  - nom: jalons
+    type: json
+    libelle: "Jalons"
+
+  - nom: prochain_jalon
+    type: text
+    libelle: "Prochain jalon"
+
+  - nom: date_prochain_jalon
+    type: date
+    libelle: "Date prochain jalon"
+
+  # ==========================================================================
+  # PRIORITÉ ET RISQUES
+  # ==========================================================================
+  - nom: priorite
+    type: select
+    libelle: "Priorité"
+    options:
+      - CRITIQUE
+      - HAUTE
+      - MOYENNE
+      - BASSE
+    defaut: MOYENNE
+
+  - nom: niveau_risque
+    type: select
+    libelle: "Niveau risque"
+    options:
+      - FAIBLE
+      - MOYEN
+      - ELEVE
+      - CRITIQUE
+
+  - nom: risques
+    type: json
+    libelle: "Risques"
+
+  # ==========================================================================
+  # CHANTIER (BTP)
+  # ==========================================================================
+  - nom: est_chantier
     type: boolean
-    obligatoire: false
+    libelle: "Est un chantier"
     defaut: false
-    description: Projet facturable au client
 
-  - nom: taux_facturation
-    type: number
-    obligatoire: false
-    description: Taux horaire de facturation (EUR/h)
+  - nom: adresse_chantier
+    type: textarea
+    libelle: "Adresse chantier"
+
+  - nom: permis_construire
+    type: text
+    libelle: "Permis de construire"
+
+  - nom: maitre_ouvrage
+    type: text
+    libelle: "Maître d'ouvrage"
+
+  - nom: maitre_oeuvre
+    type: text
+    libelle: "Maître d'œuvre"
+
+  - nom: situations_travaux
+    type: json
+    libelle: "Situations"
+
+  - nom: retenue_garantie
+    type: money
+    libelle: "Retenue de garantie"
+
+  # ==========================================================================
+  # FACTURATION
+  # ==========================================================================
+  - nom: mode_facturation
+    type: select
+    libelle: "Mode facturation"
+    options:
+      - FORFAIT
+      - REGIE
+      - AVANCEMENT
+      - MIXTE
 
   - nom: montant_facture
-    type: number
-    obligatoire: false
-    defaut: 0
-    description: Montant deja facture
+    type: money
+    libelle: "Montant facturé"
 
-  # Options
-  - nom: autoriser_heures_sup
-    type: boolean
-    obligatoire: false
-    defaut: true
-    description: Autoriser les heures supplementaires
+  - nom: montant_encaisse
+    type: money
+    libelle: "Montant encaissé"
 
-  - nom: approbation_temps_requise
-    type: boolean
-    obligatoire: false
-    defaut: true
-    description: Les saisies de temps necessitent approbation
-
-  - nom: visible_client
-    type: boolean
-    obligatoire: false
-    defaut: false
-    description: Projet visible sur le portail client
-
-  # Parametres JSON
-  - nom: parametres
+  - nom: factures
     type: json
-    obligatoire: false
-    description: Parametres supplementaires (JSON)
+    libelle: "Factures"
 
-  # Metadonnees
-  - nom: created_by
+  # ==========================================================================
+  # DOCUMENTS
+  # ==========================================================================
+  - nom: documents
+    type: json
+    libelle: "Documents"
+
+  - nom: livrables
+    type: json
+    libelle: "Livrables"
+
+  # ==========================================================================
+  # COMMUNICATION
+  # ==========================================================================
+  - nom: derniere_reunion
+    type: date
+    libelle: "Dernière réunion"
+
+  - nom: prochaine_reunion
+    type: date
+    libelle: "Prochaine réunion"
+
+  - nom: compte_rendus
+    type: json
+    libelle: "Comptes rendus"
+
+  # ==========================================================================
+  # SAISIE TEMPS (TYPE = TEMPS)
+  # ==========================================================================
+  - nom: temps_date
+    type: date
+    libelle: "Date"
+
+  - nom: temps_heures
+    type: number
+    libelle: "Heures"
+
+  - nom: temps_employe_id
     type: relation
-    obligatoire: false
-    relation: Utilisateurs
-    autocompletion: true
+    libelle: "Employé"
+    relation: employes
 
-  - nom: created_at
-    type: datetime
-    obligatoire: false
+  - nom: temps_tache
+    type: text
+    libelle: "Tâche"
 
-  - nom: updated_at
-    type: datetime
-    obligatoire: false
+  - nom: temps_description
+    type: text
+    libelle: "Description"
 
-  - nom: completed_at
-    type: datetime
-    obligatoire: false
-    description: Date de cloture
-
-  - nom: archived_at
-    type: datetime
-    obligatoire: false
-    description: Date d'archivage
-
-  - nom: is_active
+  - nom: temps_facturable
     type: boolean
-    obligatoire: false
+    libelle: "Facturable"
     defaut: true
 
-# Sous-entite: Phase de projet
-phases:
-  description: Phases/etapes du projet
-  champs:
-    - nom: nom
-      type: text
-      obligatoire: true
-      description: Nom de la phase
+  - nom: temps_valide
+    type: boolean
+    libelle: "Validé"
+    defaut: false
 
-    - nom: description
-      type: textarea
-      obligatoire: false
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - PROSPECT
+      - PLANIFIE
+      - EN_COURS
+      - EN_PAUSE
+      - TERMINE
+      - ANNULE
+      - ARCHIVE
+    defaut: PROSPECT
 
-    - nom: ordre
-      type: number
-      obligatoire: false
-      defaut: 0
-      description: Ordre d'affichage
+  - nom: couleur
+    type: text
+    libelle: "Couleur"
+    defaut: "#3B82F6"
 
-    - nom: couleur
-      type: text
-      obligatoire: false
-      description: Couleur de la phase (hex)
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
 
-    - nom: date_debut_prevue
-      type: date
-      obligatoire: false
+# Index
+index:
+  - numero
+  - client_id
+  - chef_projet_id
+  - type_fiche
+  - statut
+  - date_debut_prevue
 
-    - nom: date_fin_prevue
-      type: date
-      obligatoire: false
+recherche:
+  - numero
+  - titre
+  - client_id
 
-    - nom: date_debut_reelle
-      type: date
-      obligatoire: false
+affichage_liste:
+  - numero
+  - titre
+  - client_id
+  - chef_projet_id
+  - date_fin_prevue
+  - avancement
+  - statut
 
-    - nom: date_fin_reelle
-      type: date
-      obligatoire: false
-
-    - nom: statut
-      type: select
-      obligatoire: false
-      defaut: a_faire
-      options: [a_faire, en_cours, termine]
-
-    - nom: progression
-      type: number
-      obligatoire: false
-      defaut: 0
-      description: Pourcentage (0-100)
-
-    - nom: heures_prevues
-      type: number
-      obligatoire: false
-      defaut: 0
-
-    - nom: heures_reelles
-      type: number
-      obligatoire: false
-      defaut: 0
-
-    - nom: budget_prevu
-      type: number
-      obligatoire: false
-      defaut: 0
-
-    - nom: cout_reel
-      type: number
-      obligatoire: false
-      defaut: 0
-
-# Sous-entite: Jalon (Milestone)
-jalons:
-  description: Jalons cles du projet
-  champs:
-    - nom: nom
-      type: text
-      obligatoire: true
-      description: Nom du jalon
-
-    - nom: description
-      type: textarea
-      obligatoire: false
-
-    - nom: date_cible
-      type: date
-      obligatoire: true
-      description: Date cible du jalon
-
-    - nom: date_reelle
-      type: date
-      obligatoire: false
-      description: Date reelle d'atteinte
-
-    - nom: statut
-      type: select
-      obligatoire: true
-      defaut: en_attente
-      options: [en_attente, en_cours, atteint, manque, annule]
-
-    - nom: jalon_cle
-      type: boolean
-      obligatoire: false
-      defaut: false
-      description: Jalon majeur/cle
-
-    - nom: visible_client
-      type: boolean
-      obligatoire: false
-      defaut: true
-      description: Visible sur le portail client
-
-    - nom: livrables
-      type: json
-      obligatoire: false
-      description: Liste des livrables attendus
-
-    - nom: criteres_acceptation
-      type: textarea
-      obligatoire: false
-      description: Criteres d'acceptation
-
-    - nom: valide_par
-      type: relation
-      obligatoire: false
-      relation: Utilisateurs
-
-    - nom: date_validation
-      type: datetime
-      obligatoire: false
-
-# Sous-entite: Membre equipe
-membres_equipe:
-  description: Membres de l'equipe projet
-  champs:
-    - nom: user_id
-      type: relation
-      obligatoire: true
-      relation: Utilisateurs
-      description: Utilisateur membre
-
-    - nom: employe_id
-      type: relation
-      obligatoire: false
-      relation: Employes
-      description: Lien vers fiche employe
-
-    - nom: role
-      type: select
-      obligatoire: true
-      defaut: membre
-      options: [chef_projet, responsable_equipe, membre, partie_prenante, consultant, observateur]
-
-    - nom: role_description
-      type: text
-      obligatoire: false
-      description: Description du role
-
-    - nom: allocation_pourcent
-      type: number
-      obligatoire: false
-      defaut: 100
-      description: Pourcentage de temps alloue
-
-    - nom: date_debut
-      type: date
-      obligatoire: false
-
-    - nom: date_fin
-      type: date
-      obligatoire: false
-
-    - nom: taux_horaire
-      type: number
-      obligatoire: false
-      description: Taux horaire (EUR/h)
-
-    - nom: facturable
-      type: boolean
-      obligatoire: false
-      defaut: true
-
-    # Permissions projet
-    - nom: peut_saisir_temps
-      type: boolean
-      obligatoire: false
-      defaut: true
-
-    - nom: peut_voir_budget
-      type: boolean
-      obligatoire: false
-      defaut: false
-
-    - nom: peut_gerer_taches
-      type: boolean
-      obligatoire: false
-      defaut: false
-
-    - nom: peut_approuver_temps
-      type: boolean
-      obligatoire: false
-      defaut: false
-
-    - nom: is_active
-      type: boolean
-      obligatoire: false
-      defaut: true
-
-# Workflow du projet
 workflow:
-  brouillon -> planifie: action planifier
-  planifie -> en_cours: action demarrer
-  en_cours -> en_pause: action suspendre
-  en_pause -> en_cours: action reprendre
-  en_cours -> termine: action terminer
-  "* -> annule": sauf termine
-  termine -> archive: action archiver
+  PROSPECT -> PLANIFIE: "Planifier"
+  PLANIFIE -> EN_COURS: "Démarrer"
+  EN_COURS -> EN_PAUSE: "Suspendre"
+  EN_PAUSE -> EN_COURS: "Reprendre"
+  EN_COURS -> TERMINE: "Terminer"
+  TERMINE -> ARCHIVE: "Archiver"
+  PROSPECT -> ANNULE: "Annuler"
+  PLANIFIE -> ANNULE: "Annuler"
 
 actions:
-  - planifier
-  - demarrer
-  - suspendre
-  - reprendre
-  - terminer
-  - annuler
-  - archiver
-  - ajouter_membre
-  - retirer_membre
   - creer_tache
-  - creer_jalon
-  - voir_gantt
-  - voir_kanban
-  - voir_rapport
-  - calculer_kpis
-  - exporter_rapport
-
-# Lien avec temps (module Temps)
-temps:
-  description: Saisies de temps liees a ce projet
-  relation: Temps.projet_id
-  affichage:
-    - date
-    - user_id
-    - tache_id
-    - duree_minutes
-    - description
-    - facturable
-    - statut
-  totaux:
-    - total_heures: "SUM(duree_minutes) / 60"
-    - heures_facturables: "SUM(duree_minutes WHERE facturable=true) / 60"
-    - montant_total: "SUM(montant_ht)"
-
-# Rapports projet
-rapports:
-  avancement:
-    description: Rapport d'avancement projet
-    colonnes: [progression, taches_terminees, taches_totales, heures_prevues, heures_reelles, ecart]
-
-  budget:
-    description: Suivi budgetaire
-    colonnes: [budget, cout_reel, ecart, pourcentage_consomme]
-
-  equipe:
-    description: Charge equipe
-    colonnes: [membre, allocation, heures_prevues, heures_reelles, disponibilite]
-
-  jalons:
-    description: Suivi des jalons
-    colonnes: [jalon, date_cible, date_reelle, ecart_jours, statut]
-
-  kpi:
-    description: Indicateurs EVM (Earned Value Management)
-    colonnes: [pv, ev, ac, sv, cv, spi, cpi, eac, etc]
-
-marceau:
-  alertes:
-    - si date_fin_prevue < maintenant et statut in [planifie, en_cours]: "Projet en retard"
-    - si sante=rouge: "Projet en situation critique"
-    - si cout_reel > budget * 0.9: "Budget projet presque epuise (>90%)"
-    - si heures_reelles > heures_prevues * 1.2: "Depassement heures significatif (+20%)"
-    - si statut=en_pause et updated_at < maintenant - 30j: "Projet en pause depuis plus de 30 jours"
-  suggestions:
-    - "Mettre a jour la progression des taches"
-    - "Planifier une reunion de revue projet"
-    - "Verifier les echeances des jalons"
-  automatisations:
-    - "Calcul automatique progression depuis taches"
-    - "Calcul automatique heures_reelles depuis saisies temps"
-    - "Calcul automatique cout_reel depuis temps + depenses"
-    - "Mise a jour sante selon progression vs planning"
-
-# UI Components
-ui:
-  dashboard:
-    description: Tableau de bord projet
-    route: /projets/{id}
-    composants:
-      - carte_resume: "Resume du projet (statut, progression, budget)"
-      - graphique_avancement: "Courbe d'avancement vs planifie"
-      - liste_taches_recentes: "5 dernieres taches modifiees"
-      - liste_jalons: "Prochains jalons"
-      - equipe: "Membres de l'equipe"
-
-  liste:
-    description: Liste des projets
-    route: /projets
-    composants:
-      - filtres: "Statut, priorite, responsable, client"
-      - tri: "Date debut, progression, priorite"
-      - vues: [liste, cartes, timeline]
-
-  gantt:
-    description: Diagramme de Gantt
-    route: /projets/{id}/gantt
-    composants:
-      - timeline: "Vue chronologique des taches"
-      - dependances: "Liens entre taches"
-      - jalons: "Marqueurs jalons"
-      - chemin_critique: "Mise en evidence chemin critique"
-
-  kanban:
-    description: Vue Kanban du projet
-    route: /projets/{id}/kanban
-    composants:
-      - colonnes: "Colonnes par statut tache"
-      - drag_drop: "Deplacement taches entre colonnes"
-      - filtres: "Assignee, priorite, phase"
-      - compteurs: "Nombre de taches par colonne"
-
-  rapport:
-    description: Rapports projet
-    route: /projets/{id}/rapports
-    composants:
-      - selecteur_rapport: "Type de rapport"
-      - periode: "Filtre temporel"
-      - export: "Export PDF/Excel"
+  - ajouter_jalon
+  - affecter_ressource
+  - saisir_temps
+  - generer_situation
+  - facturer
+  - generer_rapport
+  - exporter_gantt

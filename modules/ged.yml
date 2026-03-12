@@ -1,0 +1,246 @@
+# =============================================================================
+# AZALPLUS - Module GED (Gestion Electronique de Documents)
+# =============================================================================
+# Stockage, indexation, recherche et archivage legal des documents.
+
+nom: GED
+icone: folder-open
+menu: Systeme
+description: Gestion electronique de documents
+
+champs:
+  # Identification
+  - nom: name
+    type: text
+    obligatoire: true
+    description: Nom du document
+    autocompletion: true
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: AUTRE
+    options: [FACTURE, DEVIS, CONTRAT, BON_LIVRAISON, BON_COMMANDE, AVOIR, JUSTIFICATIF, PHOTO, RAPPORT, COURRIER, PIECE_IDENTITE, ATTESTATION, CERTIFICAT, PLAN, AUTRE]
+    description: Type de document
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: ACTIF
+    options: [BROUILLON, EN_VALIDATION, ACTIF, ARCHIVE, SUPPRIME]
+    description: Statut
+
+  # Fichier
+  - nom: file_name
+    type: text
+    obligatoire: true
+    description: Nom du fichier original
+
+  - nom: file_path
+    type: text
+    obligatoire: true
+    description: Chemin stockage (S3/MinIO)
+
+  - nom: file_size
+    type: number
+    obligatoire: false
+    description: Taille (octets)
+
+  - nom: mime_type
+    type: text
+    obligatoire: false
+    description: Type MIME
+
+  - nom: extension
+    type: text
+    obligatoire: false
+    description: Extension (.pdf, .jpg...)
+
+  - nom: checksum
+    type: text
+    obligatoire: false
+    description: Hash SHA256 (integrite)
+
+  # Classification
+  - nom: dossier_id
+    type: relation
+    obligatoire: false
+    relation: GED_Dossiers
+    description: Dossier parent
+    autocompletion: true
+
+  - nom: tags
+    type: tags
+    obligatoire: false
+    description: Tags
+
+  - nom: categorie
+    type: text
+    obligatoire: false
+    description: Categorie personnalisee
+    autocompletion: true
+
+  # Relations avec entites
+  - nom: entity_type
+    type: select
+    obligatoire: false
+    options: [clients, factures, devis, commandes, interventions, employes, contrats, projets, fournisseurs, equipements, vehicules]
+    description: Type d'entite liee
+
+  - nom: entity_id
+    type: text
+    obligatoire: false
+    description: ID de l'entite liee
+
+  # OCR et indexation
+  - nom: ocr_processed
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: OCR effectue
+
+  - nom: ocr_text
+    type: textarea
+    obligatoire: false
+    description: Texte extrait par OCR
+
+  - nom: indexed
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Indexe pour recherche
+
+  - nom: language
+    type: text
+    obligatoire: false
+    defaut: fr
+    description: Langue du document
+
+  # Metadonnees
+  - nom: date_document
+    type: date
+    obligatoire: false
+    description: Date du document
+
+  - nom: auteur
+    type: text
+    obligatoire: false
+    description: Auteur
+    autocompletion: true
+
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description
+
+  - nom: metadata
+    type: json
+    obligatoire: false
+    description: Metadonnees supplementaires
+
+  # Versioning
+  - nom: version
+    type: number
+    obligatoire: false
+    defaut: 1
+    description: Numero de version
+
+  - nom: previous_version_id
+    type: relation
+    obligatoire: false
+    relation: GED
+    description: Version precedente
+
+  - nom: is_latest
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Derniere version
+
+  # Partage
+  - nom: shared
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Document partage
+
+  - nom: share_link
+    type: text
+    obligatoire: false
+    description: Lien de partage public
+
+  - nom: share_expires_at
+    type: datetime
+    obligatoire: false
+    description: Expiration du lien
+
+  - nom: share_password
+    type: text
+    obligatoire: false
+    description: Mot de passe du partage
+
+  # Archivage legal
+  - nom: archivage_legal
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Archivage a valeur probante
+
+  - nom: date_archivage
+    type: datetime
+    obligatoire: false
+    description: Date d'archivage
+
+  - nom: duree_conservation
+    type: number
+    obligatoire: false
+    description: Duree de conservation (annees)
+
+  - nom: date_suppression_prevue
+    type: date
+    obligatoire: false
+    description: Date de suppression prevue
+
+  - nom: horodatage_certifie
+    type: text
+    obligatoire: false
+    description: Jeton d'horodatage certifie
+
+  # Acces
+  - nom: uploaded_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Uploade par
+
+  - nom: last_accessed_at
+    type: datetime
+    obligatoire: false
+    description: Dernier acces
+
+  - nom: download_count
+    type: number
+    obligatoire: false
+    defaut: 0
+    description: Nombre de telechargements
+
+workflow:
+  BROUILLON -> EN_VALIDATION: soumettre
+  EN_VALIDATION -> ACTIF: valider
+  EN_VALIDATION -> BROUILLON: rejeter
+  ACTIF -> ARCHIVE: archiver
+  ARCHIVE -> SUPPRIME: supprimer
+
+actions:
+  - telecharger
+  - previsualiser
+  - partager
+  - nouvelle_version
+  - lancer_ocr
+  - archiver
+  - supprimer
+  - voir_historique_versions
+
+marceau:
+  alertes:
+    - si date_suppression_prevue < aujourd'hui + 30 jours: "Document a supprimer prochainement"

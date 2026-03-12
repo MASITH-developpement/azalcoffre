@@ -1,0 +1,140 @@
+# =============================================================================
+# AZALPLUS - Module Repondeur IA
+# =============================================================================
+nom: Repondeur IA
+icone: robot
+menu: Communication
+description: Repondeur automatique intelligent
+
+champs:
+  - nom: nom
+    type: text
+    obligatoire: true
+    description: Nom du repondeur
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: ACTIF
+    options: [ACTIF, PAUSE, ARCHIVE]
+    description: Statut
+
+  - nom: canal
+    type: select
+    obligatoire: true
+    options: [EMAIL, SMS, WHATSAPP, CHAT_WEB, TELEPHONE]
+    description: Canal
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: SUPPORT
+    options: [SUPPORT, COMMERCIAL, RDV, GENERAL, CUSTOM]
+    description: Type repondeur
+
+  - nom: prompt_systeme
+    type: textarea
+    obligatoire: true
+    description: Instructions IA (prompt systeme)
+
+  - nom: contexte_entreprise
+    type: textarea
+    obligatoire: false
+    description: Contexte entreprise
+
+  - nom: faq
+    type: json
+    obligatoire: false
+    description: FAQ integree
+
+  - nom: horaires_actifs
+    type: json
+    obligatoire: false
+    description: Horaires activation
+
+  - nom: escalade_apres
+    type: number
+    obligatoire: false
+    defaut: 3
+    description: Escalade apres N messages
+
+  - nom: escalade_vers
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+    description: Escalade vers
+
+  - nom: actions_autorisees
+    type: json
+    obligatoire: false
+    description: Actions IA autorisees
+
+  - nom: limites
+    type: json
+    obligatoire: false
+    description: Limites (pas de remises, etc.)
+
+  - nom: modele_ia
+    type: select
+    obligatoire: false
+    defaut: CLAUDE_HAIKU
+    options: [CLAUDE_HAIKU, CLAUDE_SONNET, GPT_4O_MINI, GPT_4O]
+    description: Modele IA
+
+  - nom: temperature
+    type: number
+    obligatoire: false
+    defaut: 0.3
+    description: Temperature IA
+
+  - nom: nb_conversations
+    type: number
+    obligatoire: false
+    readonly: true
+    defaut: 0
+    description: Nombre conversations
+
+  - nom: taux_resolution
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Taux resolution (%)
+
+  - nom: satisfaction_moyenne
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Satisfaction moyenne
+
+  - nom: cout_mensuel
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Cout mensuel IA
+
+  - nom: derniere_activite
+    type: datetime
+    obligatoire: false
+    description: Derniere activite
+
+  - nom: notes
+    type: textarea
+    obligatoire: false
+    description: Notes
+
+workflow:
+  ACTIF -> PAUSE: pause
+  PAUSE -> ACTIF: activer
+  ACTIF -> ARCHIVE: archiver
+  PAUSE -> ARCHIVE: archiver
+
+actions:
+  - tester
+  - analyser_conversations
+  - ajuster_prompt
+  - exporter_historique
+
+marceau:
+  alertes:
+    - si taux_resolution < 50: "Taux resolution faible"
+    - si cout_mensuel > 100: "Cout IA eleve"

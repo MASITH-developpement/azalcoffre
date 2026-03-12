@@ -1,0 +1,289 @@
+# =============================================================================
+# AZALPLUS - Module Sondages et Enquetes
+# =============================================================================
+# Creation et analyse de sondages (satisfaction client, NPS, feedback).
+
+nom: Sondages
+icone: poll
+menu: Marketing
+description: Sondages et enquetes de satisfaction
+
+champs:
+  # Identification
+  - nom: title
+    type: text
+    obligatoire: true
+    description: Titre du sondage
+    autocompletion: true
+
+  - nom: type
+    type: select
+    obligatoire: true
+    defaut: SATISFACTION
+    options: [SATISFACTION, NPS, FEEDBACK_PRODUIT, ENQUETE_MARCHE, EVALUATION_SERVICE, AUTRE]
+    description: Type de sondage
+
+  - nom: status
+    type: select
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, PUBLIE, EN_COURS, TERMINE, ARCHIVE]
+    description: Statut
+
+  # Description
+  - nom: description
+    type: textarea
+    obligatoire: false
+    description: Description/introduction
+
+  - nom: message_fin
+    type: textarea
+    obligatoire: false
+    description: Message de fin
+
+  # Periode
+  - nom: date_debut
+    type: datetime
+    obligatoire: false
+    description: Date de debut
+
+  - nom: date_fin
+    type: datetime
+    obligatoire: false
+    description: Date de fin
+
+  # Distribution
+  - nom: lien_public
+    type: text
+    obligatoire: false
+    readonly: true
+    description: Lien public
+
+  - nom: qr_code
+    type: text
+    obligatoire: false
+    description: QR code
+
+  - nom: anonyme
+    type: boolean
+    obligatoire: false
+    defaut: false
+    description: Reponses anonymes
+
+  - nom: une_reponse_par_personne
+    type: boolean
+    obligatoire: false
+    defaut: true
+    description: Une seule reponse par personne
+
+  - nom: limite_reponses
+    type: number
+    obligatoire: false
+    description: Nombre max de reponses
+
+  # Declencheur
+  - nom: declencheur
+    type: select
+    obligatoire: false
+    options: [MANUEL, POST_ACHAT, POST_INTERVENTION, POST_TICKET, PERIODIQUE]
+    description: Declencheur automatique
+
+  - nom: delai_envoi
+    type: number
+    obligatoire: false
+    defaut: 1
+    description: Delai apres evenement (jours)
+
+  # Ciblage
+  - nom: segment_clients
+    type: text
+    obligatoire: false
+    description: Segment clients cible
+    autocompletion: true
+
+  # Apparence
+  - nom: couleur_principale
+    type: text
+    obligatoire: false
+    defaut: "#3B82F6"
+    description: Couleur principale
+
+  - nom: logo
+    type: text
+    obligatoire: false
+    description: Logo personnalise
+
+  # Statistiques
+  - nom: nb_envois
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre d'envois
+
+  - nom: nb_reponses
+    type: number
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre de reponses
+
+  - nom: taux_reponse
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Taux de reponse (%)
+
+  - nom: nps_score
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Score NPS (-100 a +100)
+
+  - nom: note_moyenne
+    type: number
+    obligatoire: false
+    readonly: true
+    description: Note moyenne
+
+# Sous-entite: Questions
+questions:
+  champs:
+    - nom: ordre
+      type: number
+      obligatoire: true
+      description: Ordre d'affichage
+
+    - nom: type
+      type: select
+      obligatoire: true
+      options: [CHOIX_UNIQUE, CHOIX_MULTIPLE, TEXTE_COURT, TEXTE_LONG, ECHELLE, NPS, NOTE_ETOILES, DATE, EMAIL, TELEPHONE]
+      description: Type de question
+
+    - nom: question
+      type: text
+      obligatoire: true
+      description: Texte de la question
+
+    - nom: description
+      type: text
+      obligatoire: false
+      description: Description/aide
+
+    - nom: obligatoire
+      type: boolean
+      obligatoire: false
+      defaut: false
+      description: Reponse obligatoire
+
+    - nom: options
+      type: json
+      obligatoire: false
+      description: Options de reponse (pour choix)
+
+    - nom: echelle_min
+      type: number
+      obligatoire: false
+      description: Valeur min echelle
+
+    - nom: echelle_max
+      type: number
+      obligatoire: false
+      description: Valeur max echelle
+
+    - nom: label_min
+      type: text
+      obligatoire: false
+      description: Label min (ex "Pas du tout satisfait")
+
+    - nom: label_max
+      type: text
+      obligatoire: false
+      description: Label max (ex "Tres satisfait")
+
+    - nom: condition_affichage
+      type: json
+      obligatoire: false
+      description: Condition d'affichage (logique branchement)
+
+# Sous-entite: Reponses
+reponses:
+  champs:
+    - nom: date_reponse
+      type: datetime
+      obligatoire: true
+      auto: now
+      description: Date/heure reponse
+
+    - nom: client_id
+      type: relation
+      obligatoire: false
+      relation: Clients
+      description: Client (si identifie)
+
+    - nom: email
+      type: email
+      obligatoire: false
+      description: Email repondant
+
+    - nom: reponses_json
+      type: json
+      obligatoire: true
+      description: Reponses aux questions
+
+    - nom: nps_score
+      type: number
+      obligatoire: false
+      description: Score NPS donne
+
+    - nom: note_globale
+      type: number
+      obligatoire: false
+      description: Note globale
+
+    - nom: commentaire
+      type: textarea
+      obligatoire: false
+      description: Commentaire libre
+
+    - nom: source
+      type: select
+      obligatoire: false
+      options: [EMAIL, SMS, LIEN, QR_CODE, WIDGET]
+      description: Source
+
+    - nom: ip_address
+      type: text
+      obligatoire: false
+      description: Adresse IP
+
+    - nom: user_agent
+      type: text
+      obligatoire: false
+      description: User agent
+
+    - nom: duree_secondes
+      type: number
+      obligatoire: false
+      description: Duree de completion
+
+workflow:
+  BROUILLON -> PUBLIE: publier
+  PUBLIE -> EN_COURS: activer
+  EN_COURS -> TERMINE: terminer
+  TERMINE -> ARCHIVE: archiver
+  PUBLIE -> BROUILLON: depublier
+
+actions:
+  - publier
+  - envoyer_email
+  - envoyer_sms
+  - voir_resultats
+  - exporter_csv
+  - generer_rapport
+  - dupliquer
+
+marceau:
+  alertes:
+    - si type = NPS et nps_score < 0: "Score NPS negatif"
+    - si taux_reponse < 10: "Taux de reponse faible"
