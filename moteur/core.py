@@ -236,10 +236,24 @@ async def guardian_middleware(request: Request, call_next: Callable):
         # Log Guardian APRÈS (silencieux)
         await Guardian.log_request(request, response)
 
+        # === GUARDIAN: Capturer TOUTES les erreurs 4xx/5xx ===
+        if response.status_code >= 400:
+            import asyncio
+            async def fix_response_error():
+                try:
+                    from .autopilot import AutoFixer
+                    error_log = f"HTTP {response.status_code} on {request.method} {request.url.path}"
+                    logger.info("response_error_to_autofixer", path=request.url.path, status=response.status_code)
+                    success, message = AutoFixer.try_fix(error_log)
+                    if success:
+                        logger.info("response_error_fixed", path=request.url.path, message=message)
+                except Exception as e:
+                    logger.debug("response_fix_failed", error=str(e))
+            asyncio.create_task(fix_response_error())
+
         return response
     except Exception as e:
-        print(f"MIDDLEWARE EXCEPTION on {request.url.path}: {e}", file=sys.stderr)
-        print(traceback.format_exc(), file=sys.stderr)
+        logger.error("middleware_exception", path=request.url.path, error=str(e), traceback=traceback.format_exc())
         raise
 
 # =============================================================================
@@ -274,7 +288,7 @@ from .storage import storage_router
 from .backup import backup_router, BackupService
 from .email_router import email_router
 from .docs import docs_router, custom_openapi
-from .api_v1 import router_v1, register_v1_modules
+from .api_v1 import router_v1, register_v1_modules, legacy_router
 from .icons import router as icons_router
 from .stock_router import stock_router
 from .workflows_api import workflows_router
@@ -310,6 +324,14 @@ try:
 except ImportError:
     push_router = None
 
+# Integration routes (Fintecture, Swan, Twilio, Transporteurs)
+try:
+    from integrations.routes import setup_integration_routes
+    _integrations_available = True
+except ImportError:
+    _integrations_available = False
+    logger.debug("integrations_routes_not_available")
+
 # Authentication
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 
@@ -318,6 +340,9 @@ app.include_router(users_router, prefix="/api/admin/users", tags=["Admin - Users
 
 # Legacy API (backwards compatibility)
 app.include_router(api_router, prefix="/api", tags=["API (Legacy)"])
+
+# Legacy interventions router (avec filtrage date_prevue_debut)
+app.include_router(legacy_router, tags=["API Legacy Interventions"])
 
 # API v1 (versioned, fully documented)
 app.include_router(router_v1, prefix="/api", tags=["API v1"])
@@ -354,6 +379,22 @@ if notification_router:
 # Push Notifications
 if push_router:
     app.include_router(push_router, prefix="/api", tags=["Push Notifications"])
+
+# Integration Routes (Fintecture, Swan, Twilio, Transporteurs)
+if _integrations_available:
+    try:
+        integrations_count = setup_integration_routes(app)
+        logger.info("integrations_routes_loaded", count=integrations_count)
+    except Exception as e:
+        logger.warning("integrations_routes_failed", error=str(e))
+
+# Factur-X Routes (Facturation Électronique)
+try:
+    from integrations.facturx.routes import router as facturx_router
+    app.include_router(facturx_router, tags=["Factur-X"])
+    logger.info("facturx_routes_loaded")
+except ImportError as e:
+    logger.warning("facturx_routes_not_available", error=str(e))
 
 # Generated Endpoints (Auto-created by Guardian)
 try:
@@ -486,12 +527,149 @@ async def inscription_page():
     """Alias pour la page waitlist."""
     return await waitlist_page()
 
+@app.get("/partenaires", response_class=HTMLResponse)
+async def partenaires_page():
+    """Page partenaires AZALPLUS."""
+    template_path = Path(__file__).parent.parent / "templates" / "partenaires.html"
+    if template_path.exists():
+        return HTMLResponse(content=template_path.read_text())
+    return HTMLResponse(content="<h1>Partenaires</h1>")
+
+# =============================================================================
+# Landing Page (public)
+# =============================================================================
+@app.get("/LANDING_PAGE_AZALPLUS.html", response_class=HTMLResponse)
+async def landing_page():
+    """Page d'accueil AZALPLUS."""
+    landing_path = Path(__file__).parent.parent / "docs" / "LANDING_PAGE_AZALPLUS.html"
+    if landing_path.exists():
+        return HTMLResponse(content=landing_path.read_text())
+    return HTMLResponse(content="<h1>AZALPLUS</h1>", status_code=404)
+
+# =============================================================================
+# Style API (change interface theme)
+# =============================================================================
+@app.put("/api/admin/style")
+async def change_style(request: Request):
+    """Changer le style de l'interface."""
+    import shutil
+    import random
+
+    try:
+        data = await request.json()
+        style = data.get("style", "odoo")
+
+        # Valider le style
+        valid_styles = ["odoo", "axo", "penny", "sage"]
+        if style not in valid_styles:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": f"Style invalide. Choisir parmi: {', '.join(valid_styles)}"}
+            )
+
+        # Chemins des fichiers
+        assets_dir = Path(__file__).parent.parent / "assets"
+        source_file = assets_dir / f"style_{style}.css"
+        target_file = assets_dir / "style.css"
+
+        if not source_file.exists():
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Fichier de style non trouvé: style_{style}.css"}
+            )
+
+        # Copier le fichier de style
+        shutil.copy(source_file, target_file)
+
+        # Mettre à jour le cache-busting dans ui.py
+        ui_path = Path(__file__).parent / "ui.py"
+        if ui_path.exists():
+            content = ui_path.read_text()
+            import re
+            # Incrémenter la version du cache
+            new_version = random.randint(100, 9999)
+            content = re.sub(r'style\.css\?v=\d+', f'style.css?v={new_version}', content)
+            ui_path.write_text(content)
+
+        logger.info("style_changed", style=style)
+
+        return JSONResponse(
+            status_code=200,
+            content={"message": f"Style '{style}' appliqué avec succès", "style": style}
+        )
+
+    except Exception as e:
+        logger.error("style_change_error", error=str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Erreur: {str(e)}"}
+        )
+
+@app.put("/api/admin/ambiance")
+async def change_ambiance(request: Request):
+    """Changer l'ambiance visuelle de l'interface."""
+    import shutil
+    import random
+
+    try:
+        data = await request.json()
+        ambiance = data.get("ambiance", "calme")
+
+        # Valider l'ambiance
+        valid_ambiances = ["energique", "calme", "premium", "corporate"]
+        if ambiance not in valid_ambiances:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": f"Ambiance invalide. Choisir parmi: {', '.join(valid_ambiances)}"}
+            )
+
+        # Chemins des fichiers
+        assets_dir = Path(__file__).parent.parent / "assets"
+        source_file = assets_dir / f"ambiance_{ambiance}.css"
+        target_file = assets_dir / "style.css"
+
+        if not source_file.exists():
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Fichier d'ambiance non trouvé: ambiance_{ambiance}.css"}
+            )
+
+        # Copier le fichier d'ambiance vers style.css
+        shutil.copy(source_file, target_file)
+
+        # Mettre à jour le cache-busting dans ui.py
+        ui_path = Path(__file__).parent / "ui.py"
+        if ui_path.exists():
+            content = ui_path.read_text()
+            import re
+            # Incrémenter la version du cache
+            new_version = random.randint(100, 9999)
+            content = re.sub(r'style\.css\?v=\d+', f'style.css?v={new_version}', content)
+            ui_path.write_text(content)
+
+        logger.info("ambiance_changed", ambiance=ambiance)
+
+        return JSONResponse(
+            status_code=200,
+            content={"message": f"Ambiance '{ambiance}' appliquée avec succès", "ambiance": ambiance}
+        )
+
+    except Exception as e:
+        logger.error("ambiance_change_error", error=str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Erreur: {str(e)}"}
+        )
+
+
 @app.post("/api/public/waitlist")
 async def waitlist_register(request: Request):
     """Enregistrer une inscription à la waitlist."""
     from moteur.db import Database
+    from moteur.notifications import EmailService
     from uuid import UUID
     from datetime import datetime
+    import asyncio
 
     # Tenant système pour les inscriptions publiques
     SYSTEM_TENANT = UUID("00000000-0000-0000-0000-000000000000")
@@ -502,6 +680,7 @@ async def waitlist_register(request: Request):
         # Validation basique
         email = data.get("email", "").strip().lower()
         prenom = data.get("prenom", "").strip()
+        ami_email = data.get("ami_email", "").strip().lower() if data.get("ami_email") else None
 
         if not email or "@" not in email:
             return JSONResponse(
@@ -514,6 +693,10 @@ async def waitlist_register(request: Request):
                 status_code=400,
                 content={"detail": "Prénom requis"}
             )
+
+        # Valider l'email de l'ami si fourni
+        if ami_email and "@" not in ami_email:
+            ami_email = None  # Ignorer si invalide
 
         # Vérifier si l'email existe déjà
         existing = Database.query(
@@ -534,6 +717,7 @@ async def waitlist_register(request: Request):
             "prenom": prenom,
             "activite": data.get("activite", ""),
             "source": data.get("source", ""),
+            "ami_email": ami_email,
             "utm_source": data.get("utm_source", ""),
             "utm_campaign": data.get("utm_campaign", ""),
             "utm_content": data.get("utm_content", ""),
@@ -544,7 +728,18 @@ async def waitlist_register(request: Request):
         # Insérer dans la base
         result = Database.insert("waitlist", SYSTEM_TENANT, waitlist_data)
 
-        logger.info("waitlist_inscription", email=email, source=data.get("utm_source", "direct"))
+        logger.info("waitlist_inscription", email=email, source=data.get("source", "direct"), ami_email=ami_email)
+
+        # Envoyer l'email de remerciement à l'ami (en arrière-plan)
+        if ami_email:
+            asyncio.create_task(
+                EmailService.send_referral_thank_you(
+                    ami_email=ami_email,
+                    prenom_inscrit=prenom,
+                    email_inscrit=email
+                )
+            )
+            logger.info("referral_thank_you_queued", ami_email=ami_email, prenom_inscrit=prenom)
 
         return JSONResponse(
             status_code=201,
@@ -579,6 +774,7 @@ from fastapi.exceptions import RequestValidationError
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Gestion des erreurs de validation avec logging pour Guardian."""
+    import asyncio
     errors = exc.errors()
     path = request.url.path
 
@@ -595,10 +791,24 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         msg = err.get("msg", "")
         error_messages.append(f"{loc}: {msg}")
 
-    # Envoyer à AutoPilot pour apprentissage
+    error_log = f"ValidationError on {path}\n" + "\n".join(error_messages)
+
+    # === GUARDIAN: Envoyer à AutoFixer/ClaudeFixer ===
+    async def fix_validation_error():
+        try:
+            from .autopilot import AutoFixer
+            logger.info("validation_error_to_autofixer", path=path, error_count=len(errors))
+            success, message = AutoFixer.try_fix(error_log)
+            if success:
+                logger.info("validation_error_fixed", path=path, message=message)
+        except Exception as e:
+            logger.warning("validation_fix_failed", error=str(e))
+
+    asyncio.create_task(fix_validation_error())
+
+    # Envoyer aussi à AutoPilot pour apprentissage
     autopilot = get_autopilot()
     if autopilot:
-        error_log = f"ValidationError on {path}\n" + "\n".join(error_messages)
         autopilot.analyze(error_log)
 
     return JSONResponse(
@@ -611,7 +821,30 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    """Gestion des erreurs HTTP."""
+    """Gestion des erreurs HTTP avec Guardian."""
+    import asyncio
+    path = request.url.path
+    status_code = exc.status_code
+
+    # Log pour Guardian
+    if status_code >= 400:
+        logger.warning("http_error", path=path, status=status_code, detail=exc.detail)
+
+    # === GUARDIAN: Envoyer les erreurs 4xx à AutoFixer ===
+    if status_code in [400, 404, 422]:
+        async def fix_http_error():
+            try:
+                from .autopilot import AutoFixer
+                error_log = f"HTTP {status_code} on {path}: {exc.detail}"
+                logger.info("http_error_to_autofixer", path=path, status=status_code)
+                success, message = AutoFixer.try_fix(error_log)
+                if success:
+                    logger.info("http_error_fixed", path=path, message=message)
+            except Exception as e:
+                logger.warning("http_fix_failed", error=str(e))
+
+        asyncio.create_task(fix_http_error())
+
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail}
@@ -628,9 +861,8 @@ async def general_exception_handler(request: Request, exc: Exception):
     tb = traceback.format_exc()
     error_log = f"{type(exc).__name__}: {exc}\n{tb}"
 
-    # Log l'erreur (Guardian voit tout) - rapide
-    print(f"EXCEPTION on {request.url.path}: {exc}", file=sys.stderr)
-    logger.error("exception_traceback", path=request.url.path, error=str(exc))
+    # Log l'erreur (Guardian voit tout)
+    logger.error("exception_traceback", path=request.url.path, error=str(exc), traceback=tb)
 
     # === AUTOFIXER + CLAUDEFIXER: Correction ASYNCHRONE ===
     async def analyze_in_background():
