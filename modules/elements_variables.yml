@@ -1,0 +1,267 @@
+# =============================================================================
+# AZALPLUS - Éléments Variables de Paie
+# =============================================================================
+# Saisie mensuelle des éléments variables par salarié
+
+nom: Élément Variable
+nom_pluriel: Éléments Variables
+icone: edit-3
+menu: Paie
+description: "Éléments variables mensuels: heures sup, primes, absences"
+ordre_menu: 7
+
+champs:
+  # Identification
+  - nom: employe_id
+    type: relation
+    libelle: "Employé"
+    relation: employes
+    obligatoire: true
+
+  - nom: periode_paie
+    type: text
+    libelle: "Période"
+    obligatoire: true
+    placeholder: "AAAA-MM"
+    description: "Format: 2024-01"
+
+  - nom: rubrique_paie_id
+    type: relation
+    libelle: "Rubrique"
+    relation: rubriques_paie
+    obligatoire: true
+
+  # Valeurs
+  - nom: nombre
+    type: number
+    libelle: "Nombre/Quantité"
+    description: "Heures, jours, unités..."
+
+  - nom: base
+    type: money
+    libelle: "Base"
+    description: "Base de calcul"
+
+  - nom: taux
+    type: number
+    libelle: "Taux (%)"
+    description: "Taux applicable"
+
+  - nom: montant
+    type: money
+    libelle: "Montant"
+    description: "Montant calculé ou saisi"
+
+  # Heures
+  - nom: heures_normales
+    type: number
+    libelle: "Heures normales"
+
+  - nom: heures_sup_25
+    type: number
+    libelle: "Heures sup 25%"
+
+  - nom: heures_sup_50
+    type: number
+    libelle: "Heures sup 50%"
+
+  - nom: heures_sup_100
+    type: number
+    libelle: "Heures sup 100%"
+
+  - nom: heures_complementaires
+    type: number
+    libelle: "Heures complémentaires"
+
+  - nom: heures_nuit
+    type: number
+    libelle: "Heures de nuit"
+
+  - nom: heures_dimanche
+    type: number
+    libelle: "Heures dimanche"
+
+  - nom: heures_ferie
+    type: number
+    libelle: "Heures jours fériés"
+
+  # Absences
+  - nom: jours_absence
+    type: number
+    libelle: "Jours d'absence"
+
+  - nom: heures_absence
+    type: number
+    libelle: "Heures d'absence"
+
+  - nom: type_absence
+    type: select
+    libelle: "Type absence"
+    options:
+      - MALADIE
+      - ACCIDENT_TRAVAIL
+      - MATERNITE
+      - PATERNITE
+      - CONGE_SANS_SOLDE
+      - ABSENCE_INJUSTIFIEE
+      - CONGE_PARENTAL
+      - AUTRE
+
+  - nom: date_debut_absence
+    type: date
+    libelle: "Début absence"
+
+  - nom: date_fin_absence
+    type: date
+    libelle: "Fin absence"
+
+  # Congés payés
+  - nom: jours_cp_pris
+    type: number
+    libelle: "Jours CP pris"
+
+  - nom: jours_rtt_pris
+    type: number
+    libelle: "Jours RTT pris"
+
+  # Astreintes
+  - nom: astreintes_semaine
+    type: number
+    libelle: "Astreintes semaine"
+
+  - nom: astreintes_weekend
+    type: number
+    libelle: "Astreintes weekend"
+
+  - nom: interventions_astreinte
+    type: number
+    libelle: "Interventions astreinte"
+
+  # Déplacements
+  - nom: indemnites_km
+    type: number
+    libelle: "Indemnités km"
+    description: "Nombre de km"
+
+  - nom: indemnites_repas
+    type: number
+    libelle: "Indemnités repas"
+    description: "Nombre de repas"
+
+  - nom: grands_deplacements
+    type: number
+    libelle: "Grands déplacements"
+    description: "Nombre de jours"
+
+  # Avantages
+  - nom: titres_restaurant
+    type: number
+    libelle: "Titres restaurant"
+    description: "Nombre de TR"
+
+  - nom: avantage_vehicule
+    type: money
+    libelle: "Avantage véhicule"
+
+  - nom: avantage_logement
+    type: money
+    libelle: "Avantage logement"
+
+  - nom: avantage_nourriture
+    type: money
+    libelle: "Avantage nourriture"
+
+  # Primes ponctuelles
+  - nom: prime_exceptionnelle
+    type: money
+    libelle: "Prime exceptionnelle"
+
+  - nom: prime_objectifs
+    type: money
+    libelle: "Prime objectifs"
+
+  # Régularisations
+  - nom: regularisation
+    type: money
+    libelle: "Régularisation"
+    description: "Montant positif ou négatif"
+
+  - nom: motif_regularisation
+    type: text
+    libelle: "Motif régularisation"
+
+  # Retenues
+  - nom: acompte
+    type: money
+    libelle: "Acompte versé"
+
+  - nom: avance
+    type: money
+    libelle: "Avance"
+
+  # Validation
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - A_VALIDER
+      - VALIDE
+      - INTEGRE
+    defaut: BROUILLON
+
+  - nom: date_saisie
+    type: datetime
+    libelle: "Date saisie"
+    auto_now_add: true
+
+  - nom: saisi_par
+    type: text
+    libelle: "Saisi par"
+
+  - nom: valide_par
+    type: text
+    libelle: "Validé par"
+
+  - nom: date_validation
+    type: datetime
+    libelle: "Date validation"
+
+  # Métadonnées
+  - nom: source
+    type: select
+    libelle: "Source"
+    options:
+      - SAISIE_MANUELLE
+      - IMPORT
+      - POINTAGE
+      - PLANNING
+      - ABSENCE
+    defaut: SAISIE_MANUELLE
+
+  - nom: reference_source
+    type: text
+    libelle: "Référence source"
+    description: "ID du document source"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+recherche:
+  - employe_id
+  - periode_paie
+
+affichage_liste:
+  - employe_id
+  - periode_paie
+  - rubrique_paie_id
+  - nombre
+  - montant
+  - statut
+
+workflow:
+  BROUILLON -> A_VALIDER: "Soumettre"
+  A_VALIDER -> VALIDE: "Valider"
+  A_VALIDER -> BROUILLON: "Rejeter"
+  VALIDE -> INTEGRE: null

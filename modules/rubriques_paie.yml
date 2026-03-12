@@ -1,0 +1,293 @@
+# =============================================================================
+# AZALPLUS - Rubriques de Paie
+# =============================================================================
+# Définition des rubriques composant le bulletin de paie
+
+nom: Rubrique Paie
+nom_pluriel: Rubriques Paie
+icone: list-ordered
+menu: Paie
+description: "Rubriques de paie: gains, retenues, cotisations"
+ordre_menu: 3
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    libelle: "Code rubrique"
+    obligatoire: true
+    unique: true
+    placeholder: "Ex: 100, 200, C100"
+
+  - nom: libelle
+    type: text
+    libelle: "Libellé"
+    obligatoire: true
+    description: "Intitulé sur le bulletin"
+
+  - nom: libelle_court
+    type: text
+    libelle: "Libellé court"
+    description: "Version abrégée (20 car. max)"
+
+  - nom: libelle_dsn
+    type: text
+    libelle: "Libellé DSN"
+    description: "Libellé pour la DSN"
+
+  # Type et nature
+  - nom: type_rubrique
+    type: select
+    libelle: "Type"
+    obligatoire: true
+    options:
+      - GAIN
+      - RETENUE
+      - COTISATION
+      - AVANTAGE_NATURE
+      - REMBOURSEMENT
+      - DEDUCTION
+      - INFORMATION
+    defaut: GAIN
+
+  - nom: nature
+    type: select
+    libelle: "Nature"
+    options:
+      - SALAIRE_BASE
+      - HEURES_SUP
+      - PRIME
+      - INDEMNITE
+      - AVANTAGE
+      - COTISATION_SALARIALE
+      - COTISATION_PATRONALE
+      - CSG_CRDS
+      - NET_IMPOSABLE
+      - ACOMPTE
+      - SAISIE
+      - AUTRE
+
+  - nom: categorie
+    type: select
+    libelle: "Catégorie"
+    options:
+      - REMUNERATION
+      - TEMPS_TRAVAIL
+      - ABSENCES
+      - COTISATIONS_SOCIALES
+      - PREVOYANCE_SANTE
+      - RETRAITE
+      - AUTRES_COTISATIONS
+      - FRAIS_PRO
+      - NET_A_PAYER
+
+  # Calcul
+  - nom: mode_calcul
+    type: select
+    libelle: "Mode de calcul"
+    obligatoire: true
+    options:
+      - MONTANT_FIXE
+      - TAUX_SUR_BASE
+      - TAUX_SUR_BRUT
+      - TAUX_SUR_PLAFOND
+      - TAUX_SUR_TRANCHE
+      - FORMULE
+      - SAISIE_MANUELLE
+    defaut: MONTANT_FIXE
+
+  - nom: base_calcul
+    type: select
+    libelle: "Base de calcul"
+    options:
+      - SALAIRE_BASE
+      - BRUT
+      - BRUT_ABATTU
+      - PLAFOND_SS
+      - TRANCHE_A
+      - TRANCHE_B
+      - TRANCHE_C
+      - TRANCHE_1
+      - TRANCHE_2
+      - ASSIETTE_CSG
+      - NET_IMPOSABLE
+      - AUTRE
+
+  - nom: taux_salarial
+    type: number
+    libelle: "Taux salarial (%)"
+    description: "Part salarié"
+
+  - nom: taux_patronal
+    type: number
+    libelle: "Taux patronal (%)"
+    description: "Part employeur"
+
+  - nom: montant_fixe
+    type: money
+    libelle: "Montant fixe"
+    description: "Si mode MONTANT_FIXE"
+
+  - nom: formule
+    type: textarea
+    libelle: "Formule de calcul"
+    description: "Expression de calcul personnalisée"
+
+  # Plafonnement
+  - nom: plafond_base
+    type: select
+    libelle: "Plafond de base"
+    options:
+      - AUCUN
+      - PLAFOND_SS
+      - "2_PLAFONDS_SS"
+      - "3_PLAFONDS_SS"
+      - "4_PLAFONDS_SS"
+      - "8_PLAFONDS_SS"
+      - MONTANT_FIXE
+
+  - nom: plafond_montant
+    type: money
+    libelle: "Plafond montant"
+    description: "Si plafond fixe"
+
+  - nom: plancher
+    type: money
+    libelle: "Plancher"
+    description: "Minimum de base"
+
+  # Tranches
+  - nom: tranche_debut
+    type: number
+    libelle: "Tranche début"
+    description: "Début de tranche (x PSS)"
+
+  - nom: tranche_fin
+    type: number
+    libelle: "Tranche fin"
+    description: "Fin de tranche (x PSS)"
+
+  # DSN et déclarations
+  - nom: code_dsn
+    type: text
+    libelle: "Code DSN"
+    description: "Code pour déclaration DSN"
+
+  - nom: code_type_composant
+    type: text
+    libelle: "Code type composant"
+    description: "S21.G00.52.001"
+
+  - nom: code_base_assujettie
+    type: text
+    libelle: "Code base assujettie"
+    description: "S21.G00.78/79"
+
+  - nom: code_cotisation
+    type: text
+    libelle: "Code cotisation"
+    description: "Code CTP URSSAF"
+
+  # Impact comptable
+  - nom: compte_debit
+    type: text
+    libelle: "Compte débit"
+    description: "Compte comptable à débiter"
+
+  - nom: compte_credit
+    type: text
+    libelle: "Compte crédit"
+    description: "Compte comptable à créditer"
+
+  # Imposabilité
+  - nom: imposable
+    type: boolean
+    libelle: "Imposable"
+    defaut: true
+    description: "Soumis à l'impôt sur le revenu"
+
+  - nom: soumis_csg
+    type: boolean
+    libelle: "Soumis CSG/CRDS"
+    defaut: true
+
+  - nom: soumis_cotisations
+    type: boolean
+    libelle: "Soumis cotisations"
+    defaut: true
+
+  # Conditions d'application
+  - nom: categories_salaries
+    type: tags
+    libelle: "Catégories salariés"
+    description: "Cadre, Non-cadre, Tous..."
+
+  - nom: convention_collective_id
+    type: relation
+    libelle: "Convention collective"
+    relation: conventions_collectives
+    description: "Si spécifique à une CCN"
+
+  - nom: condition
+    type: textarea
+    libelle: "Condition d'application"
+    description: "Expression conditionnelle"
+
+  # Affichage bulletin
+  - nom: afficher_bulletin
+    type: boolean
+    libelle: "Afficher sur bulletin"
+    defaut: true
+
+  - nom: ordre_affichage
+    type: number
+    libelle: "Ordre d'affichage"
+    defaut: 100
+
+  - nom: groupe_affichage
+    type: text
+    libelle: "Groupe d'affichage"
+    description: "Regroupement sur le bulletin"
+
+  - nom: afficher_base
+    type: boolean
+    libelle: "Afficher la base"
+    defaut: true
+
+  - nom: afficher_taux
+    type: boolean
+    libelle: "Afficher le taux"
+    defaut: true
+
+  # Métadonnées
+  - nom: actif
+    type: boolean
+    libelle: "Actif"
+    defaut: true
+
+  - nom: date_debut
+    type: date
+    libelle: "Date début validité"
+
+  - nom: date_fin
+    type: date
+    libelle: "Date fin validité"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+recherche:
+  - code
+  - libelle
+  - type_rubrique
+
+affichage_liste:
+  - code
+  - libelle
+  - type_rubrique
+  - taux_salarial
+  - taux_patronal
+  - actif
+
+tri_defaut: ordre_affichage

@@ -1,0 +1,244 @@
+# =============================================================================
+# AZALPLUS - Cotisations Sociales
+# =============================================================================
+# Taux et paramètres des cotisations sociales obligatoires
+
+nom: Cotisation
+nom_pluriel: Cotisations
+icone: percent
+menu: Paie
+description: "Cotisations sociales: URSSAF, retraite, prévoyance"
+ordre_menu: 4
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    libelle: "Code"
+    obligatoire: true
+    unique: true
+    placeholder: "Ex: URSSAF_MALADIE, AGIRC_T1"
+
+  - nom: libelle
+    type: text
+    libelle: "Libellé"
+    obligatoire: true
+
+  - nom: libelle_bulletin
+    type: text
+    libelle: "Libellé bulletin"
+    description: "Texte affiché sur le bulletin"
+
+  # Classification
+  - nom: organisme
+    type: select
+    libelle: "Organisme"
+    obligatoire: true
+    options:
+      - URSSAF
+      - AGIRC-ARRCO
+      - POLE_EMPLOI
+      - MUTUELLE
+      - PREVOYANCE
+      - RETRAITE_SUP
+      - FORMATION
+      - TRANSPORT
+      - AUTRE
+
+  - nom: famille
+    type: select
+    libelle: "Famille"
+    options:
+      - SECURITE_SOCIALE
+      - CHOMAGE
+      - RETRAITE_COMPLEMENTAIRE
+      - PREVOYANCE_SANTE
+      - FORMATION_PROFESSIONNELLE
+      - TAXE_APPRENTISSAGE
+      - AUTRES_CONTRIBUTIONS
+      - CSG_CRDS
+
+  - nom: nature
+    type: select
+    libelle: "Nature"
+    options:
+      - MALADIE
+      - VIEILLESSE_PLAFONNEE
+      - VIEILLESSE_DEPLAFONNEE
+      - ALLOCATIONS_FAMILIALES
+      - ACCIDENT_TRAVAIL
+      - CHOMAGE
+      - AGS
+      - RETRAITE_T1
+      - RETRAITE_T2
+      - CEG
+      - CET
+      - APEC
+      - PREVOYANCE
+      - MUTUELLE
+      - CSG_DEDUCTIBLE
+      - CSG_NON_DEDUCTIBLE
+      - CRDS
+      - FNAL
+      - VERSEMENT_MOBILITE
+      - FORMATION
+      - CONTRIBUTION_DIALOGUE_SOCIAL
+
+  # Base de calcul
+  - nom: assiette
+    type: select
+    libelle: "Assiette"
+    obligatoire: true
+    options:
+      - BRUT_TOTAL
+      - BRUT_ABATTU
+      - PLAFOND_SS
+      - TRANCHE_A
+      - TRANCHE_B
+      - TRANCHE_C
+      - TRANCHE_1
+      - TRANCHE_2
+      - ASSIETTE_CSG
+      - ASSIETTE_FORFAIT_SOCIAL
+
+  - nom: plafond_mensuel
+    type: number
+    libelle: "Plafond (x PSS)"
+    description: "Multiple du plafond SS"
+
+  - nom: plancher_mensuel
+    type: number
+    libelle: "Plancher (x PSS)"
+    description: "Plancher en multiple du PSS"
+
+  # Taux
+  - nom: taux_salarial
+    type: number
+    libelle: "Taux salarial (%)"
+    defaut: 0
+
+  - nom: taux_patronal
+    type: number
+    libelle: "Taux patronal (%)"
+    defaut: 0
+
+  - nom: taux_global
+    type: number
+    libelle: "Taux global (%)"
+    description: "Calculé automatiquement"
+
+  # Taux par effectif (pour certaines cotisations)
+  - nom: taux_moins_11
+    type: number
+    libelle: "Taux < 11 salariés (%)"
+
+  - nom: taux_11_a_49
+    type: number
+    libelle: "Taux 11-49 salariés (%)"
+
+  - nom: taux_50_plus
+    type: number
+    libelle: "Taux 50+ salariés (%)"
+
+  # Exonérations
+  - nom: exonere_reduction_fillon
+    type: boolean
+    libelle: "Incluse réduction Fillon"
+    defaut: false
+
+  - nom: exonere_zfu
+    type: boolean
+    libelle: "Exonérée ZFU"
+    defaut: false
+
+  - nom: exonere_jei
+    type: boolean
+    libelle: "Exonérée JEI"
+    defaut: false
+
+  # DSN
+  - nom: code_ctp
+    type: text
+    libelle: "Code CTP URSSAF"
+    description: "Code type de personnel"
+
+  - nom: code_dsn
+    type: text
+    libelle: "Code DSN"
+    description: "S21.G00.81.001"
+
+  - nom: code_ducs
+    type: text
+    libelle: "Code DUCS"
+
+  # Catégories concernées
+  - nom: categories
+    type: tags
+    libelle: "Catégories"
+    description: "CADRE, NON_CADRE, TOUS"
+
+  - nom: statut_professionnel
+    type: tags
+    libelle: "Statuts professionnels"
+    description: "CDI, CDD, APPRENTI..."
+
+  # Règles spéciales
+  - nom: taux_at
+    type: boolean
+    libelle: "Utilise taux AT"
+    defaut: false
+    description: "Accident du travail - taux entreprise"
+
+  - nom: taux_versement_mobilite
+    type: boolean
+    libelle: "Utilise taux VM"
+    defaut: false
+    description: "Versement mobilité - taux local"
+
+  - nom: regle_prorata
+    type: boolean
+    libelle: "Proratisation"
+    defaut: true
+
+  # Comptabilité
+  - nom: compte_charge
+    type: text
+    libelle: "Compte charge"
+    description: "Compte 645xxx"
+
+  - nom: compte_organisme
+    type: text
+    libelle: "Compte organisme"
+    description: "Compte 43xxx"
+
+  # Validité
+  - nom: date_debut
+    type: date
+    libelle: "Date début"
+    obligatoire: true
+
+  - nom: date_fin
+    type: date
+    libelle: "Date fin"
+
+  - nom: actif
+    type: boolean
+    libelle: "Actif"
+    defaut: true
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+recherche:
+  - code
+  - libelle
+  - organisme
+
+affichage_liste:
+  - code
+  - libelle
+  - organisme
+  - taux_salarial
+  - taux_patronal
+  - actif

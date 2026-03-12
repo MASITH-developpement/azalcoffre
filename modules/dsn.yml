@@ -1,0 +1,295 @@
+# =============================================================================
+# AZALPLUS - Déclaration Sociale Nominative (DSN)
+# =============================================================================
+# Gestion des déclarations DSN mensuelles et événementielles
+
+nom: DSN
+nom_pluriel: DSN
+icone: send
+menu: Paie
+description: "Déclarations Sociales Nominatives"
+ordre_menu: 10
+
+champs:
+  # Identification
+  - nom: numero
+    type: text
+    libelle: "Numéro DSN"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+    format: "DSN-{AAAA}{MM}-{###}"
+
+  - nom: type_dsn
+    type: select
+    libelle: "Type DSN"
+    obligatoire: true
+    options:
+      - MENSUELLE
+      - ARRET_TRAVAIL
+      - FIN_CONTRAT
+      - REPRISE_TRAVAIL
+      - ANNULE_REMPLACE
+    defaut: MENSUELLE
+
+  - nom: nature
+    type: select
+    libelle: "Nature"
+    options:
+      - "01 - DSN Mensuelle"
+      - "02 - Signalement arrêt de travail"
+      - "03 - Signalement reprise suite arrêt"
+      - "04 - Signalement fin de contrat"
+      - "05 - Autre signalement"
+
+  # Période et dates
+  - nom: periode
+    type: text
+    libelle: "Période"
+    obligatoire: true
+    placeholder: "AAAA-MM"
+    description: "Mois principal concerné"
+
+  - nom: date_debut_periode
+    type: date
+    libelle: "Début période"
+
+  - nom: date_fin_periode
+    type: date
+    libelle: "Fin période"
+
+  - nom: date_exigibilite
+    type: date
+    libelle: "Date d'exigibilité"
+    description: "Date limite de dépôt"
+
+  - nom: fraction
+    type: number
+    libelle: "Fraction"
+    defaut: 1
+    description: "N° si plusieurs fractions"
+
+  # Émetteur
+  - nom: siret_emetteur
+    type: text
+    libelle: "SIRET émetteur"
+    obligatoire: true
+
+  - nom: nic_emetteur
+    type: text
+    libelle: "NIC émetteur"
+
+  - nom: raison_sociale
+    type: text
+    libelle: "Raison sociale"
+
+  - nom: contact_nom
+    type: text
+    libelle: "Contact nom"
+
+  - nom: contact_email
+    type: email
+    libelle: "Contact email"
+
+  - nom: contact_tel
+    type: tel
+    libelle: "Contact téléphone"
+
+  # Établissement
+  - nom: siret_etablissement
+    type: text
+    libelle: "SIRET établissement"
+
+  - nom: nic_etablissement
+    type: text
+    libelle: "NIC établissement"
+
+  - nom: code_ape
+    type: text
+    libelle: "Code APE"
+
+  - nom: adresse_etablissement
+    type: textarea
+    libelle: "Adresse établissement"
+
+  # Effectifs
+  - nom: effectif_entreprise
+    type: number
+    libelle: "Effectif entreprise"
+
+  - nom: effectif_etablissement
+    type: number
+    libelle: "Effectif établissement"
+
+  - nom: nombre_bulletins
+    type: number
+    libelle: "Nombre de bulletins"
+
+  # Montants globaux
+  - nom: total_brut
+    type: money
+    libelle: "Total brut"
+
+  - nom: total_cotisations
+    type: money
+    libelle: "Total cotisations"
+
+  - nom: total_cotisations_urssaf
+    type: money
+    libelle: "Total URSSAF"
+
+  - nom: total_cotisations_retraite
+    type: money
+    libelle: "Total retraite"
+
+  - nom: total_pas
+    type: money
+    libelle: "Total PAS"
+
+  # Fichier
+  - nom: nom_fichier
+    type: text
+    libelle: "Nom fichier"
+    description: "Nom du fichier DSN généré"
+
+  - nom: chemin_fichier
+    type: text
+    libelle: "Chemin fichier"
+
+  - nom: taille_fichier
+    type: number
+    libelle: "Taille (octets)"
+
+  - nom: hash_fichier
+    type: text
+    libelle: "Hash MD5"
+    description: "Empreinte du fichier"
+
+  # Transmission
+  - nom: mode_transmission
+    type: select
+    libelle: "Mode transmission"
+    options:
+      - API
+      - FICHIER
+      - MANUEL
+    defaut: API
+
+  - nom: point_depot
+    type: select
+    libelle: "Point de dépôt"
+    options:
+      - NET_ENTREPRISES
+      - MSA
+      - AUTRE
+
+  - nom: date_generation
+    type: datetime
+    libelle: "Date génération"
+
+  - nom: date_envoi
+    type: datetime
+    libelle: "Date d'envoi"
+
+  - nom: numero_envoi
+    type: text
+    libelle: "N° d'envoi"
+    description: "Référence du dépôt"
+
+  # Retour
+  - nom: date_retour
+    type: datetime
+    libelle: "Date retour"
+
+  - nom: statut_retour
+    type: select
+    libelle: "Statut retour"
+    options:
+      - EN_ATTENTE
+      - ACCEPTEE
+      - ACCEPTEE_AVEC_AVERTISSEMENTS
+      - REFUSEE
+
+  - nom: bilan_retour
+    type: json
+    libelle: "Bilan retour"
+    description: "Détail des contrôles"
+
+  - nom: nombre_erreurs
+    type: number
+    libelle: "Nombre d'erreurs"
+
+  - nom: nombre_avertissements
+    type: number
+    libelle: "Nombre d'avertissements"
+
+  # Annulation/Remplacement
+  - nom: dsn_origine_id
+    type: relation
+    libelle: "DSN d'origine"
+    relation: dsn
+    description: "Si annule et remplace"
+
+  - nom: dsn_remplacement_id
+    type: relation
+    libelle: "DSN de remplacement"
+    relation: dsn
+
+  # Statut
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - GENEREE
+      - CONTROLEE
+      - ENVOYEE
+      - ACCEPTEE
+      - REFUSEE
+      - ANNULEE
+    defaut: BROUILLON
+
+  # Audit
+  - nom: genere_par
+    type: text
+    libelle: "Généré par"
+
+  - nom: envoye_par
+    type: text
+    libelle: "Envoyé par"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+recherche:
+  - numero
+  - periode
+  - type_dsn
+  - siret_etablissement
+
+affichage_liste:
+  - numero
+  - type_dsn
+  - periode
+  - nombre_bulletins
+  - statut
+  - date_envoi
+
+workflow:
+  BROUILLON -> GENEREE: "Générer"
+  GENEREE -> CONTROLEE: "Contrôler"
+  GENEREE -> BROUILLON: "Modifier"
+  CONTROLEE -> ENVOYEE: "Envoyer"
+  CONTROLEE -> BROUILLON: "Corriger"
+  ENVOYEE -> ACCEPTEE: null
+  ENVOYEE -> REFUSEE: null
+  REFUSEE -> BROUILLON: "Corriger"
+  ACCEPTEE -> ANNULEE: "Annuler"
+
+actions:
+  - generer_dsn
+  - controler_dsn
+  - envoyer_dsn
+  - telecharger_fichier
+  - consulter_retour

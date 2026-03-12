@@ -1,0 +1,240 @@
+# =============================================================================
+# AZALPLUS - Paramètres Paie
+# =============================================================================
+# Configuration générale du module paie
+# Taux, plafonds, paramètres légaux
+
+nom: Paramètres Paie
+nom_pluriel: Paramètres Paie
+icone: settings
+menu: Paie
+description: "Configuration des paramètres de paie: SMIC, plafonds, taux"
+ordre_menu: 1
+
+champs:
+  # Identification
+  - nom: annee
+    type: number
+    libelle: "Année"
+    obligatoire: true
+    unique: true
+    description: "Année d'application des paramètres"
+
+  - nom: mois
+    type: number
+    libelle: "Mois"
+    description: "Mois si paramètres mensuels (null = annuel)"
+    min: 1
+    max: 12
+
+  # SMIC
+  - nom: smic_horaire
+    type: money
+    libelle: "SMIC horaire brut"
+    obligatoire: true
+    description: "Montant du SMIC horaire brut"
+
+  - nom: smic_mensuel
+    type: money
+    libelle: "SMIC mensuel brut"
+    obligatoire: true
+    description: "SMIC mensuel pour 151.67h"
+
+  - nom: minimum_garanti
+    type: money
+    libelle: "Minimum garanti"
+    description: "Valeur du minimum garanti (avantages en nature)"
+
+  # Plafonds Sécurité Sociale
+  - nom: plafond_ss_mensuel
+    type: money
+    libelle: "Plafond SS mensuel"
+    obligatoire: true
+    description: "Plafond mensuel de la Sécurité Sociale"
+
+  - nom: plafond_ss_annuel
+    type: money
+    libelle: "Plafond SS annuel"
+    description: "Plafond annuel de la Sécurité Sociale"
+
+  - nom: plafond_ss_journalier
+    type: money
+    libelle: "Plafond SS journalier"
+    description: "Plafond journalier de la Sécurité Sociale"
+
+  - nom: plafond_ss_horaire
+    type: money
+    libelle: "Plafond SS horaire"
+    description: "Plafond horaire de la Sécurité Sociale"
+
+  # Heures
+  - nom: heures_mensuelles_reference
+    type: number
+    libelle: "Heures mensuelles de référence"
+    defaut: 151.67
+    description: "Durée mensuelle légale du travail"
+
+  - nom: heures_hebdo_legales
+    type: number
+    libelle: "Heures hebdo légales"
+    defaut: 35
+    description: "Durée hebdomadaire légale"
+
+  # Taux légaux
+  - nom: taux_csg_deductible
+    type: number
+    libelle: "Taux CSG déductible (%)"
+    defaut: 6.8
+    description: "Taux de CSG déductible"
+
+  - nom: taux_csg_non_deductible
+    type: number
+    libelle: "Taux CSG non déductible (%)"
+    defaut: 2.4
+    description: "Taux de CSG non déductible"
+
+  - nom: taux_crds
+    type: number
+    libelle: "Taux CRDS (%)"
+    defaut: 0.5
+    description: "Taux de CRDS"
+
+  - nom: assiette_csg_crds
+    type: number
+    libelle: "Assiette CSG/CRDS (%)"
+    defaut: 98.25
+    description: "Pourcentage du brut soumis à CSG/CRDS"
+
+  # Indemnités kilométriques
+  - nom: ik_auto_cv_3_4
+    type: money
+    libelle: "IK auto 3-4 CV (€/km)"
+    description: "Indemnité kilométrique 3-4 CV"
+
+  - nom: ik_auto_cv_5
+    type: money
+    libelle: "IK auto 5 CV (€/km)"
+
+  - nom: ik_auto_cv_6
+    type: money
+    libelle: "IK auto 6 CV (€/km)"
+
+  - nom: ik_auto_cv_7_plus
+    type: money
+    libelle: "IK auto 7+ CV (€/km)"
+
+  - nom: ik_moto
+    type: money
+    libelle: "IK moto (€/km)"
+
+  - nom: ik_velo
+    type: money
+    libelle: "Forfait mobilité vélo (€/an)"
+
+  # Avantages en nature
+  - nom: avantage_repas
+    type: money
+    libelle: "Avantage repas (€/repas)"
+    description: "Valeur forfaitaire d'un repas"
+
+  - nom: avantage_logement_1_piece
+    type: money
+    libelle: "Avantage logement 1 pièce"
+
+  - nom: avantage_vehicule_pourcentage
+    type: number
+    libelle: "Avantage véhicule (%)"
+    defaut: 9
+    description: "Pourcentage du coût du véhicule"
+
+  # Titres restaurant
+  - nom: titre_restaurant_exoneration_max
+    type: money
+    libelle: "TR exonération max (€)"
+    description: "Part patronale max exonérée"
+
+  - nom: titre_restaurant_part_employeur_min
+    type: number
+    libelle: "TR part employeur min (%)"
+    defaut: 50
+
+  - nom: titre_restaurant_part_employeur_max
+    type: number
+    libelle: "TR part employeur max (%)"
+    defaut: 60
+
+  # Frais professionnels
+  - nom: frais_repas_exoneration
+    type: money
+    libelle: "Repas exonération (€)"
+    description: "Indemnité repas exonérée"
+
+  - nom: grand_deplacement_repas
+    type: money
+    libelle: "Grand déplacement repas (€)"
+
+  - nom: grand_deplacement_logement_paris
+    type: money
+    libelle: "Grand déplacement logement Paris (€)"
+
+  - nom: grand_deplacement_logement_province
+    type: money
+    libelle: "Grand déplacement logement province (€)"
+
+  # Réduction Fillon
+  - nom: fillon_coefficient_max
+    type: number
+    libelle: "Fillon coef max"
+    defaut: 0.3195
+    description: "Coefficient maximum réduction Fillon"
+
+  - nom: fillon_seuil
+    type: number
+    libelle: "Fillon seuil (x SMIC)"
+    defaut: 1.6
+    description: "Seuil en multiple du SMIC"
+
+  # Autres
+  - nom: ijss_carence_jours
+    type: number
+    libelle: "IJSS jours de carence"
+    defaut: 3
+
+  - nom: conges_payes_jours_ouvrables
+    type: number
+    libelle: "CP jours ouvrables/mois"
+    defaut: 2.5
+
+  - nom: conges_payes_jours_ouvres
+    type: number
+    libelle: "CP jours ouvrés/mois"
+    defaut: 2.08
+
+  # Métadonnées
+  - nom: actif
+    type: boolean
+    libelle: "Actif"
+    defaut: true
+
+  - nom: date_effet
+    type: date
+    libelle: "Date d'effet"
+    obligatoire: true
+
+  - nom: source
+    type: text
+    libelle: "Source"
+    description: "URSSAF, BOSS, JO..."
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Valeurs par défaut 2024
+valeurs_defaut:
+  annee: 2024
+  smic_horaire: 11.65
+  smic_mensuel: 1766.92
+  plafond_ss_mensuel: 3864
+  plafond_ss_annuel: 46368
+  date_effet: "2024-01-01"

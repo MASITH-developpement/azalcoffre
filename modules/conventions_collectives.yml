@@ -1,0 +1,252 @@
+# =============================================================================
+# AZALPLUS - Conventions Collectives
+# =============================================================================
+# Gestion des conventions collectives et accords d'entreprise
+
+nom: Convention Collective
+nom_pluriel: Conventions Collectives
+icone: scroll-text
+menu: Paie
+description: "Conventions collectives, accords de branche et d'entreprise"
+ordre_menu: 2
+
+champs:
+  # Identification
+  - nom: code
+    type: text
+    libelle: "Code IDCC"
+    obligatoire: true
+    unique: true
+    description: "Identifiant de la Convention Collective (IDCC)"
+    placeholder: "Ex: 1486"
+
+  - nom: libelle
+    type: text
+    libelle: "Libellé"
+    obligatoire: true
+    description: "Nom complet de la convention"
+
+  - nom: libelle_court
+    type: text
+    libelle: "Libellé court"
+    description: "Nom abrégé"
+
+  - nom: brochure_jo
+    type: text
+    libelle: "N° brochure JO"
+    description: "Numéro de brochure au Journal Officiel"
+
+  # Classification
+  - nom: type_convention
+    type: select
+    libelle: "Type"
+    options:
+      - Convention collective nationale
+      - Convention collective régionale
+      - Convention collective locale
+      - Accord de branche
+      - Accord d'entreprise
+    defaut: "Convention collective nationale"
+
+  - nom: secteur_activite
+    type: text
+    libelle: "Secteur d'activité"
+    description: "Secteur économique couvert"
+
+  - nom: codes_naf
+    type: tags
+    libelle: "Codes NAF"
+    description: "Codes NAF/APE concernés"
+
+  # Dates
+  - nom: date_signature
+    type: date
+    libelle: "Date de signature"
+
+  - nom: date_extension
+    type: date
+    libelle: "Date d'extension"
+    description: "Date d'extension par arrêté ministériel"
+
+  - nom: date_effet
+    type: date
+    libelle: "Date d'effet"
+    obligatoire: true
+
+  - nom: date_fin
+    type: date
+    libelle: "Date de fin"
+    description: "Si convention dénoncée"
+
+  # Durée du travail
+  - nom: duree_hebdo
+    type: number
+    libelle: "Durée hebdo (heures)"
+    defaut: 35
+
+  - nom: heures_mensuelles
+    type: number
+    libelle: "Heures mensuelles"
+    defaut: 151.67
+
+  - nom: jours_travail_hebdo
+    type: number
+    libelle: "Jours de travail/semaine"
+    defaut: 5
+
+  # Congés et absences
+  - nom: conges_payes_jours
+    type: number
+    libelle: "Congés payés (jours ouvrables)"
+    defaut: 30
+    description: "Droits annuels en jours ouvrables"
+
+  - nom: conges_anciennete
+    type: json
+    libelle: "Congés ancienneté"
+    description: "Jours supplémentaires par ancienneté"
+
+  - nom: jours_feries_chomage
+    type: number
+    libelle: "Jours fériés chômés"
+    defaut: 11
+
+  - nom: conges_speciaux
+    type: json
+    libelle: "Congés spéciaux"
+    description: "Mariage, naissance, décès..."
+
+  # Primes conventionnelles
+  - nom: prime_anciennete
+    type: boolean
+    libelle: "Prime d'ancienneté"
+    defaut: false
+
+  - nom: prime_anciennete_taux
+    type: json
+    libelle: "Taux prime ancienneté"
+    description: "Barème par ancienneté"
+
+  - nom: prime_13eme_mois
+    type: boolean
+    libelle: "13ème mois"
+    defaut: false
+
+  - nom: prime_vacances
+    type: boolean
+    libelle: "Prime de vacances"
+    defaut: false
+
+  - nom: prime_vacances_montant
+    type: money
+    libelle: "Montant prime vacances"
+
+  # Indemnités de licenciement
+  - nom: indemnite_licenciement_formule
+    type: textarea
+    libelle: "Formule indemnité licenciement"
+    description: "Calcul conventionnel"
+
+  - nom: indemnite_licenciement_minimum
+    type: text
+    libelle: "Indemnité minimum"
+
+  # Préavis
+  - nom: preavis_demission
+    type: json
+    libelle: "Préavis démission"
+    description: "Durées par catégorie/ancienneté"
+
+  - nom: preavis_licenciement
+    type: json
+    libelle: "Préavis licenciement"
+    description: "Durées par catégorie/ancienneté"
+
+  # Grille de salaires
+  - nom: grille_salaires
+    type: json
+    libelle: "Grille des salaires"
+    description: "Minima conventionnels par niveau"
+
+  - nom: date_grille
+    type: date
+    libelle: "Date grille salaires"
+    description: "Date d'effet de la grille"
+
+  # Classifications
+  - nom: classifications
+    type: json
+    libelle: "Classifications"
+    description: "Niveaux, échelons, coefficients"
+
+  # Prévoyance/Mutuelle
+  - nom: prevoyance_obligatoire
+    type: boolean
+    libelle: "Prévoyance obligatoire"
+    defaut: false
+
+  - nom: prevoyance_taux_employeur
+    type: number
+    libelle: "Prévoyance taux employeur (%)"
+
+  - nom: mutuelle_obligatoire
+    type: boolean
+    libelle: "Mutuelle obligatoire"
+    defaut: true
+
+  - nom: mutuelle_taux_employeur
+    type: number
+    libelle: "Mutuelle taux employeur (%)"
+    defaut: 50
+
+  # Retraite complémentaire
+  - nom: caisse_retraite
+    type: text
+    libelle: "Caisse de retraite"
+    description: "Organisme conventionnel"
+
+  # Maladie
+  - nom: maintien_salaire_maladie
+    type: json
+    libelle: "Maintien salaire maladie"
+    description: "Règles de maintien par ancienneté"
+
+  - nom: carence_maladie_jours
+    type: number
+    libelle: "Jours de carence maladie"
+    defaut: 3
+
+  - nom: subrogation
+    type: boolean
+    libelle: "Subrogation"
+    defaut: false
+
+  # Métadonnées
+  - nom: url_legifrance
+    type: text
+    libelle: "URL Légifrance"
+
+  - nom: actif
+    type: boolean
+    libelle: "Actif"
+    defaut: true
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+  - nom: documents
+    type: json
+    libelle: "Documents"
+    description: "Textes et avenants"
+
+recherche:
+  - code
+  - libelle
+  - secteur_activite
+
+affichage_liste:
+  - code
+  - libelle
+  - secteur_activite
+  - actif

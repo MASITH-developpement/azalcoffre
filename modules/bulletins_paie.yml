@@ -1,0 +1,361 @@
+# =============================================================================
+# AZALPLUS - Bulletins de Paie
+# =============================================================================
+# Génération et gestion des bulletins de paie mensuels
+
+nom: Bulletin de Paie
+nom_pluriel: Bulletins de Paie
+icone: file-text
+menu: Paie
+description: "Bulletins de paie mensuels des salariés"
+ordre_menu: 8
+
+champs:
+  # Identification
+  - nom: numero
+    type: text
+    libelle: "Numéro bulletin"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+    format: "BP-{AAAA}{MM}-{####}"
+
+  - nom: employe_id
+    type: relation
+    libelle: "Employé"
+    relation: employes
+    obligatoire: true
+
+  - nom: periode
+    type: text
+    libelle: "Période"
+    obligatoire: true
+    placeholder: "AAAA-MM"
+
+  - nom: date_emission
+    type: date
+    libelle: "Date d'émission"
+    defaut: "today"
+
+  - nom: date_paiement
+    type: date
+    libelle: "Date de paiement"
+
+  # Employeur
+  - nom: employeur_siret
+    type: text
+    libelle: "SIRET employeur"
+
+  - nom: employeur_raison_sociale
+    type: text
+    libelle: "Raison sociale"
+
+  - nom: employeur_adresse
+    type: textarea
+    libelle: "Adresse employeur"
+
+  - nom: code_ape
+    type: text
+    libelle: "Code APE"
+
+  - nom: convention_collective_id
+    type: relation
+    libelle: "Convention collective"
+    relation: conventions_collectives
+
+  # Salarié - copie au moment du bulletin
+  - nom: matricule
+    type: text
+    libelle: "Matricule"
+
+  - nom: nom_complet
+    type: text
+    libelle: "Nom complet"
+
+  - nom: numero_ss
+    type: text
+    libelle: "N° Sécurité Sociale"
+
+  - nom: date_entree
+    type: date
+    libelle: "Date d'entrée"
+
+  - nom: date_anciennete
+    type: date
+    libelle: "Date ancienneté"
+
+  - nom: emploi
+    type: text
+    libelle: "Emploi"
+
+  - nom: qualification
+    type: text
+    libelle: "Qualification"
+
+  - nom: coefficient
+    type: text
+    libelle: "Coefficient/Niveau"
+
+  - nom: categorie
+    type: select
+    libelle: "Catégorie"
+    options:
+      - CADRE
+      - NON_CADRE
+      - CADRE_DIRIGEANT
+
+  # Contrat
+  - nom: type_contrat
+    type: select
+    libelle: "Type contrat"
+    options:
+      - CDI
+      - CDD
+      - APPRENTISSAGE
+      - PROFESSIONNALISATION
+      - STAGE
+      - INTERIM
+
+  - nom: temps_travail
+    type: select
+    libelle: "Temps de travail"
+    options:
+      - TEMPS_PLEIN
+      - TEMPS_PARTIEL
+      - FORFAIT_JOURS
+      - FORFAIT_HEURES
+
+  - nom: horaire_mensuel
+    type: number
+    libelle: "Horaire mensuel"
+    defaut: 151.67
+
+  - nom: taux_activite
+    type: number
+    libelle: "Taux d'activité (%)"
+    defaut: 100
+
+  # Rémunération
+  - nom: salaire_base
+    type: money
+    libelle: "Salaire de base"
+    obligatoire: true
+
+  - nom: taux_horaire
+    type: money
+    libelle: "Taux horaire"
+
+  # Heures
+  - nom: heures_travaillees
+    type: number
+    libelle: "Heures travaillées"
+
+  - nom: heures_supplementaires
+    type: number
+    libelle: "Heures supplémentaires"
+
+  - nom: heures_complementaires
+    type: number
+    libelle: "Heures complémentaires"
+
+  - nom: heures_absence
+    type: number
+    libelle: "Heures absence"
+
+  # Totaux
+  - nom: brut_mensuel
+    type: money
+    libelle: "Brut mensuel"
+    description: "Total des gains"
+
+  - nom: cotisations_salariales
+    type: money
+    libelle: "Cotisations salariales"
+
+  - nom: cotisations_patronales
+    type: money
+    libelle: "Cotisations patronales"
+
+  - nom: csg_crds
+    type: money
+    libelle: "CSG/CRDS"
+
+  - nom: net_avant_impot
+    type: money
+    libelle: "Net avant impôt"
+
+  - nom: impot_source
+    type: money
+    libelle: "Impôt à la source"
+
+  - nom: taux_prelevement
+    type: number
+    libelle: "Taux PAS (%)"
+
+  - nom: net_a_payer
+    type: money
+    libelle: "Net à payer"
+    obligatoire: true
+
+  - nom: net_imposable
+    type: money
+    libelle: "Net imposable"
+
+  # Cumuls
+  - nom: cumul_brut
+    type: money
+    libelle: "Cumul brut annuel"
+
+  - nom: cumul_net_imposable
+    type: money
+    libelle: "Cumul net imposable"
+
+  - nom: cumul_cotisations_salariales
+    type: money
+    libelle: "Cumul cotisations"
+
+  - nom: cumul_impot_source
+    type: money
+    libelle: "Cumul PAS"
+
+  - nom: cumul_heures
+    type: number
+    libelle: "Cumul heures"
+
+  # Congés
+  - nom: cp_acquis_n1
+    type: number
+    libelle: "CP acquis N-1"
+
+  - nom: cp_pris_n1
+    type: number
+    libelle: "CP pris N-1"
+
+  - nom: cp_solde_n1
+    type: number
+    libelle: "Solde CP N-1"
+
+  - nom: cp_acquis_n
+    type: number
+    libelle: "CP en cours"
+
+  - nom: rtt_acquis
+    type: number
+    libelle: "RTT acquis"
+
+  - nom: rtt_pris
+    type: number
+    libelle: "RTT pris"
+
+  - nom: rtt_solde
+    type: number
+    libelle: "Solde RTT"
+
+  # Allègements
+  - nom: reduction_fillon
+    type: money
+    libelle: "Réduction Fillon"
+
+  - nom: exoneration_heures_sup
+    type: money
+    libelle: "Exo heures sup"
+
+  # Paiement
+  - nom: mode_paiement
+    type: select
+    libelle: "Mode paiement"
+    options:
+      - VIREMENT
+      - CHEQUE
+      - ESPECES
+    defaut: VIREMENT
+
+  - nom: iban
+    type: text
+    libelle: "IBAN"
+
+  - nom: reference_paiement
+    type: text
+    libelle: "Référence paiement"
+
+  # Statut
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - CALCULE
+      - VALIDE
+      - PAYE
+      - ARCHIVE
+    defaut: BROUILLON
+
+  - nom: date_validation
+    type: datetime
+    libelle: "Date validation"
+
+  - nom: valide_par
+    type: text
+    libelle: "Validé par"
+
+  # Documents
+  - nom: pdf_bulletin
+    type: text
+    libelle: "PDF bulletin"
+    description: "Chemin du fichier PDF"
+
+  - nom: envoye_salarie
+    type: boolean
+    libelle: "Envoyé au salarié"
+    defaut: false
+
+  - nom: date_envoi
+    type: datetime
+    libelle: "Date d'envoi"
+
+  # DSN
+  - nom: integre_dsn
+    type: boolean
+    libelle: "Intégré DSN"
+    defaut: false
+
+  - nom: dsn_id
+    type: relation
+    libelle: "DSN"
+    relation: dsn
+
+  # Notes
+  - nom: mention_particuliere
+    type: textarea
+    libelle: "Mention particulière"
+    description: "Affichée sur le bulletin"
+
+  - nom: notes_internes
+    type: textarea
+    libelle: "Notes internes"
+
+recherche:
+  - numero
+  - employe_id
+  - periode
+
+affichage_liste:
+  - numero
+  - employe_id
+  - periode
+  - brut_mensuel
+  - net_a_payer
+  - statut
+
+workflow:
+  BROUILLON -> CALCULE: "Calculer"
+  CALCULE -> BROUILLON: "Modifier"
+  CALCULE -> VALIDE: "Valider"
+  VALIDE -> PAYE: "Marquer payé"
+  PAYE -> ARCHIVE: "Archiver"
+
+actions:
+  - calculer_bulletin
+  - generer_pdf
+  - envoyer_salarie
+  - exporter_dsn

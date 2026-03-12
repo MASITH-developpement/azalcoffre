@@ -1,0 +1,227 @@
+# =============================================================================
+# AZALPLUS - Lignes de Bulletin de Paie
+# =============================================================================
+# Détail des lignes composant un bulletin de paie
+
+nom: Ligne Bulletin
+nom_pluriel: Lignes Bulletin
+icone: list
+menu: Paie
+description: "Lignes détaillées des bulletins de paie"
+ordre_menu: 9
+
+champs:
+  # Rattachement
+  - nom: bulletin_paie_id
+    type: relation
+    libelle: "Bulletin"
+    relation: bulletins_paie
+    obligatoire: true
+
+  - nom: rubrique_paie_id
+    type: relation
+    libelle: "Rubrique"
+    relation: rubriques_paie
+    obligatoire: true
+
+  # Identification ligne
+  - nom: ordre
+    type: number
+    libelle: "Ordre"
+    defaut: 100
+    description: "Ordre d'affichage sur le bulletin"
+
+  - nom: code_rubrique
+    type: text
+    libelle: "Code rubrique"
+
+  - nom: libelle
+    type: text
+    libelle: "Libellé"
+    obligatoire: true
+    description: "Texte affiché sur le bulletin"
+
+  # Type
+  - nom: type_ligne
+    type: select
+    libelle: "Type"
+    obligatoire: true
+    options:
+      - GAIN
+      - RETENUE
+      - COTISATION_SALARIALE
+      - COTISATION_PATRONALE
+      - NET_IMPOSABLE
+      - INFORMATION
+
+  - nom: categorie
+    type: select
+    libelle: "Catégorie"
+    options:
+      - REMUNERATION
+      - PRIMES
+      - INDEMNITES
+      - AVANTAGES_NATURE
+      - ABSENCES
+      - HEURES
+      - COTISATIONS_SS
+      - RETRAITE
+      - CHOMAGE
+      - PREVOYANCE
+      - CSG_CRDS
+      - AUTRES
+      - TOTAUX
+
+  # Calcul
+  - nom: base
+    type: money
+    libelle: "Base"
+    description: "Base de calcul"
+
+  - nom: taux_salarial
+    type: number
+    libelle: "Taux salarial (%)"
+
+  - nom: taux_patronal
+    type: number
+    libelle: "Taux patronal (%)"
+
+  - nom: nombre
+    type: number
+    libelle: "Nombre"
+    description: "Quantité (heures, jours...)"
+
+  # Montants
+  - nom: montant_salarial
+    type: money
+    libelle: "Montant salarial"
+    description: "Part salarié"
+
+  - nom: montant_patronal
+    type: money
+    libelle: "Montant patronal"
+    description: "Part employeur"
+
+  - nom: montant_total
+    type: money
+    libelle: "Montant total"
+    description: "Salarial + patronal"
+
+  # Sens
+  - nom: sens
+    type: select
+    libelle: "Sens"
+    options:
+      - POSITIF
+      - NEGATIF
+    defaut: POSITIF
+
+  # Assiette
+  - nom: assiette
+    type: select
+    libelle: "Assiette"
+    options:
+      - BRUT
+      - PLAFOND_SS
+      - TRANCHE_A
+      - TRANCHE_B
+      - TRANCHE_1
+      - TRANCHE_2
+      - ASSIETTE_CSG
+      - AUTRE
+
+  - nom: montant_assiette
+    type: money
+    libelle: "Montant assiette"
+
+  # Plafonnement
+  - nom: plafond_applique
+    type: money
+    libelle: "Plafond appliqué"
+
+  - nom: depassement_plafond
+    type: money
+    libelle: "Dépassement plafond"
+
+  # Régime social/fiscal
+  - nom: soumis_cotisations
+    type: boolean
+    libelle: "Soumis cotisations"
+    defaut: true
+
+  - nom: soumis_csg
+    type: boolean
+    libelle: "Soumis CSG"
+    defaut: true
+
+  - nom: imposable
+    type: boolean
+    libelle: "Imposable"
+    defaut: true
+
+  # DSN
+  - nom: code_dsn
+    type: text
+    libelle: "Code DSN"
+
+  - nom: code_ctp
+    type: text
+    libelle: "Code CTP"
+
+  # Affichage
+  - nom: afficher
+    type: boolean
+    libelle: "Afficher"
+    defaut: true
+    description: "Visible sur le bulletin"
+
+  - nom: groupe_affichage
+    type: text
+    libelle: "Groupe"
+    description: "Regroupement sur le bulletin"
+
+  # Source
+  - nom: source
+    type: select
+    libelle: "Source"
+    options:
+      - CALCUL_AUTO
+      - SAISIE_MANUELLE
+      - ELEMENT_VARIABLE
+      - IMPORT
+    defaut: CALCUL_AUTO
+
+  - nom: element_variable_id
+    type: relation
+    libelle: "Élément variable"
+    relation: elements_variables
+
+  # Validation
+  - nom: valide
+    type: boolean
+    libelle: "Validé"
+    defaut: true
+
+  - nom: notes
+    type: text
+    libelle: "Notes"
+
+# Index pour performance
+index:
+  - bulletin_paie_id
+  - rubrique_paie_id
+  - type_ligne
+
+recherche:
+  - bulletin_paie_id
+  - libelle
+
+affichage_liste:
+  - ordre
+  - libelle
+  - base
+  - taux_salarial
+  - montant_salarial
+  - montant_patronal
+
+tri_defaut: ordre

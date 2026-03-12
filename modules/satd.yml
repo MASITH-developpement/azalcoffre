@@ -1,0 +1,276 @@
+# =============================================================================
+# AZALPLUS - SATD / Saisies sur Salaire
+# =============================================================================
+# Saisie Administrative à Tiers Détenteur et saisies sur rémunération
+
+nom: Saisie sur Salaire
+nom_pluriel: Saisies sur Salaire
+icone: alert-triangle
+menu: Paie
+description: "SATD, saisies-arrêts, pensions alimentaires"
+ordre_menu: 13
+
+champs:
+  # Identification
+  - nom: numero
+    type: text
+    libelle: "Numéro"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+    format: "SAT-{AAAA}-{####}"
+
+  - nom: employe_id
+    type: relation
+    libelle: "Employé"
+    relation: employes
+    obligatoire: true
+
+  - nom: type_saisie
+    type: select
+    libelle: "Type de saisie"
+    obligatoire: true
+    options:
+      - SATD
+      - SAISIE_ARRET
+      - PENSION_ALIMENTAIRE
+      - CESSION_VOLONTAIRE
+      - AVIS_TIERS_DETENTEUR
+      - SAISIE_CONSERVATOIRE
+
+  # Créancier
+  - nom: creancier_nom
+    type: text
+    libelle: "Créancier"
+    obligatoire: true
+
+  - nom: creancier_type
+    type: select
+    libelle: "Type créancier"
+    options:
+      - TRESOR_PUBLIC
+      - URSSAF
+      - HUISSIER
+      - PARTICULIER
+      - ORGANISME_SOCIAL
+      - AUTRE
+
+  - nom: creancier_reference
+    type: text
+    libelle: "Référence créancier"
+
+  - nom: creancier_adresse
+    type: textarea
+    libelle: "Adresse créancier"
+
+  - nom: creancier_iban
+    type: text
+    libelle: "IBAN créancier"
+
+  # Document source
+  - nom: date_notification
+    type: date
+    libelle: "Date notification"
+    obligatoire: true
+    description: "Date de réception de l'acte"
+
+  - nom: date_effet
+    type: date
+    libelle: "Date d'effet"
+    obligatoire: true
+
+  - nom: reference_acte
+    type: text
+    libelle: "Référence acte"
+    description: "N° de l'acte de saisie"
+
+  - nom: tribunal
+    type: text
+    libelle: "Tribunal"
+    description: "Juridiction émettrice"
+
+  - nom: document_saisie
+    type: text
+    libelle: "Document"
+    description: "Chemin du scan"
+
+  # Montants
+  - nom: montant_principal
+    type: money
+    libelle: "Principal"
+    obligatoire: true
+    description: "Dette principale"
+
+  - nom: frais
+    type: money
+    libelle: "Frais"
+    description: "Frais de procédure"
+
+  - nom: interets
+    type: money
+    libelle: "Intérêts"
+
+  - nom: montant_total_du
+    type: money
+    libelle: "Total dû"
+    description: "Principal + frais + intérêts"
+
+  - nom: montant_deja_preleve
+    type: money
+    libelle: "Déjà prélevé"
+    defaut: 0
+
+  - nom: solde_restant
+    type: money
+    libelle: "Solde restant"
+
+  # Priorité
+  - nom: rang
+    type: number
+    libelle: "Rang"
+    defaut: 1
+    description: "Ordre de priorité (PA=1, autres=date)"
+
+  - nom: prioritaire
+    type: boolean
+    libelle: "Prioritaire"
+    defaut: false
+    description: "Pension alimentaire = prioritaire"
+
+  # Calcul
+  - nom: mode_calcul
+    type: select
+    libelle: "Mode calcul"
+    options:
+      - BAREME_LEGAL
+      - MONTANT_FIXE
+      - POURCENTAGE
+    defaut: BAREME_LEGAL
+
+  - nom: montant_fixe_mensuel
+    type: money
+    libelle: "Montant fixe"
+    description: "Si mode montant fixe"
+
+  - nom: pourcentage
+    type: number
+    libelle: "Pourcentage (%)"
+    description: "Si mode pourcentage"
+
+  - nom: bareme_saisie_id
+    type: relation
+    libelle: "Barème"
+    relation: baremes_saisie
+
+  # Plafond et quotité
+  - nom: quotite_saisissable
+    type: money
+    libelle: "Quotité saisissable"
+    description: "Calculée selon barème"
+
+  - nom: retenue_mensuelle
+    type: money
+    libelle: "Retenue mensuelle"
+    description: "Montant retenu ce mois"
+
+  # Personnes à charge (pour calcul barème)
+  - nom: personnes_charge
+    type: number
+    libelle: "Personnes à charge"
+    defaut: 0
+    description: "Pour calcul quotité saisissable"
+
+  # Période
+  - nom: date_debut
+    type: date
+    libelle: "Date début"
+    obligatoire: true
+
+  - nom: date_fin
+    type: date
+    libelle: "Date fin prévue"
+
+  - nom: date_fin_reelle
+    type: date
+    libelle: "Date fin réelle"
+
+  # Virements
+  - nom: periodicite_versement
+    type: select
+    libelle: "Périodicité"
+    options:
+      - MENSUEL
+      - TRIMESTRIEL
+    defaut: MENSUEL
+
+  - nom: dernier_versement_date
+    type: date
+    libelle: "Dernier versement"
+
+  - nom: dernier_versement_montant
+    type: money
+    libelle: "Montant dernier versement"
+
+  # Statut
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - ACTIVE
+      - SUSPENDUE
+      - SOLDEE
+      - ANNULEE
+      - MAINLEVEE
+    defaut: ACTIVE
+
+  - nom: date_mainlevee
+    type: date
+    libelle: "Date mainlevée"
+
+  - nom: document_mainlevee
+    type: text
+    libelle: "Document mainlevée"
+
+  # Suivi
+  - nom: date_reponse_creancier
+    type: date
+    libelle: "Réponse créancier"
+    description: "Date d'envoi du courrier de réponse"
+
+  - nom: courrier_reponse
+    type: text
+    libelle: "Courrier réponse"
+    description: "Chemin du document"
+
+  # Notes
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+recherche:
+  - numero
+  - employe_id
+  - creancier_nom
+  - reference_acte
+
+affichage_liste:
+  - numero
+  - employe_id
+  - type_saisie
+  - creancier_nom
+  - montant_total_du
+  - solde_restant
+  - statut
+
+workflow:
+  ACTIVE -> SUSPENDUE: "Suspendre"
+  SUSPENDUE -> ACTIVE: "Réactiver"
+  ACTIVE -> SOLDEE: null
+  ACTIVE -> MAINLEVEE: "Mainlevée"
+  ACTIVE -> ANNULEE: "Annuler"
+
+actions:
+  - calculer_quotite
+  - generer_reponse_creancier
+  - verser_creancier
+  - enregistrer_mainlevee
