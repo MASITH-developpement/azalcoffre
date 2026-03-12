@@ -1,0 +1,327 @@
+# =============================================================================
+# AZALPLUS - Portail Client
+# =============================================================================
+# Espace client en ligne: factures, devis, paiements, documents, tickets
+
+nom: Portail Client
+nom_pluriel: Portail Client
+icone: layout-dashboard
+menu: Portail
+description: "Espace client en ligne avec accès documents et paiements"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # ACCÈS CLIENT
+  # ==========================================================================
+  - nom: client_id
+    type: relation
+    libelle: "Client"
+    relation: clients
+    obligatoire: true
+
+  - nom: email_connexion
+    type: email
+    libelle: "Email connexion"
+    obligatoire: true
+    unique: true
+
+  - nom: mot_de_passe_hash
+    type: text
+    libelle: "Mot de passe"
+    description: "Hash Argon2"
+
+  - nom: actif
+    type: boolean
+    libelle: "Compte actif"
+    defaut: true
+
+  - nom: date_creation
+    type: datetime
+    libelle: "Date création"
+
+  - nom: date_derniere_connexion
+    type: datetime
+    libelle: "Dernière connexion"
+
+  - nom: nombre_connexions
+    type: number
+    libelle: "Connexions"
+    defaut: 0
+
+  # Token et sécurité
+  - nom: token_activation
+    type: text
+    libelle: "Token activation"
+
+  - nom: token_expiration
+    type: datetime
+    libelle: "Expiration token"
+
+  - nom: token_reset_password
+    type: text
+    libelle: "Token reset"
+
+  - nom: deux_facteurs_actif
+    type: boolean
+    libelle: "2FA actif"
+    defaut: false
+
+  - nom: secret_2fa
+    type: text
+    libelle: "Secret 2FA"
+
+  # ==========================================================================
+  # PRÉFÉRENCES
+  # ==========================================================================
+  - nom: langue
+    type: select
+    libelle: "Langue"
+    options:
+      - FR
+      - EN
+      - ES
+    defaut: FR
+
+  - nom: notifications_email
+    type: boolean
+    libelle: "Notifications email"
+    defaut: true
+
+  - nom: notifications_sms
+    type: boolean
+    libelle: "Notifications SMS"
+    defaut: false
+
+  - nom: notification_facture
+    type: boolean
+    libelle: "Notif. nouvelles factures"
+    defaut: true
+
+  - nom: notification_devis
+    type: boolean
+    libelle: "Notif. nouveaux devis"
+    defaut: true
+
+  - nom: notification_ticket
+    type: boolean
+    libelle: "Notif. réponses tickets"
+    defaut: true
+
+  - nom: rappel_echeance
+    type: boolean
+    libelle: "Rappel échéances"
+    defaut: true
+
+  - nom: jours_avant_rappel
+    type: number
+    libelle: "Jours avant rappel"
+    defaut: 7
+
+  # ==========================================================================
+  # DOCUMENTS ACCESSIBLES
+  # ==========================================================================
+  - nom: acces_factures
+    type: boolean
+    libelle: "Accès factures"
+    defaut: true
+
+  - nom: acces_devis
+    type: boolean
+    libelle: "Accès devis"
+    defaut: true
+
+  - nom: acces_bons_livraison
+    type: boolean
+    libelle: "Accès BL"
+    defaut: true
+
+  - nom: acces_contrats
+    type: boolean
+    libelle: "Accès contrats"
+    defaut: true
+
+  - nom: acces_attestations
+    type: boolean
+    libelle: "Accès attestations"
+    defaut: true
+
+  - nom: documents_partages
+    type: json
+    libelle: "Documents partagés"
+    description: "Liste IDs documents accessibles"
+
+  # ==========================================================================
+  # PAIEMENT EN LIGNE
+  # ==========================================================================
+  - nom: paiement_cb_autorise
+    type: boolean
+    libelle: "Paiement CB"
+    defaut: true
+
+  - nom: paiement_virement_autorise
+    type: boolean
+    libelle: "Paiement virement"
+    defaut: true
+
+  - nom: paiement_prelevement_autorise
+    type: boolean
+    libelle: "Prélèvement SEPA"
+    defaut: false
+
+  - nom: mandat_sepa_id
+    type: text
+    libelle: "Mandat SEPA"
+
+  - nom: carte_enregistree
+    type: boolean
+    libelle: "Carte enregistrée"
+    defaut: false
+
+  - nom: stripe_customer_id
+    type: text
+    libelle: "Stripe Customer ID"
+
+  - nom: total_paye_en_ligne
+    type: money
+    libelle: "Total payé en ligne"
+    defaut: 0
+
+  # ==========================================================================
+  # TICKETS SUPPORT
+  # ==========================================================================
+  - nom: peut_creer_ticket
+    type: boolean
+    libelle: "Création tickets"
+    defaut: true
+
+  - nom: tickets_ouverts
+    type: number
+    libelle: "Tickets ouverts"
+    defaut: 0
+
+  - nom: dernier_ticket_date
+    type: datetime
+    libelle: "Dernier ticket"
+
+  - nom: priorite_support
+    type: select
+    libelle: "Priorité support"
+    options:
+      - STANDARD
+      - PRIORITAIRE
+      - VIP
+    defaut: STANDARD
+
+  # ==========================================================================
+  # SIGNATURE DEVIS
+  # ==========================================================================
+  - nom: peut_signer_devis
+    type: boolean
+    libelle: "Signature devis"
+    defaut: true
+
+  - nom: devis_signes
+    type: number
+    libelle: "Devis signés"
+    defaut: 0
+
+  - nom: signature_electronique
+    type: text
+    libelle: "Signature enregistrée"
+    description: "Base64 ou référence"
+
+  # ==========================================================================
+  # STATISTIQUES CLIENT
+  # ==========================================================================
+  - nom: encours_factures
+    type: money
+    libelle: "Encours factures"
+
+  - nom: factures_impayees
+    type: number
+    libelle: "Factures impayées"
+
+  - nom: devis_en_attente
+    type: number
+    libelle: "Devis en attente"
+
+  - nom: derniere_facture_date
+    type: date
+    libelle: "Dernière facture"
+
+  - nom: ca_annee
+    type: money
+    libelle: "CA année"
+
+  # ==========================================================================
+  # JOURNAL ACTIVITÉ
+  # ==========================================================================
+  - nom: historique_actions
+    type: json
+    libelle: "Historique"
+    description: "Actions récentes sur le portail"
+
+  - nom: documents_telecharges
+    type: json
+    libelle: "Documents téléchargés"
+
+  - nom: ip_derniere_connexion
+    type: text
+    libelle: "Dernière IP"
+
+  - nom: user_agent
+    type: text
+    libelle: "User Agent"
+
+  # ==========================================================================
+  # CONTACTS ADDITIONNELS
+  # ==========================================================================
+  - nom: contacts_autorises
+    type: json
+    libelle: "Contacts autorisés"
+    description: "Autres personnes ayant accès"
+
+  - nom: contact_principal_nom
+    type: text
+    libelle: "Contact principal"
+
+  - nom: contact_principal_email
+    type: email
+    libelle: "Email contact"
+
+  - nom: contact_principal_tel
+    type: tel
+    libelle: "Tél. contact"
+
+  # Notes
+  - nom: notes_internes
+    type: textarea
+    libelle: "Notes internes"
+    description: "Non visible par le client"
+
+# Index
+index:
+  - client_id
+  - email_connexion
+  - actif
+
+recherche:
+  - client_id
+  - email_connexion
+
+affichage_liste:
+  - client_id
+  - email_connexion
+  - date_derniere_connexion
+  - encours_factures
+  - tickets_ouverts
+  - actif
+
+actions:
+  - envoyer_invitation
+  - reinitialiser_mot_de_passe
+  - activer_2fa
+  - desactiver_compte
+  - exporter_donnees_rgpd
+  - supprimer_compte_rgpd

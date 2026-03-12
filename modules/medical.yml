@@ -1,0 +1,551 @@
+# =============================================================================
+# AZALPLUS - Module Médical Complet
+# =============================================================================
+# Gestion complète facturation médicale: FSE, tiers payant, télétransmission
+# Consolidation de toutes les fonctionnalités médicales en un module
+
+nom: Médical
+nom_pluriel: Médical
+icone: stethoscope
+menu: Médical
+description: "Facturation médicale: FSE, tiers payant, SESAM-Vitale"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION FSE
+  # ==========================================================================
+  - nom: numero
+    type: text
+    libelle: "Numéro FSE"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+    format: "FSE-{AAAA}{MM}{JJ}-{####}"
+
+  - nom: type_fse
+    type: select
+    libelle: "Type"
+    obligatoire: true
+    options:
+      - FSE
+      - DRE
+      - FSE_NON_SECURISEE
+    defaut: FSE
+
+  - nom: nature_assurance
+    type: select
+    libelle: "Nature assurance"
+    options:
+      - MALADIE
+      - MATERNITE
+      - ACCIDENT_TRAVAIL
+      - MALADIE_PRO
+    defaut: MALADIE
+
+  # ==========================================================================
+  # PATIENT / BÉNÉFICIAIRE
+  # ==========================================================================
+  - nom: patient_id
+    type: relation
+    libelle: "Patient"
+    relation: patients
+    obligatoire: true
+
+  - nom: beneficiaire_nom
+    type: text
+    libelle: "Nom bénéficiaire"
+
+  - nom: beneficiaire_prenom
+    type: text
+    libelle: "Prénom"
+
+  - nom: nir
+    type: text
+    libelle: "NIR"
+    description: "N° Sécurité Sociale"
+
+  - nom: cle_nir
+    type: text
+    libelle: "Clé NIR"
+
+  - nom: date_naissance
+    type: date
+    libelle: "Date naissance"
+
+  - nom: rang_beneficiaire
+    type: number
+    libelle: "Rang"
+    defaut: 1
+
+  - nom: qualite
+    type: select
+    libelle: "Qualité"
+    options:
+      - ASSURE
+      - CONJOINT
+      - ENFANT
+      - AUTRE_AYANT_DROIT
+
+  # ==========================================================================
+  # CARTE VITALE
+  # ==========================================================================
+  - nom: carte_vitale_numero
+    type: text
+    libelle: "N° Carte Vitale"
+
+  - nom: carte_vitale_date_debut
+    type: date
+    libelle: "Début validité CV"
+
+  - nom: carte_vitale_date_fin
+    type: date
+    libelle: "Fin validité CV"
+
+  # ==========================================================================
+  # ORGANISME AMO (Assurance Maladie Obligatoire)
+  # ==========================================================================
+  - nom: organisme_amo_nom
+    type: text
+    libelle: "Organisme AMO"
+
+  - nom: code_regime
+    type: text
+    libelle: "Code régime"
+
+  - nom: code_caisse
+    type: text
+    libelle: "Code caisse"
+
+  - nom: code_centre
+    type: text
+    libelle: "Code centre"
+
+  - nom: regime
+    type: select
+    libelle: "Régime"
+    options:
+      - REGIME_GENERAL
+      - MSA
+      - RSI
+      - CNMSS
+      - ENIM
+      - AUTRE
+
+  # ==========================================================================
+  # ORGANISME AMC (Complémentaire)
+  # ==========================================================================
+  - nom: organisme_amc_nom
+    type: text
+    libelle: "Mutuelle"
+
+  - nom: numero_amc
+    type: text
+    libelle: "N° AMC"
+
+  - nom: numero_adherent_amc
+    type: text
+    libelle: "N° adhérent"
+
+  - nom: garantie_amc
+    type: text
+    libelle: "Garantie"
+
+  - nom: amc_teletransmission
+    type: boolean
+    libelle: "AMC télétrans."
+    defaut: false
+
+  # ==========================================================================
+  # PRATICIEN
+  # ==========================================================================
+  - nom: praticien_id
+    type: relation
+    libelle: "Praticien"
+    relation: praticiens
+
+  - nom: numero_am_praticien
+    type: text
+    libelle: "N° AM praticien"
+
+  - nom: specialite_praticien
+    type: text
+    libelle: "Spécialité"
+
+  - nom: secteur_conventionnel
+    type: select
+    libelle: "Secteur"
+    options:
+      - SECTEUR_1
+      - SECTEUR_2
+      - NON_CONVENTIONNE
+
+  - nom: lieu_execution
+    type: select
+    libelle: "Lieu"
+    options:
+      - CABINET
+      - DOMICILE
+      - ETABLISSEMENT
+    defaut: CABINET
+
+  # ==========================================================================
+  # DATES ET PRESCRIPTION
+  # ==========================================================================
+  - nom: date_soins
+    type: date
+    libelle: "Date des soins"
+    obligatoire: true
+
+  - nom: date_prescription
+    type: date
+    libelle: "Date prescription"
+
+  - nom: prescripteur_nom
+    type: text
+    libelle: "Prescripteur"
+
+  - nom: prescripteur_numero_am
+    type: text
+    libelle: "N° AM prescripteur"
+
+  # ==========================================================================
+  # ACTES ET NOMENCLATURE
+  # ==========================================================================
+  - nom: actes
+    type: json
+    libelle: "Actes"
+    description: "Liste des actes NGAP/CCAM"
+
+  - nom: nombre_actes
+    type: number
+    libelle: "Nombre d'actes"
+
+  - nom: code_acte_principal
+    type: text
+    libelle: "Acte principal"
+
+  - nom: type_nomenclature
+    type: select
+    libelle: "Nomenclature"
+    options:
+      - NGAP
+      - CCAM
+      - LPP
+      - NABM
+
+  # ==========================================================================
+  # MONTANTS
+  # ==========================================================================
+  - nom: montant_total
+    type: money
+    libelle: "Montant total"
+    obligatoire: true
+
+  - nom: montant_honoraires
+    type: money
+    libelle: "Honoraires"
+
+  - nom: montant_depassement
+    type: money
+    libelle: "Dépassement"
+
+  - nom: montant_frais_deplacement
+    type: money
+    libelle: "Frais déplacement"
+
+  # ==========================================================================
+  # REMBOURSEMENT
+  # ==========================================================================
+  - nom: base_remboursement
+    type: money
+    libelle: "Base remboursement"
+
+  - nom: taux_remboursement
+    type: number
+    libelle: "Taux (%)"
+    defaut: 70
+
+  - nom: montant_amo
+    type: money
+    libelle: "Part AMO"
+
+  - nom: montant_amc
+    type: money
+    libelle: "Part AMC"
+
+  - nom: reste_a_charge
+    type: money
+    libelle: "Reste à charge"
+
+  # ==========================================================================
+  # TIERS PAYANT
+  # ==========================================================================
+  - nom: tiers_payant_amo
+    type: boolean
+    libelle: "TP AMO"
+    defaut: true
+
+  - nom: tiers_payant_amc
+    type: boolean
+    libelle: "TP AMC"
+    defaut: false
+
+  - nom: montant_tiers_payant
+    type: money
+    libelle: "Montant TP"
+
+  - nom: montant_patient
+    type: money
+    libelle: "Part patient"
+
+  # ==========================================================================
+  # EXONÉRATIONS
+  # ==========================================================================
+  - nom: exoneration
+    type: select
+    libelle: "Exonération"
+    options:
+      - AUCUNE
+      - ALD
+      - MATERNITE
+      - ACCIDENT_TRAVAIL
+      - INVALIDITE
+      - CSS
+      - AUTRE
+    defaut: AUCUNE
+
+  - nom: numero_ald
+    type: text
+    libelle: "N° ALD"
+
+  # ==========================================================================
+  # PARCOURS DE SOINS
+  # ==========================================================================
+  - nom: parcours_soins
+    type: select
+    libelle: "Parcours de soins"
+    options:
+      - MEDECIN_TRAITANT
+      - ACCES_DIRECT
+      - HORS_PARCOURS
+      - URGENCE
+    defaut: MEDECIN_TRAITANT
+
+  - nom: medecin_traitant_nom
+    type: text
+    libelle: "Médecin traitant"
+
+  # ==========================================================================
+  # TÉLÉTRANSMISSION
+  # ==========================================================================
+  - nom: lot_numero
+    type: text
+    libelle: "N° lot"
+
+  - nom: date_envoi
+    type: datetime
+    libelle: "Date envoi"
+
+  - nom: fichier_b2
+    type: text
+    libelle: "Fichier B2"
+
+  - nom: numero_envoi
+    type: text
+    libelle: "N° envoi"
+
+  # ==========================================================================
+  # RETOURS NOEMIE
+  # ==========================================================================
+  - nom: arl_recu
+    type: boolean
+    libelle: "ARL reçu"
+    defaut: false
+
+  - nom: date_arl
+    type: datetime
+    libelle: "Date ARL"
+
+  - nom: statut_arl
+    type: select
+    libelle: "Statut ARL"
+    options:
+      - EN_ATTENTE
+      - ACCEPTE
+      - REJETE
+
+  - nom: rsp_recu
+    type: boolean
+    libelle: "RSP reçu"
+    defaut: false
+
+  - nom: date_rsp
+    type: datetime
+    libelle: "Date RSP"
+
+  - nom: montant_paye_amo
+    type: money
+    libelle: "Payé AMO"
+
+  - nom: montant_paye_amc
+    type: money
+    libelle: "Payé AMC"
+
+  # ==========================================================================
+  # REJETS
+  # ==========================================================================
+  - nom: rejet
+    type: boolean
+    libelle: "Rejet"
+    defaut: false
+
+  - nom: code_rejet
+    type: text
+    libelle: "Code rejet"
+
+  - nom: motif_rejet
+    type: text
+    libelle: "Motif rejet"
+
+  - nom: date_rejet
+    type: datetime
+    libelle: "Date rejet"
+
+  # ==========================================================================
+  # PAIEMENT PATIENT
+  # ==========================================================================
+  - nom: paiement_patient_mode
+    type: select
+    libelle: "Mode paiement"
+    options:
+      - CB
+      - ESPECES
+      - CHEQUE
+      - VIREMENT
+      - NON_PAYE
+
+  - nom: paiement_patient_date
+    type: date
+    libelle: "Date paiement"
+
+  - nom: paiement_patient_montant
+    type: money
+    libelle: "Montant payé"
+
+  # ==========================================================================
+  # IMPAYÉS ET RELANCES
+  # ==========================================================================
+  - nom: impaye
+    type: boolean
+    libelle: "Impayé"
+    defaut: false
+
+  - nom: montant_impaye
+    type: money
+    libelle: "Montant impayé"
+
+  - nom: nombre_relances
+    type: number
+    libelle: "Relances"
+    defaut: 0
+
+  - nom: date_derniere_relance
+    type: date
+    libelle: "Dernière relance"
+
+  - nom: contentieux
+    type: boolean
+    libelle: "Contentieux"
+    defaut: false
+
+  # ==========================================================================
+  # RAPPROCHEMENT
+  # ==========================================================================
+  - nom: rapproche
+    type: boolean
+    libelle: "Rapproché"
+    defaut: false
+
+  - nom: date_rapprochement
+    type: datetime
+    libelle: "Date rapprochement"
+
+  - nom: ecart
+    type: money
+    libelle: "Écart"
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - VALIDEE
+      - ENVOYEE
+      - ACCEPTEE
+      - REJETEE
+      - PAYEE
+      - IMPAYEE
+      - ANNULEE
+    defaut: BROUILLON
+
+  # ==========================================================================
+  # AUDIT
+  # ==========================================================================
+  - nom: cree_par
+    type: text
+    libelle: "Créé par"
+
+  - nom: date_creation
+    type: datetime
+    libelle: "Date création"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Index
+index:
+  - numero
+  - patient_id
+  - date_soins
+  - statut
+  - lot_numero
+
+recherche:
+  - numero
+  - patient_id
+  - nir
+  - date_soins
+
+affichage_liste:
+  - numero
+  - patient_id
+  - date_soins
+  - montant_total
+  - tiers_payant_amo
+  - statut
+
+workflow:
+  BROUILLON -> VALIDEE: "Valider"
+  VALIDEE -> ENVOYEE: null
+  ENVOYEE -> ACCEPTEE: null
+  ENVOYEE -> REJETEE: null
+  ACCEPTEE -> PAYEE: null
+  REJETEE -> BROUILLON: "Corriger"
+  PAYEE -> IMPAYEE: null
+  BROUILLON -> ANNULEE: "Annuler"
+
+actions:
+  - ajouter_acte
+  - calculer_montants
+  - valider_fse
+  - integrer_lot
+  - envoyer_teletransmission
+  - importer_retour_noemie
+  - rapprocher_paiement
+  - generer_relance
+  - imprimer_duplicata

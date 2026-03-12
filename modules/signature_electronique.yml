@@ -1,0 +1,449 @@
+# =============================================================================
+# AZALPLUS - Signature Électronique
+# =============================================================================
+# Signature de documents: devis, contrats, mandats SEPA, avec valeur légale
+
+nom: Signature Électronique
+nom_pluriel: Signatures Électroniques
+icone: pen-tool
+menu: Documents
+description: "Signature électronique de documents avec valeur légale"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: numero
+    type: text
+    libelle: "Numéro"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+    format: "SIG-{AAAA}{MM}-{####}"
+
+  - nom: type_document
+    type: select
+    libelle: "Type document"
+    obligatoire: true
+    options:
+      - DEVIS
+      - CONTRAT
+      - MANDAT_SEPA
+      - BON_COMMANDE
+      - AVENANT
+      - CGV
+      - NDA
+      - PROCES_VERBAL
+      - AUTRE
+
+  - nom: titre
+    type: text
+    libelle: "Titre"
+    obligatoire: true
+
+  - nom: description
+    type: textarea
+    libelle: "Description"
+
+  # ==========================================================================
+  # DOCUMENT SOURCE
+  # ==========================================================================
+  - nom: document_source_type
+    type: text
+    libelle: "Type source"
+    description: "devis, contrats, etc."
+
+  - nom: document_source_id
+    type: text
+    libelle: "ID source"
+
+  - nom: fichier_original
+    type: text
+    libelle: "Fichier original"
+    description: "Chemin PDF à signer"
+
+  - nom: fichier_signe
+    type: text
+    libelle: "Fichier signé"
+    description: "PDF avec signatures"
+
+  - nom: hash_document
+    type: text
+    libelle: "Hash SHA-256"
+    description: "Empreinte du document"
+
+  - nom: taille_fichier
+    type: number
+    libelle: "Taille (octets)"
+
+  # ==========================================================================
+  # DEMANDEUR
+  # ==========================================================================
+  - nom: demandeur_id
+    type: text
+    libelle: "Demandeur"
+    description: "Utilisateur ayant initié"
+
+  - nom: demandeur_nom
+    type: text
+    libelle: "Nom demandeur"
+
+  - nom: demandeur_email
+    type: email
+    libelle: "Email demandeur"
+
+  - nom: date_creation
+    type: datetime
+    libelle: "Date création"
+
+  - nom: date_envoi
+    type: datetime
+    libelle: "Date envoi"
+
+  - nom: date_expiration
+    type: datetime
+    libelle: "Date expiration"
+    description: "Limite pour signer"
+
+  # ==========================================================================
+  # SIGNATAIRES
+  # ==========================================================================
+  - nom: signataires
+    type: json
+    libelle: "Signataires"
+    description: "Liste des signataires avec ordre et statut"
+    # Structure: [{ordre, nom, email, telephone, type, statut, date_signature, ip, certificat}]
+
+  - nom: nombre_signataires
+    type: number
+    libelle: "Nb signataires"
+
+  - nom: signatures_requises
+    type: number
+    libelle: "Signatures requises"
+
+  - nom: signatures_obtenues
+    type: number
+    libelle: "Signatures obtenues"
+    defaut: 0
+
+  - nom: ordre_signature
+    type: select
+    libelle: "Ordre signature"
+    options:
+      - SEQUENTIEL
+      - PARALLELE
+    defaut: PARALLELE
+
+  # ==========================================================================
+  # SIGNATAIRE PRINCIPAL (CLIENT)
+  # ==========================================================================
+  - nom: client_id
+    type: relation
+    libelle: "Client"
+    relation: clients
+
+  - nom: signataire_nom
+    type: text
+    libelle: "Nom signataire"
+
+  - nom: signataire_email
+    type: email
+    libelle: "Email signataire"
+
+  - nom: signataire_telephone
+    type: tel
+    libelle: "Tél. signataire"
+
+  - nom: signataire_fonction
+    type: text
+    libelle: "Fonction"
+
+  # ==========================================================================
+  # PROCESSUS DE SIGNATURE
+  # ==========================================================================
+  - nom: methode_signature
+    type: select
+    libelle: "Méthode"
+    options:
+      - SIMPLE
+      - AVANCEE
+      - QUALIFIEE
+    defaut: AVANCEE
+    description: "Niveau eIDAS"
+
+  - nom: authentification
+    type: select
+    libelle: "Authentification"
+    options:
+      - EMAIL
+      - SMS
+      - EMAIL_SMS
+      - CERTIFICAT
+    defaut: EMAIL_SMS
+
+  - nom: code_otp
+    type: text
+    libelle: "Code OTP"
+
+  - nom: code_otp_expiration
+    type: datetime
+    libelle: "Expiration OTP"
+
+  - nom: tentatives_otp
+    type: number
+    libelle: "Tentatives OTP"
+    defaut: 0
+
+  # ==========================================================================
+  # TOKEN ET LIENS
+  # ==========================================================================
+  - nom: token_signature
+    type: text
+    libelle: "Token"
+    description: "Token unique pour lien de signature"
+
+  - nom: lien_signature
+    type: text
+    libelle: "Lien signature"
+
+  - nom: lien_consultation
+    type: text
+    libelle: "Lien consultation"
+    description: "Pour voir le document signé"
+
+  # ==========================================================================
+  # SIGNATURE EFFECTUÉE
+  # ==========================================================================
+  - nom: date_signature
+    type: datetime
+    libelle: "Date signature"
+
+  - nom: ip_signature
+    type: text
+    libelle: "IP signature"
+
+  - nom: user_agent_signature
+    type: text
+    libelle: "User Agent"
+
+  - nom: geolocalisation
+    type: text
+    libelle: "Géolocalisation"
+
+  - nom: signature_visuelle
+    type: text
+    libelle: "Signature visuelle"
+    description: "Image signature manuscrite (base64)"
+
+  # ==========================================================================
+  # CERTIFICAT ET HORODATAGE
+  # ==========================================================================
+  - nom: certificat_signature
+    type: text
+    libelle: "Certificat"
+    description: "Certificat X.509 utilisé"
+
+  - nom: horodatage_tsa
+    type: text
+    libelle: "Horodatage TSA"
+    description: "Token d'horodatage qualifié"
+
+  - nom: autorite_horodatage
+    type: text
+    libelle: "TSA"
+    defaut: "Universign"
+
+  - nom: cachet_serveur
+    type: text
+    libelle: "Cachet serveur"
+    description: "Signature serveur du document"
+
+  # ==========================================================================
+  # PREUVE ET AUDIT
+  # ==========================================================================
+  - nom: fichier_preuve
+    type: text
+    libelle: "Fichier preuve"
+    description: "Dossier de preuve PDF"
+
+  - nom: journal_audit
+    type: json
+    libelle: "Journal audit"
+    description: "Toutes les actions horodatées"
+
+  - nom: empreinte_preuve
+    type: text
+    libelle: "Hash preuve"
+
+  # ==========================================================================
+  # RAPPELS
+  # ==========================================================================
+  - nom: rappel_automatique
+    type: boolean
+    libelle: "Rappels auto"
+    defaut: true
+
+  - nom: frequence_rappel
+    type: number
+    libelle: "Fréquence rappel (j)"
+    defaut: 3
+
+  - nom: nombre_rappels
+    type: number
+    libelle: "Rappels envoyés"
+    defaut: 0
+
+  - nom: dernier_rappel
+    type: datetime
+    libelle: "Dernier rappel"
+
+  - nom: max_rappels
+    type: number
+    libelle: "Max rappels"
+    defaut: 3
+
+  # ==========================================================================
+  # ANNULATION / REFUS
+  # ==========================================================================
+  - nom: annule
+    type: boolean
+    libelle: "Annulé"
+    defaut: false
+
+  - nom: date_annulation
+    type: datetime
+    libelle: "Date annulation"
+
+  - nom: motif_annulation
+    type: text
+    libelle: "Motif annulation"
+
+  - nom: refuse
+    type: boolean
+    libelle: "Refusé"
+    defaut: false
+
+  - nom: date_refus
+    type: datetime
+    libelle: "Date refus"
+
+  - nom: motif_refus
+    type: text
+    libelle: "Motif refus"
+
+  # ==========================================================================
+  # INTÉGRATION PROVIDER
+  # ==========================================================================
+  - nom: provider
+    type: select
+    libelle: "Provider"
+    options:
+      - INTERNE
+      - YOUSIGN
+      - DOCUSIGN
+      - UNIVERSIGN
+      - CONTRALIA
+    defaut: INTERNE
+
+  - nom: provider_id
+    type: text
+    libelle: "ID Provider"
+    description: "ID chez le prestataire"
+
+  - nom: provider_statut
+    type: text
+    libelle: "Statut provider"
+
+  - nom: webhook_url
+    type: text
+    libelle: "Webhook URL"
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - EN_ATTENTE
+      - EN_COURS
+      - PARTIELLEMENT_SIGNE
+      - SIGNE
+      - REFUSE
+      - EXPIRE
+      - ANNULE
+    defaut: BROUILLON
+
+  # ==========================================================================
+  # ARCHIVAGE
+  # ==========================================================================
+  - nom: archive
+    type: boolean
+    libelle: "Archivé"
+    defaut: false
+
+  - nom: date_archivage
+    type: datetime
+    libelle: "Date archivage"
+
+  - nom: coffre_fort_id
+    type: text
+    libelle: "Coffre-fort"
+    description: "ID dans le coffre-fort numérique"
+
+  - nom: duree_conservation
+    type: number
+    libelle: "Conservation (ans)"
+    defaut: 10
+
+  # Notes
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Index
+index:
+  - numero
+  - client_id
+  - token_signature
+  - statut
+  - type_document
+
+recherche:
+  - numero
+  - titre
+  - signataire_nom
+  - signataire_email
+
+affichage_liste:
+  - numero
+  - titre
+  - type_document
+  - signataire_nom
+  - date_envoi
+  - signatures_obtenues
+  - statut
+
+workflow:
+  BROUILLON -> EN_ATTENTE: "Envoyer"
+  EN_ATTENTE -> EN_COURS: null
+  EN_COURS -> PARTIELLEMENT_SIGNE: null
+  EN_COURS -> SIGNE: null
+  PARTIELLEMENT_SIGNE -> SIGNE: null
+  EN_ATTENTE -> REFUSE: null
+  EN_COURS -> REFUSE: null
+  EN_ATTENTE -> EXPIRE: null
+  EN_COURS -> EXPIRE: null
+  BROUILLON -> ANNULE: "Annuler"
+  EN_ATTENTE -> ANNULE: "Annuler"
+
+actions:
+  - envoyer_signature
+  - renvoyer_invitation
+  - verifier_signature
+  - telecharger_preuve
+  - archiver_document
+  - annuler_demande

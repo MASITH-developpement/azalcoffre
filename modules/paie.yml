@@ -1,0 +1,660 @@
+# =============================================================================
+# AZALPLUS - Module Paie Complet
+# =============================================================================
+# Gestion complète de la paie française: bulletins, cotisations, DSN
+# Consolidation de toutes les fonctionnalités paie en un module
+
+nom: Paie
+nom_pluriel: Paie
+icone: calculator
+menu: Paie
+description: "Gestion complète paie: bulletins, cotisations, DSN, absences"
+ordre_menu: 1
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION BULLETIN
+  # ==========================================================================
+  - nom: numero
+    type: text
+    libelle: "Numéro bulletin"
+    obligatoire: true
+    unique: true
+    auto_genere: true
+    format: "BP-{AAAA}{MM}-{####}"
+
+  - nom: employe_id
+    type: relation
+    libelle: "Employé"
+    relation: employes
+    obligatoire: true
+
+  - nom: periode
+    type: text
+    libelle: "Période"
+    obligatoire: true
+    placeholder: "AAAA-MM"
+
+  - nom: date_emission
+    type: date
+    libelle: "Date d'émission"
+    defaut: "today"
+
+  - nom: date_paiement
+    type: date
+    libelle: "Date de paiement"
+
+  # ==========================================================================
+  # EMPLOYEUR
+  # ==========================================================================
+  - nom: employeur_siret
+    type: text
+    libelle: "SIRET employeur"
+
+  - nom: employeur_raison_sociale
+    type: text
+    libelle: "Raison sociale"
+
+  - nom: employeur_adresse
+    type: textarea
+    libelle: "Adresse employeur"
+
+  - nom: code_ape
+    type: text
+    libelle: "Code APE"
+
+  - nom: convention_collective
+    type: text
+    libelle: "Convention collective"
+
+  - nom: idcc
+    type: text
+    libelle: "IDCC"
+
+  # ==========================================================================
+  # SALARIÉ
+  # ==========================================================================
+  - nom: matricule
+    type: text
+    libelle: "Matricule"
+
+  - nom: nom_complet
+    type: text
+    libelle: "Nom complet"
+
+  - nom: numero_ss
+    type: text
+    libelle: "N° Sécurité Sociale"
+
+  - nom: date_entree
+    type: date
+    libelle: "Date d'entrée"
+
+  - nom: date_anciennete
+    type: date
+    libelle: "Date ancienneté"
+
+  - nom: emploi
+    type: text
+    libelle: "Emploi"
+
+  - nom: qualification
+    type: text
+    libelle: "Qualification"
+
+  - nom: coefficient
+    type: text
+    libelle: "Coefficient/Niveau"
+
+  - nom: categorie
+    type: select
+    libelle: "Catégorie"
+    options:
+      - CADRE
+      - NON_CADRE
+      - CADRE_DIRIGEANT
+
+  - nom: type_contrat
+    type: select
+    libelle: "Type contrat"
+    options:
+      - CDI
+      - CDD
+      - APPRENTISSAGE
+      - PROFESSIONNALISATION
+      - STAGE
+      - INTERIM
+
+  # ==========================================================================
+  # TEMPS DE TRAVAIL
+  # ==========================================================================
+  - nom: temps_travail
+    type: select
+    libelle: "Temps de travail"
+    options:
+      - TEMPS_PLEIN
+      - TEMPS_PARTIEL
+      - FORFAIT_JOURS
+      - FORFAIT_HEURES
+
+  - nom: horaire_mensuel
+    type: number
+    libelle: "Horaire mensuel"
+    defaut: 151.67
+
+  - nom: taux_activite
+    type: number
+    libelle: "Taux d'activité (%)"
+    defaut: 100
+
+  - nom: heures_travaillees
+    type: number
+    libelle: "Heures travaillées"
+
+  - nom: heures_supplementaires_25
+    type: number
+    libelle: "Heures sup 25%"
+
+  - nom: heures_supplementaires_50
+    type: number
+    libelle: "Heures sup 50%"
+
+  - nom: heures_complementaires
+    type: number
+    libelle: "Heures complémentaires"
+
+  - nom: heures_absence
+    type: number
+    libelle: "Heures absence"
+
+  # ==========================================================================
+  # RÉMUNÉRATION
+  # ==========================================================================
+  - nom: salaire_base
+    type: money
+    libelle: "Salaire de base"
+    obligatoire: true
+
+  - nom: taux_horaire
+    type: money
+    libelle: "Taux horaire"
+
+  - nom: prime_anciennete
+    type: money
+    libelle: "Prime ancienneté"
+
+  - nom: prime_13eme_mois
+    type: money
+    libelle: "13ème mois"
+
+  - nom: prime_vacances
+    type: money
+    libelle: "Prime vacances"
+
+  - nom: prime_exceptionnelle
+    type: money
+    libelle: "Prime exceptionnelle"
+
+  - nom: prime_objectifs
+    type: money
+    libelle: "Prime objectifs"
+
+  - nom: autres_primes
+    type: money
+    libelle: "Autres primes"
+
+  # ==========================================================================
+  # INDEMNITÉS
+  # ==========================================================================
+  - nom: indemnite_transport
+    type: money
+    libelle: "Indemnité transport"
+
+  - nom: indemnite_repas
+    type: money
+    libelle: "Indemnité repas"
+
+  - nom: titres_restaurant
+    type: number
+    libelle: "Titres restaurant"
+
+  - nom: indemnite_km
+    type: money
+    libelle: "Indemnités km"
+
+  - nom: avantage_nature_vehicule
+    type: money
+    libelle: "Avantage véhicule"
+
+  - nom: avantage_nature_logement
+    type: money
+    libelle: "Avantage logement"
+
+  - nom: avantage_nature_nourriture
+    type: money
+    libelle: "Avantage nourriture"
+
+  # ==========================================================================
+  # ABSENCES
+  # ==========================================================================
+  - nom: jours_absence
+    type: number
+    libelle: "Jours d'absence"
+
+  - nom: type_absence
+    type: select
+    libelle: "Type absence"
+    options:
+      - MALADIE
+      - ACCIDENT_TRAVAIL
+      - MATERNITE
+      - PATERNITE
+      - CONGE_SANS_SOLDE
+      - ABSENCE_INJUSTIFIEE
+
+  - nom: retenue_absence
+    type: money
+    libelle: "Retenue absence"
+
+  - nom: ijss
+    type: money
+    libelle: "IJSS"
+
+  - nom: complement_employeur
+    type: money
+    libelle: "Complément employeur"
+
+  - nom: subrogation
+    type: boolean
+    libelle: "Subrogation"
+    defaut: false
+
+  # ==========================================================================
+  # TOTAUX BRUTS
+  # ==========================================================================
+  - nom: brut_mensuel
+    type: money
+    libelle: "Brut mensuel"
+
+  - nom: brut_soumis_cotisations
+    type: money
+    libelle: "Brut soumis cotisations"
+
+  - nom: plafond_ss
+    type: money
+    libelle: "Plafond SS"
+    defaut: 3864
+
+  - nom: tranche_a
+    type: money
+    libelle: "Tranche A"
+
+  - nom: tranche_b
+    type: money
+    libelle: "Tranche B"
+
+  - nom: tranche_1
+    type: money
+    libelle: "Tranche 1"
+
+  - nom: tranche_2
+    type: money
+    libelle: "Tranche 2"
+
+  # ==========================================================================
+  # COTISATIONS SALARIALES
+  # ==========================================================================
+  - nom: cotisation_maladie
+    type: money
+    libelle: "Maladie salariale"
+
+  - nom: cotisation_vieillesse_plafonnee
+    type: money
+    libelle: "Vieillesse plafonnée"
+
+  - nom: cotisation_vieillesse_deplafonnee
+    type: money
+    libelle: "Vieillesse déplafonnée"
+
+  - nom: cotisation_retraite_t1
+    type: money
+    libelle: "Retraite T1"
+
+  - nom: cotisation_retraite_t2
+    type: money
+    libelle: "Retraite T2"
+
+  - nom: cotisation_ceg
+    type: money
+    libelle: "CEG"
+
+  - nom: cotisation_cet
+    type: money
+    libelle: "CET"
+
+  - nom: cotisation_apec
+    type: money
+    libelle: "APEC"
+
+  - nom: cotisation_chomage
+    type: money
+    libelle: "Chômage"
+
+  - nom: cotisation_prevoyance
+    type: money
+    libelle: "Prévoyance"
+
+  - nom: cotisation_mutuelle
+    type: money
+    libelle: "Mutuelle"
+
+  - nom: csg_deductible
+    type: money
+    libelle: "CSG déductible"
+
+  - nom: csg_non_deductible
+    type: money
+    libelle: "CSG non déductible"
+
+  - nom: crds
+    type: money
+    libelle: "CRDS"
+
+  - nom: total_cotisations_salariales
+    type: money
+    libelle: "Total cotisations salariales"
+
+  # ==========================================================================
+  # COTISATIONS PATRONALES
+  # ==========================================================================
+  - nom: patronal_maladie
+    type: money
+    libelle: "Maladie patronale"
+
+  - nom: patronal_vieillesse
+    type: money
+    libelle: "Vieillesse patronale"
+
+  - nom: patronal_allocations_familiales
+    type: money
+    libelle: "Allocations familiales"
+
+  - nom: patronal_accident_travail
+    type: money
+    libelle: "Accident travail"
+
+  - nom: patronal_retraite
+    type: money
+    libelle: "Retraite patronale"
+
+  - nom: patronal_chomage
+    type: money
+    libelle: "Chômage patronal"
+
+  - nom: patronal_ags
+    type: money
+    libelle: "AGS"
+
+  - nom: patronal_fnal
+    type: money
+    libelle: "FNAL"
+
+  - nom: patronal_formation
+    type: money
+    libelle: "Formation"
+
+  - nom: patronal_taxe_apprentissage
+    type: money
+    libelle: "Taxe apprentissage"
+
+  - nom: patronal_prevoyance
+    type: money
+    libelle: "Prévoyance patronale"
+
+  - nom: patronal_mutuelle
+    type: money
+    libelle: "Mutuelle patronale"
+
+  - nom: total_cotisations_patronales
+    type: money
+    libelle: "Total cotisations patronales"
+
+  # ==========================================================================
+  # RÉDUCTIONS
+  # ==========================================================================
+  - nom: reduction_fillon
+    type: money
+    libelle: "Réduction Fillon"
+
+  - nom: exoneration_heures_sup
+    type: money
+    libelle: "Exo heures sup"
+
+  - nom: reduction_cotisations_salariales
+    type: money
+    libelle: "Réduction cotisations salariales"
+
+  # ==========================================================================
+  # NET
+  # ==========================================================================
+  - nom: net_avant_impot
+    type: money
+    libelle: "Net avant impôt"
+
+  - nom: net_imposable
+    type: money
+    libelle: "Net imposable"
+
+  - nom: taux_prelevement
+    type: number
+    libelle: "Taux PAS (%)"
+
+  - nom: impot_source
+    type: money
+    libelle: "Impôt à la source"
+
+  - nom: net_a_payer
+    type: money
+    libelle: "Net à payer"
+    obligatoire: true
+
+  # ==========================================================================
+  # RETENUES
+  # ==========================================================================
+  - nom: acompte
+    type: money
+    libelle: "Acompte"
+
+  - nom: avance
+    type: money
+    libelle: "Avance"
+
+  - nom: saisie_arret
+    type: money
+    libelle: "Saisie-arrêt"
+
+  - nom: pension_alimentaire
+    type: money
+    libelle: "Pension alimentaire"
+
+  # ==========================================================================
+  # CUMULS ANNUELS
+  # ==========================================================================
+  - nom: cumul_brut
+    type: money
+    libelle: "Cumul brut"
+
+  - nom: cumul_net_imposable
+    type: money
+    libelle: "Cumul net imposable"
+
+  - nom: cumul_impot_source
+    type: money
+    libelle: "Cumul PAS"
+
+  - nom: cumul_heures
+    type: number
+    libelle: "Cumul heures"
+
+  # ==========================================================================
+  # CONGÉS PAYÉS
+  # ==========================================================================
+  - nom: cp_acquis_n1
+    type: number
+    libelle: "CP acquis N-1"
+
+  - nom: cp_pris_n1
+    type: number
+    libelle: "CP pris N-1"
+
+  - nom: cp_solde_n1
+    type: number
+    libelle: "Solde CP N-1"
+
+  - nom: cp_acquis_n
+    type: number
+    libelle: "CP en cours"
+
+  - nom: rtt_acquis
+    type: number
+    libelle: "RTT acquis"
+
+  - nom: rtt_pris
+    type: number
+    libelle: "RTT pris"
+
+  - nom: rtt_solde
+    type: number
+    libelle: "Solde RTT"
+
+  # ==========================================================================
+  # DSN
+  # ==========================================================================
+  - nom: dsn_id
+    type: text
+    libelle: "DSN"
+
+  - nom: integre_dsn
+    type: boolean
+    libelle: "Intégré DSN"
+    defaut: false
+
+  - nom: dsn_type
+    type: select
+    libelle: "Type DSN"
+    options:
+      - MENSUELLE
+      - ARRET_TRAVAIL
+      - FIN_CONTRAT
+      - REPRISE_TRAVAIL
+
+  - nom: dsn_periode
+    type: text
+    libelle: "Période DSN"
+
+  - nom: dsn_statut
+    type: select
+    libelle: "Statut DSN"
+    options:
+      - A_GENERER
+      - GENEREE
+      - ENVOYEE
+      - ACCEPTEE
+      - REJETEE
+
+  # ==========================================================================
+  # PAIEMENT
+  # ==========================================================================
+  - nom: mode_paiement
+    type: select
+    libelle: "Mode paiement"
+    options:
+      - VIREMENT
+      - CHEQUE
+      - ESPECES
+    defaut: VIREMENT
+
+  - nom: iban
+    type: text
+    libelle: "IBAN"
+
+  - nom: reference_paiement
+    type: text
+    libelle: "Référence paiement"
+
+  # ==========================================================================
+  # DOCUMENTS
+  # ==========================================================================
+  - nom: pdf_bulletin
+    type: text
+    libelle: "PDF bulletin"
+
+  - nom: envoye_salarie
+    type: boolean
+    libelle: "Envoyé au salarié"
+    defaut: false
+
+  - nom: date_envoi
+    type: datetime
+    libelle: "Date d'envoi"
+
+  # ==========================================================================
+  # STATUT ET VALIDATION
+  # ==========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - BROUILLON
+      - CALCULE
+      - VALIDE
+      - PAYE
+      - ARCHIVE
+    defaut: BROUILLON
+
+  - nom: date_validation
+    type: datetime
+    libelle: "Date validation"
+
+  - nom: valide_par
+    type: text
+    libelle: "Validé par"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Index
+index:
+  - employe_id
+  - periode
+  - statut
+
+recherche:
+  - numero
+  - employe_id
+  - periode
+
+affichage_liste:
+  - numero
+  - employe_id
+  - periode
+  - brut_mensuel
+  - net_a_payer
+  - statut
+
+workflow:
+  BROUILLON -> CALCULE: "Calculer"
+  CALCULE -> BROUILLON: "Modifier"
+  CALCULE -> VALIDE: "Valider"
+  VALIDE -> PAYE: "Marquer payé"
+  PAYE -> ARCHIVE: "Archiver"
+
+actions:
+  - calculer_bulletin
+  - generer_pdf
+  - envoyer_salarie
+  - exporter_dsn
+  - generer_virement_sepa
+  - calculer_cotisations
+  - appliquer_convention
