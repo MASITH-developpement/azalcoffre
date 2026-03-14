@@ -1,0 +1,44 @@
+# AZALPLUS - Robots.txt
+# https://azalplus.fr
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /ui/
+Disallow: /admin/
+Disallow: /guardian/
+Disallow: /metrics
+Disallow: /.well-known/
+
+# Sitemaps
+Sitemap: https://azalplus.fr/sitemap.xml
+
+# AI Crawlers
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /llms.txt
+
+User-agent: Claude-Web
+Allow: /
+Allow: /llms.txt
+
+User-agent: Anthropic-AI
+Allow: /
+Allow: /llms.txt
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Cohere-AI
+Allow: /
+
+# Crawl-delay
+User-agent: *
+Crawl-delay: 1

@@ -1,0 +1,21 @@
+/* TEAM */
+Company: AZALPLUS
+Contact: contact@azalplus.fr
+Location: France
+
+/* THANKS */
+FastAPI - https://fastapi.tiangolo.com
+PostgreSQL - https://postgresql.org
+Redis - https://redis.io
+Let's Encrypt - https://letsencrypt.org
+
+/* SITE */
+Last update: 2026-03-14
+Language: French / English
+Standards: HTML5, CSS3, ES6+
+Components: FastAPI, PostgreSQL, Redis, Nginx
+Software: Python 3.11, Node.js 20
+
+/* PHILOSOPHY */
+ERP should be free for everyone.
+No-Code means accessible to all businesses.

@@ -1,0 +1,14 @@
+# AZALPLUS Security Policy
+# https://azalplus.fr/.well-known/security.txt
+
+Contact: mailto:security@azalplus.fr
+Contact: mailto:contact@azalplus.fr
+Expires: 2027-03-14T23:59:59.000Z
+Encryption: https://azalplus.fr/.well-known/pgp-key.txt
+Acknowledgments: https://azalplus.fr/security/thanks
+Preferred-Languages: fr, en
+Canonical: https://azalplus.fr/.well-known/security.txt
+Policy: https://azalplus.fr/security/policy
+
+# We take security seriously. If you discover a vulnerability,
+# please report it responsibly to security@azalplus.fr

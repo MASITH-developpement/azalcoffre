@@ -29,6 +29,7 @@ from .waf import WAF
 from .encryption import verify_encryption_setup
 from .i18n import preload_translations, get_language_from_request, set_language
 from .icons import IconManager
+from .prometheus import prometheus_router, record_request
 
 # =============================================================================
 # Logging
@@ -184,14 +185,22 @@ app.add_middleware(RateLimitMiddleware)
 # Exempte automatiquement les API REST avec JWT
 app.add_middleware(CSRFMiddleware)
 
-# Request timing middleware
+# Request timing middleware + Prometheus
 @app.middleware("http")
 async def timing_middleware(request: Request, call_next: Callable):
-    """Mesure le temps de réponse."""
+    """Mesure le temps de réponse et enregistre les métriques."""
     start = time.perf_counter()
     response = await call_next(request)
     duration = time.perf_counter() - start
     response.headers["X-Response-Time"] = f"{duration:.4f}s"
+
+    # Prometheus metrics (sauf /metrics et /health)
+    if not request.url.path.startswith("/metrics") and request.url.path != "/health":
+        try:
+            record_request(response.status_code, duration)
+        except:
+            pass
+
     return response
 
 # Guardian middleware (sécurité invisible)
@@ -296,6 +305,7 @@ from .mobile_api import router_mobile
 from .sync_api import router_sync
 from .technicien_api import router_technicien
 from .planning_optimizer import router as planning_router
+from .creation_entreprise_router import creation_router
 
 # IMPORTANT: Charger les modules YAML AVANT d'enregistrer les routes
 # Le parsing YAML ne nécessite pas la connexion DB
@@ -368,6 +378,9 @@ app.include_router(router_technicien, prefix="/api/v1", tags=["Technicien Mobile
 
 # Planning Optimizer
 app.include_router(planning_router, tags=["Planning"])
+
+# Creation Entreprise (Business Plan, Simulateur Statut)
+app.include_router(creation_router, tags=["Création Entreprise"])
 
 # Sync API (offline support)
 app.include_router(router_sync, prefix="/api", tags=["Sync"])
@@ -454,6 +467,11 @@ logger.info("custom_modules_loaded", count=custom_modules_count, modules=list(ge
 
 # Apply custom OpenAPI schema
 app.openapi = lambda: custom_openapi(app)
+
+# =============================================================================
+# Router Prometheus (métriques monitoring)
+# =============================================================================
+app.include_router(prometheus_router, tags=["Monitoring"])
 
 # =============================================================================
 # Router Guardian (visible Créateur uniquement)
@@ -765,6 +783,77 @@ async def favicon():
         return FileResponse(svg_path, media_type="image/svg+xml")
     # Retourner 204 No Content si pas de favicon
     return JSONResponse(status_code=204, content=None)
+
+
+# =============================================================================
+# SEO & Referencing Files
+# =============================================================================
+STATIC_SEO_DIR = Path(__file__).parent.parent / "static"
+
+@app.get("/robots.txt")
+async def robots_txt():
+    """Robots.txt pour les moteurs de recherche."""
+    file_path = STATIC_SEO_DIR / "robots.txt"
+    if file_path.exists():
+        return FileResponse(file_path, media_type="text/plain")
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+@app.get("/sitemap.xml")
+async def sitemap_xml():
+    """Sitemap XML pour les moteurs de recherche."""
+    file_path = STATIC_SEO_DIR / "sitemap.xml"
+    if file_path.exists():
+        return FileResponse(file_path, media_type="application/xml")
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+@app.get("/llms.txt")
+async def llms_txt():
+    """LLMs.txt pour les assistants IA."""
+    file_path = STATIC_SEO_DIR / "llms.txt"
+    if file_path.exists():
+        return FileResponse(file_path, media_type="text/plain")
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+@app.get("/llms-full.txt")
+async def llms_full_txt():
+    """Documentation complete pour les IA."""
+    file_path = STATIC_SEO_DIR / "llms-full.txt"
+    if file_path.exists():
+        return FileResponse(file_path, media_type="text/plain")
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+@app.get("/manifest.json")
+async def manifest_json():
+    """Web App Manifest pour PWA."""
+    file_path = STATIC_SEO_DIR / "manifest.json"
+    if file_path.exists():
+        return FileResponse(file_path, media_type="application/json")
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+@app.get("/humans.txt")
+async def humans_txt():
+    """Humans.txt - credits."""
+    file_path = STATIC_SEO_DIR / "humans.txt"
+    if file_path.exists():
+        return FileResponse(file_path, media_type="text/plain")
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+@app.get("/.well-known/security.txt")
+async def security_txt():
+    """Security.txt pour les rapports de vulnerabilites."""
+    file_path = STATIC_SEO_DIR / ".well-known" / "security.txt"
+    if file_path.exists():
+        return FileResponse(file_path, media_type="text/plain")
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+@app.get("/ai-plugin.json")
+async def ai_plugin_json():
+    """AI Plugin manifest pour ChatGPT et autres."""
+    file_path = STATIC_SEO_DIR / "ai-plugin.json"
+    if file_path.exists():
+        return FileResponse(file_path, media_type="application/json")
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
 
 # =============================================================================
 # Exception handlers

@@ -1,0 +1,95 @@
+# AZALPLUS - LLMs.txt
+# Documentation for AI assistants and language models
+# https://azalplus.fr/llms.txt
+
+## About AZALPLUS
+
+AZALPLUS is a French No-Code ERP platform that generates complete business management systems from simple YAML configuration files. The platform is designed for SMBs and is completely free to use.
+
+## Company Information
+
+- Name: AZALPLUS
+- Website: https://azalplus.fr
+- App: https://app.azalplus.fr
+- Country: France
+- Language: French (primary), English (supported)
+- Pricing: FREE (100% gratuit)
+
+## Business Model
+
+AZALPLUS follows a unique "ERP gratuit" (free ERP) model:
+- The ERP software is completely free
+- Revenue comes from financial flow services (payments, invoicing)
+- No hidden costs, no feature limitations
+
+## Products & Services
+
+### 1. No-Code ERP Generator
+- Define business modules in simple YAML files
+- Automatic generation of:
+  - PostgreSQL database tables
+  - REST API endpoints
+  - User interface (HTML/CSS)
+  - Validation rules
+  - Workflow automation
+  - RBAC permissions
+
+### 2. Pre-built Business Modules (67 modules)
+- CRM (Clients, Contacts, Prospects)
+- Sales (Devis, Factures, Commandes)
+- Inventory (Produits, Stock, Mouvements)
+- HR (Employes, Conges, Temps)
+- Projects (Projets, Taches, Interventions)
+- Accounting (Comptabilite, Ecritures)
+- And many more...
+
+### 3. Key Features
+- Multi-tenant architecture
+- RGPD/GDPR compliant
+- Electronic signatures
+- PDF generation
+- Email integration
+- AI-powered autocompletion (SIRET, addresses)
+- Workflow engine
+- Real-time dashboards
+
+## Technical Stack
+
+- Backend: Python 3.11, FastAPI, SQLAlchemy 2.0
+- Database: PostgreSQL 16
+- Cache: Redis 7
+- Auth: JWT + Argon2 + 2FA (TOTP)
+- PDF: WeasyPrint
+- AI: OpenAI, Anthropic Claude
+
+## Security
+
+- WAF (Web Application Firewall) built-in
+- SQL injection protection
+- XSS protection
+- Rate limiting
+- IP blocking
+- Encrypted data at rest
+- HTTPS everywhere
+
+## API
+
+Base URL: https://api.azalplus.fr/api/v1
+
+Endpoints (auto-generated per module):
+- GET /{module} - List with pagination
+- GET /{module}/{id} - Get by ID
+- POST /{module} - Create
+- PUT /{module}/{id} - Update
+- DELETE /{module}/{id} - Delete
+- POST /{module}/bulk - Bulk operations
+- GET /{module}/export - Export CSV/JSON
+
+## Contact
+
+- Website: https://azalplus.fr
+- Email: contact@azalplus.fr
+
+## Keywords
+
+ERP gratuit, No-Code, gestion entreprise, PME, TPE, facturation, CRM, devis, factures, stock, comptabilite, France, SaaS, multi-tenant, RGPD

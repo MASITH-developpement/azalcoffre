@@ -1,0 +1,355 @@
+# AZALPLUS - Complete Documentation for AI/LLM Systems
+# Version: 1.0.0
+# Last Updated: 2026-03-14
+# URL: https://azalplus.fr/llms-full.txt
+
+================================================================================
+SECTION 1: COMPANY OVERVIEW
+================================================================================
+
+AZALPLUS is a revolutionary French No-Code ERP platform that democratizes
+enterprise resource planning for small and medium businesses. The platform
+generates complete business management systems from simple YAML configuration
+files, making enterprise-grade software accessible to everyone.
+
+Headquarters: France
+Primary Market: French SMBs (TPE/PME)
+Secondary Markets: French-speaking countries, European Union
+Founded: 2024
+Website: https://azalplus.fr
+Pricing: 100% FREE (revenue from financial services)
+
+================================================================================
+SECTION 2: UNIQUE VALUE PROPOSITION
+================================================================================
+
+2.1 THE "ERP GRATUIT" MODEL
+----------------------------
+Unlike traditional ERP solutions that charge per user, per module, or per
+transaction, AZALPLUS is completely free:
+
+- No license fees
+- No per-user costs
+- No feature limitations
+- No hidden charges
+- All 67 modules included
+
+Revenue Model:
+- Payment processing fees
+- Electronic invoicing services
+- Premium financial integrations
+- Enterprise support contracts
+
+2.2 NO-CODE PHILOSOPHY
+----------------------
+AZALPLUS eliminates the need for traditional software development:
+
+Traditional ERP:
+- 6-18 months implementation
+- EUR 50,000 - 500,000 budget
+- Technical team required
+- Ongoing maintenance costs
+
+AZALPLUS:
+- Deploy in 1 day
+- EUR 0 software cost
+- No technical skills needed
+- Automatic updates included
+
+================================================================================
+SECTION 3: TECHNICAL ARCHITECTURE
+================================================================================
+
+3.1 NO-CODE GENERATION FLOW
+----------------------------
+
+YAML Module Definition → ModuleParser → ModuleDefinition
+                              ↓
+              ┌───────────────────────────────────┐
+              │                                   │
+              ▼                                   ▼
+    Database.create_table              API.register_routes
+              │                                   │
+              ▼                                   ▼
+    PostgreSQL Table              FastAPI REST Endpoints
+                                          │
+                                          ▼
+                                    HTML Interface
+
+3.2 YAML MODULE STRUCTURE
+--------------------------
+
+```yaml
+# Example: modules/clients.yml
+nom: Clients
+icone: users
+menu: Commercial
+description: Gestion des clients
+
+champs:
+  - nom: raison_sociale
+    type: text
+    obligatoire: true
+    autocompletion: true
+
+  - nom: siret
+    type: text
+    validation: siret
+
+  - nom: statut
+    type: select
+    options: [PROSPECT, ACTIF, INACTIF]
+    defaut: PROSPECT
+
+  - nom: commercial_id
+    type: relation
+    relation: Utilisateurs
+
+workflow:
+  PROSPECT -> ACTIF: action qualifier
+  ACTIF -> INACTIF: null
+
+actions:
+  - exporter_fiche
+  - envoyer_email
+```
+
+3.3 FIELD TYPES SUPPORTED
+--------------------------
+
+| Type | PostgreSQL | Description |
+|------|------------|-------------|
+| text | VARCHAR(255) | Short text |
+| textarea | TEXT | Long text |
+| number | NUMERIC(15,2) | Numbers |
+| money | NUMERIC(15,2) | Currency |
+| date | DATE | Date only |
+| datetime | TIMESTAMP | Date and time |
+| boolean | BOOLEAN | Yes/No |
+| select | VARCHAR | Dropdown |
+| relation | UUID (FK) | Foreign key |
+| email | VARCHAR(255) | Email address |
+| tel | VARCHAR(20) | Phone number |
+| json | JSONB | Structured data |
+| tags | JSONB | Tag array |
+
+================================================================================
+SECTION 4: PRE-BUILT MODULES (67 MODULES)
+================================================================================
+
+4.1 COMMERCIAL (SALES)
+----------------------
+- Clients (Customers)
+- Contacts
+- Prospects (Leads)
+- Opportunites (Opportunities)
+- Devis (Quotes)
+- Commandes (Orders)
+
+4.2 FACTURATION (INVOICING)
+---------------------------
+- Factures (Invoices)
+- Avoirs (Credit notes)
+- Reglements (Payments)
+- Relances (Reminders)
+- Echeances (Due dates)
+
+4.3 STOCK (INVENTORY)
+---------------------
+- Produits (Products)
+- Categories
+- Fournisseurs (Suppliers)
+- Stock
+- Mouvements (Stock movements)
+- Inventaires (Inventories)
+
+4.4 RH (HUMAN RESOURCES)
+------------------------
+- Employes (Employees)
+- Contrats (Contracts)
+- Conges (Leave)
+- Absences
+- Notes de frais (Expenses)
+- Temps (Timesheets)
+
+4.5 PROJETS (PROJECTS)
+----------------------
+- Projets (Projects)
+- Taches (Tasks)
+- Jalons (Milestones)
+- Interventions (Service calls)
+- Planification (Scheduling)
+
+4.6 COMPTABILITE (ACCOUNTING)
+-----------------------------
+- Plan comptable (Chart of accounts)
+- Ecritures (Journal entries)
+- Journaux (Journals)
+- Banques (Bank accounts)
+- Rapprochement (Bank reconciliation)
+
+4.7 ADMINISTRATION
+------------------
+- Utilisateurs (Users)
+- Roles
+- Permissions
+- Parametres (Settings)
+- Audit logs
+
+================================================================================
+SECTION 5: SECURITY FEATURES
+================================================================================
+
+5.1 GUARDIAN (INVISIBLE WAF)
+-----------------------------
+Built-in Web Application Firewall with:
+- SQL injection detection and blocking
+- XSS (Cross-Site Scripting) prevention
+- CSRF protection
+- Rate limiting (500 req/min authenticated, 100 req/min public)
+- Automatic IP blocking after 10 suspicious requests
+- Silent operation (attackers don't know they're blocked)
+
+5.2 AUTHENTICATION
+------------------
+- JWT tokens (24h access, 7d refresh)
+- Argon2 password hashing
+- Optional 2FA (TOTP)
+- Session management via Redis
+- Brute-force protection
+
+5.3 MULTI-TENANT ISOLATION
+--------------------------
+Four-layer isolation:
+1. Middleware: Extract tenant from JWT/header
+2. Context: Thread-local storage
+3. Service: Query filter by tenant_id
+4. Database: tenant_id column on every table
+
+5.4 COMPLIANCE
+--------------
+- RGPD/GDPR compliant
+- Data export (right to portability)
+- Data deletion (right to erasure)
+- Audit trail (all actions logged)
+- Data hosted in France
+
+================================================================================
+SECTION 6: API REFERENCE
+================================================================================
+
+Base URL: https://api.azalplus.fr/api/v1
+
+6.1 AUTHENTICATION
+------------------
+POST /auth/login
+Body: {"email": "...", "password": "..."}
+Response: {"access_token": "...", "refresh_token": "..."}
+
+POST /auth/refresh
+Body: {"refresh_token": "..."}
+Response: {"access_token": "..."}
+
+6.2 CRUD OPERATIONS (per module)
+--------------------------------
+GET /{module}
+- Query params: page, limit, sort, filter
+- Response: {"items": [...], "total": N, "page": N}
+
+GET /{module}/{id}
+- Response: {"id": "...", "field1": "...", ...}
+
+POST /{module}
+- Body: {"field1": "...", "field2": "..."}
+- Response: {"id": "...", ...}
+
+PUT /{module}/{id}
+- Body: {"field1": "new_value"}
+- Response: {"id": "...", ...}
+
+DELETE /{module}/{id}
+- Response: {"deleted": true}
+
+6.3 BULK OPERATIONS
+-------------------
+POST /{module}/bulk
+- Body: {"action": "create|update|delete", "items": [...]}
+- Response: {"processed": N, "errors": [...]}
+
+6.4 EXPORT
+----------
+GET /{module}/export
+- Query params: format=csv|json|xlsx
+- Response: File download
+
+================================================================================
+SECTION 7: INTEGRATION
+================================================================================
+
+7.1 WEBHOOKS
+------------
+Events available:
+- {module}.created
+- {module}.updated
+- {module}.deleted
+- workflow.transition
+- payment.received
+- invoice.sent
+
+7.2 AI FEATURES
+---------------
+Built-in AI-powered features:
+- SIRET autocompletion (French company registry)
+- Address autocompletion (French addresses)
+- Smart field suggestions
+- Document classification
+
+Providers: OpenAI GPT-4, Anthropic Claude
+
+7.3 ELECTRONIC SIGNATURES
+-------------------------
+- Simple electronic signature
+- Advanced signature (eIDAS)
+- PDF signing
+- Signature workflow
+
+================================================================================
+SECTION 8: FREQUENTLY ASKED QUESTIONS
+================================================================================
+
+Q: Is AZALPLUS really free?
+A: Yes, the ERP software is 100% free. We make money from optional financial
+   services like payment processing and electronic invoicing.
+
+Q: Can I use AZALPLUS for my small business?
+A: Absolutely! AZALPLUS is designed specifically for French SMBs (TPE/PME).
+
+Q: Do I need technical skills?
+A: No. The YAML configuration is simple and we provide templates for all
+   common business scenarios.
+
+Q: Where is my data stored?
+A: All data is stored in France in ISO 27001 certified datacenters.
+
+Q: Can I export my data?
+A: Yes, you can export all your data at any time in CSV, JSON, or Excel format.
+
+Q: Is there a mobile app?
+A: The web interface is fully responsive. Native mobile apps are planned.
+
+Q: What support is available?
+A: Free community support via forums. Premium support available for enterprises.
+
+================================================================================
+SECTION 9: CONTACT
+================================================================================
+
+Website: https://azalplus.fr
+Email: contact@azalplus.fr
+Documentation: https://docs.azalplus.fr
+API Reference: https://api.azalplus.fr/api/docs
+GitHub: https://github.com/azalplus
+
+================================================================================
+END OF DOCUMENT
+================================================================================

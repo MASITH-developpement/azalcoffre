@@ -109,6 +109,26 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/waitlist",
         "/inscription",
         "/api/public/waitlist",
+        # Landing page (public)
+        "/LANDING_PAGE_AZALPLUS.html",
+        # Partenaires (public)
+        "/partenaires",
+        # Création Entreprise - Outils publics
+        "/api/creation/simulateur-statut/public",
+        "/api/creation/checklist-creation",
+        "/api/creation/organismes",
+        "/api/creation/aides-financements",
+        # Prometheus metrics (filtré par IP dans le handler)
+        "/metrics",
+        # === SEO & Referencing (public) ===
+        "/robots.txt",
+        "/sitemap.xml",
+        "/llms.txt",
+        "/llms-full.txt",
+        "/manifest.json",
+        "/humans.txt",
+        "/.well-known/security.txt",
+        "/ai-plugin.json",
     ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

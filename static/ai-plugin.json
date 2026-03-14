@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "AZALPLUS",
+  "name_for_model": "azalplus",
+  "description_for_human": "ERP No-Code 100% gratuit pour PME. Generez votre logiciel de gestion depuis des fichiers YAML.",
+  "description_for_model": "AZALPLUS is a French No-Code ERP platform that is 100% free. It generates complete business management systems (CRM, invoicing, inventory, HR, projects, accounting) from simple YAML configuration files. Key features: 67 pre-built modules, multi-tenant architecture, RGPD compliant, electronic signatures, AI-powered autocompletion, workflow engine. Target market: French SMBs (TPE/PME). Unique business model: ERP is free, revenue from financial services. Technical stack: Python FastAPI, PostgreSQL, Redis.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://api.azalplus.fr/api/openapi.json"
+  },
+  "logo_url": "https://azalplus.fr/static/logo.png",
+  "contact_email": "contact@azalplus.fr",
+  "legal_info_url": "https://azalplus.fr/legal"
+}

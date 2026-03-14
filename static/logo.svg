@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#059669"/>
+    </linearGradient>
+    <filter id="logoShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#047857" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="url(#logoGradient)" filter="url(#logoShadow)"/>
+
+  <!-- Letter A+ -->
+  <text x="256" y="320" font-family="Inter, Arial, sans-serif" font-size="220" font-weight="800" fill="white" text-anchor="middle">A+</text>
+
+  <!-- Small gear icon (No-Code) -->
+  <g transform="translate(380, 90)">
+    <circle cx="30" cy="30" r="28" fill="rgba(255,255,255,0.9)"/>
+    <circle cx="30" cy="30" r="12" fill="#10b981"/>
+    <g fill="rgba(255,255,255,0.9)">
+      <rect x="26" y="0" width="8" height="14" rx="2"/>
+      <rect x="26" y="46" width="8" height="14" rx="2"/>
+      <rect x="0" y="26" width="14" height="8" rx="2"/>
+      <rect x="46" y="26" width="14" height="8" rx="2"/>
+    </g>
+  </g>
+</svg>
