@@ -51,6 +51,20 @@ couleurs:
   primaire_clair: "#6B9FFF"
 
   # ---------------------------------------------------------------------------
+  # Echelle de gris (requis par theme.py)
+  # ---------------------------------------------------------------------------
+  gris_50: "#F8FAFC"
+  gris_100: "#F1F5F9"
+  gris_200: "#E2E8F0"
+  gris_300: "#CBD5E1"
+  gris_400: "#94A3B8"
+  gris_500: "#64748B"
+  gris_600: "#475569"
+  gris_700: "#334155"
+  gris_800: "#1E293B"
+  gris_900: "#0F172A"
+
+  # ---------------------------------------------------------------------------
   # Fonds Light Mode
   # ---------------------------------------------------------------------------
   fond_page: "#F1F5F9"           # Fond general (gris clair)
@@ -94,27 +108,34 @@ couleurs:
   succes: "#10B981"
   succes_hover: "#059669"
   succes_pale: "#D1FAE5"
+  succes_clair: "#D1FAE5"
   succes_texte: "#047857"
 
   attention: "#F59E0B"
   attention_hover: "#D97706"
   attention_pale: "#FEF3C7"
+  attention_clair: "#FEF3C7"
   attention_texte: "#92400E"
 
   erreur: "#EF4444"
   erreur_hover: "#DC2626"
   erreur_pale: "#FEE2E2"
+  erreur_clair: "#FEE2E2"
   erreur_texte: "#B91C1C"
 
   info: "#6B9FFF"
   info_pale: "#EEF2FF"
+  info_clair: "#DBEAFE"
   info_texte: "#3454D1"
+
+  # Alias sidebar pour theme.py
+  sidebar_hover: "#1e40af"
 
 # =============================================================================
 # TYPOGRAPHIE (+2px pour lisibilite TPE)
 # =============================================================================
 typographie:
-  police: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+  police: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
   police_mono: "'JetBrains Mono', 'Fira Code', monospace"
 
   # Tailles (augmentees de 2px)

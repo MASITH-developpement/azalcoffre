@@ -20,6 +20,7 @@ from .db import Database
 from .config import settings
 from .reports import ReportEngine
 from .constants import get_tva_options, get_tva
+from .icons import get_icon_html, get_icon_url, get_inline_svg, INLINE_ICONS
 from datetime import date, timedelta
 
 logger = structlog.get_logger()
@@ -102,7 +103,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         <div class="o-field-row" style="grid-template-columns: 150px 1fr;">
             <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
             <div class="o-field-widget">
-                <textarea class="o-field-text" id="{field_id}" name="{field.nom}" rows="3" {required_attr} placeholder="{placeholder}">{escaped_value}</textarea>
+                <textarea class="o-field-text" id="{field_id}" name="{field.nom}" rows="6" {required_attr} placeholder="{placeholder}">{escaped_value}</textarea>
                 {help_text}
             </div>
         </div>
@@ -199,6 +200,9 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         autofill_config = ""
         if field.nom == "client_id":
             autofill_config = 'data-autofill="adresse_ligne1:address_line1,adresse_ligne2:address_line2,ville:city,code_postal:postal_code,contact_sur_place:contact_name,telephone_contact:phone,email_contact:email"'
+        elif field.nom == "customer_id":
+            # Pour les factures : construire l'adresse complète dans billing_address (textarea)
+            autofill_config = 'data-autofill="billing_address:_compose_address:address_line1|address_line2|postal_code|city,recipient_siret:tax_id"'
         elif field.nom == "donneur_ordre_id":
             autofill_config = 'data-autofill="adresse_ligne1:adresse_ligne1,adresse_ligne2:adresse_ligne2,ville:ville,code_postal:code_postal,contact_sur_place:contact_principal,telephone_contact:telephone,email_contact:email"'
 
@@ -2127,8 +2131,8 @@ async def calendar_view(
         }
         .calendar-container {
             background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
-            border-radius: 12px;
-            padding: 24px;
+            border-radius: 6px;
+            padding: 6px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             color: white;
         }
@@ -2136,9 +2140,9 @@ async def calendar_view(
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 6px;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 4px;
             color: white;
         }
         .calendar-header h2 {
@@ -2191,10 +2195,10 @@ async def calendar_view(
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
+            gap: 1px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 8px;
+            border-radius: 4px;
+            padding: 2px;
         }
         .calendar-weekdays {
             display: contents;
@@ -2202,12 +2206,12 @@ async def calendar_view(
         .calendar-weekdays > div {
             text-align: center;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: white;
-            padding: 12px 4px;
+            padding: 3px 1px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            letter-spacing: 0.25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             background: rgba(255, 255, 255, 0.05);
         }
         .calendar-days {
@@ -2218,11 +2222,11 @@ async def calendar_view(
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 8px;
-            border-radius: 6px;
+            padding: 2px;
+            border-radius: 2px;
             cursor: pointer;
             transition: all 0.15s;
-            min-height: 70px;
+            min-height: 18px;
             color: white;
             background: rgba(255, 255, 255, 0.05);
         }
@@ -2238,26 +2242,26 @@ async def calendar_view(
             color: rgba(255, 255, 255, 0.4);
         }
         .calendar-day.selected {
-            border: 2px solid white;
+            border: 1px solid white;
             background: rgba(255, 255, 255, 0.2);
         }
         .calendar-day .day-number {
             font-weight: 600;
-            font-size: 14px;
+            font-size: 20px;
         }
         .calendar-day .day-events {
-            font-size: 10px;
-            margin-top: 4px;
+            font-size: 9px;
+            margin-top: 2px;
         }
         .event-dot {
-            min-width: 18px;
-            height: 18px;
-            border-radius: 9px;
+            min-width: 10px;
+            height: 10px;
+            border-radius: 5px;
             background: #f97316;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 8px;
             font-weight: 600;
             color: white;
         }
@@ -2278,13 +2282,13 @@ async def calendar_view(
             background: rgba(185, 28, 28, 0.7) !important; /* rouge foncé */
         }
         .calendar-day .workload-hours {
-            font-size: 9px;
+            font-size: 8px;
             color: rgba(255,255,255,0.9);
-            margin-top: 2px;
+            margin-top: 1px;
             font-weight: 500;
         }
         .calendar-day .workload-travel {
-            font-size: 8px;
+            font-size: 7px;
             color: rgba(255,255,255,0.7);
             margin-top: 1px;
         }
@@ -4029,38 +4033,44 @@ def generate_form_scripts(module_name: str) -> str:
     }}
 
     document.addEventListener('DOMContentLoaded', function() {{
-        // Récupérer le token depuis l'URL ou localStorage
+        // Récupérer le token depuis URL, localStorage ou cookies
         const urlParams = new URLSearchParams(window.location.search);
-        const authToken = urlParams.get('token') || localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
+        const getCookie = (name) => {{
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }};
+        const authToken = urlParams.get('token') || localStorage.getItem('access_token') || localStorage.getItem('auth_token') || getCookie('access_token') || getCookie('token') || '';
 
         document.querySelectorAll('select[data-link]').forEach(async select => {{
             const linkedModule = select.dataset.link;
             const currentValue = select.dataset.currentValue || '';
             try {{
-                const response = await fetch(`/api/${{linkedModule.toLowerCase()}}`, {{
+                const response = await fetch(`/api/select/${{linkedModule.toLowerCase()}}`, {{
                     credentials: 'include',
                     headers: {{
-                        'Authorization': 'Bearer ' + authToken
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
                     }}
                 }});
                 if (response.ok) {{
                     const data = await response.json();
-                    const items = data.items || data || [];
+                    const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
                     const firstOption = select.options[0];
                     select.innerHTML = '';
                     select.appendChild(firstOption);
                     items.forEach(item => {{
                         const opt = document.createElement('option');
                         opt.value = item.id;
-                        opt.textContent = item.nom || item.name || item.raison_sociale || item.titre || item.numero || item.code || item.email || item.id;
-                        // Sélectionner si c'est la valeur actuelle
+                        opt.textContent = item.nom || item.name || item.id;
                         if (currentValue && item.id === currentValue) {{
                             opt.selected = true;
                         }}
                         select.appendChild(opt);
                     }});
+                }} else {{
+                    console.warn('Erreur chargement ' + linkedModule + ':', response.status);
                 }}
-            }} catch (e) {{ console.error('Erreur chargement:', e); }}
+            }} catch (e) {{ console.error('Erreur chargement ' + linkedModule + ':', e); }}
         }});
     }});
 
@@ -4100,8 +4110,22 @@ def generate_form_scripts(module_name: str) -> str:
                 // Parser la config: "champ_local:champ_distant,..."
                 const mappings = autofillConfig.split(',');
                 mappings.forEach(mapping => {{
-                    const [localField, remoteField] = mapping.split(':');
-                    const value = data[remoteField] || '';
+                    const parts = mapping.split(':');
+                    const localField = parts[0];
+                    const remoteField = parts[1];
+                    let value = '';
+
+                    // Cas spécial: _compose_address construit une adresse complète
+                    if (remoteField === '_compose_address' && parts.length > 2) {{
+                        const addressFields = parts[2].split('|');
+                        const addressParts = [];
+                        addressFields.forEach(f => {{
+                            if (data[f]) addressParts.push(data[f]);
+                        }});
+                        value = addressParts.join('\\n');
+                    }} else {{
+                        value = data[remoteField] || '';
+                    }}
 
                     // Trouver le champ local et le remplir
                     const input = document.querySelector(`[name="${{localField}}"]`);
@@ -4165,7 +4189,7 @@ def generate_form_scripts(module_name: str) -> str:
             }});
             if (response.ok) {{
                 const data = await response.json();
-                const items = data.items || data || [];
+                const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
                 const currentValue = select.value;
                 const firstOption = select.options[0];
                 select.innerHTML = '';
@@ -4635,8 +4659,22 @@ def generate_document_form(module, module_name: str) -> str:
                 // Parser la config: "champ_local:champ_distant,..."
                 const mappings = autofillConfig.split(',');
                 mappings.forEach(mapping => {{
-                    const [localField, remoteField] = mapping.split(':');
-                    const value = data[remoteField] || '';
+                    const parts = mapping.split(':');
+                    const localField = parts[0];
+                    const remoteField = parts[1];
+                    let value = '';
+
+                    // Cas spécial: _compose_address construit une adresse complète
+                    if (remoteField === '_compose_address' && parts.length > 2) {{
+                        const addressFields = parts[2].split('|');
+                        const addressParts = [];
+                        addressFields.forEach(f => {{
+                            if (data[f]) addressParts.push(data[f]);
+                        }});
+                        value = addressParts.join('\\n');
+                    }} else {{
+                        value = data[remoteField] || '';
+                    }}
 
                     // Trouver le champ local et le remplir
                     const input = document.querySelector(`[name="${{localField}}"]`);
@@ -4670,7 +4708,7 @@ def generate_document_form(module, module_name: str) -> str:
             const response = await fetch('/api/' + moduleName, {{ credentials: 'include' }});
             if (response.ok) {{
                 const data = await response.json();
-                const items = data.items || data || [];
+                const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
                 const currentValue = select.value;
                 select.innerHTML = '<option value="">Sélectionner un client...</option>';
                 items.forEach(item => {{
@@ -5086,24 +5124,8 @@ def get_all_modules() -> List[Dict]:
     return modules
 
 
-def get_icon(icon_name: str, size: int = 20, css_class: str = "icon") -> str:
-    """
-    Retourne une balise img SVG pour l'icône.
-
-    Args:
-        icon_name: Nom de l'icône (sans extension)
-        size: Taille en pixels (défaut: 20)
-        css_class: Classe CSS à appliquer (défaut: "icon")
-
-    Returns:
-        Balise HTML img pointant vers le SVG
-    """
-    return f'<img src="/assets/icons/{icon_name}.svg" alt="{icon_name}" width="{size}" height="{size}" class="{css_class}" onerror="this.src=\'/assets/icons/default.svg\'" />'
-
-
-def get_icon_url(icon_name: str) -> str:
-    """Retourne l'URL de l'icône SVG."""
-    return f"/assets/icons/{icon_name}.svg"
+# Alias pour compatibilité avec le code existant
+get_icon = get_icon_html
 
 
 def generate_intervention_wizard() -> str:
@@ -5871,6 +5893,8 @@ def generate_intervention_wizard() -> str:
     }
 
     function renderClientResults() {
+        var container = document.getElementById('wizardClientResults');
+        if (!container) return;
         var html = '';
         wizardState.clientResults.forEach(function(c) {
             var selected = wizardState.data.client_id === c.id ? 'selected' : '';
@@ -5879,7 +5903,7 @@ def generate_intervention_wizard() -> str:
             html += '<div class="wizard-client-info">' + (c.ville || '') + (c.telephone ? ' • ' + c.telephone : '') + '</div>';
             html += '</div>';
         });
-        document.getElementById('wizardClientResults').innerHTML = html;
+        container.innerHTML = html;
     }
 
     async function selectClient(id) {
@@ -6575,7 +6599,12 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     }})();
     </script>
     <script src="/assets/js/error-reporter.js"></script>
-    <link rel="stylesheet" href="/assets/style.css?v=9001">
+    <!-- Google Fonts - Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS genere depuis theme.yml -->
+    <link rel="stylesheet" href="/static/style.css">
     <script>
     // Notification bell - defined early so onclick works
     var notifPanelOpen = false;

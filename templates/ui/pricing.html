@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarifs - AZALPLUS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        .pricing-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Header */
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .pricing-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-header .subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+        }
+
+        .pricing-header .highlight {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        /* Section gratuit */
+        .free-section {
+            background: linear-gradient(135deg, var(--success), #059669);
+            border-radius: 1.5rem;
+            padding: 3rem;
+            color: white;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .free-section::before {
+            content: "GRATUIT";
+            position: absolute;
+            top: 1rem;
+            right: -2rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 3rem;
+            transform: rotate(45deg);
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .free-section h2 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .free-section .tagline {
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .free-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .free-feature-group h3 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.8;
+            margin-bottom: 0.75rem;
+        }
+
+        .free-feature-group ul {
+            list-style: none;
+        }
+
+        .free-feature-group li {
+            padding: 0.4rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .free-feature-group li::before {
+            content: "✓";
+            font-weight: bold;
+        }
+
+        .free-price {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .free-price .amount {
+            font-size: 4rem;
+            font-weight: 800;
+        }
+
+        .free-price .period {
+            font-size: 1.25rem;
+            opacity: 0.8;
+        }
+
+        /* Signatures section */
+        .signatures-section {
+            margin-bottom: 3rem;
+        }
+
+        .signatures-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--gray-900);
+        }
+
+        .signatures-section .intro {
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+        }
+
+        .signature-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .signature-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 2px solid var(--gray-200);
+            transition: all 0.2s;
+        }
+
+        .signature-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .signature-card.free {
+            border-color: var(--success);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(5, 150, 105, 0.05));
+        }
+
+        .signature-card .level {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-600);
+            margin-bottom: 0.25rem;
+        }
+
+        .signature-card .name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .signature-card .price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .signature-card.free .price {
+            color: var(--success);
+        }
+
+        .signature-card .price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--gray-600);
+        }
+
+        .signature-card .description {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .signature-card .usages {
+            list-style: none;
+            font-size: 0.875rem;
+        }
+
+        .signature-card .usages li {
+            padding: 0.25rem 0;
+            color: var(--gray-600);
+        }
+
+        .signature-card .usages li::before {
+            content: "→ ";
+            color: var(--primary);
+        }
+
+        /* Plans section */
+        .plans-section {
+            margin-bottom: 3rem;
+        }
+
+        .plans-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--gray-900);
+        }
+
+        .plans-section .intro {
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+        }
+
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .plan-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 2px solid var(--gray-200);
+            position: relative;
+        }
+
+        .plan-card.recommended {
+            border-color: var(--success);
+        }
+
+        .plan-card.recommended::before {
+            content: "99% des TPE";
+            position: absolute;
+            top: -0.75rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .plan-card .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-card .plan-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .plan-card .plan-price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--gray-600);
+        }
+
+        .plan-card .plan-description {
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .plan-card .plan-features {
+            list-style: none;
+        }
+
+        .plan-card .plan-features li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-600);
+        }
+
+        .plan-card .plan-features li::before {
+            content: "✓";
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .plan-card .btn {
+            display: block;
+            width: 100%;
+            padding: 0.875rem;
+            margin-top: 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .plan-card .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .plan-card .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .plan-card .btn-outline {
+            background: white;
+            color: var(--gray-800);
+            border: 2px solid var(--gray-200);
+        }
+
+        .plan-card .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Comparison section */
+        .comparison-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .comparison-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .comparison-table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table .price-cell {
+            font-weight: 700;
+        }
+
+        .comparison-table .azalplus-row {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+        }
+
+        .comparison-table .azalplus-row td {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .comparison-table .missing {
+            color: #ef4444;
+            font-size: 0.875rem;
+        }
+
+        .comparison-table .included {
+            color: var(--success);
+        }
+
+        .savings-banner {
+            background: var(--success);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .savings-banner .amount {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        /* FAQ */
+        .faq-section {
+            margin-bottom: 3rem;
+        }
+
+        .faq-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .faq-question {
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-question::after {
+            content: "+";
+            font-size: 1.25rem;
+            color: var(--gray-600);
+        }
+
+        .faq-item.open .faq-question::after {
+            content: "−";
+        }
+
+        .faq-answer {
+            padding: 0 1.5rem 1rem;
+            color: var(--gray-600);
+            display: none;
+        }
+
+        .faq-item.open .faq-answer {
+            display: block;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 1.5rem;
+            padding: 3rem;
+            color: white;
+        }
+
+        .cta-section h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .cta-section .btn {
+            display: inline-block;
+            background: white;
+            color: var(--primary);
+            padding: 1rem 2.5rem;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .cta-section .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .pricing-header h1 {
+                font-size: 1.75rem;
+            }
+
+            .free-section {
+                padding: 2rem 1.5rem;
+            }
+
+            .free-price .amount {
+                font-size: 3rem;
+            }
+
+            .comparison-table {
+                font-size: 0.875rem;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="pricing-page">
+        <!-- Header -->
+        <header class="pricing-header">
+            <h1>Tarifs AZALPLUS</h1>
+            <p class="subtitle">L'ERP complet pour les TPE. Vraiment gratuit.</p>
+            <span class="highlight">Une TPE ne paye jamais</span>
+        </header>
+
+        <!-- Section Gratuit -->
+        <section class="free-section">
+            <h2>Offre TPE</h2>
+            <p class="tagline">Tout ce dont une TPE a besoin. Sans jamais sortir la carte bleue.</p>
+
+            <div class="free-features">
+                <div class="free-feature-group">
+                    <h3>ERP Complet</h3>
+                    <ul>
+                        <li>Gestion clients & contacts</li>
+                        <li>Devis & factures illimités</li>
+                        <li>Interventions & planning</li>
+                        <li>Tableaux de bord</li>
+                    </ul>
+                </div>
+
+                <div class="free-feature-group">
+                    <h3>Facturation Électronique 2026</h3>
+                    <ul>
+                        <li>Factur-X illimité (XML EN16931)</li>
+                        <li>Envoi PPF illimité</li>
+                        <li>Réception factures fournisseurs</li>
+                        <li>Conformité garantie</li>
+                    </ul>
+                </div>
+
+                <div class="free-feature-group">
+                    <h3>Signature Électronique</h3>
+                    <ul>
+                        <li>Signatures simples illimitées</li>
+                        <li>Preuve légale eIDAS</li>
+                        <li>Devis signés par vos clients</li>
+                        <li>Horodatage certifié</li>
+                    </ul>
+                </div>
+
+                <div class="free-feature-group">
+                    <h3>Coffre-fort & Sauvegarde</h3>
+                    <ul>
+                        <li>100 documents/mois archivés</li>
+                        <li>2 Go de stockage</li>
+                        <li>Backup quotidien (30 jours)</li>
+                        <li>Téléchargement des sauvegardes</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="free-price">
+                <div class="amount">0€</div>
+                <div class="period">par mois, pour toujours</div>
+            </div>
+        </section>
+
+        <!-- Signatures -->
+        <section class="signatures-section">
+            <h2>Signatures électroniques</h2>
+            <p class="intro">La signature simple couvre 99% des besoins d'une TPE. Les signatures certifiées sont disponibles pour les cas exceptionnels.</p>
+
+            <div class="signature-cards">
+                <div class="signature-card free">
+                    <div class="level">Niveau eIDAS</div>
+                    <div class="name">Signature Simple</div>
+                    <div class="price">GRATUIT <span>illimité</span></div>
+                    <p class="description">Code envoyé par email + preuve horodatée. Valeur légale pleine.</p>
+                    <ul class="usages">
+                        <li>Devis acceptés par vos clients</li>
+                        <li>Bons de commande</li>
+                        <li>CGV et mentions légales</li>
+                        <li>Mandats SEPA</li>
+                    </ul>
+                </div>
+
+                <div class="signature-card">
+                    <div class="level">Niveau eIDAS</div>
+                    <div class="name">Signature Advanced</div>
+                    <div class="price">1€ <span>/ signature</span></div>
+                    <p class="description">Certificat électronique via Yousign. Sécurité renforcée.</p>
+                    <ul class="usages">
+                        <li>Contrats > 10 000€</li>
+                        <li>Engagements pluriannuels</li>
+                        <li>Documents sensibles</li>
+                    </ul>
+                </div>
+
+                <div class="signature-card">
+                    <div class="level">Niveau eIDAS</div>
+                    <div class="name">Signature Qualified</div>
+                    <div class="price">3€ <span>/ signature</span></div>
+                    <p class="description">HSM certifié eIDAS via Certinomis. Équivalent signature manuscrite.</p>
+                    <ul class="usages">
+                        <li>Actes notariés</li>
+                        <li>Secteurs réglementés</li>
+                        <li>Marchés publics</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Plans (si dépassement) -->
+        <section class="plans-section">
+            <h2>Plans d'abonnement</h2>
+            <p class="intro">Le plan TPE suffit à 99% des petites entreprises. Les plans supérieurs sont disponibles si vous dépassez les limites.</p>
+
+            <div class="plans-grid">
+                <div class="plan-card recommended">
+                    <div class="plan-name">TPE</div>
+                    <div class="plan-price">0€ <span>/ mois</span></div>
+                    <p class="plan-description">Pour les artisans, commerçants et indépendants</p>
+                    <ul class="plan-features">
+                        <li>100 documents/mois</li>
+                        <li>2 Go de stockage</li>
+                        <li>Signatures simples illimitées</li>
+                        <li>Backup quotidien (30 jours)</li>
+                        <li>Factur-X & PPF illimités</li>
+                        <li>Support par email</li>
+                    </ul>
+                    <a href="/register" class="btn btn-primary">Commencer gratuitement</a>
+                </div>
+
+                <div class="plan-card">
+                    <div class="plan-name">PME</div>
+                    <div class="plan-price">19€ <span>/ mois</span></div>
+                    <p class="plan-description">Pour les entreprises en croissance</p>
+                    <ul class="plan-features">
+                        <li>1 000 documents/mois</li>
+                        <li>50 Go de stockage</li>
+                        <li>Signatures simples illimitées</li>
+                        <li>Backup horaire (90 jours)</li>
+                        <li>Restauration point-in-time</li>
+                        <li>Support prioritaire</li>
+                    </ul>
+                    <a href="/contact" class="btn btn-outline">Nous contacter</a>
+                </div>
+
+                <div class="plan-card">
+                    <div class="plan-name">ETI</div>
+                    <div class="plan-price">49€ <span>/ mois</span></div>
+                    <p class="plan-description">Pour les grandes structures</p>
+                    <ul class="plan-features">
+                        <li>Documents illimités</li>
+                        <li>500 Go de stockage</li>
+                        <li>Signatures simples illimitées</li>
+                        <li>Backup temps réel (1 an)</li>
+                        <li>Réplication multi-région</li>
+                        <li>Support dédié</li>
+                    </ul>
+                    <a href="/contact" class="btn btn-outline">Nous contacter</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparaison -->
+        <section class="comparison-section">
+            <h2>Comparatif avec la concurrence</h2>
+            <p style="color: var(--gray-600); margin-bottom: 1.5rem;">Pour une TPE : 15 factures/mois, 5 devis signés</p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Solution</th>
+                        <th>Coût/mois</th>
+                        <th>Ce qui manque</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Sage Compta</td>
+                        <td class="price-cell">30€</td>
+                        <td><span class="missing">Factur-X, signatures</span></td>
+                    </tr>
+                    <tr>
+                        <td>EBP</td>
+                        <td class="price-cell">25€</td>
+                        <td><span class="missing">Factur-X, signatures</span></td>
+                    </tr>
+                    <tr>
+                        <td>Yousign seul</td>
+                        <td class="price-cell">9€</td>
+                        <td><span class="missing">ERP, Factur-X</span></td>
+                    </tr>
+                    <tr>
+                        <td>Sage + Yousign</td>
+                        <td class="price-cell">39€</td>
+                        <td><span class="missing">Factur-X</span></td>
+                    </tr>
+                    <tr>
+                        <td>Pennylane</td>
+                        <td class="price-cell">49€</td>
+                        <td><span class="missing">Signatures limitées</span></td>
+                    </tr>
+                    <tr class="azalplus-row">
+                        <td>AZALPLUS</td>
+                        <td class="price-cell">0€</td>
+                        <td><span class="included">Tout inclus ✓</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="savings-banner">
+                <span>Économie annuelle vs Sage+Yousign</span>
+                <span class="amount">468€</span>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section class="faq-section">
+            <h2>Questions fréquentes</h2>
+
+            <div class="faq-item open">
+                <div class="faq-question">Pourquoi c'est gratuit ?</div>
+                <div class="faq-answer">
+                    Nous avons fait le choix de ne facturer que ce qui nous coûte réellement cher : les signatures certifiées (ADVANCED et QUALIFIED) qui passent par des prestataires externes comme Yousign ou Certinomis. Le reste (ERP, Factur-X, signatures simples, backup) ne nous coûte presque rien, donc on l'offre.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">La signature simple a-t-elle une valeur légale ?</div>
+                <div class="faq-answer">
+                    Oui, absolument. La signature simple est conforme au règlement eIDAS (niveau SIMPLE). Elle constitue une preuve de consentement valable juridiquement. Elle est parfaite pour les devis, CGV, bons de commande, mandats SEPA. Pour les contrats très importants ou les actes notariés, utilisez les signatures ADVANCED ou QUALIFIED.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Qu'est-ce qui est inclus dans Factur-X ?</div>
+                <div class="faq-answer">
+                    Factur-X est le format de facturation électronique obligatoire en France à partir de 2026. AZALPLUS génère automatiquement vos factures au format Factur-X (XML EN16931) et les transmet au Portail Public de Facturation (PPF). C'est entièrement gratuit et illimité.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Mes données sont-elles sécurisées ?</div>
+                <div class="faq-answer">
+                    Vos documents sont archivés avec un hash SHA-256 et un horodatage certifié (TSA RFC 3161), garantissant leur intégrité. Les backups sont automatiques et chiffrés. Hébergement en France, conforme RGPD.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Que se passe-t-il si je dépasse 100 documents/mois ?</div>
+                <div class="faq-answer">
+                    Vous serez prévenu à l'approche de la limite. Vous pourrez alors passer au plan PME (19€/mois) qui offre 1000 documents/mois. Mais honnêtement, 99% des TPE ne dépassent jamais cette limite.
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section">
+            <h2>Prêt à simplifier votre gestion ?</h2>
+            <p>Créez votre compte en 2 minutes. Pas de carte bancaire requise.</p>
+            <a href="/register" class="btn">Commencer gratuitement</a>
+        </section>
+    </div>
+
+    <script>
+        // FAQ toggle
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentElement;
+                item.classList.toggle('open');
+            });
+        });
+    </script>
+</body>
+</html>
