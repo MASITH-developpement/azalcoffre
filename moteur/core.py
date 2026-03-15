@@ -409,6 +409,14 @@ try:
 except ImportError as e:
     logger.warning("facturx_routes_not_available", error=str(e))
 
+# Import Bancaire Routes (CSV, OFX, QIF, CAMT.053, MT940)
+try:
+    from .api_import_bancaire import router as import_bancaire_router
+    app.include_router(import_bancaire_router, tags=["Import Bancaire"])
+    logger.info("import_bancaire_routes_loaded")
+except ImportError as e:
+    logger.warning("import_bancaire_routes_not_available", error=str(e))
+
 # Generated Endpoints (Auto-created by Guardian)
 try:
     from .generated_endpoints import generated_router
@@ -456,6 +464,49 @@ async def api_utilisateurs(user: dict = Depends(require_auth)):
                 "role": r["role"]
             })
     return {"items": users, "total": len(users)}
+
+
+@app.get("/api/select/{module}", tags=["Selects"])
+async def api_select_options(module: str, user: dict = Depends(require_auth)):
+    """Retourne les options pour les selects de relations (id + libellé)."""
+    tenant_id = user.get("tenant_id")
+    module_lower = module.lower().replace("-", "_")
+
+    # Mapping des colonnes d'affichage par module
+    display_columns = {
+        "clients": "COALESCE(name, '') as display_name",
+        "donneur_ordre": "COALESCE(nom, '') as display_name",
+        "employes": "COALESCE(prenom || ' ' || nom, nom, '') as display_name",
+        "fournisseurs": "COALESCE(nom, raison_sociale, '') as display_name",
+        "produits": "COALESCE(nom, designation, '') as display_name",
+        "projets": "COALESCE(nom, titre, '') as display_name",
+        "contrats": "COALESCE(numero, reference, '') as display_name",
+    }
+
+    display_col = display_columns.get(module_lower, "COALESCE(nom, name, code, numero, id::text) as display_name")
+
+    with Database.get_session() as session:
+        from sqlalchemy import text
+        try:
+            query = text(f"""
+                SELECT id, {display_col}
+                FROM azalplus.{module_lower}
+                WHERE tenant_id = :tenant_id
+                AND (deleted_at IS NULL OR deleted_at > NOW())
+                ORDER BY display_name
+                LIMIT 500
+            """)
+            result = session.execute(query, {"tenant_id": str(tenant_id)})
+            items = []
+            for row in result:
+                items.append({
+                    "id": str(row[0]),
+                    "nom": row[1] or str(row[0])
+                })
+            return {"items": items, "total": len(items)}
+        except Exception as e:
+            logger.warning("select_options_error", module=module, error=str(e))
+            return {"items": [], "total": 0}
 
 # =============================================================================
 # Auto-discovery des modules Python custom (app/modules/*)

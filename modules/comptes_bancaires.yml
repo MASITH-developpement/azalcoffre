@@ -1,0 +1,318 @@
+# =============================================================================
+# AZALPLUS - Module Comptes Bancaires
+# =============================================================================
+# Gestion des comptes bancaires pour le rapprochement automatique.
+# Supporte: Swan (BaaS intégré), agrégateurs (Bridge, Powens), import manuel
+#
+# Types de comptes:
+# - SWAN: Compte bancaire intégré via Swan BaaS
+# - BRIDGE: Agrégation via Bridge (Bankin')
+# - POWENS: Agrégation via Powens (Budget Insight)
+# - MANUEL: Import manuel (CSV, OFX, CAMT.053)
+# =============================================================================
+
+nom: Comptes Bancaires
+nom_pluriel: Comptes Bancaires
+icone: building-columns
+menu: Finance
+description: "Comptes bancaires: intégrés, agrégés ou manuels"
+ordre_menu: 2
+
+champs:
+  # ===========================================================================
+  # IDENTIFICATION
+  # ===========================================================================
+  - nom: code
+    type: text
+    libelle: "Code"
+    obligatoire: true
+    unique: true
+    description: "Code unique du compte (ex: BQ-001)"
+    auto_genere: true
+    format: "BQ-{####}"
+
+  - nom: libelle
+    type: text
+    libelle: "Libellé"
+    obligatoire: true
+    description: "Nom du compte (ex: Compte courant CA)"
+
+  - nom: type_compte
+    type: select
+    libelle: "Type"
+    obligatoire: true
+    options:
+      - COURANT
+      - EPARGNE
+      - PROFESSIONNEL
+      - CARTE
+    defaut: COURANT
+    description: "Type de compte bancaire"
+
+  # ===========================================================================
+  # COORDONNEES BANCAIRES
+  # ===========================================================================
+  - nom: iban
+    type: text
+    libelle: "IBAN"
+    obligatoire: true
+    unique: true
+    description: "IBAN du compte (FR76...)"
+
+  - nom: bic
+    type: text
+    libelle: "BIC"
+    obligatoire: false
+    description: "Code BIC/SWIFT"
+
+  - nom: banque
+    type: text
+    libelle: "Banque"
+    obligatoire: true
+    description: "Nom de la banque"
+    autocompletion: true
+
+  - nom: agence
+    type: text
+    libelle: "Agence"
+    obligatoire: false
+    description: "Code ou nom de l'agence"
+
+  # ===========================================================================
+  # PROVIDER / SOURCE
+  # ===========================================================================
+  - nom: provider
+    type: select
+    libelle: "Source"
+    obligatoire: true
+    options:
+      - SWAN
+      - BRIDGE
+      - POWENS
+      - FINTECTURE
+      - STRIPE
+      - QONTO
+      - SHINE
+      - SUMUP
+      - MANUEL
+    defaut: MANUEL
+    description: "Source des données bancaires"
+
+  - nom: provider_account_id
+    type: text
+    libelle: "ID Provider"
+    obligatoire: false
+    description: "Identifiant du compte chez le provider"
+
+  - nom: provider_status
+    type: text
+    libelle: "Statut Provider"
+    obligatoire: false
+    readonly: true
+    description: "Statut de connexion au provider"
+
+  - nom: derniere_synchro
+    type: datetime
+    libelle: "Dernière synchro"
+    obligatoire: false
+    readonly: true
+    description: "Date/heure de la dernière synchronisation"
+
+  - nom: erreur_synchro
+    type: text
+    libelle: "Erreur synchro"
+    obligatoire: false
+    readonly: true
+    description: "Message d'erreur si échec de synchronisation"
+
+  # ===========================================================================
+  # SOLDES
+  # ===========================================================================
+  - nom: solde_actuel
+    type: number
+    libelle: "Solde actuel"
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: "Solde disponible (mis à jour automatiquement)"
+
+  - nom: solde_comptable
+    type: number
+    libelle: "Solde comptable"
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: "Solde comptable (après rapprochement)"
+
+  - nom: solde_releve
+    type: number
+    libelle: "Solde dernier relevé"
+    obligatoire: false
+    defaut: 0
+    description: "Solde du dernier relevé bancaire"
+
+  - nom: date_solde_releve
+    type: date
+    libelle: "Date relevé"
+    obligatoire: false
+    description: "Date du dernier relevé bancaire"
+
+  - nom: devise
+    type: text
+    libelle: "Devise"
+    obligatoire: true
+    defaut: "EUR"
+    description: "Devise du compte"
+
+  # ===========================================================================
+  # COMPTABILITE
+  # ===========================================================================
+  - nom: compte_comptable
+    type: text
+    libelle: "Compte comptable"
+    obligatoire: false
+    description: "Numéro de compte comptable (512xxx)"
+    defaut: "512000"
+
+  - nom: journal_comptable
+    type: text
+    libelle: "Journal"
+    obligatoire: false
+    description: "Code journal comptable (BQ, CA)"
+    defaut: "BQ"
+
+  # ===========================================================================
+  # RAPPROCHEMENT
+  # ===========================================================================
+  - nom: rapprochement_auto
+    type: boolean
+    libelle: "Rapprochement auto"
+    obligatoire: false
+    defaut: true
+    description: "Activer le rapprochement automatique"
+
+  - nom: seuil_confiance
+    type: number
+    libelle: "Seuil confiance (%)"
+    obligatoire: false
+    defaut: 95
+    description: "Seuil de confiance IA pour rapprochement auto (0-100)"
+
+  - nom: tolerance_montant
+    type: number
+    libelle: "Tolérance montant"
+    obligatoire: false
+    defaut: 0
+    description: "Tolérance sur les montants (0 = exact)"
+
+  - nom: dernier_rapprochement
+    type: datetime
+    libelle: "Dernier rapprochement"
+    obligatoire: false
+    readonly: true
+    description: "Date du dernier rapprochement effectué"
+
+  # ===========================================================================
+  # STATISTIQUES
+  # ===========================================================================
+  - nom: nb_mouvements_total
+    type: number
+    libelle: "Mouvements totaux"
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: "Nombre total de mouvements"
+
+  - nom: nb_mouvements_rapproches
+    type: number
+    libelle: "Mouvements rapprochés"
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: "Nombre de mouvements rapprochés"
+
+  - nom: taux_rapprochement
+    type: number
+    libelle: "Taux rapprochement (%)"
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: "Pourcentage de mouvements rapprochés"
+
+  # ===========================================================================
+  # STATUT
+  # ===========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    obligatoire: true
+    options:
+      - ACTIF
+      - INACTIF
+      - ERREUR
+      - CLOTURE
+    defaut: ACTIF
+    description: "Statut du compte"
+
+  - nom: regles_rapprochement
+    type: json
+    libelle: "Règles apprises"
+    obligatoire: false
+    readonly: true
+    description: "Règles de rapprochement apprises automatiquement (JSON)"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+    obligatoire: false
+    description: "Notes internes"
+
+# Index pour performances
+index:
+  - iban
+  - code
+  - provider
+  - statut
+  - banque
+
+# Champs de recherche
+recherche:
+  - code
+  - libelle
+  - iban
+  - banque
+
+# Affichage liste
+affichage_liste:
+  - code
+  - libelle
+  - banque
+  - iban
+  - solde_actuel
+  - provider
+  - taux_rapprochement
+  - statut
+
+# Workflow
+workflow:
+  ACTIF -> INACTIF: "Désactiver"
+  INACTIF -> ACTIF: "Réactiver"
+  ACTIF -> ERREUR: null
+  ERREUR -> ACTIF: "Corriger"
+  ACTIF -> CLOTURE: "Clôturer"
+  INACTIF -> CLOTURE: "Clôturer"
+
+# Actions disponibles
+actions:
+  - synchroniser
+  - rapprocher_tout
+  - exporter_releve
+  - importer_releve
+  - verifier_connexion
+
+# Alertes automatiques (Marceau)
+marceau:
+  alertes:
+    - si statut = ERREUR: "Compte en erreur - vérifier la connexion"
+    - si taux_rapprochement < 80 et nb_mouvements_total > 10: "Taux de rapprochement bas"
+    - si derniere_synchro < aujourd'hui - 1 jour et provider != MANUEL: "Synchronisation en retard"

@@ -1,0 +1,444 @@
+# =============================================================================
+# AZALPLUS - Module Mouvements Bancaires
+# =============================================================================
+# Transactions bancaires avec rapprochement automatique intégré.
+# Sources: Swan (BaaS), agrégateurs (Bridge, Powens), import fichiers
+#
+# RAPPROCHEMENT AUTOMATIQUE (5 niveaux):
+# 1. Métadonnées Fintecture (payment_id → facture)
+# 2. Référence exacte (REF-xxx dans libellé → facture.number)
+# 3. Règles apprises (pattern libellé + tiers → compte comptable)
+# 4. Montant unique (1 seule facture du même montant ± tolérance)
+# 5. IA prédictive (score ≥ 95% → auto-rapprochement)
+#
+# Statuts: A_TRAITER → EN_COURS → RAPPROCHE | EXCLU | ERREUR
+# =============================================================================
+
+nom: Mouvements Bancaires
+nom_pluriel: Mouvements Bancaires
+icone: arrow-left-right
+menu: Finance
+description: "Mouvements bancaires: import, synchronisation et rapprochement"
+ordre_menu: 3
+
+champs:
+  # ===========================================================================
+  # IDENTIFICATION
+  # ===========================================================================
+  - nom: reference
+    type: text
+    libelle: "Référence"
+    obligatoire: true
+    unique: true
+    description: "Référence unique du mouvement"
+    auto_genere: true
+    format: "MVT-{AAAA}{MM}-{#####}"
+
+  - nom: compte_id
+    type: relation
+    libelle: "Compte"
+    obligatoire: true
+    relation: Comptes_Bancaires
+    description: "Compte bancaire concerné"
+    autocompletion: true
+
+  # ===========================================================================
+  # TRANSACTION
+  # ===========================================================================
+  - nom: date_operation
+    type: date
+    libelle: "Date opération"
+    obligatoire: true
+    description: "Date de l'opération"
+
+  - nom: date_valeur
+    type: date
+    libelle: "Date valeur"
+    obligatoire: false
+    description: "Date de valeur bancaire"
+
+  - nom: libelle
+    type: text
+    libelle: "Libellé"
+    obligatoire: true
+    description: "Libellé de l'opération bancaire"
+
+  - nom: libelle_complementaire
+    type: text
+    libelle: "Libellé complémentaire"
+    obligatoire: false
+    description: "Informations complémentaires"
+
+  - nom: sens
+    type: select
+    libelle: "Sens"
+    obligatoire: true
+    options:
+      - CREDIT
+      - DEBIT
+    description: "Crédit (entrée) ou Débit (sortie)"
+
+  - nom: montant
+    type: number
+    libelle: "Montant"
+    obligatoire: true
+    description: "Montant de l'opération (toujours positif)"
+
+  - nom: devise
+    type: text
+    libelle: "Devise"
+    obligatoire: true
+    defaut: "EUR"
+    description: "Devise du mouvement"
+
+  - nom: type_operation
+    type: select
+    libelle: "Type"
+    obligatoire: false
+    options:
+      - VIREMENT_SEPA
+      - VIREMENT_INSTANTANE
+      - PRELEVEMENT
+      - CARTE
+      - CHEQUE
+      - ESPECES
+      - FRAIS
+      - INTERET
+      - AUTRE
+    defaut: AUTRE
+    description: "Type d'opération bancaire"
+
+  # ===========================================================================
+  # TIERS
+  # ===========================================================================
+  - nom: tiers_libelle
+    type: text
+    libelle: "Tiers"
+    obligatoire: false
+    description: "Nom du tiers (émetteur ou bénéficiaire)"
+    autocompletion: true
+
+  - nom: tiers_iban
+    type: text
+    libelle: "IBAN tiers"
+    obligatoire: false
+    description: "IBAN du tiers si disponible"
+
+  - nom: tiers_reference
+    type: text
+    libelle: "Référence tiers"
+    obligatoire: false
+    description: "Référence communiquée par le tiers"
+
+  # ===========================================================================
+  # PROVIDER / SOURCE
+  # ===========================================================================
+  - nom: source
+    type: select
+    libelle: "Source"
+    obligatoire: true
+    options:
+      - SWAN
+      - BRIDGE
+      - POWENS
+      - FINTECTURE
+      - IMPORT_CSV
+      - IMPORT_OFX
+      - IMPORT_CAMT053
+      - MANUEL
+    defaut: MANUEL
+    description: "Origine du mouvement"
+
+  - nom: provider_id
+    type: text
+    libelle: "ID Provider"
+    obligatoire: false
+    description: "Identifiant unique chez le provider"
+    unique: true
+
+  - nom: provider_data
+    type: json
+    libelle: "Données provider"
+    obligatoire: false
+    readonly: true
+    description: "Données brutes du provider (JSON)"
+
+  # ===========================================================================
+  # RAPPROCHEMENT
+  # ===========================================================================
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    obligatoire: true
+    options:
+      - A_TRAITER
+      - EN_COURS
+      - RAPPROCHE
+      - EXCLU
+      - ERREUR
+    defaut: A_TRAITER
+    description: "Statut du rapprochement"
+
+  - nom: methode_rapprochement
+    type: select
+    libelle: "Méthode"
+    obligatoire: false
+    options:
+      - FINTECTURE_METADATA
+      - REFERENCE_EXACTE
+      - REGLE_APPRISE
+      - MONTANT_UNIQUE
+      - IA_PREDICTION
+      - MANUEL
+    description: "Méthode utilisée pour le rapprochement"
+
+  - nom: confiance
+    type: number
+    libelle: "Confiance (%)"
+    obligatoire: false
+    description: "Score de confiance du rapprochement (0-100)"
+
+  - nom: date_rapprochement
+    type: datetime
+    libelle: "Date rapprochement"
+    obligatoire: false
+    readonly: true
+    description: "Date/heure du rapprochement"
+
+  - nom: rapproche_par
+    type: text
+    libelle: "Rapproché par"
+    obligatoire: false
+    readonly: true
+    description: "AUTO ou ID utilisateur"
+
+  # ===========================================================================
+  # DOCUMENT LIE (1 mouvement → 1+ documents)
+  # ===========================================================================
+  - nom: document_type
+    type: select
+    libelle: "Type document"
+    obligatoire: false
+    options:
+      - FACTURE
+      - AVOIR
+      - PAIEMENT
+      - NOTE_FRAIS
+      - SALAIRE
+      - CHARGE
+      - AUTRE
+    description: "Type de document lié"
+
+  - nom: document_id
+    type: text
+    libelle: "ID Document"
+    obligatoire: false
+    description: "ID du document principal lié"
+
+  - nom: documents_lies
+    type: json
+    libelle: "Documents liés"
+    obligatoire: false
+    description: "Liste des documents liés si plusieurs (JSON)"
+
+  - nom: facture_id
+    type: relation
+    libelle: "Facture"
+    obligatoire: false
+    relation: Factures
+    description: "Facture liée (si paiement client)"
+    autocompletion: true
+
+  - nom: client_id
+    type: relation
+    libelle: "Client"
+    obligatoire: false
+    relation: Clients
+    description: "Client identifié"
+    autocompletion: true
+
+  - nom: fournisseur_id
+    type: relation
+    libelle: "Fournisseur"
+    obligatoire: false
+    relation: Fournisseurs
+    description: "Fournisseur identifié"
+    autocompletion: true
+
+  # ===========================================================================
+  # COMPTABILITE
+  # ===========================================================================
+  - nom: compte_comptable
+    type: text
+    libelle: "Compte comptable"
+    obligatoire: false
+    description: "N° compte comptable affecté"
+
+  - nom: compte_contrepartie
+    type: text
+    libelle: "Contrepartie"
+    obligatoire: false
+    description: "N° compte de contrepartie"
+
+  - nom: journal
+    type: text
+    libelle: "Journal"
+    obligatoire: false
+    description: "Code journal comptable"
+
+  - nom: ecriture_id
+    type: text
+    libelle: "Écriture comptable"
+    obligatoire: false
+    description: "ID de l'écriture générée"
+
+  # ===========================================================================
+  # ANOMALIES / ALERTES
+  # ===========================================================================
+  - nom: anomalie
+    type: boolean
+    libelle: "Anomalie"
+    obligatoire: false
+    defaut: false
+    description: "Mouvement signalé comme anomalie"
+
+  - nom: type_anomalie
+    type: select
+    libelle: "Type anomalie"
+    obligatoire: false
+    options:
+      - DOUBLON_POTENTIEL
+      - IBAN_MODIFIE
+      - MONTANT_INHABITUEL
+      - TIERS_INCONNU
+      - DEBIT_NON_AUTORISE
+    description: "Type d'anomalie détectée"
+
+  - nom: anomalie_message
+    type: text
+    libelle: "Message anomalie"
+    obligatoire: false
+    description: "Description de l'anomalie"
+
+  - nom: anomalie_resolue
+    type: boolean
+    libelle: "Résolue"
+    obligatoire: false
+    defaut: false
+    description: "Anomalie traitée"
+
+  - nom: resolution_note
+    type: textarea
+    libelle: "Note résolution"
+    obligatoire: false
+    description: "Note de résolution de l'anomalie"
+
+  # ===========================================================================
+  # EXCLUSION (compte 471)
+  # ===========================================================================
+  - nom: exclu_motif
+    type: select
+    libelle: "Motif exclusion"
+    obligatoire: false
+    options:
+      - EN_ATTENTE_JUSTIFICATIF
+      - REMBOURSEMENT_CLIENT
+      - ERREUR_BANCAIRE
+      - OPERATION_INTERNE
+      - AUTRE
+    description: "Motif si mouvement exclu temporairement"
+
+  - nom: exclu_note
+    type: textarea
+    libelle: "Note exclusion"
+    obligatoire: false
+    description: "Explication de l'exclusion"
+
+  - nom: exclu_echeance
+    type: date
+    libelle: "Échéance résolution"
+    obligatoire: false
+    description: "Date limite pour résoudre"
+
+  # ===========================================================================
+  # METADONNEES
+  # ===========================================================================
+  - nom: hash_doublon
+    type: text
+    libelle: "Hash"
+    obligatoire: false
+    readonly: true
+    description: "Hash pour détection doublons"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+    obligatoire: false
+    description: "Notes internes"
+
+# Index pour performances
+index:
+  - reference
+  - compte_id
+  - date_operation
+  - statut
+  - provider_id
+  - facture_id
+  - client_id
+  - hash_doublon
+
+# Champs de recherche
+recherche:
+  - reference
+  - libelle
+  - tiers_libelle
+  - montant
+
+# Affichage liste
+affichage_liste:
+  - date_operation
+  - libelle
+  - sens
+  - montant
+  - tiers_libelle
+  - statut
+  - confiance
+  - document_type
+
+# Workflow
+workflow:
+  A_TRAITER -> EN_COURS: null
+  A_TRAITER -> RAPPROCHE: "Rapprocher"
+  A_TRAITER -> EXCLU: "Exclure temporairement"
+  EN_COURS -> RAPPROCHE: "Valider"
+  EN_COURS -> EXCLU: "Exclure"
+  EN_COURS -> ERREUR: null
+  EXCLU -> A_TRAITER: "Réintégrer"
+  ERREUR -> A_TRAITER: "Corriger"
+
+# Actions disponibles
+actions:
+  - rapprocher_auto
+  - lier_facture
+  - lier_fournisseur
+  - marquer_anomalie
+  - exclure
+  - reintegrer
+  - generer_ecriture
+  - rechercher_doublon
+
+# Webhooks entrants
+webhooks:
+  - event: swan.transaction.booked
+    action: creer_mouvement
+  - event: fintecture.payment.completed
+    action: creer_mouvement_fintecture
+  - event: bridge.transaction.created
+    action: creer_mouvement
+
+# Alertes automatiques (Marceau)
+marceau:
+  alertes:
+    - si statut = A_TRAITER et date_operation < aujourd'hui - 2 jours: "Mouvement non traité depuis plus de 48h"
+    - si anomalie = true et anomalie_resolue = false: "Anomalie non résolue"
+    - si statut = EXCLU et exclu_echeance < aujourd'hui: "Exclusion arrivée à échéance"
