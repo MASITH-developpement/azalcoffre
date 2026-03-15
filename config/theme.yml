@@ -1,279 +1,634 @@
 # =============================================================================
-# AZALPLUS - Thème Dark Professionnel
+# AZALPLUS - Identite Visuelle Officielle v3
 # =============================================================================
-# Design moderne inspiré de la landing page AZALPLUS
-# Modifier ici = change TOUT le design automatiquement
+# Light Mode - Cible TPE francaises
+# Sidebar Bleu Marine + Fond Gris Clair + Accents Premium
+# Palette basee sur le logo (Bleu Roi #3454D1 + Accent #6B9FFF)
+# =============================================================================
 
-nom: "AZALPLUS Dark"
+nom: "AZALPLUS Light"
+version: "3.0"
+mode: "light"
 
-# -----------------------------------------------------------------------------
-# Couleurs
-# -----------------------------------------------------------------------------
+# =============================================================================
+# IDENTITE DE MARQUE (basee sur le logo)
+# =============================================================================
+marque:
+  # Couleurs officielles du logo
+  logo_primaire: "#3454D1"       # Bleu Roi - Cercle + "AZAL"
+  logo_accent: "#6B9FFF"         # Bleu Clair - Point + "PLUS"
+  logo_blanc: "#FFFFFF"          # Lettre A+
+
+  # Couleur sidebar (2 tons sous le bleu roi)
+  sidebar: "#1E3A8A"             # Bleu Marine
+
+  # Degrades officiels
+  degrade_primaire: "linear-gradient(135deg, #3454D1 0%, #2a44a8 100%)"
+  degrade_accent: "linear-gradient(135deg, #6B9FFF 0%, #4a6ae0 100%)"
+  degrade_hero: "linear-gradient(135deg, #3454D1 0%, #6B9FFF 100%)"
+  degrade_bouton: "linear-gradient(135deg, #3454D1 0%, #2a44a8 100%)"
+  degrade_danger: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)"
+  degrade_succes: "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+
+# =============================================================================
+# PALETTE COMPLETE AZALPLUS - LIGHT MODE
+# =============================================================================
 couleurs:
-  # Bleu AZALPLUS
+  # ---------------------------------------------------------------------------
+  # Gamme Bleu (du logo)
+  # ---------------------------------------------------------------------------
+  bleu_marine: "#1E3A8A"         # Sidebar
+  bleu_marine_hover: "#1e40af"   # Sidebar hover
+  bleu_roi: "#3454D1"            # Principal (logo)
+  bleu_roi_hover: "#2a44a8"      # Hover boutons
+  bleu_clair: "#6B9FFF"          # Accent (logo)
+  bleu_pale: "#EEF2FF"           # Fonds accentes
+  bleu_tres_pale: "#F5F8FF"      # Hover lignes
+
+  # Alias compatibilite
   primaire: "#3454D1"
   primaire_fonce: "#2a44a8"
   primaire_clair: "#6B9FFF"
 
-  # Sidebar sombre AZALPLUS
-  sidebar_fond: "#0a0e1a"
-  sidebar_texte: "#94A3B8"
-  sidebar_texte_actif: "#FFFFFF"
-  sidebar_hover: "#1a1f36"
-  sidebar_actif: "#3454D1"
+  # ---------------------------------------------------------------------------
+  # Fonds Light Mode
+  # ---------------------------------------------------------------------------
+  fond_page: "#F1F5F9"           # Fond general (gris clair)
+  fond_principal: "#FFFFFF"      # Cartes, modales
+  fond_secondaire: "#F8FAFC"     # Zones secondaires
+  fond_tertiaire: "#F1F5F9"      # Zones tertiaires
 
-  # Statuts
-  succes: "#10b981"
-  succes_clair: "#065f46"
-  attention: "#f59e0b"
-  attention_clair: "#92400e"
-  erreur: "#ef4444"
-  erreur_clair: "#991b1b"
-  info: "#3b82f6"
-  info_clair: "#1e40af"
-
-  # Palette Dark Mode
   blanc: "#FFFFFF"
-  noir: "#0f1225"
+  noir: "#1E293B"
 
-  # Gris inversés pour dark mode
-  gris_50: "#0f1225"        # Fond principal (le plus sombre)
-  gris_100: "#1a1f36"       # Cartes, surfaces élevées
-  gris_200: "#252d47"       # Bordures, séparateurs
-  gris_300: "#3a4558"       # Bordures actives
-  gris_400: "#4a5568"       # Texte désactivé
-  gris_500: "#64748b"       # Texte secondaire
-  gris_600: "#94a3b8"       # Texte normal
-  gris_700: "#cbd5e1"       # Texte important
-  gris_800: "#e2e8f0"       # Titres
-  gris_900: "#f8fafc"       # Texte principal (le plus clair)
+  # ---------------------------------------------------------------------------
+  # Textes Light Mode
+  # ---------------------------------------------------------------------------
+  texte_principal: "#1E293B"     # Titres, texte important
+  texte_secondaire: "#475569"    # Texte normal
+  texte_muted: "#94A3B8"         # Placeholders, desactive
+  texte_inverse: "#FFFFFF"       # Sur fond colore
 
-# -----------------------------------------------------------------------------
-# Typographie
-# -----------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # Bordures Light Mode
+  # ---------------------------------------------------------------------------
+  bordure: "#E2E8F0"             # Bordure par defaut
+  bordure_hover: "#CBD5E1"       # Bordure hover
+  bordure_focus: "#3454D1"       # Bordure focus (bleu roi)
+
+  # ---------------------------------------------------------------------------
+  # Sidebar Bleu Marine
+  # ---------------------------------------------------------------------------
+  sidebar_fond: "#1E3A8A"
+  sidebar_fond_hover: "#1e40af"
+  sidebar_fond_actif: "rgba(255, 255, 255, 0.1)"
+  sidebar_texte: "rgba(255, 255, 255, 0.7)"
+  sidebar_texte_actif: "#FFFFFF"
+  sidebar_texte_muted: "rgba(255, 255, 255, 0.4)"
+  sidebar_bordure: "rgba(255, 255, 255, 0.1)"
+  sidebar_accent: "#6B9FFF"
+
+  # ---------------------------------------------------------------------------
+  # Statuts
+  # ---------------------------------------------------------------------------
+  succes: "#10B981"
+  succes_hover: "#059669"
+  succes_pale: "#D1FAE5"
+  succes_texte: "#047857"
+
+  attention: "#F59E0B"
+  attention_hover: "#D97706"
+  attention_pale: "#FEF3C7"
+  attention_texte: "#92400E"
+
+  erreur: "#EF4444"
+  erreur_hover: "#DC2626"
+  erreur_pale: "#FEE2E2"
+  erreur_texte: "#B91C1C"
+
+  info: "#6B9FFF"
+  info_pale: "#EEF2FF"
+  info_texte: "#3454D1"
+
+# =============================================================================
+# TYPOGRAPHIE (+2px pour lisibilite TPE)
+# =============================================================================
 typographie:
   police: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-  taille_base: "14px"
-  taille_petite: "13px"
-  taille_grande: "16px"
-  taille_titre: "20px"
+  police_mono: "'JetBrains Mono', 'Fira Code', monospace"
 
-# -----------------------------------------------------------------------------
-# Espacement
-# -----------------------------------------------------------------------------
+  # Tailles (augmentees de 2px)
+  taille_xs: "13px"
+  taille_petite: "15px"
+  taille_base: "16px"
+  taille_grande: "18px"
+  taille_titre: "22px"
+  taille_h1: "34px"
+  taille_h2: "26px"
+  taille_h3: "22px"
+  taille_h4: "18px"
+
+  # Poids
+  poids_normal: "400"
+  poids_medium: "500"
+  poids_semibold: "600"
+  poids_bold: "700"
+  poids_extrabold: "800"
+
+  # Hauteur de ligne
+  ligne_base: "1.5"
+  ligne_titre: "1.2"
+  ligne_compacte: "1.3"
+
+# =============================================================================
+# ESPACEMENT
+# =============================================================================
 espacement:
+  xxs: "2px"
   xs: "4px"
   sm: "8px"
   md: "16px"
   lg: "24px"
   xl: "32px"
+  xxl: "48px"
+  xxxl: "64px"
 
-# -----------------------------------------------------------------------------
-# Bordures
-# -----------------------------------------------------------------------------
+# =============================================================================
+# BORDURES
+# =============================================================================
 bordures:
-  rayon: "8px"
-  rayon_grand: "12px"
-  couleur: "#252d47"
+  rayon_xs: "4px"
+  rayon_sm: "6px"
+  rayon: "10px"
+  rayon_md: "12px"
+  rayon_lg: "14px"
+  rayon_xl: "16px"
+  rayon_full: "9999px"
+  couleur: "#E2E8F0"
+  couleur_hover: "#CBD5E1"
+  couleur_focus: "#3454D1"
 
-# -----------------------------------------------------------------------------
-# Ombres (adaptées au dark mode)
-# -----------------------------------------------------------------------------
+# =============================================================================
+# OMBRES (Light Mode)
+# =============================================================================
 ombres:
-  petite: "0 2px 4px rgba(0,0,0,0.3)"
-  moyenne: "0 4px 8px rgba(0,0,0,0.4)"
-  grande: "0 8px 24px rgba(0,0,0,0.5)"
+  xs: "0 1px 2px rgba(0, 0, 0, 0.05)"
+  sm: "0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)"
+  md: "0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06)"
+  lg: "0 10px 25px rgba(0, 0, 0, 0.1), 0 6px 10px rgba(0, 0, 0, 0.08)"
+  xl: "0 20px 40px rgba(0, 0, 0, 0.12)"
 
-# -----------------------------------------------------------------------------
-# Layout
-# -----------------------------------------------------------------------------
+  # Ombres colorees (boutons)
+  primaire: "0 4px 14px rgba(52, 84, 209, 0.35)"
+  primaire_hover: "0 6px 20px rgba(52, 84, 209, 0.45)"
+  danger: "0 4px 14px rgba(239, 68, 68, 0.35)"
+  succes: "0 4px 14px rgba(16, 185, 129, 0.35)"
+
+  # Sidebar
+  sidebar: "4px 0 20px rgba(0, 0, 0, 0.15)"
+
+# =============================================================================
+# LAYOUT
+# =============================================================================
 layout:
-  sidebar_largeur: "240px"
-  header_hauteur: "60px"
+  sidebar_largeur: "260px"
+  sidebar_largeur_collapsed: "72px"
+  header_hauteur: "64px"
   contenu_max: "1400px"
+  contenu_padding: "28px"
+  card_gap: "20px"
 
-# -----------------------------------------------------------------------------
-# Breakpoints (Mobile-First Responsive Design)
-# -----------------------------------------------------------------------------
+# =============================================================================
+# BREAKPOINTS (Mobile-First)
+# =============================================================================
 breakpoints:
+  xs: "320px"
   mobile: "480px"
   tablet: "768px"
   desktop: "1024px"
-  wide: "1440px"
+  wide: "1280px"
+  ultrawide: "1536px"
 
-# -----------------------------------------------------------------------------
-# Mobile Settings
-# -----------------------------------------------------------------------------
+# =============================================================================
+# MOBILE
+# =============================================================================
 mobile:
   touch_target_min: "44px"
   sidebar_behavior: "overlay"
   form_layout: "stacked"
   table_layout: "cards"
+  header_sticky: true
+  bottom_nav: true
 
-# -----------------------------------------------------------------------------
-# Composants - Boutons
-# -----------------------------------------------------------------------------
+# =============================================================================
+# COMPOSANTS - BOUTONS
+# =============================================================================
 boutons:
-  padding: "12px 20px"
-  rayon: "8px"
-  primaire_fond: "#3454D1"
+  padding: "11px 20px"
+  padding_sm: "8px 14px"
+  padding_lg: "14px 28px"
+  rayon: "10px"
+  taille_texte: "16px"
+  taille_texte_sm: "15px"
+  taille_texte_lg: "18px"
+
+  # Bouton primaire (degrade)
+  primaire_fond: "linear-gradient(135deg, #3454D1 0%, #2a44a8 100%)"
   primaire_texte: "#FFFFFF"
-  primaire_hover: "#2a44a8"
-  secondaire_fond: "#1a1f36"
-  secondaire_texte: "#FFFFFF"
-  secondaire_bordure: "#3a4558"
-  secondaire_hover: "#252d47"
-  danger_fond: "#ef4444"
+  primaire_hover: "linear-gradient(135deg, #2a44a8 0%, #1E3A8A 100%)"
+  primaire_ombre: "0 4px 14px rgba(52, 84, 209, 0.35)"
+  primaire_ombre_hover: "0 6px 20px rgba(52, 84, 209, 0.45)"
+
+  # Bouton secondaire
+  secondaire_fond: "#FFFFFF"
+  secondaire_texte: "#1E293B"
+  secondaire_bordure: "#E2E8F0"
+  secondaire_hover: "#F8FAFC"
+  secondaire_ombre: "0 1px 3px rgba(0, 0, 0, 0.08)"
+
+  # Bouton outline
+  outline_fond: "transparent"
+  outline_texte: "#3454D1"
+  outline_bordure: "#3454D1"
+  outline_hover: "#EEF2FF"
+
+  # Bouton danger
+  danger_fond: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)"
   danger_texte: "#FFFFFF"
-  danger_hover: "#dc2626"
+  danger_ombre: "0 4px 14px rgba(239, 68, 68, 0.35)"
 
-# -----------------------------------------------------------------------------
-# Composants - Inputs
-# -----------------------------------------------------------------------------
+  # Bouton succes
+  succes_fond: "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+  succes_texte: "#FFFFFF"
+  succes_ombre: "0 4px 14px rgba(16, 185, 129, 0.35)"
+
+# =============================================================================
+# COMPOSANTS - INPUTS
+# =============================================================================
 inputs:
-  padding: "12px 14px"
-  rayon: "8px"
-  fond: "#0f1225"
-  bordure: "#252d47"
+  padding: "12px 16px"
+  rayon: "10px"
+  taille_texte: "16px"
+  fond: "#FFFFFF"
+  fond_hover: "#FFFFFF"
+  bordure: "#E2E8F0"
+  bordure_hover: "#CBD5E1"
   bordure_focus: "#3454D1"
-  texte: "#f8fafc"
-  placeholder: "#64748b"
+  bordure_erreur: "#EF4444"
+  texte: "#1E293B"
+  placeholder: "#94A3B8"
+  disabled_fond: "#F1F5F9"
+  disabled_texte: "#94A3B8"
 
-# -----------------------------------------------------------------------------
-# Composants - Cartes
-# -----------------------------------------------------------------------------
+  # Focus ring
+  focus_ring: "0 0 0 3px rgba(52, 84, 209, 0.12)"
+  erreur_ring: "0 0 0 3px rgba(239, 68, 68, 0.12)"
+
+# =============================================================================
+# COMPOSANTS - CARTES
+# =============================================================================
 cartes:
-  rayon: "12px"
+  rayon: "14px"
   padding: "24px"
-  fond: "#1a1f36"
-  bordure: "#252d47"
-  ombre: "0 4px 12px rgba(0,0,0,0.3)"
+  padding_compact: "16px"
+  fond: "#FFFFFF"
+  bordure: "#E2E8F0"
+  bordure_hover: "#CBD5E1"
+  ombre: "0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)"
+  ombre_hover: "0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06)"
 
-# -----------------------------------------------------------------------------
-# Composants - Tables
-# -----------------------------------------------------------------------------
+  # Header/Footer carte
+  header_fond: "#F8FAFC"
+  footer_fond: "#F8FAFC"
+
+# =============================================================================
+# COMPOSANTS - TABLES
+# =============================================================================
 tables:
-  header_fond: "#0f1225"
-  header_texte: "#94a3b8"
-  ligne_fond: "#1a1f36"
-  ligne_hover: "#252d47"
-  ligne_texte: "#e2e8f0"
-  bordure: "#252d47"
-  padding: "14px 16px"
+  header_fond: "#F8FAFC"
+  header_texte: "#475569"
+  header_taille: "14px"
+  ligne_fond: "#FFFFFF"
+  ligne_hover: "#F5F8FF"
+  ligne_texte: "#1E293B"
+  bordure: "#E2E8F0"
+  padding: "16px 18px"
+  padding_compact: "12px 14px"
 
-# -----------------------------------------------------------------------------
-# Composants - Badges
-# -----------------------------------------------------------------------------
+# =============================================================================
+# COMPOSANTS - BADGES
+# =============================================================================
 badges:
-  padding: "6px 12px"
-  rayon: "20px"
+  padding: "5px 12px"
+  padding_lg: "6px 14px"
+  rayon: "6px"
+  rayon_pill: "9999px"
+  taille_texte: "14px"
 
   # Badges de statut
-  brouillon_fond: "#252d47"
-  brouillon_texte: "#94a3b8"
+  brouillon_fond: "#F1F5F9"
+  brouillon_texte: "#94A3B8"
 
-  envoye_fond: "rgba(59, 130, 246, 0.2)"
-  envoye_texte: "#60a5fa"
+  attente_fond: "#FEF3C7"
+  attente_texte: "#92400E"
 
-  accepte_fond: "rgba(16, 185, 129, 0.2)"
-  accepte_texte: "#34d399"
+  envoye_fond: "#EEF2FF"
+  envoye_texte: "#3454D1"
 
-  refuse_fond: "rgba(239, 68, 68, 0.2)"
-  refuse_texte: "#f87171"
+  valide_fond: "#D1FAE5"
+  valide_texte: "#047857"
 
-  attente_fond: "rgba(245, 158, 11, 0.2)"
-  attente_texte: "#fbbf24"
+  refuse_fond: "#FEE2E2"
+  refuse_texte: "#B91C1C"
 
-  termine_fond: "rgba(16, 185, 129, 0.2)"
-  termine_texte: "#34d399"
+  paye_fond: "#D1FAE5"
+  paye_texte: "#047857"
 
-  annule_fond: "rgba(239, 68, 68, 0.2)"
-  annule_texte: "#f87171"
+  impaye_fond: "#FEE2E2"
+  impaye_texte: "#B91C1C"
 
-# -----------------------------------------------------------------------------
-# Header
-# -----------------------------------------------------------------------------
+# =============================================================================
+# HEADER
+# =============================================================================
 header:
-  fond: "#1a1f36"
-  texte: "#f8fafc"
-  recherche_fond: "#0f1225"
-  recherche_bordure: "#252d47"
-  recherche_largeur: "350px"
-  bouton_ajouter: true
-  notifications: true
+  fond: "#FFFFFF"
+  texte: "#1E293B"
+  bordure: "#E2E8F0"
+  ombre: "0 1px 3px rgba(0, 0, 0, 0.08)"
 
-# -----------------------------------------------------------------------------
-# Login
-# -----------------------------------------------------------------------------
-login:
-  fond: "linear-gradient(135deg, #0a0e1a 0%, #0f1225 100%)"
-  carte_fond: "#1a1f36"
-  carte_largeur: "420px"
-  carte_rayon: "16px"
-  carte_ombre: "0 20px 60px rgba(0,0,0,0.5)"
+  # Recherche
+  recherche_fond: "#F8FAFC"
+  recherche_bordure: "#E2E8F0"
+  recherche_focus_bordure: "#3454D1"
+  recherche_focus_fond: "#FFFFFF"
+  recherche_largeur: "320px"
+  recherche_placeholder: "#94A3B8"
+  recherche_taille: "16px"
 
-# -----------------------------------------------------------------------------
-# Dashboard
-# -----------------------------------------------------------------------------
+  # Boutons header
+  bouton_fond: "#FFFFFF"
+  bouton_bordure: "#E2E8F0"
+  bouton_hover_fond: "#EEF2FF"
+  bouton_hover_bordure: "#3454D1"
+  notification_badge: "#EF4444"
+
+# =============================================================================
+# SIDEBAR
+# =============================================================================
+sidebar:
+  fond: "#1E3A8A"
+  ombre: "4px 0 20px rgba(0, 0, 0, 0.15)"
+
+  # Logo
+  logo_fond: "#3454D1"
+  logo_ombre: "0 4px 12px rgba(52, 84, 209, 0.4)"
+  logo_texte: "#FFFFFF"
+  logo_accent: "#6B9FFF"
+
+  # Navigation
+  nav_texte: "rgba(255, 255, 255, 0.7)"
+  nav_texte_hover: "#FFFFFF"
+  nav_texte_actif: "#FFFFFF"
+  nav_fond_hover: "#1e40af"
+  nav_fond_actif: "rgba(255, 255, 255, 0.1)"
+  nav_accent_actif: "#6B9FFF"
+  nav_taille: "16px"
+
+  # Sections
+  section_titre: "rgba(255, 255, 255, 0.4)"
+  section_titre_taille: "13px"
+
+  # Badge
+  badge_fond: "#EF4444"
+  badge_texte: "#FFFFFF"
+
+  # User
+  user_fond_hover: "rgba(255, 255, 255, 0.1)"
+  user_avatar_degrade: "linear-gradient(135deg, #3454D1 0%, #6B9FFF 100%)"
+  user_nom: "#FFFFFF"
+  user_role: "rgba(255, 255, 255, 0.5)"
+
+# =============================================================================
+# KPI / DASHBOARD
+# =============================================================================
 dashboard:
-  kpi_fond: "#1a1f36"
-  kpi_bordure: "#252d47"
-  kpi_icone_fond: "rgba(52, 84, 209, 0.15)"
-  kpi_icone_couleur: "#6B9FFF"
-  graphique_fond: "#1a1f36"
+  # KPI Cards
+  kpi_fond: "#FFFFFF"
+  kpi_bordure: "#E2E8F0"
+  kpi_bordure_hover: "#3454D1"
+  kpi_rayon: "14px"
+  kpi_ombre: "0 1px 3px rgba(0, 0, 0, 0.08)"
+  kpi_ombre_hover: "0 4px 6px rgba(0, 0, 0, 0.07)"
+  kpi_accent_barre: "#3454D1"
 
-# -----------------------------------------------------------------------------
-# Style des Documents (Devis/Factures)
-# -----------------------------------------------------------------------------
-documents:
-  # Couleur principale du document
-  couleur: "#3454D1"
+  # KPI Valeurs
+  kpi_valeur_taille: "34px"
+  kpi_label_taille: "16px"
+  kpi_label_couleur: "#475569"
 
-  # Structure: "moderne" | "classique" | "minimal"
-  structure: "moderne"
+  # KPI Icones
+  kpi_icone_taille: "48px"
+  kpi_icone_rayon: "10px"
+  kpi_icone_bleu_fond: "#EEF2FF"
+  kpi_icone_bleu: "#3454D1"
+  kpi_icone_vert_fond: "#D1FAE5"
+  kpi_icone_vert: "#10B981"
+  kpi_icone_orange_fond: "#FEF3C7"
+  kpi_icone_orange: "#F59E0B"
+  kpi_icone_rouge_fond: "#FEE2E2"
+  kpi_icone_rouge: "#EF4444"
 
-  # Style tableaux
-  tableaux: "simple"
+  # Tendances
+  tendance_hausse_fond: "#D1FAE5"
+  tendance_hausse_texte: "#047857"
+  tendance_baisse_fond: "#FEE2E2"
+  tendance_baisse_texte: "#B91C1C"
+  tendance_taille: "14px"
 
-  # Angles
-  angles: "arrondis"
+# =============================================================================
+# ALERTES
+# =============================================================================
+alertes:
+  rayon: "10px"
+  padding: "16px 18px"
+  taille_titre: "16px"
+  taille_texte: "16px"
 
-  # Lignes séparatrices
-  lignes: "fines"
+  info_fond: "#F5F8FF"
+  info_bordure: "rgba(52, 84, 209, 0.2)"
+  info_texte: "#3454D1"
 
-  # Images produits
-  images_produits: "petites"
+  succes_fond: "#F0FDF4"
+  succes_bordure: "rgba(16, 185, 129, 0.2)"
+  succes_texte: "#047857"
 
-  # Police du document
-  police: "Inter"
+  attention_fond: "#FFFBEB"
+  attention_bordure: "rgba(245, 158, 11, 0.2)"
+  attention_texte: "#92400E"
 
-  # Taille police
-  taille_police: "12px"
+  erreur_fond: "#FEF2F2"
+  erreur_bordure: "rgba(239, 68, 68, 0.2)"
+  erreur_texte: "#B91C1C"
 
-  # Afficher logo
-  logo: true
-
-  # Marges (en mm pour PDF)
-  marges: "15mm"
-
-  # Fond (pour PDF en dark mode on garde blanc pour impression)
-  fond_impression: "#FFFFFF"
-  texte_impression: "#0f172a"
-
-# -----------------------------------------------------------------------------
-# Animations
-# -----------------------------------------------------------------------------
-animations:
-  transition: "all 0.2s ease"
-  hover_scale: "1.02"
-
-# -----------------------------------------------------------------------------
-# Liste / Tableaux
-# -----------------------------------------------------------------------------
+# =============================================================================
+# LISTES
+# =============================================================================
 liste:
-  item_fond: "#1a1f36"
-  item_hover: "#252d47"
-  item_actif: "rgba(52, 84, 209, 0.15)"
-  item_bordure: "#252d47"
+  item_fond: "#FFFFFF"
+  item_hover: "#F8FAFC"
+  item_actif: "#EEF2FF"
+  item_bordure: "#E2E8F0"
   item_rayon: "10px"
-  item_padding: "16px"
+  item_padding: "14px"
+  item_gap: "14px"
+
+  icone_taille: "42px"
+  icone_rayon: "10px"
+  icone_fond: "#EEF2FF"
+  icone_couleur: "#3454D1"
+
+  titre_taille: "16px"
+  titre_couleur: "#1E293B"
+  sous_titre_taille: "15px"
+  sous_titre_couleur: "#94A3B8"
+
+# =============================================================================
+# DOCUMENTS (Devis/Factures PDF)
+# =============================================================================
+documents:
+  couleur: "#3454D1"
+  couleur_accent: "#6B9FFF"
+  structure: "moderne"
+  tableaux: "simple"
+  angles: "arrondis"
+  lignes: "fines"
+  images_produits: "petites"
+  police: "Inter"
+  taille_police: "14px"
+  logo: true
+  marges: "15mm"
+  fond_impression: "#FFFFFF"
+  texte_impression: "#1E293B"
+  accent_impression: "#3454D1"
+
+# =============================================================================
+# ANIMATIONS & TRANSITIONS
+# =============================================================================
+animations:
+  duree_rapide: "0.15s"
+  duree_normale: "0.2s"
+  duree_lente: "0.3s"
+  ease_default: "cubic-bezier(0.4, 0, 0.2, 1)"
+  ease_bounce: "cubic-bezier(0.34, 1.56, 0.64, 1)"
+  transition: "all 0.2s ease"
+  hover_lift: "translateY(-2px)"
+  active_scale: "0.98"
+
+# =============================================================================
+# MODALES
+# =============================================================================
+modales:
+  overlay_fond: "rgba(30, 41, 59, 0.5)"
+  overlay_blur: "blur(4px)"
+  fond: "#FFFFFF"
+  bordure: "#E2E8F0"
+  rayon: "16px"
+  ombre: "0 20px 40px rgba(0, 0, 0, 0.15)"
+  header_fond: "#F8FAFC"
+  footer_fond: "#F8FAFC"
+
+# =============================================================================
+# SCROLLBARS
+# =============================================================================
+scrollbars:
+  largeur: "8px"
+  largeur_fine: "4px"
+  fond: "transparent"
+  thumb: "#CBD5E1"
+  thumb_hover: "#94A3B8"
+  rayon: "4px"
+
+# =============================================================================
+# FOCUS & SELECTION
+# =============================================================================
+selection:
+  fond: "rgba(52, 84, 209, 0.15)"
+  texte: "#1E293B"
+
+focus:
+  outline_couleur: "#3454D1"
+  outline_largeur: "2px"
+  outline_offset: "2px"
+  ring: "0 0 0 3px rgba(52, 84, 209, 0.12)"
+
+# =============================================================================
+# GRAPHIQUES
+# =============================================================================
+graphiques:
+  # Palette de couleurs (ordre d'utilisation)
+  couleurs:
+    - "#3454D1"   # Bleu roi
+    - "#6B9FFF"   # Bleu clair
+    - "#10B981"   # Vert
+    - "#F59E0B"   # Orange
+    - "#8B5CF6"   # Violet
+    - "#EC4899"   # Rose
+    - "#14B8A6"   # Teal
+    - "#F97316"   # Orange vif
+
+  # Fond et grille
+  fond: "#FFFFFF"
+  grille: "#E2E8F0"
+  grille_style: "dashed"           # solid | dashed | dotted
+  grille_opacite: "0.5"
+
+  # Axes
+  axes_couleur: "#CBD5E1"
+  axes_texte: "#64748B"
+  axes_taille: "14px"
+  axes_poids: "500"
+
+  # Lignes (line chart)
+  ligne_epaisseur: "2px"
+  ligne_style: "smooth"            # smooth | straight | step
+  ligne_opacite: "1"
+  aire_opacite: "0.1"              # Pour area charts
+
+  # Points
+  point_rayon: "4px"
+  point_hover_rayon: "6px"
+  point_bordure: "#FFFFFF"
+  point_bordure_epaisseur: "2px"
+
+  # Barres (bar chart)
+  barre_rayon: "6px"
+  barre_espacement: "8px"
+  barre_hover_opacite: "0.8"
+
+  # Pie / Donut
+  pie_bordure: "#FFFFFF"
+  pie_bordure_epaisseur: "2px"
+  donut_epaisseur: "60%"
+
+  # Legende
+  legende_position: "bottom"       # top | bottom | left | right
+  legende_taille: "14px"
+  legende_couleur: "#64748B"
+  legende_espacement: "16px"
+  legende_point_rayon: "6px"
+
+  # Tooltip
+  tooltip_fond: "#1E293B"
+  tooltip_texte: "#FFFFFF"
+  tooltip_rayon: "8px"
+  tooltip_padding: "10px 14px"
+  tooltip_ombre: "0 4px 12px rgba(0, 0, 0, 0.15)"
+  tooltip_taille: "14px"
+
+  # Animations
+  animation_duree: "0.3s"
+  animation_ease: "cubic-bezier(0.4, 0, 0.2, 1)"
+
+  # Responsive
+  mobile_legende_position: "bottom"
+  mobile_axes_taille: "12px"

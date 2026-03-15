@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZALPLUS - Identité Visuelle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* =================================================================
+       AZALPLUS - IDENTITÉ VISUELLE LIGHT MODE
+       Cible : TPE françaises
+       Personnalité : Simple, Accueillant, Efficace, Fiable, Humain
+       ================================================================= */
+
+    :root {
+      /* Fond */
+      --fond-principal: #FFFFFF;
+      --fond-secondaire: #F8FAFC;
+      --fond-tertiaire: #F1F5F9;
+
+      /* Texte */
+      --texte-principal: #1E293B;
+      --texte-secondaire: #475569;
+      --texte-muted: #94A3B8;
+      --texte-placeholder: #94A3B8;
+
+      /* Marque (du logo) */
+      --bleu-roi: #3454D1;
+      --bleu-roi-hover: #2a44a8;
+      --bleu-clair: #6B9FFF;
+      --bleu-pale: #EEF2FF;
+      --bleu-tres-pale: #F5F7FF;
+
+      /* Statuts */
+      --succes: #10B981;
+      --succes-pale: #D1FAE5;
+      --attention: #F59E0B;
+      --attention-pale: #FEF3C7;
+      --erreur: #EF4444;
+      --erreur-pale: #FEE2E2;
+      --info: #6B9FFF;
+      --info-pale: #EEF2FF;
+
+      /* Bordures */
+      --bordure: #E2E8F0;
+      --bordure-hover: #CBD5E1;
+      --bordure-focus: #3454D1;
+
+      /* Ombres */
+      --ombre-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --ombre-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+      --ombre-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --ombre-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+      /* Rayons */
+      --rayon-sm: 6px;
+      --rayon-md: 8px;
+      --rayon-lg: 12px;
+      --rayon-xl: 16px;
+
+      /* Transitions */
+      --transition: all 0.2s ease;
+
+      /* Layout */
+      --sidebar-largeur: 260px;
+      --header-hauteur: 64px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--texte-principal);
+      background: var(--fond-secondaire);
+    }
+
+    /* =================================================================
+       LAYOUT PRINCIPAL
+       ================================================================= */
+
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-largeur);
+      background: var(--fond-principal);
+      border-right: 1px solid var(--bordure);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--bordure);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--bleu-roi);
+      border-radius: var(--rayon-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+      position: relative;
+    }
+
+    .logo-icon::after {
+      content: '';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 8px;
+      height: 8px;
+      background: var(--bleu-clair);
+      border-radius: 50%;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--texte-principal);
+    }
+
+    .logo-text span {
+      color: var(--bleu-clair);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 12px;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--texte-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 12px;
+      margin-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--rayon-md);
+      color: var(--texte-secondaire);
+      text-decoration: none;
+      transition: var(--transition);
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover {
+      background: var(--fond-secondaire);
+      color: var(--texte-principal);
+    }
+
+    .nav-item.active {
+      background: var(--bleu-pale);
+      color: var(--bleu-roi);
+    }
+
+    .nav-item.active .nav-icon {
+      color: var(--bleu-roi);
+    }
+
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--texte-muted);
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--erreur);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-largeur);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      height: var(--header-hauteur);
+      background: var(--fond-principal);
+      border-bottom: 1px solid var(--bordure);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--texte-principal);
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--fond-secondaire);
+      border: 1px solid var(--bordure);
+      border-radius: var(--rayon-md);
+      padding: 8px 14px;
+      width: 300px;
+      transition: var(--transition);
+    }
+
+    .search-box:focus-within {
+      border-color: var(--bleu-roi);
+      box-shadow: 0 0 0 3px rgba(52, 84, 209, 0.1);
+    }
+
+    .search-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 14px;
+      width: 100%;
+      color: var(--texte-principal);
+    }
+
+    .search-box input::placeholder {
+      color: var(--texte-placeholder);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--rayon-md);
+      border: 1px solid var(--bordure);
+      background: var(--fond-principal);
+      color: var(--texte-secondaire);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .header-btn:hover {
+      border-color: var(--bordure-hover);
+      color: var(--texte-principal);
+    }
+
+    .header-btn .badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 18px;
+      height: 18px;
+      background: var(--erreur);
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px 6px 6px;
+      border-radius: var(--rayon-md);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .user-menu:hover {
+      background: var(--fond-secondaire);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bleu-roi);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .user-name {
+      font-weight: 500;
+      color: var(--texte-principal);
+    }
+
+    /* Content Area */
+    .content {
+      padding: 24px;
+      flex: 1;
+    }
+
+    /* =================================================================
+       COMPOSANTS
+       ================================================================= */
+
+    /* Section */
+    .section {
+      background: var(--fond-principal);
+      border: 1px solid var(--bordure);
+      border-radius: var(--rayon-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--texte-principal);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--bordure);
+    }
+
+    /* Grille */
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+    /* Carte KPI */
+    .kpi-card {
+      background: var(--fond-principal);
+      border: 1px solid var(--bordure);
+      border-radius: var(--rayon-lg);
+      padding: 20px;
+      transition: var(--transition);
+    }
+
+    .kpi-card:hover {
+      border-color: var(--bordure-hover);
+      box-shadow: var(--ombre-sm);
+    }
+
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .kpi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--rayon-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .kpi-icon.blue { background: var(--bleu-pale); color: var(--bleu-roi); }
+    .kpi-icon.green { background: var(--succes-pale); color: var(--succes); }
+    .kpi-icon.orange { background: var(--attention-pale); color: var(--attention); }
+    .kpi-icon.red { background: var(--erreur-pale); color: var(--erreur); }
+
+    .kpi-trend {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 20px;
+    }
+
+    .kpi-trend.up { background: var(--succes-pale); color: var(--succes); }
+    .kpi-trend.down { background: var(--erreur-pale); color: var(--erreur); }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--texte-principal);
+      margin-bottom: 4px;
+    }
+
+    .kpi-label {
+      font-size: 14px;
+      color: var(--texte-secondaire);
+    }
+
+    /* Boutons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--rayon-md);
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--bleu-roi);
+      color: white;
+      box-shadow: 0 2px 8px rgba(52, 84, 209, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: var(--bleu-roi-hover);
+      box-shadow: 0 4px 12px rgba(52, 84, 209, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--fond-principal);
+      color: var(--texte-principal);
+      border: 1px solid var(--bordure);
+    }
+
+    .btn-secondary:hover {
+      background: var(--fond-secondaire);
+      border-color: var(--bordure-hover);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--bleu-roi);
+      border: 1px solid var(--bleu-roi);
+    }
+
+    .btn-outline:hover {
+      background: var(--bleu-pale);
+    }
+
+    .btn-danger {
+      background: var(--erreur);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #DC2626;
+    }
+
+    .btn-success {
+      background: var(--succes);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .btn-lg {
+      padding: 14px 24px;
+      font-size: 16px;
+    }
+
+    /* Inputs */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--texte-principal);
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      border: 1px solid var(--bordure);
+      border-radius: var(--rayon-md);
+      background: var(--fond-principal);
+      color: var(--texte-principal);
+      transition: var(--transition);
+    }
+
+    .form-input:hover {
+      border-color: var(--bordure-hover);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--bleu-roi);
+      box-shadow: 0 0 0 3px rgba(52, 84, 209, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: var(--texte-placeholder);
+    }
+
+    .form-input.error {
+      border-color: var(--erreur);
+    }
+
+    .form-input.error:focus {
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .form-hint {
+      font-size: 13px;
+      color: var(--texte-muted);
+      margin-top: 4px;
+    }
+
+    .form-error {
+      font-size: 13px;
+      color: var(--erreur);
+      margin-top: 4px;
+    }
+
+    /* Select */
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: var(--rayon-sm);
+    }
+
+    .badge-draft { background: var(--fond-tertiaire); color: var(--texte-muted); }
+    .badge-pending { background: var(--attention-pale); color: #B45309; }
+    .badge-success { background: var(--succes-pale); color: #047857; }
+    .badge-error { background: var(--erreur-pale); color: #B91C1C; }
+    .badge-info { background: var(--bleu-pale); color: var(--bleu-roi); }
+
+    .badge-pill {
+      border-radius: 20px;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--texte-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--fond-secondaire);
+      border-bottom: 1px solid var(--bordure);
+    }
+
+    .table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--bordure);
+      color: var(--texte-principal);
+    }
+
+    .table tr:hover td {
+      background: var(--fond-secondaire);
+    }
+
+    .table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Alertes */
+    .alert {
+      padding: 14px 16px;
+      border-radius: var(--rayon-md);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .alert-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .alert-info {
+      background: var(--info-pale);
+      border: 1px solid rgba(107, 159, 255, 0.3);
+      color: var(--bleu-roi);
+    }
+
+    .alert-success {
+      background: var(--succes-pale);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #047857;
+    }
+
+    .alert-warning {
+      background: var(--attention-pale);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #B45309;
+    }
+
+    .alert-error {
+      background: var(--erreur-pale);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #B91C1C;
+    }
+
+    /* Card */
+    .card {
+      background: var(--fond-principal);
+      border: 1px solid var(--bordure);
+      border-radius: var(--rayon-lg);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: var(--ombre-md);
+      border-color: var(--bordure-hover);
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--bordure);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--texte-principal);
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    .card-footer {
+      padding: 16px 20px;
+      background: var(--fond-secondaire);
+      border-top: 1px solid var(--bordure);
+    }
+
+    /* Liste simple */
+    .list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--rayon-md);
+      transition: var(--transition);
+    }
+
+    .list-item:hover {
+      background: var(--fond-secondaire);
+    }
+
+    .list-item-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--rayon-md);
+      background: var(--bleu-pale);
+      color: var(--bleu-roi);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .list-item-content {
+      flex: 1;
+    }
+
+    .list-item-title {
+      font-weight: 500;
+      color: var(--texte-principal);
+    }
+
+    .list-item-subtitle {
+      font-size: 13px;
+      color: var(--texte-muted);
+    }
+
+    /* =================================================================
+       PAGE DÉMO : PALETTE DE COULEURS
+       ================================================================= */
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    .color-swatch {
+      border-radius: var(--rayon-md);
+      overflow: hidden;
+      border: 1px solid var(--bordure);
+    }
+
+    .color-preview {
+      height: 60px;
+    }
+
+    .color-info {
+      padding: 8px 10px;
+      background: var(--fond-principal);
+    }
+
+    .color-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--texte-principal);
+    }
+
+    .color-hex {
+      font-size: 11px;
+      color: var(--texte-muted);
+      font-family: monospace;
+    }
+
+    /* Demo spacing */
+    .demo-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .demo-row:last-child {
+      margin-bottom: 0;
+    }
+
+    /* =================================================================
+       ICONS (SVG inline simples)
+       ================================================================= */
+    .icon {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="#" class="logo">
+        <div class="logo-icon">A</div>
+        <div class="logo-text">AZAL<span>PLUS</span></div>
+      </a>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Principal</div>
+        <a href="#" class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          Tableau de bord
+        </a>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Clients
+          <span class="nav-badge">12</span>
+        </a>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Devis
+        </a>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          Factures
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Gestion</div>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          Produits
+        </a>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+          Stock
+        </a>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          Comptabilité
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Configuration</div>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Paramètres
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="page-title">Identité Visuelle AZALPLUS</h1>
+      </div>
+      <div class="header-right">
+        <div class="search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" placeholder="Rechercher...">
+        </div>
+        <button class="header-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="badge">3</span>
+        </button>
+        <div class="user-menu">
+          <div class="user-avatar">JD</div>
+          <span class="user-name">Jean Dupont</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Palette de couleurs -->
+      <div class="section">
+        <h2 class="section-title">Palette de couleurs</h2>
+
+        <h3 style="font-size: 14px; font-weight: 600; color: var(--texte-secondaire); margin-bottom: 12px;">Marque (du logo)</h3>
+        <div class="color-grid" style="margin-bottom: 24px;">
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #3454D1;"></div>
+            <div class="color-info">
+              <div class="color-name">Bleu Roi</div>
+              <div class="color-hex">#3454D1</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #6B9FFF;"></div>
+            <div class="color-info">
+              <div class="color-name">Bleu Clair</div>
+              <div class="color-hex">#6B9FFF</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #EEF2FF;"></div>
+            <div class="color-info">
+              <div class="color-name">Bleu Pale</div>
+              <div class="color-hex">#EEF2FF</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; font-weight: 600; color: var(--texte-secondaire); margin-bottom: 12px;">Fonds</h3>
+        <div class="color-grid" style="margin-bottom: 24px;">
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #FFFFFF; border-bottom: 1px solid #E2E8F0;"></div>
+            <div class="color-info">
+              <div class="color-name">Blanc</div>
+              <div class="color-hex">#FFFFFF</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #F8FAFC;"></div>
+            <div class="color-info">
+              <div class="color-name">Gris clair</div>
+              <div class="color-hex">#F8FAFC</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #F1F5F9;"></div>
+            <div class="color-info">
+              <div class="color-name">Gris</div>
+              <div class="color-hex">#F1F5F9</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; font-weight: 600; color: var(--texte-secondaire); margin-bottom: 12px;">Textes</h3>
+        <div class="color-grid" style="margin-bottom: 24px;">
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #1E293B;"></div>
+            <div class="color-info">
+              <div class="color-name">Principal</div>
+              <div class="color-hex">#1E293B</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #475569;"></div>
+            <div class="color-info">
+              <div class="color-name">Secondaire</div>
+              <div class="color-hex">#475569</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #94A3B8;"></div>
+            <div class="color-info">
+              <div class="color-name">Muted</div>
+              <div class="color-hex">#94A3B8</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; font-weight: 600; color: var(--texte-secondaire); margin-bottom: 12px;">Statuts</h3>
+        <div class="color-grid">
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #10B981;"></div>
+            <div class="color-info">
+              <div class="color-name">Succes</div>
+              <div class="color-hex">#10B981</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #F59E0B;"></div>
+            <div class="color-info">
+              <div class="color-name">Attention</div>
+              <div class="color-hex">#F59E0B</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-preview" style="background: #EF4444;"></div>
+            <div class="color-info">
+              <div class="color-name">Erreur</div>
+              <div class="color-hex">#EF4444</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="section">
+        <h2 class="section-title">Cartes KPI</h2>
+        <div class="grid grid-4">
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                </svg>
+              </div>
+              <span class="kpi-trend up">+12%</span>
+            </div>
+            <div class="kpi-value">248</div>
+            <div class="kpi-label">Clients actifs</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+              <span class="kpi-trend up">+8%</span>
+            </div>
+            <div class="kpi-value">42 350 &euro;</div>
+            <div class="kpi-label">Chiffre d'affaires</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon orange">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <span class="kpi-trend down">-3%</span>
+            </div>
+            <div class="kpi-value">18</div>
+            <div class="kpi-label">Devis en attente</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon red">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value">5</div>
+            <div class="kpi-label">Factures impayees</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Boutons -->
+      <div class="section">
+        <h2 class="section-title">Boutons</h2>
+        <div class="demo-row">
+          <button class="btn btn-primary">Bouton principal</button>
+          <button class="btn btn-secondary">Secondaire</button>
+          <button class="btn btn-outline">Outline</button>
+          <button class="btn btn-success">Succes</button>
+          <button class="btn btn-danger">Danger</button>
+        </div>
+        <div class="demo-row">
+          <button class="btn btn-primary btn-sm">Petit</button>
+          <button class="btn btn-primary">Normal</button>
+          <button class="btn btn-primary btn-lg">Grand</button>
+        </div>
+        <div class="demo-row">
+          <button class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nouveau client
+          </button>
+          <button class="btn btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Exporter
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulaires -->
+      <div class="section">
+        <h2 class="section-title">Formulaires</h2>
+        <div class="grid grid-2">
+          <div>
+            <div class="form-group">
+              <label class="form-label">Nom du client</label>
+              <input type="text" class="form-input" placeholder="Ex: Dupont SARL">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" value="contact@dupont.fr">
+              <div class="form-hint">Adresse email principale de contact</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Champ avec erreur</label>
+              <input type="text" class="form-input error" value="Valeur incorrecte">
+              <div class="form-error">Ce champ contient une erreur</div>
+            </div>
+          </div>
+          <div>
+            <div class="form-group">
+              <label class="form-label">Type de client</label>
+              <select class="form-input form-select">
+                <option>Particulier</option>
+                <option>Entreprise</option>
+                <option>Association</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <textarea class="form-input" rows="4" placeholder="Informations complementaires..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="section">
+        <h2 class="section-title">Badges</h2>
+        <div class="demo-row">
+          <span class="badge badge-draft">Brouillon</span>
+          <span class="badge badge-pending">En attente</span>
+          <span class="badge badge-info">Envoyé</span>
+          <span class="badge badge-success">Validé</span>
+          <span class="badge badge-error">Refusé</span>
+        </div>
+        <div class="demo-row">
+          <span class="badge badge-draft badge-pill">Brouillon</span>
+          <span class="badge badge-success badge-pill">Payé</span>
+          <span class="badge badge-error badge-pill">Impayé</span>
+        </div>
+      </div>
+
+      <!-- Alertes -->
+      <div class="section">
+        <h2 class="section-title">Alertes</h2>
+        <div class="alert alert-info">
+          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <div class="alert-content">
+            <div class="alert-title">Information</div>
+            <div>Votre période d'essai se termine dans 7 jours.</div>
+          </div>
+        </div>
+        <div class="alert alert-success">
+          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <div class="alert-content">
+            <div class="alert-title">Succes</div>
+            <div>La facture a été envoyée avec succes.</div>
+          </div>
+        </div>
+        <div class="alert alert-warning">
+          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <div class="alert-content">
+            <div class="alert-title">Attention</div>
+            <div>3 factures arrivent à échéance cette semaine.</div>
+          </div>
+        </div>
+        <div class="alert alert-error">
+          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <div class="alert-content">
+            <div class="alert-title">Erreur</div>
+            <div>Impossible de se connecter au serveur.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="section">
+        <h2 class="section-title">Tableau</h2>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Référence</th>
+                <th>Date</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Dupont SARL</strong></td>
+                <td>FAC-2024-001</td>
+                <td>15/03/2024</td>
+                <td>1 250,00 &euro;</td>
+                <td><span class="badge badge-success">Payé</span></td>
+                <td>
+                  <button class="btn btn-secondary btn-sm">Voir</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Martin & Fils</strong></td>
+                <td>FAC-2024-002</td>
+                <td>18/03/2024</td>
+                <td>3 420,00 &euro;</td>
+                <td><span class="badge badge-pending">En attente</span></td>
+                <td>
+                  <button class="btn btn-secondary btn-sm">Voir</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Petit Commerce</strong></td>
+                <td>FAC-2024-003</td>
+                <td>20/03/2024</td>
+                <td>890,00 &euro;</td>
+                <td><span class="badge badge-error">Impayé</span></td>
+                <td>
+                  <button class="btn btn-secondary btn-sm">Voir</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Tech Solutions</strong></td>
+                <td>FAC-2024-004</td>
+                <td>22/03/2024</td>
+                <td>5 600,00 &euro;</td>
+                <td><span class="badge badge-info">Envoyé</span></td>
+                <td>
+                  <button class="btn btn-secondary btn-sm">Voir</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div class="section">
+        <h2 class="section-title">Cartes</h2>
+        <div class="grid grid-3">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Devis en cours</h3>
+              <span class="badge badge-info">8</span>
+            </div>
+            <div class="card-body">
+              <div class="list-item">
+                <div class="list-item-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </div>
+                <div class="list-item-content">
+                  <div class="list-item-title">DEV-2024-042</div>
+                  <div class="list-item-subtitle">Dupont SARL - 2 400 &euro;</div>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </div>
+                <div class="list-item-content">
+                  <div class="list-item-title">DEV-2024-043</div>
+                  <div class="list-item-subtitle">Martin & Fils - 1 850 &euro;</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-secondary btn-sm" style="width: 100%;">Voir tous les devis</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Activité récente</h3>
+            </div>
+            <div class="card-body">
+              <div class="list-item">
+                <div class="list-item-icon" style="background: var(--succes-pale); color: var(--succes);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <div class="list-item-content">
+                  <div class="list-item-title">Paiement reçu</div>
+                  <div class="list-item-subtitle">FAC-001 - Il y a 2h</div>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-icon" style="background: var(--attention-pale); color: var(--attention);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <div class="list-item-content">
+                  <div class="list-item-title">Relance envoyée</div>
+                  <div class="list-item-subtitle">FAC-002 - Il y a 5h</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Nouveau client</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input type="text" class="form-input" placeholder="Nom de l'entreprise">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" placeholder="email@exemple.fr">
+              </div>
+              <button class="btn btn-primary" style="width: 100%;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Créer le client
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Typographie -->
+      <div class="section">
+        <h2 class="section-title">Typographie</h2>
+        <div style="margin-bottom: 24px;">
+          <h1 style="font-size: 32px; font-weight: 700; color: var(--texte-principal); margin-bottom: 8px;">Titre H1 - 32px Bold</h1>
+          <h2 style="font-size: 24px; font-weight: 600; color: var(--texte-principal); margin-bottom: 8px;">Titre H2 - 24px Semibold</h2>
+          <h3 style="font-size: 20px; font-weight: 600; color: var(--texte-principal); margin-bottom: 8px;">Titre H3 - 20px Semibold</h3>
+          <h4 style="font-size: 16px; font-weight: 600; color: var(--texte-principal); margin-bottom: 8px;">Titre H4 - 16px Semibold</h4>
+        </div>
+        <div>
+          <p style="font-size: 16px; color: var(--texte-principal); margin-bottom: 8px;">Texte large - 16px Regular - Lorem ipsum dolor sit amet.</p>
+          <p style="font-size: 14px; color: var(--texte-principal); margin-bottom: 8px;">Texte normal - 14px Regular - Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+          <p style="font-size: 14px; color: var(--texte-secondaire); margin-bottom: 8px;">Texte secondaire - 14px Regular - Information complémentaire moins importante.</p>
+          <p style="font-size: 13px; color: var(--texte-muted); margin-bottom: 8px;">Texte muted - 13px Regular - Placeholder ou texte désactivé.</p>
+          <p style="font-size: 12px; color: var(--texte-muted); text-transform: uppercase; letter-spacing: 0.5px;">Label uppercase - 12px - Catégorie ou section</p>
+        </div>
+      </div>
+
+      <!-- Espacement -->
+      <div class="section">
+        <h2 class="section-title">Principes de design</h2>
+        <div class="grid grid-3">
+          <div style="text-align: center; padding: 24px;">
+            <div style="width: 64px; height: 64px; background: var(--bleu-pale); color: var(--bleu-roi); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="9"/>
+              </svg>
+            </div>
+            <h4 style="font-weight: 600; margin-bottom: 8px;">Simple</h4>
+            <p style="font-size: 13px; color: var(--texte-secondaire);">Interface épurée, pas de surcharge visuelle</p>
+          </div>
+          <div style="text-align: center; padding: 24px;">
+            <div style="width: 64px; height: 64px; background: var(--succes-pale); color: var(--succes); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
+            <h4 style="font-weight: 600; margin-bottom: 8px;">Efficace</h4>
+            <p style="font-size: 13px; color: var(--texte-secondaire);">Actions rapides, résultats immédiats</p>
+          </div>
+          <div style="text-align: center; padding: 24px;">
+            <div style="width: 64px; height: 64px; background: var(--attention-pale); color: var(--attention); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </div>
+            <h4 style="font-weight: 600; margin-bottom: 8px;">Humain</h4>
+            <p style="font-size: 13px; color: var(--texte-secondaire);">Ton chaleureux, jamais de jargon</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
