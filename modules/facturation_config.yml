@@ -1,0 +1,118 @@
+nom: FacturationConfig
+icone: settings
+menu: Configuration
+description: "Configuration facturation électronique par tenant"
+
+champs:
+  # Identité entreprise
+  - nom: siret
+    type: text
+    obligatoire: true
+    label: "SIRET"
+    validation: "^[0-9]{14}$"
+    aide: "14 chiffres sans espaces"
+
+  - nom: siren
+    type: text
+    label: "SIREN"
+    validation: "^[0-9]{9}$"
+    calcule: "siret[:9]"
+
+  - nom: tva_intra
+    type: text
+    obligatoire: true
+    label: "N° TVA Intracommunautaire"
+    validation: "^FR[0-9A-Z]{2}[0-9]{9}$"
+    aide: "Format FR + 2 caractères + 9 chiffres"
+
+  - nom: raison_sociale
+    type: text
+    obligatoire: true
+    label: "Raison sociale"
+
+  - nom: adresse_ligne1
+    type: text
+    obligatoire: true
+    label: "Adresse"
+
+  - nom: adresse_ligne2
+    type: text
+    label: "Complément d'adresse"
+
+  - nom: code_postal
+    type: text
+    obligatoire: true
+    validation: "^[0-9]{5}$"
+
+  - nom: ville
+    type: text
+    obligatoire: true
+
+  - nom: pays
+    type: text
+    defaut: "FR"
+
+  - nom: email_facturation
+    type: email
+    obligatoire: true
+    label: "Email facturation"
+
+  - nom: telephone
+    type: tel
+
+  # Configuration Factur-X
+  - nom: profil_facturx
+    type: select
+    options: [MINIMUM, BASIC_WL, BASIC, EN16931, EXTENDED]
+    defaut: EN16931
+    label: "Profil Factur-X"
+    aide: "EN16931 recommandé pour conformité maximale"
+
+  - nom: mode_envoi
+    type: select
+    options: [PPF, CHORUS_PRO, MANUEL]
+    defaut: PPF
+    label: "Mode d'envoi par défaut"
+    aide: "PPF pour B2B, Chorus Pro pour B2G"
+
+  # IDs Chorus Pro (cache)
+  - nom: chorus_id_structure
+    type: number
+    label: "ID Structure Chorus Pro"
+    lecture_seule: true
+    aide: "Rempli automatiquement"
+
+  - nom: chorus_service_code
+    type: text
+    label: "Code service Chorus Pro"
+
+  # Compteurs
+  - nom: prefixe_facture
+    type: text
+    defaut: "FA"
+    label: "Préfixe numéros facture"
+
+  - nom: prochain_numero
+    type: number
+    defaut: 1
+    label: "Prochain numéro"
+
+  # Activation
+  - nom: demat_active
+    type: boolean
+    defaut: false
+    label: "Dématérialisation activée"
+    aide: "Activer une fois la configuration validée"
+
+  - nom: date_activation
+    type: datetime
+    lecture_seule: true
+
+actions:
+  - valider_siret
+  - tester_connexion_chorus
+  - synchroniser_chorus
+
+permissions:
+  lecture: [admin, comptable]
+  ecriture: [admin]

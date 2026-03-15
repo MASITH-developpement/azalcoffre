@@ -176,53 +176,9 @@ class PDFAConverter:
             conformance_level=conformance_level
         )
 
-        # Définir les métadonnées XMP
-        pdf.Root.Metadata = pdf.make_stream(xmp.encode("utf-8"))
-        pdf.Root.Metadata.Type = Name.Metadata
-        pdf.Root.Metadata.Subtype = Name.XML
-
-        # Préparer le fichier XML embarqué
+        # Embarquer le XML Factur-X
         xml_bytes = xml_content.encode("utf-8")
-
-        # Créer le fichier embarqué
-        file_spec = AttachedFileSpec.from_filepath(
-            pdf,
-            io.BytesIO(xml_bytes),
-            description="Factur-X XML Invoice",
-            relationship=Name.Alternative,
-            mime_type="text/xml"
-        )
-
-        # Nommer le fichier
-        if not hasattr(pdf.Root, "Names") or pdf.Root.Names is None:
-            pdf.Root.Names = Dictionary()
-
-        if not hasattr(pdf.Root.Names, "EmbeddedFiles") or pdf.Root.Names.EmbeddedFiles is None:
-            pdf.Root.Names.EmbeddedFiles = Dictionary()
-
-        # Ajouter le fichier
-        pdf.Root.Names.EmbeddedFiles.Names = Array([
-            String("factur-x.xml"),
-            file_spec.obj
-        ])
-
-        # Marquer comme PDF/A-3
-        if not hasattr(pdf.Root, "MarkInfo") or pdf.Root.MarkInfo is None:
-            pdf.Root.MarkInfo = Dictionary()
-        pdf.Root.MarkInfo.Marked = True
-
-        # OutputIntent pour PDF/A
-        output_intent = Dictionary({
-            Name.Type: Name.OutputIntent,
-            Name.S: Name.GTS_PDFA1,
-            Name.OutputConditionIdentifier: String("sRGB"),
-            Name.RegistryName: String("http://www.color.org"),
-            Name.Info: String("sRGB IEC61966-2.1"),
-        })
-
-        if not hasattr(pdf.Root, "OutputIntents") or pdf.Root.OutputIntents is None:
-            pdf.Root.OutputIntents = Array()
-        pdf.Root.OutputIntents.append(output_intent)
+        pdf.attachments["factur-x.xml"] = xml_bytes
 
         # Sauvegarder
         output = io.BytesIO()
