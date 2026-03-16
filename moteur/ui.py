@@ -4350,7 +4350,7 @@ def generate_document_form(module, module_name: str) -> str:
                     <div class="doc-field">
                         <label class="label">Client</label>
                         <div class="select-with-create">
-                            <select class="input" id="client_id" name="client_id" data-link="Clients" data-autofill="billing_address:_compose_address:adresse1|adresse2|cp|ville" onchange="handleRelationAutofill(this)">
+                            <select class="input" id="client_id" name="client_id" data-link="Clients" data-autofill="adresse_facturation:_compose_address:adresse1|adresse2|cp|ville" onchange="handleRelationAutofill(this)">
                                 <option value="">Sélectionner un client...</option>
                             </select>
                             <button type="button" class="btn-create-inline" onclick="openFullCreatePage('clients', 'client_id')" title="Créer nouveau client">
