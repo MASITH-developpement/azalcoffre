@@ -4442,7 +4442,7 @@ def generate_document_form(module, module_name: str) -> str:
         let options = '<option value="">-- Sélectionner un produit --</option>';
         produits.forEach(p => {{
             const nom = p.name || p.nom || p.designation || p.libelle || '';
-            const prix = p.prix_vente || p.prix || p.price || p.unit_price || 0;
+            const prix = p.sale_price || p.prix_vente || p.prix || p.price || p.unit_price || 0;
             options += `<option value="${{p.id}}" data-prix="${{prix}}" data-nom="${{nom}}">${{nom}}</option>`;
         }});
         return options;
