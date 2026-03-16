@@ -4641,6 +4641,38 @@ def generate_document_form(module, module_name: str) -> str:
             console.error('Erreur chargement clients:', e);
         }}
 
+        // Charger les donneurs d'ordre et les ajouter au select client
+        try {{
+            const respDonneurs = await fetch('/api/donneur_ordre', {{
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + authToken
+                }}
+            }});
+            if (respDonneurs.ok) {{
+                const dataDonneurs = await respDonneurs.json();
+                const donneurs = dataDonneurs.items || dataDonneurs || [];
+                const select = document.getElementById('client_id');
+                if (donneurs.length > 0) {{
+                    // Ajouter un séparateur
+                    const separator = document.createElement('option');
+                    separator.disabled = true;
+                    separator.textContent = '── Donneurs d\\'ordre ──';
+                    select.appendChild(separator);
+                    // Ajouter les donneurs d'ordre
+                    donneurs.forEach(donneur => {{
+                        const option = document.createElement('option');
+                        option.value = donneur.id;
+                        option.textContent = donneur.nom || donneur.name || donneur.code || donneur.id;
+                        option.dataset.type = 'donneur_ordre';
+                        select.appendChild(option);
+                    }});
+                }}
+            }}
+        }} catch (e) {{
+            console.error('Erreur chargement donneurs d\\'ordre:', e);
+        }}
+
         // Charger les produits
         try {{
             const respProduits = await fetch('/api/produits', {{
