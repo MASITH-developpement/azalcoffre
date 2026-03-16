@@ -1,0 +1,131 @@
+# =============================================================================
+# AZALPLUS - Module Produits
+# =============================================================================
+# Gestion des produits et services
+
+nom: Produits
+nom_pluriel: Produits
+icone: package
+menu: Commercial
+description: "Gestion des produits et services"
+ordre_menu: 3
+
+champs:
+  - nom: code
+    type: text
+    libelle: "Code"
+
+  - nom: name
+    type: text
+    libelle: "Nom"
+    obligatoire: true
+
+  - nom: description
+    type: textarea
+    libelle: "Description"
+
+  - nom: type
+    type: select
+    libelle: "Type"
+    options:
+      - PRODUIT
+      - SERVICE
+      - CONSOMMABLE
+    defaut: PRODUIT
+
+  - nom: status
+    type: select
+    libelle: "Statut"
+    options:
+      - ACTIVE
+      - INACTIVE
+      - DISCONTINUED
+    defaut: ACTIVE
+
+  - nom: category_id
+    type: text
+    libelle: "Catégorie"
+
+  - nom: barcode
+    type: text
+    libelle: "Code-barres"
+
+  - nom: sku
+    type: text
+    libelle: "SKU"
+
+  - nom: unit
+    type: text
+    libelle: "Unité"
+    defaut: "unité"
+
+  - nom: sale_price
+    type: number
+    libelle: "Prix de vente HT"
+    obligatoire: true
+
+  - nom: standard_cost
+    type: number
+    libelle: "Prix d'achat"
+
+  - nom: tax_rate
+    type: number
+    libelle: "Taux TVA (%)"
+    defaut: 20
+
+  - nom: supplier_tax_rate
+    type: number
+    libelle: "Taux TVA achat (%)"
+    defaut: 20
+
+  - nom: stock_actuel
+    type: number
+    libelle: "Stock actuel"
+    defaut: 0
+
+  - nom: stock_minimum
+    type: number
+    libelle: "Stock minimum"
+    defaut: 0
+
+  - nom: is_sellable
+    type: boolean
+    libelle: "Vendable"
+    defaut: true
+
+  - nom: is_purchasable
+    type: boolean
+    libelle: "Achetable"
+    defaut: true
+
+  - nom: is_active
+    type: boolean
+    libelle: "Actif"
+    defaut: true
+
+  - nom: image_url
+    type: text
+    libelle: "Image URL"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Champs recherche
+recherche:
+  - code
+  - name
+  - description
+  - barcode
+  - sku
+
+# Colonnes affichées dans la liste
+affichage_liste:
+  - code
+  - name
+  - type
+  - sale_price
+  - stock_actuel
+
+# Champ affiché dans les selects de relation
+champ_affichage: name
