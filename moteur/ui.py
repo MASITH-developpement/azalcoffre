@@ -4751,25 +4751,30 @@ def generate_document_form(module, module_name: str) -> str:
                         if (isDonneurOrdre) {{
                             // Essayer d'abord l'adresse de facturation, sinon l'adresse principale
                             const hasBillingAddr = data.facturation_adresse_ligne1 || data.facturation_code_postal || data.facturation_ville;
+                            console.log('Donneur ordre - hasBillingAddr:', hasBillingAddr);
+                            console.log('Donneur ordre - data:', data);
                             if (hasBillingAddr) {{
                                 addressFields = ['facturation_adresse_ligne1', 'facturation_adresse_ligne2', 'facturation_code_postal', 'facturation_ville'];
                             }} else {{
                                 addressFields = ['adresse_ligne1', 'adresse_ligne2', 'code_postal', 'ville'];
                             }}
+                            console.log('Donneur ordre - addressFields:', addressFields);
                         }}
 
                         const addressParts = [];
                         addressFields.forEach(f => {{
+                            console.log('Checking field:', f, '=', data[f]);
                             if (data[f]) addressParts.push(data[f]);
                         }});
                         value = addressParts.join('\\n');
+                        console.log('Composed address value:', value);
                     }} else {{
                         value = data[remoteField] || '';
                     }}
 
-                    // Trouver le champ local et le remplir
+                    // Trouver le champ local et le remplir (toujours mettre à jour)
                     const input = document.querySelector(`[name="${{localField}}"]`);
-                    if (input && !input.value) {{
+                    if (input) {{
                         input.value = value;
                         input.dispatchEvent(new Event('change', {{ bubbles: true }}));
                     }}
