@@ -4371,9 +4371,10 @@ def generate_document_form(module, module_name: str) -> str:
                     </div>
                     <div class="doc-field">
                         <label class="label">Conditions de paiement</label>
-                        <select class="input" id="conditions">
+                        <select class="input" id="conditions" name="conditions">
                             <option value="immediate">Paiement immédiat</option>
                             <option value="30j">30 jours</option>
+                            <option value="45j">45 jours</option>
                             <option value="60j">60 jours</option>
                         </select>
                     </div>
@@ -4749,16 +4750,15 @@ def generate_document_form(module, module_name: str) -> str:
 
                         // Pour les donneurs d'ordre, utiliser les champs de facturation ou principaux
                         if (isDonneurOrdre) {{
-                            // Essayer d'abord l'adresse de facturation, sinon l'adresse principale
-                            const hasBillingAddr = data.facturation_adresse_ligne1 || data.facturation_code_postal || data.facturation_ville;
+                            // Utiliser l'adresse de facturation SEULEMENT si elle est complète (ligne1 ET ville)
+                            const hasBillingAddr = data.facturation_adresse_ligne1 && data.facturation_ville;
                             console.log('Donneur ordre - hasBillingAddr:', hasBillingAddr);
-                            console.log('Donneur ordre - data:', data);
                             if (hasBillingAddr) {{
                                 addressFields = ['facturation_adresse_ligne1', 'facturation_adresse_ligne2', 'facturation_code_postal', 'facturation_ville'];
                             }} else {{
                                 addressFields = ['adresse_ligne1', 'adresse_ligne2', 'code_postal', 'ville'];
                             }}
-                            console.log('Donneur ordre - addressFields:', addressFields);
+                            console.log('Donneur ordre - using fields:', addressFields);
                         }}
 
                         const addressParts = [];
@@ -4779,6 +4779,24 @@ def generate_document_form(module, module_name: str) -> str:
                         input.dispatchEvent(new Event('change', {{ bubbles: true }}));
                     }}
                 }});
+
+                // Pour les donneurs d'ordre, remplir aussi les conditions de paiement
+                if (isDonneurOrdre) {{
+                    const conditionsSelect = document.querySelector('[name="conditions"]');
+                    if (conditionsSelect && data.delai_paiement !== undefined) {{
+                        const delai = parseInt(data.delai_paiement) || 0;
+                        if (delai === 0) {{
+                            conditionsSelect.value = 'immediate';
+                        }} else if (delai <= 30) {{
+                            conditionsSelect.value = '30j';
+                        }} else if (delai <= 45) {{
+                            conditionsSelect.value = '45j';
+                        }} else {{
+                            conditionsSelect.value = '60j';
+                        }}
+                        console.log('Conditions de paiement:', delai, 'jours ->', conditionsSelect.value);
+                    }}
+                }}
 
                 console.log('Auto-fill appliqué depuis', isDonneurOrdre ? 'donneur_ordre' : linkedModule);
             }}
