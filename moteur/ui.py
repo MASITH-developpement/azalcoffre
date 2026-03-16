@@ -4431,7 +4431,7 @@ def generate_document_form(module, module_name: str) -> str:
                     <div class="doc-row">
                         <div class="doc-field">
                             <label class="label">Référence client</label>
-                            <input type="text" class="input" id="reference_client" name="reference_client" placeholder="Référence...">
+                            <input type="text" class="input" id="reference_client" name="reference_client" placeholder="Numéro donné par le client...">
                         </div>
                         <div class="doc-field">
                             <label class="label">Date de livraison</label>
@@ -4444,15 +4444,17 @@ def generate_document_form(module, module_name: str) -> str:
                             <input type="text" class="input" id="vendeur" name="vendeur" value="Stéphane MOREAU">
                         </div>
                         <div class="doc-field">
-                            <label class="label">Équipe commerciale</label>
-                            <input type="text" class="input" id="equipe_commerciale" name="equipe_commerciale" value="Ventes">
+                            <label class="label">Commercial</label>
+                            <select class="input" id="commercial_id" name="commercial_id">
+                                <option value="">-- Sélectionner --</option>
+                            </select>
                         </div>
                     </div>
                     <div class="doc-row">
                         <div class="doc-field">
                             <label class="label">Banque destinataire</label>
                             <select class="input" id="banque_destinataire" name="banque_destinataire">
-                                <option value="shine">FR76 1741 8000 0100 0117 6769 408 - Shine</option>
+                                <option value="">-- Sélectionner --</option>
                             </select>
                         </div>
                         <div class="doc-field">
@@ -4604,7 +4606,7 @@ def generate_document_form(module, module_name: str) -> str:
             // Champs additionnels (stockés dans custom_fields)
             custom_fields: {{
                 vendeur: document.getElementById('vendeur')?.value || null,
-                equipe_commerciale: document.getElementById('equipe_commerciale')?.value || null,
+                commercial_id: document.getElementById('commercial_id')?.value || null,
                 banque_destinataire: document.getElementById('banque_destinataire')?.value || null,
                 reference_paiement: document.getElementById('reference_paiement')?.value || null
             }}
@@ -4796,6 +4798,58 @@ def generate_document_form(module, module_name: str) -> str:
         }} catch (e) {{
             console.error('Erreur chargement produits:', e);
             window.produitsData = [];
+        }}
+
+        // Charger les commerciaux (employés)
+        try {{
+            const respCommerciaux = await fetch('/api/employes', {{
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + authToken
+                }}
+            }});
+            if (respCommerciaux.ok) {{
+                const dataCommerciaux = await respCommerciaux.json();
+                const commerciaux = dataCommerciaux.items || dataCommerciaux || [];
+                const selectCommercial = document.getElementById('commercial_id');
+                if (selectCommercial && commerciaux.length > 0) {{
+                    commerciaux.forEach(emp => {{
+                        const option = document.createElement('option');
+                        option.value = emp.id;
+                        const nom = emp.prenom && emp.nom ? `${{emp.prenom}} ${{emp.nom}}` : (emp.nom || emp.name || emp.matricule);
+                        option.textContent = nom;
+                        selectCommercial.appendChild(option);
+                    }});
+                }}
+            }}
+        }} catch (e) {{
+            console.error('Erreur chargement commerciaux:', e);
+        }}
+
+        // Charger les comptes bancaires
+        try {{
+            const respBanques = await fetch('/api/comptes_bancaires', {{
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + authToken
+                }}
+            }});
+            if (respBanques.ok) {{
+                const dataBanques = await respBanques.json();
+                const banques = dataBanques.items || dataBanques || [];
+                const selectBanque = document.getElementById('banque_destinataire');
+                if (selectBanque && banques.length > 0) {{
+                    banques.forEach(bq => {{
+                        const option = document.createElement('option');
+                        option.value = bq.id;
+                        const label = bq.iban ? `${{bq.iban}} - ${{bq.libelle || bq.code}}` : (bq.libelle || bq.code);
+                        option.textContent = label;
+                        selectBanque.appendChild(option);
+                    }});
+                }}
+            }}
+        }} catch (e) {{
+            console.error('Erreur chargement comptes bancaires:', e);
         }}
 
         // Date par defaut : aujourd'hui + 30 jours
