@@ -4367,7 +4367,7 @@ def generate_document_form(module, module_name: str) -> str:
                 <div class="doc-row">
                     <div class="doc-field">
                         <label class="label">Adresse de facturation</label>
-                        <textarea class="input" id="adresse_facturation" rows="2" placeholder="Adresse..."></textarea>
+                        <textarea class="input" id="adresse_facturation" name="adresse_facturation" rows="2" placeholder="Adresse..."></textarea>
                     </div>
                     <div class="doc-field">
                         <label class="label">Conditions de paiement</label>
