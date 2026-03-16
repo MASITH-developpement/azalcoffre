@@ -4511,7 +4511,8 @@ def generate_document_form(module, module_name: str) -> str:
                 const prix = parseFloat(inputs[0].value) || 0;
                 const qte = parseFloat(inputs[1].value) || 0;
                 const tvaSelect = selects[2];
-                const tauxTVA = parseFloat(tvaSelect?.value) || {tva_default};
+                const parsedTVA = parseFloat(tvaSelect?.value);
+                const tauxTVA = isNaN(parsedTVA) ? {tva_default} : parsedTVA;
                 const montantHT = prix * qte;
                 const montantTVA = montantHT * (tauxTVA / 100);
                 totalHT += montantHT;
@@ -4569,7 +4570,8 @@ def generate_document_form(module, module_name: str) -> str:
                 const productName = selectedOption?.dataset?.nom || '';
                 const prix = parseFloat(inputs[0].value) || 0;
                 const qte = parseFloat(inputs[1].value) || 0;
-                const tauxTVA = parseFloat(selects[2]?.value) || {tva_default};
+                const parsedTVALine = parseFloat(selects[2]?.value);
+                const tauxTVA = isNaN(parsedTVALine) ? {tva_default} : parsedTVALine;
 
                 if (productId || prix > 0) {{
                     const subtotal = prix * qte;
