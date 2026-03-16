@@ -4384,36 +4384,82 @@ def generate_document_form(module, module_name: str) -> str:
             <!-- Section Lignes -->
             <div class="doc-section" style="margin-top: 24px;">
                 <div class="doc-tabs">
-                    <button class="doc-tab active">Lignes de commande</button>
-                    <button class="doc-tab">Produits optionnels</button>
-                    <button class="doc-tab">Autres informations</button>
+                    <button class="doc-tab active" data-tab="lignes">Lignes de commande</button>
+                    <button class="doc-tab" data-tab="optionnels">Produits optionnels</button>
+                    <button class="doc-tab" data-tab="autres">Autres informations</button>
                 </div>
 
-                <table class="table" style="margin-top: 16px;">
-                    <thead>
-                        <tr>
-                            <th style="width: 40%;">Produit</th>
-                            <th style="width: 70px;">Tarif</th>
-                            <th>Prix unit.</th>
-                            <th>Quantité</th>
-                            <th>Taxes</th>
-                            <th>Montant</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="lignes-table">
-                        <tr class="ligne-vide">
-                            <td colspan="7" style="text-align: center; padding: 32px; color: var(--gray-400);">
-                                Aucune ligne. Ajoutez un produit ci-dessous.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- Tab: Lignes de commande -->
+                <div id="tab-lignes" class="tab-content active">
+                    <table class="table" style="margin-top: 16px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 40%;">Produit</th>
+                                <th style="width: 70px;">Tarif</th>
+                                <th>Prix unit.</th>
+                                <th>Quantité</th>
+                                <th>Taxes</th>
+                                <th>Montant</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="lignes-table">
+                            <tr class="ligne-vide">
+                                <td colspan="7" style="text-align: center; padding: 32px; color: var(--gray-400);">
+                                    Aucune ligne. Ajoutez un produit ci-dessous.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-                <div class="doc-actions" style="margin-top: 12px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="ajouterLigne()">+ Ajouter un produit</button>
-                    <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une section</button>
-                    <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une note</button>
+                    <div class="doc-actions" style="margin-top: 12px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="ajouterLigne()">+ Ajouter un produit</button>
+                        <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une section</button>
+                        <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une note</button>
+                    </div>
+                </div>
+
+                <!-- Tab: Produits optionnels -->
+                <div id="tab-optionnels" class="tab-content" style="display: none;">
+                    <p style="padding: 24px; color: var(--gray-400); text-align: center;">
+                        Produits optionnels (non inclus dans le total)
+                    </p>
+                </div>
+
+                <!-- Tab: Autres informations -->
+                <div id="tab-autres" class="tab-content" style="display: none; margin-top: 16px;">
+                    <div class="doc-row">
+                        <div class="doc-field">
+                            <label class="label">Référence client</label>
+                            <input type="text" class="input" id="reference_client" name="reference_client" placeholder="Référence...">
+                        </div>
+                        <div class="doc-field">
+                            <label class="label">Date de livraison</label>
+                            <input type="date" class="input" id="delivery_date" name="delivery_date">
+                        </div>
+                    </div>
+                    <div class="doc-row">
+                        <div class="doc-field">
+                            <label class="label">Vendeur</label>
+                            <input type="text" class="input" id="vendeur" name="vendeur" value="Stéphane MOREAU">
+                        </div>
+                        <div class="doc-field">
+                            <label class="label">Équipe commerciale</label>
+                            <input type="text" class="input" id="equipe_commerciale" name="equipe_commerciale" value="Ventes">
+                        </div>
+                    </div>
+                    <div class="doc-row">
+                        <div class="doc-field">
+                            <label class="label">Banque destinataire</label>
+                            <select class="input" id="banque_destinataire" name="banque_destinataire">
+                                <option value="shine">FR76 1741 8000 0100 0117 6769 408 - Shine</option>
+                            </select>
+                        </div>
+                        <div class="doc-field">
+                            <label class="label">Référence du paiement</label>
+                            <input type="text" class="input" id="reference_paiement" name="reference_paiement" placeholder="FAC/2025/00001" readonly>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -4546,13 +4592,22 @@ def generate_document_form(module, module_name: str) -> str:
             customer_id: document.getElementById('client_id').value || null,
             date: new Date().toISOString().split('T')[0],
             due_date: document.getElementById('date_validite').value || null,
+            delivery_date: document.getElementById('delivery_date')?.value || null,
             billing_address: document.getElementById('adresse_facturation').value || null,
             payment_terms: conditionsMap[conditionsValue] || 'NET_30',
+            reference: document.getElementById('reference_client')?.value || null,
             status: 'DRAFT',
             lignes: [],
             subtotal: 0,
             tax_amount: 0,
-            total: 0
+            total: 0,
+            // Champs additionnels (stockés dans custom_fields)
+            custom_fields: {{
+                vendeur: document.getElementById('vendeur')?.value || null,
+                equipe_commerciale: document.getElementById('equipe_commerciale')?.value || null,
+                banque_destinataire: document.getElementById('banque_destinataire')?.value || null,
+                reference_paiement: document.getElementById('reference_paiement')?.value || null
+            }}
         }};
 
         // Collecter les lignes
@@ -4753,8 +4808,17 @@ def generate_document_form(module, module_name: str) -> str:
     // Gestion des onglets
     document.querySelectorAll('.doc-tab').forEach(tab => {{
         tab.addEventListener('click', function() {{
+            // Désactiver tous les onglets
             document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
+
+            // Masquer tous les contenus
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+            // Afficher le contenu correspondant
+            const tabId = this.dataset.tab;
+            const content = document.getElementById('tab-' + tabId);
+            if (content) content.style.display = 'block';
         }});
     }});
 

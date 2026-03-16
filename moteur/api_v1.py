@@ -52,10 +52,17 @@ class RecentTrackData(BaseModel):
 
 @legacy_router.post("/recent/track")
 async def track_recent_access(
-    request: Request
+    data: Optional[Dict[str, Any]] = Body(None),
+    request: Request = None
 ):
     """Enregistre l'accès récent à un élément"""
     try:
+        # Récupérer les données du body de la requête
+        try:
+            data = await request.json()
+        except:
+            data = None
+        
         # Toujours retourner un succès, même avec des données invalides
         logger.debug("Tracking d'accès récent reçu", data=data)
         
