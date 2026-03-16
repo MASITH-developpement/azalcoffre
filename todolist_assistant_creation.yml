@@ -1,0 +1,98 @@
+# =============================================================================
+# TODOLIST - Assistant Création d'Entreprise
+# =============================================================================
+# IA accompagnement création entreprise TPE
+# Status: En attente
+# Priorité: Moyenne
+
+module: assistant_creation
+description: "IA accompagnement création entreprise TPE"
+statut: TODO
+
+# Sources de référence
+sources:
+  - https://francedigitale.org/publications/mapping-startups-ia-2026
+  - https://entreprendre.service-public.gouv.fr/vosdroits/F32886
+  - https://neuroflash.com/fr/les-5-meilleurs-generateurs-de-business-plans-par-ia/
+
+# Fonctionnalités à implémenter
+fonctionnalites:
+  - id: F1
+    nom: choix_statut_juridique
+    description: "Questionnaire IA pour recommander le statut (EI, EURL, SARL, SAS, auto-entrepreneur)"
+    statut: TODO
+    priorite: HAUTE
+    details:
+      - Questionnaire interactif (CA prévu, associés, protection patrimoine)
+      - Comparatif charges sociales par statut
+      - Avantages/inconvénients de chaque forme
+      - Recommandation IA basée sur le profil
+
+  - id: F2
+    nom: generation_statuts
+    description: "Génération automatique des statuts juridiques"
+    statut: TODO
+    priorite: HAUTE
+    details:
+      - Templates statuts SARL, SAS, EURL, SASU
+      - Personnalisation (capital, gérance, objet social)
+      - Clauses optionnelles (agrément, préemption)
+      - Export PDF prêt pour dépôt
+
+  - id: F3
+    nom: business_plan_simplifie
+    description: "Générateur de business plan IA pour TPE"
+    statut: TODO
+    priorite: HAUTE
+    details:
+      - Questionnaire guidé (activité, marché, objectifs)
+      - Génération executive summary
+      - Prévisionnel financier simplifié (3 ans)
+      - Export PDF professionnel
+
+  - id: F4
+    nom: simulation_charges
+    description: "Simulateur charges sociales et fiscales"
+    statut: TODO
+    priorite: MOYENNE
+    details:
+      - Calcul cotisations par statut (URSSAF, retraite)
+      - Simulation IR vs IS
+      - Impact ACRE (1ère année)
+      - Comparatif net après charges
+
+  - id: F5
+    nom: checklist_formalites
+    description: "Checklist interactive des formalités de création"
+    statut: TODO
+    priorite: MOYENNE
+    details:
+      - Étapes personnalisées selon statut
+      - Documents à préparer
+      - Délais et coûts estimés
+      - Liens vers services officiels (INPI, guichet unique)
+
+  - id: F6
+    nom: redirection_cma_cci_bge
+    description: "Orientation vers organismes d'accompagnement"
+    statut: TODO
+    priorite: BASSE
+    details:
+      - Détection activité (artisan → CMA, commerce → CCI)
+      - Liens BGE, Réseau Entreprendre, Initiative France
+      - Aides régionales disponibles
+      - Prise de RDV intégrée
+
+# Intégrations prévues
+integrations:
+  - INPI (guichet unique entreprises)
+  - API Entreprise (vérification SIRET)
+  - Service-Public.fr
+  - API adresse.data.gouv.fr
+
+# Notes techniques
+notes:
+  - Utiliser Claude/GPT pour génération textes (statuts, BP)
+  - Barèmes charges à jour (2024-2025)
+  - Conformité RGPD pour données personnelles
+  - Option: intégrer dans secretariat_ia ou module séparé

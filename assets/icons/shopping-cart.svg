@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Panier corps (secondaire) -->
-  <path d="M5.5 7l2.2 10a2 2 0 0 0 2 1.5h8.6a2 2 0 0 0 1.9-1.5L22 7H5.5z" fill="#93C5FD"/>
-  <!-- Poignée panier (primaire) -->
-  <path d="M2 3h2.5l.6 3h17.4l-1.8 8H7.8L5.5 3H2z" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
-  <!-- Roues (primaire) -->
-  <circle cx="9" cy="21" r="1.5" fill="#2563EB"/>
-  <circle cx="18" cy="21" r="1.5" fill="#2563EB"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>

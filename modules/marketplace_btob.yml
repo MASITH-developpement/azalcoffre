@@ -1,0 +1,128 @@
+# =============================================================================
+# AZALPLUS - Module Etudes de Marche B2B
+# =============================================================================
+nom: marketplace_btob
+nom_affichage: Etudes de Marche
+icone: chart-bar
+menu: Commercial
+description: Rapports et etudes de marche a vendre
+
+champs:
+  - nom: reference
+    type: text
+    libelle: "Reference"
+    obligatoire: true
+    unique: true
+
+  - nom: titre
+    type: text
+    libelle: "Titre de l'etude"
+    obligatoire: true
+
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    obligatoire: true
+    defaut: BROUILLON
+    options:
+      - BROUILLON
+      - DISPONIBLE
+      - VENDU
+      - ARCHIVE
+
+  - nom: categorie
+    type: select
+    libelle: "Categorie"
+    obligatoire: true
+    options:
+      - ANALYSE_SECTORIELLE
+      - TENDANCES_MARCHE
+      - ETUDE_REGIONALE
+      - COMPARATIF_PRIX
+      - RAPPORT_PERSONNALISE
+
+  - nom: secteur
+    type: text
+    libelle: "Secteur d'activite"
+
+  - nom: region
+    type: text
+    libelle: "Region"
+
+  - nom: date_debut
+    type: date
+    libelle: "Periode - Debut"
+    obligatoire: true
+
+  - nom: date_fin
+    type: date
+    libelle: "Periode - Fin"
+    obligatoire: true
+
+  - nom: nb_entreprises
+    type: number
+    libelle: "Nombre d'entreprises analysees"
+    readonly: true
+
+  - nom: format
+    type: select
+    libelle: "Format du rapport"
+    defaut: PDF
+    options:
+      - PDF
+      - EXCEL
+      - POWERPOINT
+
+  - nom: prix
+    type: money
+    libelle: "Prix de vente"
+
+  - nom: acheteur
+    type: text
+    libelle: "Acheteur"
+
+  - nom: date_vente
+    type: date
+    libelle: "Date de vente"
+
+  - nom: licence
+    type: select
+    libelle: "Type de licence"
+    defaut: USAGE_UNIQUE
+    options:
+      - USAGE_UNIQUE
+      - ANNUELLE
+      - ILLIMITEE
+
+  - nom: date_expiration
+    type: date
+    libelle: "Date d'expiration"
+
+  - nom: description
+    type: textarea
+    libelle: "Description"
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes internes"
+
+recherche:
+  - reference
+  - titre
+  - secteur
+  - acheteur
+
+affichage_liste:
+  - reference
+  - titre
+  - categorie
+  - statut
+  - prix
+
+champ_affichage: titre
+
+workflow:
+  BROUILLON -> DISPONIBLE: Publier
+  DISPONIBLE -> VENDU: Marquer vendu
+  DISPONIBLE -> ARCHIVE: Archiver
+  VENDU -> ARCHIVE: Archiver

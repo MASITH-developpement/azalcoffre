@@ -1,10 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Toit -->
-  <path d="M2 9l10-6 10 6H2z" fill="#2563EB"/>
-  <!-- Base -->
-  <rect x="3" y="19" width="18" height="3" fill="#2563EB"/>
-  <!-- Colonnes -->
-  <rect x="5" y="10" width="3" height="9" fill="#93C5FD"/>
-  <rect x="10.5" y="10" width="3" height="9" fill="#93C5FD"/>
-  <rect x="16" y="10" width="3" height="9" fill="#93C5FD"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>

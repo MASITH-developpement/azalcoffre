@@ -1,0 +1,162 @@
+# =============================================================================
+# AZALPLUS - Module Employés
+# =============================================================================
+# Gestion des employés (techniciens, commerciaux, etc.)
+
+nom: Employes
+nom_pluriel: Employés
+icone: users
+menu: RH
+description: "Gestion des employés"
+ordre_menu: 2
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: matricule
+    type: text
+    libelle: "Matricule"
+    unique: true
+    auto_genere: true
+    format: "EMP-{####}"
+
+  - nom: civilite
+    type: select
+    libelle: "Civilité"
+    options:
+      - M.
+      - Mme
+      - Mlle
+
+  - nom: nom
+    type: text
+    libelle: "Nom"
+    obligatoire: true
+
+  - nom: prenom
+    type: text
+    libelle: "Prénom"
+    obligatoire: true
+
+  - nom: email
+    type: email
+    libelle: "Email"
+
+  - nom: telephone
+    type: tel
+    libelle: "Téléphone"
+
+  - nom: mobile
+    type: tel
+    libelle: "Mobile"
+
+  # ==========================================================================
+  # POSTE
+  # ==========================================================================
+  - nom: poste
+    type: text
+    libelle: "Poste"
+
+  - nom: departement
+    type: text
+    libelle: "Département"
+
+  - nom: type_employe
+    type: select
+    libelle: "Type"
+    options:
+      - TECHNICIEN
+      - COMMERCIAL
+      - ADMINISTRATIF
+      - DIRECTION
+      - AUTRE
+    defaut: TECHNICIEN
+
+  - nom: responsable_id
+    type: relation
+    libelle: "Responsable"
+    relation: employes
+
+  # ==========================================================================
+  # COMPÉTENCES (pour techniciens)
+  # ==========================================================================
+  - nom: competences
+    type: tags
+    libelle: "Compétences"
+
+  - nom: certifications
+    type: tags
+    libelle: "Certifications"
+
+  - nom: zone_intervention
+    type: text
+    libelle: "Zone intervention"
+
+  # ==========================================================================
+  # COORDONNÉES
+  # ==========================================================================
+  - nom: adresse
+    type: text
+    libelle: "Adresse"
+
+  - nom: code_postal
+    type: text
+    libelle: "Code postal"
+
+  - nom: ville
+    type: text
+    libelle: "Ville"
+
+  # ==========================================================================
+  # STATUT
+  # ==========================================================================
+  - nom: date_entree
+    type: date
+    libelle: "Date entrée"
+
+  - nom: date_sortie
+    type: date
+    libelle: "Date sortie"
+
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    options:
+      - ACTIF
+      - CONGE
+      - INACTIF
+    defaut: ACTIF
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Index
+index:
+  - matricule
+  - nom
+  - email
+  - type_employe
+  - statut
+
+# Recherche
+recherche:
+  - matricule
+  - nom
+  - prenom
+  - email
+  - poste
+
+# Affichage liste
+affichage_liste:
+  - matricule
+  - nom
+  - prenom
+  - poste
+  - type_employe
+  - telephone
+  - statut
+
+# Champ affiché dans les selects
+champ_affichage: nom

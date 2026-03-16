@@ -709,9 +709,9 @@
     </main>
 
     <div class="bottom-actions">
-        {% if intervention.statut == 'PLANIFIEE' %}
+        {% if intervention.statut in ['DRAFT', 'A_PLANIFIER', 'PLANIFIEE', None] %}
         <button class="btn btn-primary" onclick="marquerArrivee()">
-            &#x2714; Marquer l'arrivee
+            &#x2714; Arrivee sur site
         </button>
         {% elif intervention.statut == 'SUR_SITE' %}
         <button class="btn btn-success" onclick="demarrerIntervention()">

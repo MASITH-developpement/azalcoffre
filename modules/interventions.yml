@@ -63,6 +63,21 @@ champs:
     relation: clients
     obligatoire: true
 
+  - nom: donneur_ordre_id
+    type: relation
+    libelle: "Donneur d'ordre"
+    relation: donneur_ordre
+
+  - nom: numero_os
+    type: text
+    libelle: "N° OS"
+    description: "Numéro d'ordre de service"
+
+  - nom: facture_a_id
+    type: relation
+    libelle: "Facturé à"
+    relation: clients
+
   - nom: contact_nom
     type: text
     libelle: "Contact"
@@ -459,9 +474,11 @@ recherche:
 
 affichage_liste:
   - numero
-  - objet
   - client_id
-  - technicien_id
+  - donneur_ordre_id
+  - numero_os
+  - type_intervention
+  - objet
   - date_prevue
   - priorite
   - statut

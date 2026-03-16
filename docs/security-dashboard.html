@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AZALPLUS - Dashboard Sécurité</title>
+    <meta http-equiv="refresh" content="60">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 20px 40px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header h1 span { color: #3b82f6; }
+        .live-badge {
+            background: #22c55e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .container { padding: 30px 40px; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #334155;
+        }
+        .stat-card.danger { border-left: 4px solid #ef4444; }
+        .stat-card.warning { border-left: 4px solid #f59e0b; }
+        .stat-card.success { border-left: 4px solid #22c55e; }
+        .stat-card.info { border-left: 4px solid #3b82f6; }
+        .stat-value { font-size: 36px; font-weight: 700; margin-bottom: 8px; }
+        .stat-card.danger .stat-value { color: #ef4444; }
+        .stat-card.warning .stat-value { color: #f59e0b; }
+        .stat-card.success .stat-value { color: #22c55e; }
+        .stat-card.info .stat-value { color: #3b82f6; }
+        .stat-label { color: #94a3b8; font-size: 14px; }
+
+        .section { margin-bottom: 30px; }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        th, td { padding: 14px 16px; text-align: left; }
+        th {
+            background: #334155;
+            font-weight: 600;
+            color: #f8fafc;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        tr { border-bottom: 1px solid #334155; }
+        tr:last-child { border-bottom: none; }
+        tr:hover { background: #334155; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-critical { background: #dc2626; color: white; }
+        .badge-high { background: #ea580c; color: white; }
+        .badge-medium { background: #d97706; color: white; }
+        .badge-low { background: #65a30d; color: white; }
+        .badge-clean { background: #22c55e; color: white; }
+        .badge-vpn { background: #7c3aed; color: white; }
+        .badge-hosting { background: #0891b2; color: white; }
+
+        .ip-cell { font-family: 'Monaco', monospace; font-size: 13px; }
+        .flag { font-size: 20px; margin-right: 8px; }
+        .blocked { color: #22c55e; }
+        .passed { color: #ef4444; font-weight: 600; }
+
+        .abuse-score {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .score-bar {
+            width: 60px;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .score-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+
+        .cmd-box {
+            background: #0f172a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', monospace;
+            font-size: 12px;
+            color: #22c55e;
+        }
+
+        .last-update {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            color: #64748b;
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .container { padding: 20px; }
+            table { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            <svg width="32" height="32" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="55" fill="#3454D1"/>
+                <circle cx="92" cy="28" r="6" fill="#6B9FFF"/>
+                <text x="45" y="82" font-family="Inter, sans-serif" font-weight="800" font-size="58" fill="#FFF">A</text>
+                <text x="78" y="68" font-family="Inter, sans-serif" font-weight="700" font-size="32" fill="#FFF">+</text>
+            </svg>
+            AZALPLUS <span>Security Dashboard</span>
+        </h1>
+        <div style="display:flex;align-items:center;gap:20px;">
+            <span class="live-badge">LIVE</span>
+            <span class="last-update" id="lastUpdate"></span>
+            <button onclick="logout()" style="background:#dc2626;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:0.85rem;">
+                🚪 Déconnexion
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card info">
+                <div class="stat-value" id="totalAttempts">--</div>
+                <div class="stat-label">Tentatives totales (24h)</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-value" id="blockedCount">--</div>
+                <div class="stat-label">Bloquées</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-value" id="passedCount">--</div>
+                <div class="stat-label">Non bloquées</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-value" id="uniqueIPs">--</div>
+                <div class="stat-label">IPs uniques</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Top 10 IPs Suspectes</h2>
+            <table id="topIPsTable">
+                <thead>
+                    <tr>
+                        <th>IP</th>
+                        <th>Localisation</th>
+                        <th>Réputation</th>
+                        <th>Tentatives</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="topIPsBody">
+                    <tr><td colspan="5" class="no-data">Chargement...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Dernières Attaques</h2>
+            <table id="eventsTable">
+                <thead>
+                    <tr>
+                        <th>Heure</th>
+                        <th>IP</th>
+                        <th>Pays</th>
+                        <th>Type</th>
+                        <th>Chemin</th>
+                        <th>Sévérité</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="eventsBody">
+                    <tr><td colspan="7" class="no-data">Chargement...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Charger les données
+        async function loadData() {
+            try {
+                const response = await fetch('/security-data.json');
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (e) {
+                // Fallback: charger depuis fichier JSON statique
+                try {
+                    const response = await fetch('/security-data.json');
+                    const data = await response.json();
+                    updateDashboard(data);
+                } catch (e2) {
+                    console.error('Erreur chargement données:', e2);
+                }
+            }
+        }
+
+        function updateDashboard(data) {
+            // Stats
+            document.getElementById('totalAttempts').textContent = data.total || 0;
+            document.getElementById('blockedCount').textContent = data.blocked || 0;
+            document.getElementById('passedCount').textContent = data.passed || 0;
+            document.getElementById('uniqueIPs').textContent = data.unique_ips || 0;
+
+            // Top IPs
+            const topIPsBody = document.getElementById('topIPsBody');
+            if (data.top_ips && data.top_ips.length > 0) {
+                topIPsBody.innerHTML = data.top_ips.map(ip => `
+                    <tr>
+                        <td class="ip-cell">
+                            <strong>${ip.ip}</strong><br>
+                            <small style="color:#64748b">${ip.isp || ''}</small>
+                        </td>
+                        <td>
+                            <span class="flag">${ip.flag || '🌐'}</span>
+                            ${ip.country || 'Inconnu'}${ip.city ? ', ' + ip.city : ''}
+                            ${ip.is_vpn ? '<span class="badge badge-vpn" style="margin-left:8px">VPN</span>' : ''}
+                            ${ip.is_hosting ? '<span class="badge badge-hosting" style="margin-left:8px">Hébergeur</span>' : ''}
+                        </td>
+                        <td>
+                            <div class="abuse-score">
+                                <span class="badge ${getScoreBadgeClass(ip.abuse_score)}">${ip.abuse_score || 0}%</span>
+                                <div class="score-bar">
+                                    <div class="score-fill" style="width:${ip.abuse_score || 0}%;background:${getScoreColor(ip.abuse_score)}"></div>
+                                </div>
+                            </div>
+                            ${ip.abuse_reports ? `<br><small style="color:#64748b">${ip.abuse_reports} signalements</small>` : ''}
+                        </td>
+                        <td style="text-align:center"><strong>${ip.count}</strong></td>
+                        <td><code class="cmd-box">sudo ufw deny from ${ip.ip}</code></td>
+                    </tr>
+                `).join('');
+            } else {
+                topIPsBody.innerHTML = '<tr><td colspan="5" class="no-data">Aucune IP suspecte détectée</td></tr>';
+            }
+
+            // Events
+            const eventsBody = document.getElementById('eventsBody');
+            if (data.events && data.events.length > 0) {
+                eventsBody.innerHTML = data.events.slice(0, 50).map(e => `
+                    <tr>
+                        <td>${e.time}</td>
+                        <td class="ip-cell">${e.ip}</td>
+                        <td><span class="flag">${e.flag || '🌐'}</span></td>
+                        <td>${e.attack_type}</td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${e.path}</td>
+                        <td><span class="badge badge-${e.severity.toLowerCase()}">${e.severity}</span></td>
+                        <td class="${e.blocked ? 'blocked' : 'passed'}">${e.blocked ? '✓ Bloqué' : '⚠ Passé'}</td>
+                    </tr>
+                `).join('');
+            } else {
+                eventsBody.innerHTML = '<tr><td colspan="7" class="no-data">Aucun événement</td></tr>';
+            }
+
+            // Update time
+            document.getElementById('lastUpdate').textContent =
+                'Mis à jour: ' + new Date().toLocaleTimeString('fr-FR');
+        }
+
+        function getScoreBadgeClass(score) {
+            if (!score || score === 0) return 'badge-clean';
+            if (score < 25) return 'badge-low';
+            if (score < 50) return 'badge-medium';
+            if (score < 75) return 'badge-high';
+            return 'badge-critical';
+        }
+
+        function getScoreColor(score) {
+            if (!score || score === 0) return '#22c55e';
+            if (score < 25) return '#84cc16';
+            if (score < 50) return '#eab308';
+            if (score < 75) return '#f97316';
+            return '#ef4444';
+        }
+
+        // Charger au démarrage
+        loadData();
+
+        // Rafraîchir toutes les 30 secondes
+        setInterval(loadData, 30000);
+
+        // Logout function
+        function logout() {
+            window.location.href = '/logout';
+        }
+    </script>
+</body>
+</html>

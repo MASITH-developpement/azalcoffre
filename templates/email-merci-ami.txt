@@ -1,0 +1,34 @@
+AZALPLUS — Merci d'avoir parlé de nous !
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Salut,
+
+{{ prenom_inscrit }} vient de s'inscrire sur AZALPLUS et a mentionné que c'est grâce à toi.
+
+On voulait te dire MERCI. Vraiment.
+
+AZALPLUS, c'est un ERP 100% gratuit pour les TPE. Facturation, devis, clients, stock, compta — tout inclus, sans limite, sans abonnement.
+
+On croit que les petites entreprises méritent des outils pros sans se ruiner.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TU ES AUSSI ARTISAN, COMMERÇANT OU INDÉPENDANT ?
+
+Rejoins les Zaliers — notre communauté de révolutionnaires qui veulent changer la donne.
+
+→ Inscription : https://azalplus.fr/waitlist
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+À très vite,
+L'équipe AZALPLUS
+
+--
+AZALPLUS — ERP 100% gratuit pour les TPE
+Site : https://azalplus.fr
+LinkedIn : https://linkedin.com/company/azalplus
+Groupe Zaliers : https://facebook.com/groups/zaliers
+
+Tu reçois cet email car {{ prenom_inscrit }} t'a mentionné comme la personne qui lui a recommandé AZALPLUS. Cet email est unique et ne se répétera pas.

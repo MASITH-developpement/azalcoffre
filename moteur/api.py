@@ -348,6 +348,9 @@ class GenericCRUDRouter:
             user: dict = Depends(require_auth)
         ):
             """Supprime plusieurs enregistrements."""
+            # Pour les modules createur_only, utiliser SYSTEM_TENANT_ID
+            query_tenant_id = SYSTEM_TENANT_ID if is_createur_only else tenant_id
+
             ids = data.get("ids", [])
             if not ids:
                 return {"success": 0, "failed": 0, "errors": [{"error": "Aucun ID fourni"}]}
@@ -356,7 +359,7 @@ class GenericCRUDRouter:
             errors = []
             for item_id in ids:
                 try:
-                    Database.soft_delete(self.table_name, tenant_id, UUID(item_id))
+                    Database.soft_delete(self.table_name, query_tenant_id, UUID(item_id))
                     success += 1
                 except Exception as e:
                     failed += 1
@@ -546,10 +549,13 @@ class GenericCRUDRouter:
             user: dict = Depends(require_auth)
         ):
             """Supprime un enregistrement (soft delete)."""
-            # Recuperer les donnees avant suppression pour l'audit
-            existing = Database.get_by_id(self.table_name, tenant_id, item_id)
+            # Pour les modules createur_only, utiliser SYSTEM_TENANT_ID
+            query_tenant_id = SYSTEM_TENANT_ID if is_createur_only else tenant_id
 
-            success = Database.soft_delete(self.table_name, tenant_id, item_id)
+            # Recuperer les donnees avant suppression pour l'audit
+            existing = Database.get_by_id(self.table_name, query_tenant_id, item_id)
+
+            success = Database.soft_delete(self.table_name, query_tenant_id, item_id)
             if not success:
                 raise HTTPException(status_code=404, detail="Non trouvé")
 

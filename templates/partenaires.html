@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partenaires — AZALPLUS</title>
+    <meta name="description" content="Devenez partenaire AZALPLUS. Proposez un ERP gratuit à vos adhérents TPE.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3454D1;
+            --primary-dark: #2A45B0;
+            --accent: #6B9FFF;
+            --dark: #1a1a2e;
+            --gray: #666;
+            --light-gray: #f8f9fa;
+            --white: #ffffff;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .header-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .header p {
+            font-size: 20px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Section */
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-alt {
+            background: var(--light-gray);
+        }
+
+        .section-title {
+            font-size: 32px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 16px;
+            color: var(--dark);
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            text-align: center;
+            color: var(--gray);
+            margin-bottom: 48px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--gray);
+            font-size: 15px;
+        }
+
+        /* Two Columns */
+        .two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .two-cols {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .col-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .col-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .col-card ul {
+            list-style: none;
+        }
+
+        .col-card li {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .col-card li:last-child {
+            border-bottom: none;
+        }
+
+        .check {
+            color: var(--success);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat-item h3 {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-item p {
+            color: var(--gray);
+            font-size: 16px;
+        }
+
+        /* CTA */
+        .cta-section {
+            background: var(--dark);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .cta-section p {
+            font-size: 18px;
+            opacity: 0.8;
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 16px 32px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid white;
+            margin-left: 16px;
+        }
+
+        .btn-outline:hover {
+            background: white;
+            color: var(--dark);
+        }
+
+        /* Process */
+        .process-steps {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .process-step {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            margin: 0 auto 16px;
+        }
+
+        .process-step h4 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .process-step p {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        /* Témoignages */
+        .testimonial {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .testimonial blockquote {
+            font-size: 20px;
+            font-style: italic;
+            color: var(--dark);
+            margin-bottom: 24px;
+        }
+
+        .testimonial cite {
+            color: var(--gray);
+            font-size: 16px;
+        }
+
+        /* Contact */
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+            margin-top: 32px;
+        }
+
+        .contact-item {
+            text-align: center;
+        }
+
+        .contact-item strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .contact-item a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--light-gray);
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--gray);
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Print */
+        @media print {
+            .header {
+                padding: 40px 20px;
+            }
+            .section {
+                padding: 40px 0;
+            }
+            .btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <circle cx="256" cy="256" r="256" fill="#FFFFFF"/>
+                <circle cx="380" cy="120" r="24" fill="#6B9FFF"/>
+                <text x="200" y="360" font-family="Inter, Arial" font-weight="800" font-size="280" fill="#3454D1">A</text>
+                <text x="340" y="280" font-family="Inter, Arial" font-weight="700" font-size="140" fill="#3454D1">+</text>
+            </svg>
+        </div>
+        <h1>Devenez Partenaire AZALPLUS</h1>
+        <p>Proposez un ERP 100% gratuit aux TPE et artisans que vous accompagnez</p>
+    </header>
+
+    <!-- Ce que nous proposons -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Ce que nous proposons à vos adhérents</h2>
+            <p class="section-subtitle">Un ERP complet, gratuit, sans aucune limite</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📄</div>
+                    <h3>Facturation illimitée</h3>
+                    <p>Factures professionnelles, conformes, envoyées par email avec lien de paiement intégré.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Devis illimités</h3>
+                    <p>Création rapide, conversion en facture en un clic, relances automatiques.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Gestion clients</h3>
+                    <p>Fichier client complet, historique des échanges, balance âgée.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <h3>Stock & catalogue</h3>
+                    <p>Gestion des produits, alertes de stock, inventaires.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Comptabilité</h3>
+                    <p>Suivi des dépenses, rapprochement bancaire, exports comptables.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💳</div>
+                    <h3>Paiements instantanés</h3>
+                    <p>Vos adhérents sont payés en 10 secondes par virement. Moins cher que Stripe ou PayPal.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chiffres -->
+    <section class="section section-alt">
+        <div class="container">
+            <h2 class="section-title">AZALPLUS en chiffres</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>0€</h3>
+                    <p>Coût pour vos adhérents</p>
+                </div>
+                <div class="stat-item">
+                    <h3>100+</h3>
+                    <p>Modules inclus</p>
+                </div>
+                <div class="stat-item">
+                    <h3>1.29%</h3>
+                    <p>Frais de paiement (vs 2.9% PayPal)</p>
+                </div>
+                <div class="stat-item">
+                    <h3>10s</h3>
+                    <p>Délai de paiement client</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partenariat -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Le partenariat</h2>
+            <p class="section-subtitle">Un échange gagnant-gagnant, sans engagement</p>
+
+            <div class="two-cols">
+                <div class="col-card">
+                    <h3>🎁 Ce que nous offrons</h3>
+                    <ul>
+                        <li><span class="check">✓</span> Accès gratuit et illimité pour tous vos adhérents</li>
+                        <li><span class="check">✓</span> Webinaire de formation pour vos équipes</li>
+                        <li><span class="check">✓</span> Support dédié pour vos adhérents</li>
+                        <li><span class="check">✓</span> Co-branding possible ("Recommandé par...")</li>
+                        <li><span class="check">✓</span> Reporting d'usage anonymisé (si souhaité)</li>
+                        <li><span class="check">✓</span> Flyers et supports de communication</li>
+                    </ul>
+                </div>
+                <div class="col-card">
+                    <h3>🤝 Ce que nous demandons</h3>
+                    <ul>
+                        <li><span class="check">✓</span> Mention sur votre site web (page outils/ressources)</li>
+                        <li><span class="check">✓</span> Communication à vos adhérents (newsletter, mailing)</li>
+                        <li><span class="check">✓</span> Présentation lors de vos ateliers/formations</li>
+                        <li><span class="check">✓</span> Affichage en accueil (flyer, QR code)</li>
+                        <li><span class="check">✓</span> Retours terrain pour améliorer l'outil</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Processus -->
+    <section class="section section-alt">
+        <div class="container">
+            <h2 class="section-title">Comment ça se passe ?</h2>
+            <div class="process-steps">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h4>Échange initial</h4>
+                    <p>15 min pour vous présenter l'outil et répondre à vos questions</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h4>Test par vos équipes</h4>
+                    <p>Vos conseillers testent l'outil pour valider sa pertinence</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h4>Mise en place</h4>
+                    <p>Webinaire de formation + création des supports</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <h4>Déploiement</h4>
+                    <p>Communication à vos adhérents et accompagnement</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pourquoi gratuit -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Pourquoi c'est gratuit ?</h2>
+            <p class="section-subtitle">Notre modèle économique repose sur les flux financiers, pas sur les TPE</p>
+
+            <div class="testimonial">
+                <blockquote>
+                    "Nous ne facturons pas les TPE. Nous prenons une commission de 0.30% sur les paiements de leurs clients qui passent par notre plateforme. C'est tout. L'ERP reste gratuit, complet, sans limite."
+                </blockquote>
+                <cite>— Équipe AZALPLUS</cite>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <h2>Prêt à offrir un ERP gratuit à vos adhérents ?</h2>
+        <p>Contactez-nous pour un échange de 15 minutes</p>
+        <a href="mailto:contact@masith.fr" class="btn">Nous contacter</a>
+        <a href="/assets/docs/azalplus-visuels.zip" class="btn btn-outline" download>Télécharger les ressources</a>
+
+        <div class="contact-info">
+            <div class="contact-item">
+                <strong>Email</strong>
+                <a href="mailto:contact@masith.fr">contact@masith.fr</a>
+            </div>
+            <div class="contact-item">
+                <strong>Téléphone</strong>
+                <a href="tel:+33675788758">06.75.78.87.58</a>
+            </div>
+            <div class="contact-item">
+                <strong>Site web</strong>
+                <a href="/">azalplus.fr</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>
+            <a href="/">AZALPLUS</a> — ERP 100% gratuit pour les TPE
+            <br><br>
+            <a href="/waitlist">S'inscrire</a> • <a href="/partenaires">Partenaires</a>
+        </p>
+    </footer>
+
+</body>
+</html>

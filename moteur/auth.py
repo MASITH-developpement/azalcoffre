@@ -546,7 +546,7 @@ async def login(data: LoginWith2FARequest, request: Request):
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,  # True en production avec HTTPS
+        secure=settings.AZALPLUS_ENV == "production",
         samesite="lax",
         max_age=settings.JWT_EXPIRE_MINUTES * 60
     )
@@ -625,7 +625,7 @@ async def complete_2fa_login(data: Complete2FARequest, request: Request):
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,  # True en production avec HTTPS
+        secure=settings.AZALPLUS_ENV == "production",
         samesite="lax",
         max_age=settings.JWT_EXPIRE_MINUTES * 60
     )

@@ -1,8 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Fond flèche bas (secondaire) -->
-  <path d="M21 17H16L18.5 14.5L14 10L10 14L4 8V11L10 17L14 13L17 16V17H21Z" fill="#93C5FD"/>
-  <!-- Flèche haut (principale) -->
-  <path d="M3 17L3 14L9 8L13 12L17 8H14V5H21V12H18V9L13 14L9 10L3 16V17Z" fill="#2563EB"/>
-  <!-- Pointe flèche bas -->
-  <path d="M21 21V18H18L21 21Z" fill="#2563EB"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>

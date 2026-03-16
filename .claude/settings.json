@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "PreToolUse": [],
+    "PostToolUse": [],
+    "Notification": [
+      {
+        "type": "command",
+        "command": "python3 /home/ubuntu/azalplus/.claude/check_errors.py 2>/dev/null"
+      }
+    ]
+  }
+}

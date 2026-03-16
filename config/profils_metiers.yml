@@ -1,0 +1,788 @@
+# =============================================================================
+# AZALPLUS - Profils Metiers
+# =============================================================================
+# Mapping metier -> modules actives automatiquement a l'inscription.
+# Un fichier simple, pas de base de donnees, facile a maintenir.
+#
+# Usage:
+# 1. SIRET saisi -> API INSEE -> Code NAF -> Profil auto
+# 2. Pas de SIRET -> Selection manuelle du metier
+# 3. Modules actives automatiquement selon le profil
+#
+# Maintenance:
+# - Ajouter un metier: 5 lignes dans ce fichier
+# - Modifier les modules: editer la liste
+# - Ajouter un code NAF: ajouter dans la liste naf
+# =============================================================================
+
+version: "1.0.0"
+
+# =============================================================================
+# MODULES DE BASE (actives pour tous)
+# =============================================================================
+modules_base:
+  - clients
+  - devis
+  - factures
+  - avoirs
+  - paiements
+  - paiements_openbanking
+  - entreprise
+  - modeles_email
+  - notifications
+
+# =============================================================================
+# CATEGORIES DE METIERS
+# =============================================================================
+categories:
+  batiment:
+    label: "Artisanat du batiment"
+    icone: "hard-hat"
+    ordre: 1
+
+  commerce:
+    label: "Commerce et restauration"
+    icone: "store"
+    ordre: 2
+
+  services_entreprises:
+    label: "Services aux entreprises"
+    icone: "briefcase"
+    ordre: 3
+
+  services_personnes:
+    label: "Services a la personne"
+    icone: "users"
+    ordre: 4
+
+  sante:
+    label: "Sante et bien-etre"
+    icone: "heart-pulse"
+    ordre: 5
+
+  transport:
+    label: "Transport et logistique"
+    icone: "truck"
+    ordre: 6
+
+  creation:
+    label: "Creation et communication"
+    icone: "palette"
+    ordre: 7
+
+  immobilier:
+    label: "Immobilier"
+    icone: "building"
+    ordre: 8
+
+  industrie:
+    label: "Industrie et production"
+    icone: "industry"
+    ordre: 9
+
+# =============================================================================
+# METIERS
+# =============================================================================
+metiers:
+  # -------------------------------------------------------------------------
+  # BATIMENT
+  # -------------------------------------------------------------------------
+  plombier:
+    label: "Plombier / Chauffagiste"
+    icone: "wrench"
+    categorie: batiment
+    populaire: true
+    naf:
+      - "43.22A"  # Travaux d'installation d'eau et de gaz
+      - "43.22B"  # Travaux d'installation thermique
+    modules:
+      - interventions
+      - equipements
+      - maintenances
+      - stock
+      - produits
+      - bons_livraison
+      - temps
+      - vehicules
+      - chantiers
+      - situations_travaux
+      - retenues_garantie
+
+  electricien:
+    label: "Electricien"
+    icone: "bolt"
+    categorie: batiment
+    populaire: true
+    naf:
+      - "43.21A"  # Travaux d'installation electrique
+    modules:
+      - interventions
+      - equipements
+      - maintenances
+      - stock
+      - produits
+      - bons_livraison
+      - temps
+      - vehicules
+      - chantiers
+      - situations_travaux
+      - retenues_garantie
+
+  maconnerie:
+    label: "Macon / Gros oeuvre"
+    icone: "landmark"
+    categorie: batiment
+    populaire: true
+    naf:
+      - "41.20A"  # Construction de maisons individuelles
+      - "41.20B"  # Construction d'autres batiments
+      - "43.99A"  # Travaux de maconnerie generale
+    modules:
+      - chantiers
+      - situations_travaux
+      - retenues_garantie
+      - interventions
+      - stock
+      - produits
+      - bons_livraison
+      - temps
+      - vehicules
+      - employes
+      - cautions
+
+  peintre:
+    label: "Peintre en batiment"
+    icone: "paint-roller"
+    categorie: batiment
+    naf:
+      - "43.34A"  # Travaux de peinture et vitrerie
+    modules:
+      - interventions
+      - chantiers
+      - situations_travaux
+      - stock
+      - produits
+      - temps
+      - vehicules
+
+  menuisier:
+    label: "Menuisier / Charpentier"
+    icone: "hammer"
+    categorie: batiment
+    naf:
+      - "43.32A"  # Travaux de menuiserie bois et PVC
+      - "43.91A"  # Travaux de charpente
+    modules:
+      - interventions
+      - chantiers
+      - situations_travaux
+      - stock
+      - produits
+      - temps
+      - vehicules
+
+  couvreur:
+    label: "Couvreur / Zingueur"
+    icone: "home"
+    categorie: batiment
+    naf:
+      - "43.91B"  # Travaux de couverture par elements
+    modules:
+      - interventions
+      - chantiers
+      - situations_travaux
+      - stock
+      - produits
+      - temps
+      - vehicules
+
+  carreleur:
+    label: "Carreleur / Solier"
+    icone: "square"
+    categorie: batiment
+    naf:
+      - "43.33Z"  # Travaux de revetement des sols et murs
+    modules:
+      - interventions
+      - chantiers
+      - situations_travaux
+      - stock
+      - produits
+      - temps
+      - vehicules
+
+  serrurier:
+    label: "Serrurier / Metallier"
+    icone: "key"
+    categorie: batiment
+    naf:
+      - "43.32B"  # Travaux de menuiserie metallique
+      - "25.72Z"  # Fabrication de serrures et ferrures
+    modules:
+      - interventions
+      - equipements
+      - stock
+      - produits
+      - temps
+      - vehicules
+
+  climatisation:
+    label: "Climatisation / Frigoriste"
+    icone: "snowflake"
+    categorie: batiment
+    naf:
+      - "43.22B"  # Installation thermique et climatisation
+    modules:
+      - interventions
+      - equipements
+      - maintenances
+      - contrats
+      - stock
+      - produits
+      - temps
+      - vehicules
+
+  # -------------------------------------------------------------------------
+  # COMMERCE ET RESTAURATION
+  # -------------------------------------------------------------------------
+  restaurant:
+    label: "Restaurant"
+    icone: "utensils"
+    categorie: commerce
+    populaire: true
+    naf:
+      - "56.10A"  # Restauration traditionnelle
+      - "56.10C"  # Restauration de type rapide
+    modules:
+      - produits
+      - stock
+      - fournisseurs
+      - commandes_achat
+      - receptions
+      - haccp
+      - employes
+      - conges
+      - temps
+      - caisse
+
+  boulangerie:
+    label: "Boulangerie / Patisserie"
+    icone: "bread-slice"
+    categorie: commerce
+    naf:
+      - "10.71C"  # Boulangerie et boulangerie-patisserie
+      - "10.71D"  # Patisserie
+    modules:
+      - produits
+      - stock
+      - fournisseurs
+      - commandes_achat
+      - haccp
+      - employes
+      - caisse
+
+  commerce_detail:
+    label: "Commerce de detail"
+    icone: "store"
+    categorie: commerce
+    populaire: true
+    naf:
+      - "47.11A"  # Commerce de detail alimentaire
+      - "47.11B"  # Commerce alimentation generale
+      - "47.19A"  # Grands magasins
+      - "47.19B"  # Autres commerces de detail
+    modules:
+      - produits
+      - stock
+      - fournisseurs
+      - commandes_achat
+      - receptions
+      - bons_livraison
+      - caisse
+
+  bar_cafe:
+    label: "Bar / Cafe"
+    icone: "coffee"
+    categorie: commerce
+    naf:
+      - "56.30Z"  # Debits de boissons
+    modules:
+      - produits
+      - stock
+      - fournisseurs
+      - haccp
+      - employes
+      - caisse
+
+  traiteur:
+    label: "Traiteur / Evenementiel"
+    icone: "cake"
+    categorie: commerce
+    naf:
+      - "56.21Z"  # Services des traiteurs
+    modules:
+      - produits
+      - stock
+      - fournisseurs
+      - haccp
+      - commandes
+      - employes
+      - temps
+
+  fleuriste:
+    label: "Fleuriste"
+    icone: "seedling"
+    categorie: commerce
+    naf:
+      - "47.76Z"  # Commerce de detail de fleurs
+    modules:
+      - produits
+      - stock
+      - fournisseurs
+      - commandes
+
+  # -------------------------------------------------------------------------
+  # SERVICES AUX ENTREPRISES
+  # -------------------------------------------------------------------------
+  consultant:
+    label: "Consultant / Conseil"
+    icone: "user-tie"
+    categorie: services_entreprises
+    populaire: true
+    naf:
+      - "70.22Z"  # Conseil pour affaires et gestion
+      - "70.21Z"  # Conseil en relations publiques
+    modules:
+      - opportunites
+      - projets
+      - taches
+      - temps
+      - contrats
+      - abonnements
+      - reunions
+
+  formateur:
+    label: "Formateur / Coach"
+    icone: "chalkboard-teacher"
+    categorie: services_entreprises
+    populaire: true
+    naf:
+      - "85.59A"  # Formation continue d'adultes
+      - "85.59B"  # Autres enseignements
+    modules:
+      - opportunites
+      - projets
+      - temps
+      - contrats
+      - abonnements
+      - agenda
+      - reunions
+
+  comptable:
+    label: "Expert-comptable / Comptable"
+    icone: "calculator"
+    categorie: services_entreprises
+    naf:
+      - "69.20Z"  # Activites comptables
+    modules:
+      - opportunites
+      - contrats
+      - abonnements
+      - temps
+      - comptabilite
+      - reunions
+
+  informatique:
+    label: "Informatique / Developpement"
+    icone: "laptop-code"
+    categorie: services_entreprises
+    populaire: true
+    naf:
+      - "62.01Z"  # Programmation informatique
+      - "62.02A"  # Conseil en systemes informatiques
+      - "62.02B"  # Tierce maintenance informatique
+    modules:
+      - opportunites
+      - projets
+      - taches
+      - temps
+      - tickets
+      - contrats
+      - abonnements
+      - sla
+
+  agence_com:
+    label: "Agence de communication"
+    icone: "bullhorn"
+    categorie: services_entreprises
+    naf:
+      - "73.11Z"  # Activites des agences de publicite
+    modules:
+      - opportunites
+      - projets
+      - taches
+      - temps
+      - campagnes
+      - contrats
+
+  avocat:
+    label: "Avocat / Juriste"
+    icone: "balance-scale"
+    categorie: services_entreprises
+    naf:
+      - "69.10Z"  # Activites juridiques
+    modules:
+      - opportunites
+      - affaires
+      - temps
+      - reunions
+      - contrats
+
+  architecte:
+    label: "Architecte"
+    icone: "drafting-compass"
+    categorie: services_entreprises
+    naf:
+      - "71.11Z"  # Activites d'architecture
+    modules:
+      - opportunites
+      - projets
+      - taches
+      - temps
+      - chantiers
+      - situations_travaux
+
+  # -------------------------------------------------------------------------
+  # SERVICES A LA PERSONNE
+  # -------------------------------------------------------------------------
+  aide_domicile:
+    label: "Aide a domicile"
+    icone: "hands-helping"
+    categorie: services_personnes
+    naf:
+      - "88.10A"  # Aide a domicile
+    modules:
+      - interventions
+      - temps
+      - agenda
+      - employes
+      - conges
+      - contrats
+
+  menage:
+    label: "Menage / Nettoyage"
+    icone: "broom"
+    categorie: services_personnes
+    naf:
+      - "81.21Z"  # Nettoyage courant des batiments
+    modules:
+      - interventions
+      - temps
+      - agenda
+      - contrats
+      - abonnements
+      - employes
+
+  jardinage:
+    label: "Jardinier / Paysagiste"
+    icone: "leaf"
+    categorie: services_personnes
+    naf:
+      - "81.30Z"  # Services d'amenagement paysager
+    modules:
+      - interventions
+      - temps
+      - agenda
+      - contrats
+      - equipements
+      - vehicules
+
+  garde_enfants:
+    label: "Garde d'enfants / Nounou"
+    icone: "baby"
+    categorie: services_personnes
+    naf:
+      - "88.91A"  # Accueil de jeunes enfants
+    modules:
+      - agenda
+      - temps
+      - contrats
+
+  # -------------------------------------------------------------------------
+  # SANTE ET BIEN-ETRE
+  # -------------------------------------------------------------------------
+  medecin:
+    label: "Medecin"
+    icone: "stethoscope"
+    categorie: sante
+    naf:
+      - "86.21Z"  # Activite des medecins generalistes
+      - "86.22C"  # Activites des medecins specialistes
+    modules:
+      - patients
+      - consultations
+      - agenda
+      - contrats
+
+  infirmier:
+    label: "Infirmier"
+    icone: "syringe"
+    categorie: sante
+    naf:
+      - "86.90D"  # Activites des infirmiers
+    modules:
+      - patients
+      - interventions
+      - agenda
+      - temps
+      - vehicules
+
+  kine:
+    label: "Kinesitherapeute"
+    icone: "hand-holding-medical"
+    categorie: sante
+    naf:
+      - "86.90E"  # Activites des professionnels de la reeducation
+    modules:
+      - patients
+      - consultations
+      - agenda
+      - abonnements
+
+  coiffeur:
+    label: "Coiffeur"
+    icone: "cut"
+    categorie: sante
+    populaire: true
+    naf:
+      - "96.02A"  # Coiffure
+    modules:
+      - agenda
+      - produits
+      - stock
+      - abonnements
+      - caisse
+
+  esthetique:
+    label: "Estheticien(ne)"
+    icone: "spa"
+    categorie: sante
+    naf:
+      - "96.02B"  # Soins de beaute
+    modules:
+      - agenda
+      - produits
+      - stock
+      - abonnements
+      - caisse
+
+  # -------------------------------------------------------------------------
+  # TRANSPORT ET LOGISTIQUE
+  # -------------------------------------------------------------------------
+  transport_marchandises:
+    label: "Transport de marchandises"
+    icone: "truck"
+    categorie: transport
+    naf:
+      - "49.41A"  # Transports routiers de fret interurbains
+      - "49.41B"  # Transports routiers de fret de proximite
+    modules:
+      - vehicules
+      - expeditions
+      - bons_livraison
+      - temps
+      - employes
+      - maintenances
+
+  demenagement:
+    label: "Demenagement"
+    icone: "truck-moving"
+    categorie: transport
+    naf:
+      - "49.42Z"  # Services de demenagement
+    modules:
+      - interventions
+      - vehicules
+      - temps
+      - employes
+
+  taxi_vtc:
+    label: "Taxi / VTC"
+    icone: "car"
+    categorie: transport
+    naf:
+      - "49.32Z"  # Transports de voyageurs par taxis
+    modules:
+      - interventions
+      - vehicules
+      - temps
+      - agenda
+
+  coursier:
+    label: "Coursier / Livraison"
+    icone: "bicycle"
+    categorie: transport
+    naf:
+      - "53.20Z"  # Autres activites de poste et courrier
+    modules:
+      - interventions
+      - expeditions
+      - vehicules
+      - temps
+
+  # -------------------------------------------------------------------------
+  # CREATION ET COMMUNICATION
+  # -------------------------------------------------------------------------
+  photographe:
+    label: "Photographe"
+    icone: "camera"
+    categorie: creation
+    naf:
+      - "74.20Z"  # Activites photographiques
+    modules:
+      - opportunites
+      - projets
+      - agenda
+      - temps
+      - contrats
+      - equipements
+
+  graphiste:
+    label: "Graphiste / Designer"
+    icone: "pen-nib"
+    categorie: creation
+    naf:
+      - "74.10Z"  # Activites specialisees de design
+    modules:
+      - opportunites
+      - projets
+      - taches
+      - temps
+      - contrats
+
+  video:
+    label: "Videaste / Monteur"
+    icone: "video"
+    categorie: creation
+    naf:
+      - "59.11A"  # Production de films cinematographiques
+      - "59.11B"  # Production de films institutionnels
+    modules:
+      - opportunites
+      - projets
+      - taches
+      - temps
+      - contrats
+      - equipements
+
+  musique:
+    label: "Musicien / DJ"
+    icone: "music"
+    categorie: creation
+    naf:
+      - "90.01Z"  # Arts du spectacle vivant
+    modules:
+      - opportunites
+      - agenda
+      - contrats
+      - equipements
+
+  # -------------------------------------------------------------------------
+  # IMMOBILIER
+  # -------------------------------------------------------------------------
+  agent_immobilier:
+    label: "Agent immobilier"
+    icone: "key"
+    categorie: immobilier
+    naf:
+      - "68.31Z"  # Agences immobilieres
+    modules:
+      - opportunites
+      - leads
+      - contrats
+      - agenda
+      - campagnes
+
+  syndic:
+    label: "Syndic de copropriete"
+    icone: "building"
+    categorie: immobilier
+    naf:
+      - "68.32A"  # Administration d'immeubles
+    modules:
+      - copropriete
+      - contrats
+      - interventions
+      - reunions
+      - comptabilite
+
+  gestion_locative:
+    label: "Gestion locative"
+    icone: "home"
+    categorie: immobilier
+    naf:
+      - "68.32B"  # Gestion de biens immobiliers
+    modules:
+      - immobilier
+      - contrats
+      - comptabilite
+      - interventions
+
+  # -------------------------------------------------------------------------
+  # INDUSTRIE ET PRODUCTION
+  # -------------------------------------------------------------------------
+  fabricant:
+    label: "Fabricant / Artisan producteur"
+    icone: "industry"
+    categorie: industrie
+    naf:
+      - "10.89Z"  # Fabrication d'autres produits alimentaires
+      - "31.09B"  # Fabrication d'autres meubles
+    modules:
+      - produits
+      - stock
+      - fournisseurs
+      - commandes_achat
+      - receptions
+      - bons_livraison
+      - temps
+      - employes
+
+  # -------------------------------------------------------------------------
+  # PROFIL GENERALISTE
+  # -------------------------------------------------------------------------
+  autre:
+    label: "Autre activite"
+    icone: "briefcase"
+    categorie: services_entreprises
+    populaire: false
+    naf: []
+    modules:
+      - opportunites
+      - projets
+      - taches
+      - temps
+      - contrats
+
+# =============================================================================
+# METIERS POPULAIRES (affichage en grille sur l'ecran de selection)
+# =============================================================================
+populaires:
+  - plombier
+  - electricien
+  - maconnerie
+  - restaurant
+  - commerce_detail
+  - consultant
+  - formateur
+  - informatique
+  - coiffeur
+  - photographe
+  - agent_immobilier
+  - autre
+
+# =============================================================================
+# MAPPING NAF -> METIER (pour detection automatique)
+# =============================================================================
+# Genere automatiquement depuis la liste des metiers ci-dessus
+# Utilise par: moteur/profils.py lors de l'autocompletion SIRET

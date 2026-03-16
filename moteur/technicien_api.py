@@ -500,7 +500,7 @@ async def marquer_arrivee(
     if not (is_intervenant or is_creator or is_admin):
         raise HTTPException(status_code=403, detail="Non autorise")
 
-    if intervention.get("statut") not in ["PLANIFIEE"]:
+    if intervention.get("statut") not in ["DRAFT", "A_PLANIFIER", "PLANIFIEE", None]:
         raise HTTPException(
             status_code=400,
             detail=f"Impossible de marquer l'arrivee depuis le statut {intervention.get('statut')}"

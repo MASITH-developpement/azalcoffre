@@ -1,0 +1,148 @@
+# =============================================================================
+# AZALPLUS - Module Clients
+# =============================================================================
+# Synchronisé avec la structure de table existante
+
+nom: Clients
+nom_pluriel: Clients
+icone: users
+menu: Commercial
+description: "Gestion des clients"
+ordre_menu: 2
+
+champs:
+  - nom: code
+    type: text
+    libelle: "Code"
+
+  - nom: name
+    type: text
+    libelle: "Nom"
+    obligatoire: true
+
+  - nom: legal_name
+    type: text
+    libelle: "Raison sociale"
+
+  - nom: type
+    type: select
+    libelle: "Type"
+    options:
+      - ENTREPRISE
+      - PARTICULIER
+
+  - nom: civilite
+    type: select
+    libelle: "Civilité"
+    options:
+      - M.
+      - Mme
+      - Mlle
+
+  - nom: contact_name
+    type: text
+    libelle: "Contact"
+
+  - nom: email
+    type: email
+    libelle: "Email"
+
+  - nom: phone
+    type: tel
+    libelle: "Téléphone"
+
+  - nom: mobile
+    type: tel
+    libelle: "Mobile"
+
+  - nom: website
+    type: url
+    libelle: "Site web"
+
+  - nom: address_line1
+    type: text
+    libelle: "Adresse"
+
+  - nom: address_line2
+    type: text
+    libelle: "Complément"
+
+  - nom: postal_code
+    type: text
+    libelle: "Code postal"
+
+  - nom: city
+    type: text
+    libelle: "Ville"
+
+  - nom: country_code
+    type: text
+    libelle: "Pays"
+    defaut: "FR"
+
+  - nom: tax_id
+    type: text
+    libelle: "SIRET"
+
+  - nom: registration_number
+    type: text
+    libelle: "SIREN"
+
+  - nom: legal_form
+    type: text
+    libelle: "Forme juridique"
+
+  - nom: payment_terms
+    type: select
+    libelle: "Conditions paiement"
+    options:
+      - COMPTANT
+      - 30_JOURS
+      - 45_JOURS
+      - 60_JOURS
+
+  - nom: payment_method
+    type: select
+    libelle: "Mode paiement"
+    options:
+      - VIREMENT
+      - CHEQUE
+      - CB
+      - PRELEVEMENT
+
+  - nom: credit_limit
+    type: money
+    libelle: "Encours max"
+
+  - nom: discount_rate
+    type: number
+    libelle: "Remise (%)"
+
+  - nom: is_active
+    type: boolean
+    libelle: "Actif"
+    defaut: true
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes"
+
+# Champs recherche
+recherche:
+  - code
+  - name
+  - legal_name
+  - email
+  - city
+  - tax_id
+
+# Colonnes affichées dans la liste
+affichage_liste:
+  - code
+  - name
+  - city
+  - phone
+  - email
+
+# Champ affiché dans les selects de relation
+champ_affichage: name

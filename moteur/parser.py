@@ -366,9 +366,15 @@ class ModuleDefinition:
     actions: List[str] = field(default_factory=list)
     marceau: Dict[str, Any] = field(default_factory=dict)
 
+    # Configuration liste
+    liste_colonnes: List[str] = field(default_factory=list)
+
     # Métadonnées
     version: int = 1
     actif: bool = True
+
+    # Contrôle d'accès
+    acces: str = ""  # "", "createur_only", "admin_only"
 
 # =============================================================================
 # Module Parser
@@ -530,7 +536,9 @@ class ModuleParser:
             nom_affichage=raw.get("nom", nom.title()),
             icone=raw.get("icone", "file"),
             menu=raw.get("menu", "Général"),
-            description=raw.get("description", "")
+            description=raw.get("description", ""),
+            liste_colonnes=raw.get("liste_colonnes") or raw.get("affichage_liste", []),
+            acces=raw.get("acces", "")
         )
 
         # Parser les champs
@@ -693,8 +701,16 @@ class ModuleParser:
 
     @classmethod
     def get(cls, name: str) -> Optional[ModuleDefinition]:
-        """Récupère une définition de module."""
-        return cls._modules.get(name)
+        """Récupère une définition de module (insensible à la casse)."""
+        # Recherche exacte d'abord
+        if name in cls._modules:
+            return cls._modules[name]
+        # Recherche insensible à la casse
+        name_lower = name.lower()
+        for key, module in cls._modules.items():
+            if key.lower() == name_lower:
+                return module
+        return None
 
     @classmethod
     def get_raw(cls, name: str) -> Optional[Dict]:

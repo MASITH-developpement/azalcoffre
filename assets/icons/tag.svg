@@ -1,8 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Corps étiquette (secondaire) -->
-  <path d="M12.4 2.3L2.3 12.4c-.4.4-.4 1 0 1.4l7.9 7.9c.4.4 1 .4 1.4 0l10.1-10.1c.2-.2.3-.5.3-.7V3a1 1 0 0 0-1-1h-7.9c-.3 0-.5.1-.7.3z" fill="#93C5FD"/>
-  <!-- Trou étiquette (primaire) -->
-  <circle cx="17" cy="7" r="2.5" fill="#2563EB"/>
-  <!-- Bande de renfort (primaire) -->
-  <path d="M3 12l9-9h3L3 15v-3z" fill="#2563EB" opacity="0.5"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>

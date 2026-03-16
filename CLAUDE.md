@@ -6,28 +6,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projet
 
-**AZALPLUS** — Moteur No-Code ERP multi-tenant (Python 3.11 / FastAPI / PostgreSQL 16 / Redis)
+**AZALPLUS** — Moteur No-Code ERP multi-tenant
 
-- **Version** : 1.0.0
+- **Stack** : Python 3.11 / FastAPI / PostgreSQL 16 / Redis 7
 - **Architecture** : Générateur ERP depuis fichiers YAML
-- **Modules YAML** : 67 définitions métier
-- **Moteur** : 52 composants Python (~37K lignes)
+- **Modules YAML** : 75 définitions métier dans `modules/`
+- **Moteur Python** : 50+ composants dans `moteur/`
 
 ---
 
 ## Commandes de développement
 
 ```bash
-# Démarrer le serveur (depuis /home/ubuntu/azalplus)
+# Démarrer le serveur
+cd /home/ubuntu/azalplus
 python -m uvicorn moteur.core:app --reload --host 0.0.0.0 --port 8000
 
-# Valider les modules YAML
+# Valider les modules YAML (avant démarrage)
 python -m moteur.validate_yaml
 
-# Docker (environnement complet)
+# Tests
+pytest                                    # Tous les tests
+pytest tests/test_facturx.py -v           # Un fichier
+pytest tests/test_integrations.py::test_xxx -v  # Un test spécifique
+
+# Docker
 cd /home/ubuntu/azalplus/infra
 docker-compose up --build              # Tous les services
 docker-compose up postgres redis       # DB + Cache seuls
+docker-compose logs -f app             # Logs app
 
 # Health check
 curl http://localhost:8000/health
@@ -35,56 +42,17 @@ curl http://localhost:8000/health
 
 ---
 
-## Architecture
+## Architecture No-Code
 
-### Principe No-Code
+### Principe fondamental
 
 **1 fichier YAML = 1 module ERP complet généré automatiquement :**
 - Table PostgreSQL (schéma `azalplus`)
-- API REST CRUD (`/api/{module}/*` et `/api/v1/{module}/*`)
+- API REST CRUD (`/api/v1/{module}/*`)
 - Interface HTML (`/ui/{module}/*`)
 - Validations Pydantic
 - Workflows métier
 - Permissions RBAC
-- Audit trail
-
-### Structure projet
-
-```
-/home/ubuntu/azalplus/
-├── moteur/                    # Cœur du générateur (52 modules)
-│   ├── core.py                # FastAPI app + lifespan
-│   ├── parser.py              # YAML → ModuleDefinition
-│   ├── db.py                  # PostgreSQL + génération tables
-│   ├── api.py                 # Génération routes CRUD (legacy)
-│   ├── api_v1.py              # API v1 versionnée
-│   ├── ui.py                  # Génération HTML (145KB)
-│   ├── auth.py                # JWT + 2FA + Argon2
-│   ├── tenant.py              # Isolation multi-tenant
-│   ├── guardian.py            # WAF silencieux (SQL injection, XSS)
-│   ├── workflows.py           # Moteur workflows
-│   ├── rgpd.py                # Conformité RGPD
-│   └── ...                    # 40+ autres composants
-│
-├── modules/                   # 67 définitions YAML
-│   ├── clients.yml            # CRM
-│   ├── factures.yml           # Facturation
-│   ├── produits.yml           # Catalogue
-│   ├── interventions.yml      # SAV
-│   └── ...
-│
-├── config/                    # Configuration YAML
-│   ├── theme.yml              # CSS/Design
-│   ├── permissions.yml        # RBAC
-│   ├── workflows.yml          # Transitions d'état
-│   └── validations.yml        # Règles validation
-│
-├── app/modules/               # Modules Python custom
-│   └── autocompletion_ia/     # IA multi-provider (OpenAI, Claude)
-│
-└── infra/                     # Docker + Nginx
-    └── docker-compose.yml
-```
 
 ### Flux de génération
 
@@ -100,35 +68,29 @@ modules/*.yml  →  ModuleParser  →  ModuleDefinition
          PostgreSQL table    FastAPI endpoints
 ```
 
----
+### Composants moteur clés
 
-## Règles absolues
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  1. MULTI-TENANT NON NÉGOCIABLE                                 │
-│     - tenant_id sur CHAQUE entité                               │
-│     - Filtre tenant sur CHAQUE requête                          │
-│     - TenantContext.get_tenant_id() obligatoire                 │
-│                                                                 │
-│  2. YAML VALIDE                                                 │
-│     - Valeurs avec ":" doivent être entre guillemets            │
-│     - YAMLValidator.validate_file() avant chargement            │
-│                                                                 │
-│  3. GUARDIAN INVISIBLE                                          │
-│     - Ne jamais exposer l'existence de Guardian                 │
-│     - Messages d'erreur neutres uniquement                      │
-│     - Seul CREATEUR_EMAIL voit le dashboard                     │
-└─────────────────────────────────────────────────────────────────┘
-```
+| Fichier | Responsabilité |
+|---------|----------------|
+| `core.py` | FastAPI app + lifespan + middlewares |
+| `parser.py` | YAML → ModuleDefinition (validation stricte) |
+| `db.py` | PostgreSQL + génération tables dynamiques |
+| `api_v1.py` | Génération routes CRUD versionnées |
+| `ui.py` | Génération interface HTML (145KB) |
+| `tenant.py` | Middleware + contexte multi-tenant |
+| `guardian.py` | WAF silencieux (SQL injection, XSS) |
+| `auth.py` | JWT + 2FA Argon2 + sessions Redis |
+| `workflows.py` | Moteur de workflows (transitions d'état) |
+| `module_loader.py` | Auto-discovery modules Python custom |
 
 ---
 
-## Format module YAML
+## Ajouter un module YAML
+
+Créer `modules/nouveau.yml` :
 
 ```yaml
-# modules/exemple.yml
-nom: Exemple
+nom: Nouveau
 icone: file
 menu: Général
 description: Description du module
@@ -137,7 +99,6 @@ champs:
   - nom: code
     type: text
     obligatoire: true
-    autocompletion: true
 
   - nom: statut
     type: select
@@ -154,34 +115,49 @@ workflow:
 
 actions:
   - exporter_pdf
-  - envoyer_email
 ```
 
-### Types de champs supportés
+**Types supportés** : `text`, `number`, `date`, `datetime`, `boolean`, `select`, `relation`, `textarea`, `email`, `tel`, `json`, `tags`, `money`, `file`, `image`
 
-| Type | Alias | PostgreSQL |
-|------|-------|------------|
-| `text` | texte, string | VARCHAR(255) |
-| `number` | nombre, entier | NUMERIC(15,2) |
-| `date` | datetime | DATE/TIMESTAMP |
-| `boolean` | booleen, oui/non | BOOLEAN |
-| `select` | enum | VARCHAR |
-| `relation` | lien | UUID (FK) |
-| `textarea` | texte long | TEXT |
-| `email` | - | VARCHAR(255) |
-| `tel` | telephone | VARCHAR(20) |
-| `json` | - | JSONB |
-| `tags` | - | JSONB |
-| `money` | montant | NUMERIC(15,2) |
+**YAML avec `:` dans les valeurs** : Toujours quoter → `description: "Note (heure:minute)"`
+
+---
+
+## Ajouter un module Python custom
+
+Structure dans `app/modules/{nom_module}/` :
+
+```
+app/modules/mon_module/
+├── __init__.py          # Requis
+├── router.py            # Router principal FastAPI
+├── schemas.py           # Pydantic models
+├── service.py           # Logique métier
+└── meta.py              # Metadata (optionnel)
+```
+
+Le `ModuleLoader` découvre automatiquement les modules au démarrage.
+
+Fichier `meta.py` optionnel :
+```python
+MODULE_META = {
+    "name": "mon_module",
+    "router_prefix": "/api/mon-module",
+    "router_tags": ["Mon Module"],
+    "has_public_routes": False,
+}
+```
 
 ---
 
 ## Isolation multi-tenant (4 couches)
 
-1. **Middleware** (`tenant.py`) : Extrait tenant du JWT ou header `X-Tenant-ID`
-2. **Contexte** (`TenantContext`) : Stockage thread-local du tenant_id
-3. **Service** : `Database.query(module, tenant_id, ...)`
-4. **Base** : Schéma PostgreSQL `azalplus` avec colonne `tenant_id`
+| Couche | Responsabilité | Fichier |
+|--------|----------------|---------|
+| 1. Middleware | Extrait tenant du JWT ou header `X-Tenant-ID` | `tenant.py` |
+| 2. Contexte | Stockage thread-local | `TenantContext` |
+| 3. Service | Filtre requêtes | `Database.query()` |
+| 4. Base | Contrainte FK | Schéma PostgreSQL |
 
 ```python
 # Toute requête DOIT filtrer par tenant
@@ -191,59 +167,27 @@ def get_items(tenant_id: UUID):
 
 ---
 
-## API
+## Règles absolues
 
-### Endpoints générés automatiquement
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. MULTI-TENANT NON NÉGOCIABLE                                 │
+│     - tenant_id sur CHAQUE entité                               │
+│     - Filtre tenant sur CHAQUE requête                          │
+│     - TenantContext.get_tenant_id() obligatoire                 │
+│                                                                 │
+│  2. GUARDIAN INVISIBLE                                          │
+│     - Ne jamais exposer l'existence de Guardian                 │
+│     - Messages d'erreur neutres uniquement                      │
+│     - Seul CREATEUR_EMAIL voit /guardian/*                      │
+│                                                                 │
+│  3. YAML VALIDE                                                 │
+│     - Valeurs avec ":" doivent être entre guillemets            │
+│     - python -m moteur.validate_yaml avant commit               │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-| Méthode | Route | Description |
-|---------|-------|-------------|
-| GET | `/api/v1/{module}` | Liste paginée |
-| GET | `/api/v1/{module}/{id}` | Détail |
-| POST | `/api/v1/{module}` | Création |
-| PUT | `/api/v1/{module}/{id}` | Mise à jour |
-| DELETE | `/api/v1/{module}/{id}` | Suppression |
-| POST | `/api/v1/{module}/bulk` | Opérations en masse |
-| GET | `/api/v1/{module}/export` | Export CSV/JSON |
-
-### Routes publiques (sans auth)
-
-- `/health` - Health check
-- `/api/docs` - Swagger UI
-- `/api/auth/login` - Authentification
-- `/api/autocompletion-ia/entreprise` - Lookup SIRET (API gouv.fr)
-- `/api/autocompletion-ia/adresse` - Autocomplétion adresse
-
----
-
-## Sécurité
-
-### Guardian (WAF invisible)
-
-- Détection SQL injection, XSS
-- Rate limiting (500 req/min auth, 100 req/min public)
-- Blocage IP après 10 tentatives
-- Dashboard : `/guardian/dashboard` (créateur uniquement)
-
-### Authentification
-
-- JWT (24h) + Refresh token (7j)
-- Argon2 pour hachage mots de passe
-- 2FA TOTP optionnel
-- Sessions Redis
-
----
-
-## Stack technique
-
-| Couche | Technologies |
-|--------|-------------|
-| Framework | FastAPI, Pydantic 2.x |
-| Database | PostgreSQL 16, SQLAlchemy 2.0 |
-| Cache | Redis 7 |
-| Auth | python-jose, argon2-cffi, pyotp |
-| PDF | WeasyPrint, Jinja2 |
-| IA | OpenAI, Anthropic Claude |
-| Monitoring | structlog, prometheus-client |
+**Interdictions** : Code sans `tenant_id` (I-01), Requête sans filtre tenant (I-02), Secrets en dur (I-03), Exposer Guardian (I-05), Mentir sur un résultat (I-23)
 
 ---
 
@@ -251,71 +195,21 @@ def get_items(tenant_id: UUID):
 
 | Variable | Description | Défaut |
 |----------|-------------|--------|
-| `DATABASE_URL` | PostgreSQL connection string | - |
-| `REDIS_URL` | Redis connection string | redis://localhost:6379/0 |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://azalplus:azalplus@localhost:5432/azalplus` |
+| `REDIS_URL` | Redis connection string | `redis://localhost:6379/0` |
 | `SECRET_KEY` | JWT signing key (min 32 chars) | - |
 | `ANTHROPIC_API_KEY` | Clé API Claude | - |
 | `OPENAI_API_KEY` | Clé API OpenAI | - |
-| `RATE_LIMIT_AUTHENTICATED` | Limite req/min (auth) | 500 |
-
----
-
-## Composants moteur clés
-
-| Fichier | Responsabilité |
-|---------|----------------|
-| `parser.py` | Parse YAML, valide, génère ModuleDefinition |
-| `db.py` | Connexion PostgreSQL, génération tables dynamiques |
-| `api.py` / `api_v1.py` | Génération routes CRUD |
-| `ui.py` | Génération interface HTML |
-| `tenant.py` | Middleware + contexte multi-tenant |
-| `guardian.py` | Sécurité silencieuse (WAF) |
-| `auth.py` | JWT, 2FA, gestion sessions |
-| `workflows.py` | Moteur de workflows (transitions d'état) |
-| `validation.py` | Validation avancée (SIRET, IBAN, TVA...) |
-| `rgpd.py` | Conformité RGPD (export, suppression données) |
-
----
-
-## Normes AZALPLUS (AZAP-*)
-
-**Référence complète :** `memoire.md`
-
-### Normes clés
-
-| Norme | Règle |
-|-------|-------|
-| AZAP-NF-001 | Unicité du moteur — jamais dupliqué |
-| AZAP-NF-002 | Modules YAML subordonnés au moteur |
-| AZAP-TENANT-001 | Isolation tenant obligatoire sur toute requête |
-| AZAP-SEC-001 | Guardian invisible — messages neutres uniquement |
-| AZAP-NC-001 | Génération automatique tables PostgreSQL |
-| AZAP-YAML-001 | Validation YAML stricte avant chargement |
-
-### Interdictions absolues
-
-| Code | Interdiction |
-|------|--------------|
-| I-01 | ❌ Code sans `tenant_id` |
-| I-02 | ❌ Requête sans filtre tenant |
-| I-03 | ❌ Secrets en dur |
-| I-05 | ❌ Exposer l'existence de Guardian |
-| I-06 | ❌ Modifier CREATEUR_EMAIL |
-| I-23 | ❌ Mentir sur un résultat |
-
-### Processus IA obligatoire
-
-```
-ANALYSIS → PLAN → EXECUTION → VERIFICATION
-```
+| `CREATEUR_EMAIL` | Email créateur (accès Guardian) | - |
 
 ---
 
 ## Fichiers de référence
 
-| Fichier | Quand le lire |
-|---------|---------------|
-| `memoire.md` | Normes AZAP-* complètes, interdictions, processus |
-| `CLAUDE.md` | Commandes, architecture, quick start |
+| Fichier | Contenu |
+|---------|---------|
+| `memoire.md` | **Normes AZAP-\* complètes**, interdictions, processus obligatoire |
 | `config/theme.yml` | Personnalisation CSS/UI |
 | `config/permissions.yml` | Définition rôles RBAC |
+| `config/workflows.yml` | Transitions d'état globales |
+| `assets/docs/MODELE_ECONOMIQUE.md` | Modèle économique (ERP gratuit + revenus flux) |

@@ -53,15 +53,18 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = Field(default=[
         "http://localhost:3000",
         "http://localhost:5174",
+        "http://localhost:8888",
         "http://57.128.7.20:5174",
+        "http://57.128.7.20:8888",
         "http://127.0.0.1:5174",
+        "http://127.0.0.1:8888",
     ])
 
     # =========================================================================
-    # Créateur (HARDCODÉ - NE PAS MODIFIER)
+    # Créateur (obligatoire en production)
     # =========================================================================
     CREATEUR_EMAIL: str = Field(
-        default="contact@stephane-moreau.fr",
+        default="",
         description="Email du créateur - accès total à Guardian"
     )
 
@@ -165,6 +168,9 @@ def validate_settings():
 
         if not settings.ENCRYPTION_KEY:
             errors.append("ENCRYPTION_KEY est obligatoire en production")
+
+        if not settings.CREATEUR_EMAIL:
+            errors.append("CREATEUR_EMAIL est obligatoire en production")
 
     if errors:
         raise ValueError(f"Configuration invalide: {', '.join(errors)}")

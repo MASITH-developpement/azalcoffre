@@ -356,7 +356,7 @@
                         <text x="340" y="280" font-family="Inter, Arial" font-weight="700" font-size="140" fill="#FFFFFF">+</text>
                     </svg>
                 </div>
-                <h1>Deviens Zalier</h1>
+                <h1>Intégration de la troupe des Zaliers</h1>
                 <p>ERP 100% gratuit pour les TPE</p>
                 <span class="badge">Pré-inscription</span>
             </div>
@@ -419,16 +419,29 @@
                             <label for="source">Comment tu nous as connu ?</label>
                             <select id="source" name="source" required>
                                 <option value="">Sélectionne...</option>
+                                <option value="Ami">Un ami me l'a recommandé</option>
                                 <option value="LinkedIn">LinkedIn</option>
                                 <option value="Facebook">Facebook</option>
                                 <option value="Groupe Zaliers">Groupe Zaliers</option>
+                                <option value="CMA">CMA (Chambre de Métiers)</option>
+                                <option value="CCI">CCI (Chambre de Commerce)</option>
+                                <option value="BGE">BGE</option>
+                                <option value="Initiative France">Initiative France</option>
+                                <option value="Réseau Entreprendre">Réseau Entreprendre</option>
+                                <option value="Pôle Emploi">Pôle Emploi</option>
                                 <option value="Bouche à oreille">Bouche à oreille</option>
                                 <option value="Recherche Google">Recherche Google</option>
                                 <option value="Autre">Autre</option>
                             </select>
                         </div>
 
-                        <input type="hidden" id="utm_source" name="utm_source">
+                        <div class="form-group" id="ami-email-group" style="display: none;">
+                            <label for="ami_email">Email de ton ami (pour le remercier)</label>
+                            <input type="email" id="ami_email" name="ami_email" placeholder="ami@email.com">
+                            <p style="font-size: 12px; color: var(--gray); margin-top: 6px;">On lui enverra un petit merci de ta part !</p>
+                        </div>
+
+                                        <input type="hidden" id="utm_source" name="utm_source">
                         <input type="hidden" id="utm_campaign" name="utm_campaign">
                         <input type="hidden" id="utm_content" name="utm_content">
 
@@ -468,8 +481,16 @@
     </footer>
 
     <script>
-        // Récupérer les paramètres UTM
+        // Récupérer les paramètres URL
         const urlParams = new URLSearchParams(window.location.search);
+
+        // Pré-remplir l'email si présent dans l'URL
+        const emailParam = urlParams.get('email');
+        if (emailParam) {
+            document.getElementById('email').value = emailParam;
+        }
+
+        // Récupérer les paramètres UTM
         document.getElementById('utm_source').value = urlParams.get('utm_source') || '';
         document.getElementById('utm_campaign').value = urlParams.get('utm_campaign') || '';
         document.getElementById('utm_content').value = urlParams.get('utm_content') || '';
@@ -489,6 +510,18 @@
             }
         }
 
+        // Afficher/masquer le champ email ami
+        document.getElementById('source').addEventListener('change', function() {
+            const amiEmailGroup = document.getElementById('ami-email-group');
+            const amiEmailInput = document.getElementById('ami_email');
+            if (this.value === 'Ami') {
+                amiEmailGroup.style.display = 'block';
+            } else {
+                amiEmailGroup.style.display = 'none';
+                amiEmailInput.value = '';
+            }
+        });
+
         // Soumission du formulaire
         document.getElementById('waitlist-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -505,6 +538,7 @@
                 prenom: document.getElementById('prenom').value,
                 activite: document.getElementById('activite').value,
                 source: document.getElementById('source').value,
+                ami_email: document.getElementById('ami_email').value || null,
                 utm_source: document.getElementById('utm_source').value,
                 utm_campaign: document.getElementById('utm_campaign').value,
                 utm_content: document.getElementById('utm_content').value

@@ -332,6 +332,7 @@
     <script>
         // Helpers JS
         async function apiCall(url, method = 'GET', data = null) {
+            const token = localStorage.getItem('access_token');
             const options = {
                 method,
                 headers: {
@@ -339,6 +340,10 @@
                 },
                 credentials: 'include'
             };
+            // Ajouter le token si disponible
+            if (token) {
+                options.headers['Authorization'] = 'Bearer ' + token;
+            }
             if (data) {
                 options.body = JSON.stringify(data);
             }

@@ -1,7 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Étoile principale -->
-  <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z" fill="#2563EB"/>
-  <!-- Petites étoiles -->
-  <path d="M5 3l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" fill="#93C5FD"/>
-  <path d="M19 17l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z" fill="#93C5FD"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 19l1 3 1-3 3-1-3-1-1-3-1 3-3 1 3 1z"/><path d="M19 10l1 2 1-2 2-1-2-1-1-2-1 2-2 1 2 1z"/></svg>

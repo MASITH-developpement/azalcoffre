@@ -1,18 +1,30 @@
 # =============================================================================
-# AZALPLUS - Routes API Factur-X
+# AZALPLUS - Routes API Factur-X (format technique)
 # =============================================================================
 """
-Endpoints REST pour la facturation électronique.
+Endpoints REST pour le format Factur-X (PDF/A-3 + XML).
 
-Routes:
+NOTE: Les routes preview/send/archive sont dans app/modules/factures/
+      → /api/v1/factures/preview, /send, /{id}/archive
+
+Routes génération:
 - POST /api/facturx/generate - Générer PDF Factur-X
+- POST /api/facturx/generate/download - Générer et télécharger
 - POST /api/facturx/validate - Valider un PDF Factur-X
 - POST /api/facturx/extract - Extraire XML d'un PDF
+
+Routes PDP:
 - POST /api/facturx/pdp/submit - Soumettre à une PDP
 - GET /api/facturx/pdp/status/{id} - Statut PDP
+
+Routes Chorus Pro:
 - POST /api/facturx/chorus/submit - Soumettre à Chorus Pro
 - GET /api/facturx/chorus/status/{id} - Statut Chorus
+
+Routes réception:
 - POST /api/facturx/reception/parse - Parser facture entrante
+
+Routes annuaire:
 - GET /api/facturx/annuaire/lookup - Recherche annuaire PPF
 """
 
@@ -172,6 +184,7 @@ class ParsedInvoiceResponse(BaseModel):
 # =============================================================================
 # Dépendances
 # =============================================================================
+
 
 def get_facturx_generator():
     """Obtenir le générateur Factur-X."""
@@ -654,11 +667,16 @@ async def check_eligibility(
 
 @router.get("/health")
 async def health_check():
-    """Vérifier l'état du module Factur-X."""
+    """
+    Vérifier l'état du module Factur-X (format technique).
+
+    NOTE: Preview/Send/Archive sont dans /api/v1/factures/
+    """
     return {
         "status": "ok",
         "module": "facturx",
         "version": "1.0.0",
+        "note": "Preview/Send/Archive déplacés vers /api/v1/factures/",
         "capabilities": {
             "generate": True,
             "validate": True,

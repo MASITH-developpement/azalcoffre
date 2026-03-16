@@ -17,6 +17,7 @@ Ce module utilise l'API Anthropic pour obtenir des corrections intelligentes.
 import os
 import re
 import json
+import asyncio
 import structlog
 from typing import Optional, Tuple, Dict, Any
 from pathlib import Path
@@ -114,15 +115,18 @@ class ClaudeFixer:
             # Construire le prompt pour Claude
             prompt = cls._build_prompt(error_context)
 
-            # Appeler Claude
-            response = cls._client.messages.create(
-                model=cls._model,
-                max_tokens=cls._max_tokens,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                system=cls._get_system_prompt()
-            )
+            # Appeler Claude dans un thread séparé pour ne pas bloquer l'event loop
+            def _call_claude():
+                return cls._client.messages.create(
+                    model=cls._model,
+                    max_tokens=cls._max_tokens,
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ],
+                    system=cls._get_system_prompt()
+                )
+
+            response = await asyncio.to_thread(_call_claude)
 
             # Parser la réponse
             response_text = response.content[0].text
@@ -311,17 +315,37 @@ LOG D'ERREUR:
 
                 new_content = content.replace(search, replace, 1)
 
+                # === VALIDATION SYNTAXE AVANT APPLICATION ===
+                if file_path.suffix == ".py":
+                    is_valid, syntax_error = cls._validate_python_syntax(new_content)
+                    if not is_valid:
+                        logger.error("claude_fix_syntax_error",
+                                   file=str(file_path),
+                                   error=syntax_error)
+                        return False
+
                 # Backup avant modification
                 backup_path = file_path.with_suffix(file_path.suffix + ".claude_backup")
                 file_path.rename(backup_path)
 
                 try:
                     file_path.write_text(new_content)
+
+                    # Double vérification: revalider après écriture
+                    if file_path.suffix == ".py":
+                        is_valid, syntax_error = cls._validate_python_syntax(new_content)
+                        if not is_valid:
+                            # Restaurer le backup
+                            backup_path.rename(file_path)
+                            logger.error("claude_fix_post_write_syntax_error", error=syntax_error)
+                            return False
+
                     backup_path.unlink()  # Supprimer le backup si succès
                     return True
                 except Exception as e:
                     # Restaurer le backup
-                    backup_path.rename(file_path)
+                    if backup_path.exists():
+                        backup_path.rename(file_path)
                     logger.error("claude_fix_write_failed", error=str(e))
                     return False
 
@@ -336,6 +360,76 @@ LOG D'ERREUR:
         except Exception as e:
             logger.error("claude_fix_apply_error", error=str(e))
             return False
+
+    @classmethod
+    def _validate_python_syntax(cls, code: str) -> Tuple[bool, Optional[str]]:
+        """
+        Valide la syntaxe Python du code.
+
+        Returns:
+            Tuple[bool, Optional[str]]: (is_valid, error_message)
+        """
+        import ast
+        import py_compile
+        import tempfile
+
+        try:
+            # Méthode 1: ast.parse (rapide, détecte les erreurs de syntaxe)
+            ast.parse(code)
+            return True, None
+        except SyntaxError as e:
+            error_msg = f"Ligne {e.lineno}: {e.msg}"
+            if e.text:
+                error_msg += f" -> {e.text.strip()}"
+            return False, error_msg
+        except Exception as e:
+            return False, f"Erreur de validation: {str(e)}"
+
+    @classmethod
+    def _validate_js_syntax(cls, code: str) -> Tuple[bool, Optional[str]]:
+        """
+        Validation basique de syntaxe JavaScript.
+        Vérifie l'équilibre des accolades, parenthèses, etc.
+        """
+        # Compteurs pour les délimiteurs
+        stack = []
+        pairs = {')': '(', ']': '[', '}': '{'}
+
+        in_string = False
+        string_char = None
+        escape_next = False
+
+        for i, char in enumerate(code):
+            if escape_next:
+                escape_next = False
+                continue
+
+            if char == '\\':
+                escape_next = True
+                continue
+
+            if char in '"\'`':
+                if not in_string:
+                    in_string = True
+                    string_char = char
+                elif char == string_char:
+                    in_string = False
+                continue
+
+            if in_string:
+                continue
+
+            if char in '([{':
+                stack.append(char)
+            elif char in ')]}':
+                if not stack or stack[-1] != pairs[char]:
+                    return False, f"Délimiteur non équilibré à la position {i}: '{char}'"
+                stack.pop()
+
+        if stack:
+            return False, f"Délimiteurs non fermés: {stack}"
+
+        return True, None
 
     @classmethod
     def _record_correction(cls, context: Dict, response: str, success: bool):

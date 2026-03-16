@@ -4711,14 +4711,21 @@ def generate_document_form(module, module_name: str) -> str:
         const autofillConfig = select.dataset.autofill;
         if (!autofillConfig || !select.value) return;
 
-        const linkedModule = select.dataset.link;
+        let linkedModule = select.dataset.link;
         const selectedId = select.value;
+
+        // Vérifier si c'est un donneur d'ordre
+        const selectedOption = select.options[select.selectedIndex];
+        const isDonneurOrdre = selectedOption && selectedOption.dataset.type === 'donneur_ordre';
+
+        // Utiliser le bon endpoint API
+        const apiEndpoint = isDonneurOrdre ? 'donneur_ordre' : linkedModule.toLowerCase();
 
         try {{
             const urlParams = new URLSearchParams(window.location.search);
             const authToken = urlParams.get('token') || localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
 
-            const response = await fetch(`/api/${{linkedModule.toLowerCase()}}/${{selectedId}}`, {{
+            const response = await fetch(`/api/${{apiEndpoint}}/${{selectedId}}`, {{
                 credentials: 'include',
                 headers: {{
                     'Authorization': 'Bearer ' + authToken
@@ -4738,7 +4745,19 @@ def generate_document_form(module, module_name: str) -> str:
 
                     // Cas spécial: _compose_address construit une adresse complète
                     if (remoteField === '_compose_address' && parts.length > 2) {{
-                        const addressFields = parts[2].split('|');
+                        let addressFields = parts[2].split('|');
+
+                        // Pour les donneurs d'ordre, utiliser les champs de facturation ou principaux
+                        if (isDonneurOrdre) {{
+                            // Essayer d'abord l'adresse de facturation, sinon l'adresse principale
+                            const hasBillingAddr = data.facturation_adresse_ligne1 || data.facturation_code_postal || data.facturation_ville;
+                            if (hasBillingAddr) {{
+                                addressFields = ['facturation_adresse_ligne1', 'facturation_adresse_ligne2', 'facturation_code_postal', 'facturation_ville'];
+                            }} else {{
+                                addressFields = ['adresse_ligne1', 'adresse_ligne2', 'code_postal', 'ville'];
+                            }}
+                        }}
+
                         const addressParts = [];
                         addressFields.forEach(f => {{
                             if (data[f]) addressParts.push(data[f]);
@@ -4756,7 +4775,7 @@ def generate_document_form(module, module_name: str) -> str:
                     }}
                 }});
 
-                console.log('Auto-fill appliqué depuis', linkedModule);
+                console.log('Auto-fill appliqué depuis', isDonneurOrdre ? 'donneur_ordre' : linkedModule);
             }}
         }} catch (e) {{
             console.error('Erreur auto-fill:', e);

@@ -97,6 +97,43 @@ from .annuaire import (
     check_siret_registration
 )
 
+# Service unifié (avec archivage AZALCOFFRE)
+from .service import (
+    FacturationService,
+    TenantConfig,
+    SendResult,
+    ArchiveInfo,
+    DestinationType,
+    SendStatus,
+)
+
+# Email
+from .email_sender import (
+    InvoiceEmailSender,
+    InvoiceEmailData,
+    EmailResult,
+    EmailStatus,
+)
+# Note: EmailConfig supprimé - utiliser EmailSettings de integrations/settings.py
+
+# Prévisualisation et envoi
+from .preview import (
+    InvoicePreviewService,
+    PreviewData,
+    PreviewLine,
+    SendOptions,
+    SendOption,
+    SendPreviewResult,
+)
+
+# Parser
+from .parser import (
+    FacturXParser,
+    ParsedInvoice,
+    ParsedParty,
+    ParsedLine,
+)
+
 __all__ = [
     # Générateur
     "FacturXGenerator",
@@ -159,4 +196,33 @@ __all__ = [
     "LookupResult",
     "RoutingType",
     "check_siret_registration",
+
+    # Service unifié
+    "FacturationService",
+    "TenantConfig",
+    "SendResult",
+    "ArchiveInfo",
+    "DestinationType",
+    "SendStatus",
+
+    # Email
+    "InvoiceEmailSender",
+    "InvoiceEmailData",
+    "EmailResult",
+    "EmailStatus",
+    # EmailConfig supprimé - utiliser EmailSettings de integrations/settings.py
+
+    # Prévisualisation
+    "InvoicePreviewService",
+    "PreviewData",
+    "PreviewLine",
+    "SendOptions",
+    "SendOption",
+    "SendPreviewResult",
+
+    # Parser
+    "FacturXParser",
+    "ParsedInvoice",
+    "ParsedParty",
+    "ParsedLine",
 ]

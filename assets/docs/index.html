@@ -13,7 +13,7 @@
             min-height: 100vh;
             padding: 40px;
         }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 900px; margin: 0 auto; }
         h1 {
             font-size: 28px;
             margin-bottom: 10px;
@@ -88,15 +88,258 @@
             background: rgba(251, 191, 36, 0.2);
             color: #fbbf24;
         }
+        .badge-zip {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+        }
+        .badge-png {
+            background: rgba(236, 72, 153, 0.2);
+            color: #f472b6;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+        .grid-2 li {
+            border-bottom: none;
+            background: rgba(37, 45, 71, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #3454D1;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 16px;
+            transition: all 0.2s;
+        }
+        .download-btn:hover {
+            background: #6B9FFF;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>AZALPLUS Documents</h1>
-        <p class="subtitle">Fiches de préparation, présentations et ressources</p>
+        <p class="subtitle">Fiches de préparation, visuels réseaux sociaux et ressources</p>
 
+        <!-- RÉSEAUX SOCIAUX -->
         <div class="section">
-            <div class="section-title">Partenaires Financiers</div>
+            <div class="section-title">🚀 Lancement Réseaux Sociaux — Les Zaliers</div>
+            <ul class="doc-list">
+                <li>
+                    <a href="calendrier-publication.md">
+                        <span class="icon">📅</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Calendrier de Publication</span>
+                            <span class="doc-type">Planning 7 semaines complet</span>
+                        </span>
+                        <span class="badge badge-new">Nouveau</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="pitch-email.md">
+                        <span class="icon">📧</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Pitch Email Organismes</span>
+                            <span class="doc-type">CMA, CCI, BGE + relances</span>
+                        </span>
+                        <span class="badge badge-new">Nouveau</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="script-video-teasing.md">
+                        <span class="icon">🎬</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Script Vidéo Teasing</span>
+                            <span class="doc-type">Reels / TikTok 30-45s</span>
+                        </span>
+                        <span class="badge badge-md">MD</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="script-video-lancement.md">
+                        <span class="icon">🎬</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Script Vidéo Lancement</span>
+                            <span class="doc-type">Reels / TikTok 45-60s</span>
+                        </span>
+                        <span class="badge badge-md">MD</span>
+                    </a>
+                </li>
+            </ul>
+            <a href="azalplus-visuels.zip" class="download-btn" download>
+                📦 Télécharger tous les visuels (ZIP 1.4 MB)
+            </a>
+        </div>
+
+        <!-- VISUELS POSTS -->
+        <div class="section">
+            <div class="section-title">📱 Visuels Posts Réseaux Sociaux</div>
+            <ul class="doc-list grid-2">
+                <li>
+                    <a href="post-teasing.png">
+                        <span class="icon">1️⃣</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Post Teasing</span>
+                            <span class="doc-type">Étape 1 — "ASSEZ."</span>
+                        </span>
+                        <span class="badge badge-png">PNG</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="post-revelation.png">
+                        <span class="icon">2️⃣</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Post Révélation</span>
+                            <span class="doc-type">Étape 2 — Présentation</span>
+                        </span>
+                        <span class="badge badge-png">PNG</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="post-lancement.png">
+                        <span class="icon">3️⃣</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Post Lancement</span>
+                            <span class="doc-type">Étape 3 — "C'est maintenant"</span>
+                        </span>
+                        <span class="badge badge-png">PNG</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- CARROUSEL -->
+        <div class="section">
+            <div class="section-title">🎠 Carrousel LinkedIn/Instagram (5 slides)</div>
+            <ul class="doc-list grid-2">
+                <li>
+                    <a href="carrousel-slide-1.png">
+                        <span class="icon">1</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Slide 1</span>
+                            <span class="doc-type">"Vous payez combien ?"</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="carrousel-slide-2.png">
+                        <span class="icon">2</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Slide 2</span>
+                            <span class="doc-type">Comparatif prix</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="carrousel-slide-3.png">
+                        <span class="icon">3</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Slide 3</span>
+                            <span class="doc-type">"Et si c'était fini ?"</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="carrousel-slide-4.png">
+                        <span class="icon">4</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Slide 4</span>
+                            <span class="doc-type">Présentation AZALPLUS</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="carrousel-slide-5.png">
+                        <span class="icon">5</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Slide 5</span>
+                            <span class="doc-type">"Rejoins les Zaliers"</span>
+                        </span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- BANNIÈRES -->
+        <div class="section">
+            <div class="section-title">🖼️ Bannières & Logos</div>
+            <ul class="doc-list grid-2">
+                <li>
+                    <a href="banniere-zaliers-facebook.png">
+                        <span class="icon">📘</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Bannière Facebook</span>
+                            <span class="doc-type">Groupe Les Zaliers</span>
+                        </span>
+                        <span class="badge badge-png">PNG</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="banniere-linkedin.png">
+                        <span class="icon">💼</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Bannière LinkedIn</span>
+                            <span class="doc-type">Page entreprise</span>
+                        </span>
+                        <span class="badge badge-png">PNG</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="logo-azalplus.png">
+                        <span class="icon">🔵</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Logo AZALPLUS</span>
+                            <span class="doc-type">Icône seule</span>
+                        </span>
+                        <span class="badge badge-png">PNG</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="logo-azalplus-full.png">
+                        <span class="icon">🔵</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Logo AZALPLUS Full</span>
+                            <span class="doc-type">Avec texte</span>
+                        </span>
+                        <span class="badge badge-png">PNG</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="logo-zaliers.png">
+                        <span class="icon">🇿</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Logo Zaliers</span>
+                            <span class="doc-type">Icône seule</span>
+                        </span>
+                        <span class="badge badge-png">PNG</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="logo-zaliers-full.png">
+                        <span class="icon">🇿</span>
+                        <span class="doc-info">
+                            <span class="doc-name">Logo Zaliers Full</span>
+                            <span class="doc-type">Avec texte</span>
+                        </span>
+                        <span class="badge badge-png">PNG</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- PARTENAIRES FINANCIERS -->
+        <div class="section">
+            <div class="section-title">💳 Partenaires Financiers</div>
             <ul class="doc-list">
                 <li>
                     <a href="FICHE_APPEL_FINTECTURE.md">
@@ -105,7 +348,7 @@
                             <span class="doc-name">Fiche Appel FINTECTURE</span>
                             <span class="doc-type">RDV Jeudi 12 mars 15h</span>
                         </span>
-                        <span class="badge badge-new">Nouveau</span>
+                        <span class="badge badge-md">MD</span>
                     </a>
                 </li>
                 <li>
@@ -114,16 +357,6 @@
                         <span class="doc-info">
                             <span class="doc-name">Fiche Appel POWENS</span>
                             <span class="doc-type">Formulaire de préparation</span>
-                        </span>
-                        <span class="badge badge-html">HTML</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="CALL_POWENS_QUESTIONS.html">
-                        <span class="icon">❓</span>
-                        <span class="doc-info">
-                            <span class="doc-name">Questions POWENS</span>
-                            <span class="doc-type">Liste des questions</span>
                         </span>
                         <span class="badge badge-html">HTML</span>
                     </a>
@@ -142,7 +375,7 @@
                     <a href="EMAILS_PARTENAIRES.md">
                         <span class="icon">📧</span>
                         <span class="doc-info">
-                            <span class="doc-name">Emails Partenaires</span>
+                            <span class="doc-name">Emails Partenaires Financiers</span>
                             <span class="doc-type">Templates emails</span>
                         </span>
                         <span class="badge badge-md">MD</span>
@@ -151,8 +384,9 @@
             </ul>
         </div>
 
+        <!-- PRÉSENTATION -->
         <div class="section">
-            <div class="section-title">Présentation AZALPLUS</div>
+            <div class="section-title">📊 Présentation AZALPLUS</div>
             <ul class="doc-list">
                 <li>
                     <a href="LANDING_PAGE_AZALPLUS.html">
@@ -197,29 +431,33 @@
             </ul>
         </div>
 
+        <!-- PAGES PUBLIQUES -->
         <div class="section">
-            <div class="section-title">Ressources</div>
+            <div class="section-title">🔗 Pages Publiques</div>
             <ul class="doc-list">
                 <li>
-                    <a href="logo-azalplus.svg">
-                        <span class="icon">🎨</span>
+                    <a href="/waitlist">
+                        <span class="icon">📝</span>
                         <span class="doc-info">
-                            <span class="doc-name">Logo AZALPLUS</span>
-                            <span class="doc-type">SVG</span>
+                            <span class="doc-name">Page Waitlist</span>
+                            <span class="doc-type">Inscription pré-lancement</span>
                         </span>
+                        <span class="badge badge-new">Live</span>
                     </a>
                 </li>
                 <li>
-                    <a href="logo-azalplus-full.svg">
-                        <span class="icon">🎨</span>
+                    <a href="/partenaires">
+                        <span class="icon">🤝</span>
                         <span class="doc-info">
-                            <span class="doc-name">Logo AZALPLUS (complet)</span>
-                            <span class="doc-type">SVG avec texte</span>
+                            <span class="doc-name">Page Partenaires</span>
+                            <span class="doc-type">CMA, CCI, BGE...</span>
                         </span>
+                        <span class="badge badge-new">Live</span>
                     </a>
                 </li>
             </ul>
         </div>
+
     </div>
 </body>
 </html>

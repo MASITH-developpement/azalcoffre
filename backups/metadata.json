@@ -1,23 +1,34 @@
 {
   "backups": {
-    "c360c9e0-0a86-47e5-9168-10a8d289ba60": {
-      "id": "c360c9e0-0a86-47e5-9168-10a8d289ba60",
-      "filename": "backup_daily_20260304_020000_full.sql.gz",
-      "backup_type": "daily",
+    "c92dee50-cc1f-44bb-af50-057d587f20f5": {
+      "id": "c92dee50-cc1f-44bb-af50-057d587f20f5",
+      "filename": "backup_weekly_20260315_030000_full.sql.gz",
+      "backup_type": "weekly",
       "status": "failed",
       "size_bytes": 0,
-      "created_at": "2026-03-04T02:00:00.004281",
+      "created_at": "2026-03-15T03:00:00.008503",
       "tenant_id": null,
       "description": null,
       "error_message": "[Errno 2] No such file or directory"
     },
-    "64ba4af7-3e51-4593-8421-b2ab54199224": {
-      "id": "64ba4af7-3e51-4593-8421-b2ab54199224",
-      "filename": "backup_daily_20260305_020000_full.sql.gz",
+    "45d51d29-9758-4576-8a69-1d1ea0e48a4c": {
+      "id": "45d51d29-9758-4576-8a69-1d1ea0e48a4c",
+      "filename": "backup_daily_20260316_020000_full.sql.gz",
       "backup_type": "daily",
       "status": "failed",
       "size_bytes": 0,
-      "created_at": "2026-03-05T02:00:00.005714",
+      "created_at": "2026-03-16T02:00:00.005430",
+      "tenant_id": null,
+      "description": null,
+      "error_message": "[Errno 2] No such file or directory"
+    },
+    "72f7a690-050b-4026-b421-ec63e86dfa23": {
+      "id": "72f7a690-050b-4026-b421-ec63e86dfa23",
+      "filename": "backup_daily_20260316_020000_full.sql.gz",
+      "backup_type": "daily",
+      "status": "failed",
+      "size_bytes": 0,
+      "created_at": "2026-03-16T02:00:00.008255",
       "tenant_id": null,
       "description": null,
       "error_message": "[Errno 2] No such file or directory"

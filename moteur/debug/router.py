@@ -54,11 +54,17 @@ async def get_debug_context(request: Request):
     if not tenant_id:
         raise HTTPException(status_code=400, detail="Tenant non défini")
 
-    user_id = getattr(user, "id", None) or user.get("sub")
+    user_id = getattr(user, "id", None) or user.get("sub") or user.get("id")
+
+    # Convertir user_id en UUID si possible
+    try:
+        user_uuid = UUID(str(user_id)) if user_id else None
+    except (ValueError, TypeError):
+        user_uuid = None
 
     return {
         "tenant_id": UUID(str(tenant_id)),
-        "user_id": UUID(str(user_id)),
+        "user_id": user_uuid,
         "ip_address": request.client.host if request.client else None
     }
 

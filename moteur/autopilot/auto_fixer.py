@@ -100,7 +100,7 @@ class AutoFixer:
         if module_match:
             key_parts.append(module_match.group(1))
 
-        return ":".join(key_parts) if key_parts else hash(error_log[:200])
+        return ":".join(key_parts) if key_parts else str(hash(error_log[:200]))
 
     @classmethod
     def _track_fix_attempt(cls, error_key: str, fix_type: str) -> bool:
@@ -147,9 +147,27 @@ class AutoFixer:
     # Contexte d'erreur courant pour ClaudeFixer
     _current_error_context: Dict[str, Any] = {}
 
+    # Erreurs HTTP qui ne sont PAS des bugs à corriger (comportement normal)
+    SKIP_CLAUDE_ERRORS = [
+        "401",      # Non autorisé (token expiré, pas de token)
+        "403",      # Interdit (permissions)
+        "404",      # Non trouvé (URL incorrecte de l'utilisateur)
+        "422",      # Validation Pydantic (données invalides de l'utilisateur)
+        "favicon",  # Requêtes favicon
+        "/metrics", # Prometheus metrics
+        "/health",  # Health checks
+    ]
+
     @classmethod
     def _escalate_to_claude(cls, error_key: str, fix_type: str, attempts: int):
         """Escalade vers Claude quand les corrections automatiques échouent."""
+
+        # Ne pas escalader les erreurs HTTP normales
+        for skip in cls.SKIP_CLAUDE_ERRORS:
+            if skip in error_key.lower():
+                logger.debug("skip_claude_escalation", error_key=error_key, reason="Normal HTTP error")
+                return
+
         logger.error("claude_action_required",
                     priority="HIGH",
                     error_key=error_key,
@@ -422,7 +440,7 @@ class AutoFixer:
 
     @classmethod
     def _fix_missing_column(cls, error_log: str) -> Tuple[bool, str]:
-        """Corrige une colonne manquante."""
+        """Corrige TOUTES les colonnes manquantes d'un module en une fois."""
         # Pattern: column "xxx" of relation "yyy" does not exist
         match = re.search(
             r'column "(\w+)" of relation "(\w+)" does not exist',
@@ -438,29 +456,114 @@ class AutoFixer:
         try:
             with cls._get_session() as session:
                 from sqlalchemy import text
+                from pathlib import Path
+                import yaml
 
-                # Déterminer le type de colonne basé sur le nom
-                col_type = cls._guess_column_type(column_name)
-
-                sql = f"""
-                    ALTER TABLE azalplus.{table_name}
-                    ADD COLUMN IF NOT EXISTS {column_name} {col_type}
+                # 1. Récupérer les colonnes existantes dans la table
+                existing_cols_sql = """
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_schema = 'azalplus' AND table_name = :table_name
                 """
-                session.execute(text(sql))
+                result = session.execute(text(existing_cols_sql), {"table_name": table_name})
+                existing_columns = {row[0] for row in result}
+
+                # 2. Charger le module YAML pour avoir la liste complète des champs
+                module_path = Path("/home/ubuntu/azalplus/modules") / f"{table_name}.yml"
+                yaml_columns = {}
+
+                if module_path.exists():
+                    try:
+                        with open(module_path, 'r', encoding='utf-8') as f:
+                            module_def = yaml.safe_load(f)
+
+                        if module_def and 'champs' in module_def:
+                            for champ in module_def['champs']:
+                                champ_name = champ.get('nom')
+                                champ_type = champ.get('type', 'text')
+                                if champ_name:
+                                    yaml_columns[champ_name] = champ_type
+                    except Exception as e:
+                        logger.warning("yaml_parse_failed", file=str(module_path), error=str(e))
+
+                # 3. Identifier toutes les colonnes manquantes
+                missing_columns = []
+
+                # Ajouter d'abord la colonne qui a causé l'erreur
+                if column_name not in existing_columns:
+                    col_type = yaml_columns.get(column_name) if yaml_columns else None
+                    sql_type = cls._yaml_type_to_sql(col_type) if col_type else cls._guess_column_type(column_name)
+                    missing_columns.append((column_name, sql_type))
+
+                # Ajouter les autres colonnes manquantes du YAML
+                for col_name, col_type in yaml_columns.items():
+                    if col_name not in existing_columns and col_name != column_name:
+                        sql_type = cls._yaml_type_to_sql(col_type)
+                        missing_columns.append((col_name, sql_type))
+
+                if not missing_columns:
+                    return False, "Aucune colonne manquante identifiée"
+
+                # 4. Ajouter toutes les colonnes manquantes en une transaction
+                added_columns = []
+                for col_name, col_type in missing_columns:
+                    try:
+                        sql = f"""
+                            ALTER TABLE azalplus.{table_name}
+                            ADD COLUMN IF NOT EXISTS {col_name} {col_type}
+                        """
+                        session.execute(text(sql))
+                        added_columns.append(col_name)
+                        logger.info(
+                            "auto_fix_column_added",
+                            table=table_name,
+                            column=col_name,
+                            type=col_type
+                        )
+                    except Exception as col_e:
+                        logger.warning("column_add_failed", column=col_name, error=str(col_e))
+
                 session.commit()
 
-                logger.info(
-                    "auto_fix_column_added",
-                    table=table_name,
-                    column=column_name,
-                    type=col_type
-                )
-                cls._log_learning("sql_column", f"{table_name}.{column_name} ({col_type})")
-                return True, f"Colonne '{column_name}' ajoutée à '{table_name}'"
+                if added_columns:
+                    cls._log_learning("sql_column", f"{table_name}: {', '.join(added_columns)}")
+                    return True, f"{len(added_columns)} colonnes ajoutées à '{table_name}': {', '.join(added_columns)}"
+
+                return False, "Aucune colonne ajoutée"
 
         except Exception as e:
             logger.error("auto_fix_column_failed", error=str(e))
             return False, f"Échec ajout colonne: {e}"
+
+    @classmethod
+    def _yaml_type_to_sql(cls, yaml_type: str) -> str:
+        """Convertit un type YAML en type SQL PostgreSQL."""
+        type_mapping = {
+            'text': 'VARCHAR(255)',
+            'texte': 'VARCHAR(255)',
+            'string': 'VARCHAR(255)',
+            'number': 'NUMERIC(15,2)',
+            'nombre': 'NUMERIC(15,2)',
+            'entier': 'INTEGER',
+            'integer': 'INTEGER',
+            'date': 'DATE',
+            'datetime': 'TIMESTAMP',
+            'boolean': 'BOOLEAN',
+            'booleen': 'BOOLEAN',
+            'select': 'VARCHAR(100)',
+            'enum': 'VARCHAR(100)',
+            'relation': 'UUID',
+            'lien': 'UUID',
+            'textarea': 'TEXT',
+            'email': 'VARCHAR(255)',
+            'tel': 'VARCHAR(20)',
+            'telephone': 'VARCHAR(20)',
+            'json': 'JSONB',
+            'tags': 'JSONB',
+            'money': 'NUMERIC(15,2)',
+            'montant': 'NUMERIC(15,2)',
+        }
+        return type_mapping.get(yaml_type.lower(), 'VARCHAR(255)')
 
     @classmethod
     def _fix_not_null_violation(cls, error_log: str) -> Tuple[bool, str]:

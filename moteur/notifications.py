@@ -41,6 +41,13 @@ class DocumentNotFoundError(Exception):
 
 
 # =============================================================================
+# Email Templates Path
+# =============================================================================
+from pathlib import Path
+TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
+
+
+# =============================================================================
 # Email Service
 # =============================================================================
 class EmailService:
@@ -159,6 +166,72 @@ class EmailService:
         except Exception as e:
             logger.error("email_send_failed", to=to, error=str(e))
             raise EmailSendError(f"Erreur lors de l'envoi: {str(e)}")
+
+    @classmethod
+    async def send_referral_thank_you(
+        cls,
+        ami_email: str,
+        prenom_inscrit: str,
+        email_inscrit: str
+    ) -> bool:
+        """
+        Envoie un email de remerciement à l'ami qui a recommandé AZALPLUS.
+
+        Args:
+            ami_email: Email de l'ami à remercier
+            prenom_inscrit: Prénom de la personne qui s'est inscrite
+            email_inscrit: Email de la personne inscrite (pour UTM tracking)
+
+        Returns:
+            True si envoyé avec succès
+        """
+        try:
+            # Charger les templates
+            html_template_path = TEMPLATES_DIR / "email-merci-ami.html"
+            text_template_path = TEMPLATES_DIR / "email-merci-ami.txt"
+
+            if not html_template_path.exists():
+                logger.error("referral_email_template_missing", path=str(html_template_path))
+                return False
+
+            # Encoder l'email pour l'URL
+            import urllib.parse
+            email_inscrit_encoded = urllib.parse.quote(email_inscrit)
+
+            # Lire et personnaliser le template HTML
+            html_body = html_template_path.read_text(encoding="utf-8")
+            html_body = html_body.replace("{{ prenom_inscrit }}", prenom_inscrit)
+            html_body = html_body.replace("{{ email_inscrit_encoded }}", email_inscrit_encoded)
+
+            # Lire et personnaliser le template texte
+            text_body = None
+            if text_template_path.exists():
+                text_body = text_template_path.read_text(encoding="utf-8")
+                text_body = text_body.replace("{{ prenom_inscrit }}", prenom_inscrit)
+
+            # Envoyer l'email
+            await cls.send_email(
+                to=ami_email,
+                subject=f"Merci d'avoir parlé d'AZALPLUS à {prenom_inscrit} !",
+                html_body=html_body,
+                text_body=text_body
+            )
+
+            logger.info(
+                "referral_thank_you_sent",
+                ami_email=ami_email,
+                prenom_inscrit=prenom_inscrit
+            )
+            return True
+
+        except EmailConfigurationError:
+            # SMTP non configuré - on log mais on ne plante pas l'inscription
+            logger.warning("referral_email_skipped_no_smtp", ami_email=ami_email)
+            return False
+        except Exception as e:
+            # Erreur d'envoi - on log mais on ne plante pas l'inscription
+            logger.error("referral_email_failed", ami_email=ami_email, error=str(e))
+            return False
 
     @classmethod
     async def send_devis_email(

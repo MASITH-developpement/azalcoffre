@@ -29,9 +29,9 @@ from .autopilot import AutoPilot, PostgresStorage
 logger = structlog.get_logger()
 
 # =============================================================================
-# CRÉATEUR - HARDCODÉ (NE JAMAIS MODIFIER)
+# CRÉATEUR - Depuis la configuration
 # =============================================================================
-CREATEUR_EMAIL = "contact@stephane-moreau.fr"
+CREATEUR_EMAIL = settings.CREATEUR_EMAIL
 
 # =============================================================================
 # Messages neutres (Guardian reste invisible)

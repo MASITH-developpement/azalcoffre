@@ -1,0 +1,362 @@
+# =============================================================================
+# AZALPLUS - Simulateur Statut Juridique
+# =============================================================================
+# Aide au choix du statut juridique pour les créateurs d'entreprise.
+# Basé sur les critères URSSAF et règles fiscales/sociales françaises.
+
+nom: Simulateur Statut
+nom_affichage: Simulateur Statut Juridique
+icone: scale
+menu: Création
+description: Trouver le statut juridique adapté à votre projet
+
+champs:
+  # -----------------------------------------------------
+  # Identification simulation
+  # -----------------------------------------------------
+  - nom: reference
+    type: text
+    obligatoire: true
+    auto: "SIM-{ANNEE}-{NUMERO:04d}"
+    label: Référence simulation
+
+  - nom: date_simulation
+    type: datetime
+    obligatoire: true
+    defaut: maintenant
+    label: Date
+
+  - nom: business_plan_id
+    type: relation
+    obligatoire: false
+    relation: Business Plan
+    label: Business plan lié
+
+  # -----------------------------------------------------
+  # Profil du créateur
+  # -----------------------------------------------------
+  - nom: situation_actuelle
+    type: select
+    obligatoire: true
+    options:
+      - Salarié en poste
+      - Demandeur d'emploi indemnisé
+      - Demandeur d'emploi non indemnisé
+      - Étudiant
+      - Retraité
+      - Fonctionnaire
+      - Indépendant / Déjà entrepreneur
+      - Sans activité
+    label: Situation actuelle
+
+  - nom: maintien_activite_salariee
+    type: boolean
+    obligatoire: false
+    defaut: false
+    label: Maintien activité salariée en parallèle ?
+
+  - nom: droits_chomage
+    type: boolean
+    obligatoire: false
+    defaut: false
+    label: Bénéficiaire ARE (allocation chômage) ?
+
+  - nom: acre_eligible
+    type: boolean
+    obligatoire: false
+    defaut: true
+    label: Éligible ACRE ?
+    description: Exonération partielle de charges 1ère année
+
+  # -----------------------------------------------------
+  # Nature du projet
+  # -----------------------------------------------------
+  - nom: type_activite
+    type: select
+    obligatoire: true
+    options:
+      - Vente de marchandises (BIC)
+      - Prestation de services commerciale (BIC)
+      - Prestation de services libérale (BNC)
+      - Artisanat
+      - Profession libérale réglementée
+      - Activité mixte
+    label: Type d'activité
+
+  - nom: activite_reglementee
+    type: boolean
+    obligatoire: false
+    defaut: false
+    label: Activité réglementée ?
+    description: Nécessite diplôme ou autorisation
+
+  - nom: local_commercial
+    type: boolean
+    obligatoire: false
+    defaut: false
+    label: Besoin d'un local commercial ?
+
+  - nom: stock_important
+    type: boolean
+    obligatoire: false
+    defaut: false
+    label: Stock important ?
+
+  # -----------------------------------------------------
+  # Associés
+  # -----------------------------------------------------
+  - nom: nombre_associes
+    type: select
+    obligatoire: true
+    options:
+      - "1 (seul)"
+      - "2"
+      - "3 à 5"
+      - "Plus de 5"
+    label: Nombre d'associés
+
+  - nom: associes_actifs
+    type: boolean
+    obligatoire: false
+    defaut: false
+    label: Associés actifs dans l'entreprise ?
+
+  - nom: investisseurs_exterieurs
+    type: boolean
+    obligatoire: false
+    defaut: false
+    label: Investisseurs extérieurs prévus ?
+
+  # -----------------------------------------------------
+  # Prévisions financières
+  # -----------------------------------------------------
+  - nom: ca_previsionnel
+    type: select
+    obligatoire: true
+    options:
+      - "< 10 000 €"
+      - "10 000 € - 36 800 €"
+      - "36 800 € - 77 700 €"
+      - "77 700 € - 188 700 €"
+      - "> 188 700 €"
+    label: CA annuel prévisionnel
+    description: Seuils micro-entreprise 2026
+
+  - nom: benefice_previsionnel
+    type: select
+    obligatoire: true
+    options:
+      - "< 10 000 €"
+      - "10 000 € - 30 000 €"
+      - "30 000 € - 50 000 €"
+      - "50 000 € - 100 000 €"
+      - "> 100 000 €"
+    label: Bénéfice annuel prévu
+
+  - nom: investissement_depart
+    type: select
+    obligatoire: true
+    options:
+      - "< 5 000 €"
+      - "5 000 € - 20 000 €"
+      - "20 000 € - 50 000 €"
+      - "50 000 € - 100 000 €"
+      - "> 100 000 €"
+    label: Investissement de départ
+
+  - nom: emprunt_bancaire
+    type: boolean
+    obligatoire: false
+    defaut: false
+    label: Emprunt bancaire prévu ?
+
+  # -----------------------------------------------------
+  # Protection et rémunération
+  # -----------------------------------------------------
+  - nom: protection_patrimoine
+    type: select
+    obligatoire: true
+    options:
+      - Pas importante
+      - Importante
+      - Prioritaire
+    label: Protection du patrimoine personnel
+
+  - nom: couverture_sociale
+    type: select
+    obligatoire: true
+    options:
+      - Minimale (coûts bas)
+      - Équilibrée
+      - Maximale (salarié)
+    label: Niveau couverture sociale souhaité
+
+  - nom: mode_remuneration
+    type: select
+    obligatoire: true
+    options:
+      - Dividendes principalement
+      - Salaire principalement
+      - Mixte
+      - Peu importe
+    label: Mode de rémunération préféré
+
+  - nom: cotisations_retraite
+    type: select
+    obligatoire: true
+    options:
+      - Minimiser les cotisations
+      - Cotisations équilibrées
+      - Maximiser la retraite
+    label: Priorité retraite
+
+  # -----------------------------------------------------
+  # Évolution
+  # -----------------------------------------------------
+  - nom: croissance_prevue
+    type: select
+    obligatoire: true
+    options:
+      - Stable / Activité solo
+      - Croissance modérée
+      - Forte croissance
+      - Levée de fonds envisagée
+    label: Évolution envisagée
+
+  - nom: embauche_prevue
+    type: select
+    obligatoire: true
+    options:
+      - Non, jamais
+      - Peut-être à terme
+      - Oui, dans les 2 ans
+      - Oui, dès le départ
+    label: Embauche de salariés prévue ?
+
+  - nom: cession_transmission
+    type: boolean
+    obligatoire: false
+    defaut: false
+    label: Cession/transmission envisagée ?
+
+  # -----------------------------------------------------
+  # Résultats de la simulation
+  # -----------------------------------------------------
+  - nom: statut_recommande
+    type: select
+    obligatoire: false
+    readonly: true
+    options:
+      - Micro-entreprise
+      - EI (Entreprise Individuelle)
+      - EURL
+      - SARL
+      - SASU
+      - SAS
+    label: Statut recommandé
+
+  - nom: statut_score
+    type: number
+    obligatoire: false
+    readonly: true
+    label: Score de pertinence (%)
+
+  - nom: statuts_alternatifs
+    type: json
+    obligatoire: false
+    readonly: true
+    label: Statuts alternatifs
+    description: |
+      Format: [
+        {"statut": "EURL", "score": 85, "raisons": ["Protection patrimoine", "Crédibilité"]},
+        {"statut": "Micro", "score": 70, "raisons": ["Simplicité", "Coûts faibles"]}
+      ]
+
+  - nom: avantages
+    type: json
+    obligatoire: false
+    readonly: true
+    label: Avantages du statut recommandé
+
+  - nom: inconvenients
+    type: json
+    obligatoire: false
+    readonly: true
+    label: Inconvénients à considérer
+
+  - nom: charges_estimees
+    type: json
+    obligatoire: false
+    readonly: true
+    label: Estimation charges sociales/fiscales
+    description: |
+      Format: {
+        "charges_sociales_pct": 22,
+        "charges_sociales_eur": 6600,
+        "impot_estime_eur": 3000,
+        "total_annuel": 9600
+      }
+
+  - nom: regime_fiscal
+    type: text
+    obligatoire: false
+    readonly: true
+    label: Régime fiscal recommandé
+    description: "IR, IS, Micro-fiscal..."
+
+  - nom: regime_tva
+    type: text
+    obligatoire: false
+    readonly: true
+    label: Régime TVA recommandé
+    description: "Franchise, Réel simplifié, Réel normal"
+
+  - nom: explications
+    type: textarea
+    obligatoire: false
+    readonly: true
+    label: Explications détaillées
+
+  - nom: points_vigilance
+    type: textarea
+    obligatoire: false
+    readonly: true
+    label: Points de vigilance
+
+  - nom: prochaines_etapes
+    type: json
+    obligatoire: false
+    readonly: true
+    label: Prochaines étapes
+    description: Checklist des démarches
+
+  # -----------------------------------------------------
+  # Métadonnées
+  # -----------------------------------------------------
+  - nom: created_at
+    type: datetime
+    obligatoire: false
+
+  - nom: created_by
+    type: relation
+    obligatoire: false
+    relation: Utilisateurs
+
+# =============================================================================
+# Actions
+# =============================================================================
+actions:
+  - lancer_simulation
+  - recalculer
+  - exporter_pdf
+  - lier_business_plan
+  - contacter_expert
+
+# =============================================================================
+# Marceau
+# =============================================================================
+marceau:
+  suggestions:
+    - "Vérifier l'éligibilité ACRE"
+    - "Consulter un expert-comptable pour validation"
+    - "Contacter la CMA/CCI pour accompagnement"
