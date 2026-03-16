@@ -5377,6 +5377,40 @@ async def module_detail(
 
             // Track recent view
             trackRecent('{module_name}', '{item_id}', `{display_name_js}`, `{sous_titre_js}`, '{item_statut_js}', `{module_icone_js}`);
+
+            // Charger les options des champs relation (select)
+            const authToken = getToken();
+            document.querySelectorAll('select[data-link]').forEach(async select => {{
+                const linkedModule = select.dataset.link;
+                const currentValue = select.dataset.currentValue || '';
+                try {{
+                    const response = await fetch(`/api/select/${{linkedModule.toLowerCase()}}`, {{
+                        credentials: 'include',
+                        headers: {{
+                            'Authorization': 'Bearer ' + authToken,
+                            'Content-Type': 'application/json'
+                        }}
+                    }});
+                    if (response.ok) {{
+                        const data = await response.json();
+                        const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+                        const firstOption = select.options[0];
+                        select.innerHTML = '';
+                        select.appendChild(firstOption);
+                        items.forEach(item => {{
+                            const opt = document.createElement('option');
+                            opt.value = item.id;
+                            opt.textContent = item.nom || item.name || item.raison_sociale || item.code || item.id;
+                            if (currentValue && item.id === currentValue) {{
+                                opt.selected = true;
+                            }}
+                            select.appendChild(opt);
+                        }});
+                    }} else {{
+                        console.warn('Erreur chargement ' + linkedModule + ':', response.status);
+                    }}
+                }} catch (e) {{ console.error('Erreur chargement ' + linkedModule + ':', e); }}
+            }});
         }});
         </script>
         ''',
