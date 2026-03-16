@@ -52,8 +52,7 @@ class RecentTrackData(BaseModel):
 
 @legacy_router.post("/recent/track")
 async def track_recent_access(
-    request: Request,
-    data: Optional[Dict[str, Any]] = Body(default=None)
+    request: Request
 ):
     """Enregistre l'accès récent à un élément"""
     try:

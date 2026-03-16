@@ -54,8 +54,8 @@ def _get_tva_select_options() -> str:
     options_html = ""
     for nom, taux in sorted_tva:
         options_html += f'<option value="{taux}">{taux}%</option>'
-    # Ajouter 0% pour exonéré
-    options_html += '<option value="0">0%</option>'
+    # Ajouter exonéré (0%)
+    options_html += '<option value="0">Exonéré</option>'
     return options_html
 
 def _get_tva_default_rate() -> float:
