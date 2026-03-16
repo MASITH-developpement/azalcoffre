@@ -51,10 +51,10 @@ AUTO_NUMBER_CONFIG = {
     "fournisseurs": ("FOU", "code", False),
     "donneur_ordre": ("DO", "code", False),
     "devis": ("DEV", "numero", True),
-    "factures": ("FAC", "numero", True),
+    "factures": ("FAC", "number", True),  # Corrigé: numero -> number (cf. factures.yml)
     "avoirs": ("AVO", "numero", True),
     "bons_livraison": ("BL", "numero", True),
-    "commandes": ("CMD", "numero", True),
+    "commandes": ("CMD", "number", True),  # Corrigé: numero -> number (cf. commandes.yml)
     "projets": ("PRJ", "code", False),
     "contrats": ("CTR", "numero", True),
     "produits": ("PRD", "code", False),

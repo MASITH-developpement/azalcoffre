@@ -127,7 +127,7 @@ async def factures_handler(
             # Créer un nouvel élément
             body = await request.json()
             result = db.create_record("factures", body, tenant_id, user_id)
-            return resultltltltltlt
+            return resultltltltltltlt
         
         elif request.method == "PUT":
             if not item_id:
@@ -1483,7 +1483,7 @@ AUTO_NUMBER_CONFIG = {
     "fournisseurs": ("FOU", "code", False),
     "donneur_ordre": ("DO", "code", False),
     "devis": ("DEV", "numero", True),
-    "factures": ("FAC", "numero", True),
+    "factures": ("FAC", "number", True),
     "avoirs": ("AVO", "numero", True),
     "bons_livraison": ("BL", "numero", True),
     "commandes": ("CMD", "numero", True),
