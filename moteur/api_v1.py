@@ -127,7 +127,7 @@ async def factures_handler(
             # Créer un nouvel élément
             body = await request.json()
             result = db.create_record("factures", body, tenant_id, user_id)
-            return result
+            return resultltltltltlt
         
         elif request.method == "PUT":
             if not item_id:

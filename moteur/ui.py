@@ -4590,35 +4590,15 @@ def generate_document_form(module, module_name: str) -> str:
         }};
         const conditionsValue = document.getElementById('conditions').value || 'immediate';
 
-        const data = {{
-            customer_id: document.getElementById('client_id').value || null,
-            date: new Date().toISOString().split('T')[0],
-            due_date: document.getElementById('date_validite').value || null,
-            delivery_date: document.getElementById('delivery_date')?.value || null,
-            billing_address: document.getElementById('adresse_facturation').value || null,
-            payment_terms: conditionsMap[conditionsValue] || 'NET_30',
-            reference: document.getElementById('reference_client')?.value || null,
-            status: 'DRAFT',
-            lignes: [],
-            subtotal: 0,
-            tax_amount: 0,
-            total: 0,
-            // Champs additionnels (stockés dans custom_fields)
-            custom_fields: {{
-                vendeur: document.getElementById('vendeur')?.value || null,
-                commercial_id: document.getElementById('commercial_id')?.value || null,
-                banque_destinataire: document.getElementById('banque_destinataire')?.value || null,
-                reference_paiement: document.getElementById('reference_paiement')?.value || null
-            }}
-        }};
-
-        // Collecter les lignes
+        // Collecter d'abord les lignes
+        const lignesData = [];
         let lineNumber = 1;
+        let subtotalCalc = 0;
+        let taxAmountCalc = 0;
+
         document.querySelectorAll('#lignes-table tr:not(.ligne-vide)').forEach(tr => {{
             const selects = tr.querySelectorAll('select');
             const inputs = tr.querySelectorAll('input[type="number"]');
-            // selects[0] = produit, selects[1] = niveau prix, selects[2] = TVA
-            // inputs[0] = prix, inputs[1] = quantité
             if (inputs.length >= 2 && selects.length >= 3) {{
                 const produitSelect = selects[0];
                 const selectedOption = produitSelect.options[produitSelect.selectedIndex];
@@ -4633,7 +4613,9 @@ def generate_document_form(module, module_name: str) -> str:
                 if (productId || prix > 0) {{
                     const subtotal = prix * qte;
                     const taxAmount = subtotal * (tauxTVA / 100);
-                    data.lignes.push({{
+                    subtotalCalc += subtotal;
+                    taxAmountCalc += taxAmount;
+                    lignesData.push({{
                         line_number: lineNumber++,
                         product_id: productId,
                         product_code: productCode,
@@ -4649,12 +4631,27 @@ def generate_document_form(module, module_name: str) -> str:
             }}
         }});
 
-        // Calculer les totaux
-        data.lignes.forEach(ligne => {{
-            data.subtotal += ligne.subtotal;
-            data.tax_amount += ligne.tax_amount;
-        }});
-        data.total = data.subtotal + data.tax_amount;
+        const data = {{
+            customer_id: document.getElementById('client_id').value || null,
+            date: new Date().toISOString().split('T')[0],
+            due_date: document.getElementById('date_validite').value || null,
+            delivery_date: document.getElementById('delivery_date')?.value || null,
+            billing_address: document.getElementById('adresse_facturation').value || null,
+            payment_terms: conditionsMap[conditionsValue] || 'NET_30',
+            reference: document.getElementById('reference_client')?.value || null,
+            status: 'DRAFT',
+            subtotal: subtotalCalc,
+            tax_amount: taxAmountCalc,
+            total: subtotalCalc + taxAmountCalc,
+            // Tous les champs additionnels dans custom_fields (y compris lignes)
+            custom_fields: {{
+                lignes: lignesData,
+                vendeur: document.getElementById('vendeur')?.value || null,
+                commercial_id: document.getElementById('commercial_id')?.value || null,
+                banque_destinataire: document.getElementById('banque_destinataire')?.value || null,
+                reference_paiement: document.getElementById('reference_paiement')?.value || null
+            }}
+        }};
 
         return data;
     }}
