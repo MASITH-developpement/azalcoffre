@@ -202,7 +202,8 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
             autofill_config = 'data-autofill="adresse_ligne1:address_line1,adresse_ligne2:address_line2,ville:city,code_postal:postal_code,contact_sur_place:contact_name,telephone_contact:phone,email_contact:email"'
         elif field.nom == "customer_id":
             # Pour les factures : construire l'adresse complète dans billing_address (textarea)
-            autofill_config = 'data-autofill="billing_address:_compose_address:address_line1|address_line2|postal_code|city,recipient_siret:tax_id"'
+            # Note: l'API /clients/{id} retourne adresse1, adresse2, cp, ville (noms français)
+            autofill_config = 'data-autofill="billing_address:_compose_address:adresse1|adresse2|cp|ville"'
         elif field.nom == "donneur_ordre_id":
             autofill_config = 'data-autofill="adresse_ligne1:adresse_ligne1,adresse_ligne2:adresse_ligne2,ville:ville,code_postal:code_postal,contact_sur_place:contact_principal,telephone_contact:telephone,email_contact:email"'
 
