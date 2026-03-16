@@ -4392,7 +4392,8 @@ def generate_document_form(module, module_name: str) -> str:
                 <table class="table" style="margin-top: 16px;">
                     <thead>
                         <tr>
-                            <th style="width: 50%;">Produit</th>
+                            <th style="width: 40%;">Produit</th>
+                            <th style="width: 70px;">Tarif</th>
                             <th>Prix unit.</th>
                             <th>Quantité</th>
                             <th>Taxes</th>
@@ -4402,7 +4403,7 @@ def generate_document_form(module, module_name: str) -> str:
                     </thead>
                     <tbody id="lignes-table">
                         <tr class="ligne-vide">
-                            <td colspan="6" style="text-align: center; padding: 32px; color: var(--gray-400);">
+                            <td colspan="7" style="text-align: center; padding: 32px; color: var(--gray-400);">
                                 Aucune ligne. Ajoutez un produit ci-dessous.
                             </td>
                         </tr>
@@ -4444,9 +4445,12 @@ def generate_document_form(module, module_name: str) -> str:
         produits.forEach(p => {{
             const code = p.code || '';
             const nom = p.name || p.nom || p.designation || p.libelle || '';
-            const prix = p.sale_price || p.prix_vente || p.prix || p.price || p.unit_price || 0;
+            const pu1 = p.sale_price || p.prix_vente || p.prix || p.price || p.unit_price || 0;
+            const custom = p.custom_fields || {{}};
+            const pu2 = custom.pu2 || pu1;
+            const pu3 = custom.pu3 || pu1;
             const displayText = code ? `${{code}} - ${{nom}}` : nom;
-            options += `<option value="${{p.id}}" data-prix="${{prix}}" data-nom="${{nom}}" data-code="${{code}}">${{displayText}}</option>`;
+            options += `<option value="${{p.id}}" data-pu1="${{pu1}}" data-pu2="${{pu2}}" data-pu3="${{pu3}}" data-nom="${{nom}}" data-code="${{code}}">${{displayText}}</option>`;
         }});
         return options;
     }}
@@ -4455,10 +4459,19 @@ def generate_document_form(module, module_name: str) -> str:
         const selectedOption = select.options[select.selectedIndex];
         const tr = select.closest('tr');
         const prixInput = tr.querySelectorAll('input[type="number"]')[0];
-        if (selectedOption && selectedOption.dataset.prix) {{
-            prixInput.value = parseFloat(selectedOption.dataset.prix) || 0;
+        const niveauSelect = tr.querySelector('select.niveau-prix');
+        if (selectedOption && selectedOption.value) {{
+            const niveau = niveauSelect ? niveauSelect.value : 'pu1';
+            const prix = parseFloat(selectedOption.dataset[niveau]) || 0;
+            prixInput.value = prix;
         }}
         calculerTotaux();
+    }}
+
+    function onNiveauPrixChange(select) {{
+        const tr = select.closest('tr');
+        const produitSelect = tr.querySelector('select:first-child');
+        onProduitChange(produitSelect);
     }}
 
     function ajouterLigne() {{
@@ -4469,6 +4482,13 @@ def generate_document_form(module, module_name: str) -> str:
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><select class="input" onchange="onProduitChange(this)">${{getProduitsOptions()}}</select></td>
+            <td>
+                <select class="input niveau-prix" style="width:70px" onchange="onNiveauPrixChange(this)">
+                    <option value="pu1">PU1</option>
+                    <option value="pu2">PU2</option>
+                    <option value="pu3">PU3</option>
+                </select>
+            </td>
             <td><input type="number" class="input" value="0" step="0.01" style="width:80px" onchange="calculerTotaux()"></td>
             <td><input type="number" class="input" value="1" style="width:60px" onchange="calculerTotaux()"></td>
             <td><select class="input" style="width:100px" onchange="calculerTotaux()">{tva_options_html}</select></td>
@@ -4482,12 +4502,15 @@ def generate_document_form(module, module_name: str) -> str:
     function calculerTotaux() {{
         let totalHT = 0;
         let totalTVA = 0;
-        document.querySelectorAll('#lignes-table tr').forEach(tr => {{
-            const inputs = tr.querySelectorAll('input');
-            const tvaSelect = tr.querySelector('select');
-            if (inputs.length >= 3) {{
-                const prix = parseFloat(inputs[1].value) || 0;
-                const qte = parseFloat(inputs[2].value) || 0;
+        document.querySelectorAll('#lignes-table tr:not(.ligne-vide)').forEach(tr => {{
+            const inputs = tr.querySelectorAll('input[type="number"]');
+            const selects = tr.querySelectorAll('select');
+            // selects[0] = produit, selects[1] = niveau prix, selects[2] = TVA
+            // inputs[0] = prix, inputs[1] = quantité
+            if (inputs.length >= 2) {{
+                const prix = parseFloat(inputs[0].value) || 0;
+                const qte = parseFloat(inputs[1].value) || 0;
+                const tvaSelect = selects[2];
                 const tauxTVA = parseFloat(tvaSelect?.value) || {tva_default};
                 const montantHT = prix * qte;
                 const montantTVA = montantHT * (tauxTVA / 100);
