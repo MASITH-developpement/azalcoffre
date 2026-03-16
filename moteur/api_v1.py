@@ -84,6 +84,67 @@ async def track_recent_access(
             content={"success": True, "message": "Access tracking skipped"}
         )
 
+@legacy_router.api_route("/factures", methods=["GET", "POST", "PUT", "DELETE"])
+@legacy_router.api_route("/factures/{item_id}", methods=["GET", "POST", "PUT", "DELETE"])
+async def factures_handler(
+    request: Request,
+    item_id: Optional[str] = None,
+    tenant_id: UUID = Depends(get_current_tenant),
+    user_id: UUID = Depends(get_current_user_id)
+):
+    """Handler générique pour le module factures"""
+    try:
+        logger.info("Requête factures", method=request.method, item_id=item_id, tenant_id=str(tenant_id))
+        
+        db = Database()
+        parser = ModuleParser()
+        
+        # Récupérer la définition du module
+        module_def = parser.get_module_definition("factures", tenant_id)
+        if not module_def:
+            raise HTTPException(status_code=404, detail="Module factures non trouvé")
+        
+        # Traitement selon la méthode HTTP
+        if request.method == "GET":
+            if item_id:
+                # Récupérer un élément spécifique
+                result = db.get_record("factures", item_id, tenant_id)
+                if not result:
+                    raise HTTPException(status_code=404, detail="Facture non trouvée")
+                return result
+            else:
+                # Récupérer la liste
+                results = db.get_records("factures", tenant_id, limit=100)
+                return {"data": results, "total": len(results)}
+        
+        elif request.method == "POST":
+            # Créer un nouvel élément
+            body = await request.json()
+            result = db.create_record("factures", body, tenant_id, user_id)
+            return result
+        
+        elif request.method == "PUT":
+            if not item_id:
+                raise HTTPException(status_code=400, detail="ID requis pour la mise à jour")
+            body = await request.json()
+            result = db.update_record("factures", item_id, body, tenant_id, user_id)
+            return result
+        
+        elif request.method == "DELETE":
+            if not item_id:
+                raise HTTPException(status_code=400, detail="ID requis pour la suppression")
+            result = db.delete_record("factures", item_id, tenant_id)
+            return {"success": True, "deleted_id": item_id}
+        
+        else:
+            raise HTTPException(status_code=405, detail="Méthode non autorisée")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Erreur dans factures_handler", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
 @legacy_router.get("/calendar/workload")
 async def get_calendar_workload(
     year: int = Query(..., description="Année", ge=1900, le=2100),

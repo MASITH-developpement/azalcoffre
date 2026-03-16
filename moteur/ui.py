@@ -4532,35 +4532,59 @@ def generate_document_form(module, module_name: str) -> str:
     }}
 
     function collectDocumentData() {{
+        // Mapper les conditions de paiement vers le format API
+        const conditionsMap = {{
+            'immediate': 'IMMEDIATE',
+            '30j': 'NET_30',
+            '45j': 'NET_45',
+            '60j': 'NET_60'
+        }};
+        const conditionsValue = document.getElementById('conditions').value || 'immediate';
+
         const data = {{
-            client_id: document.getElementById('client_id').value || null,
-            date_validite: document.getElementById('date_validite').value || null,
-            adresse_facturation: document.getElementById('adresse_facturation').value || null,
-            conditions: document.getElementById('conditions').value || 'immediate',
+            customer_id: document.getElementById('client_id').value || null,
+            date: new Date().toISOString().split('T')[0],
+            due_date: document.getElementById('date_validite').value || null,
+            billing_address: document.getElementById('adresse_facturation').value || null,
+            payment_terms: conditionsMap[conditionsValue] || 'NET_30',
+            status: 'DRAFT',
             lignes: [],
-            total_ht: 0,
-            total_tva: 0,
-            total_ttc: 0
+            subtotal: 0,
+            tax_amount: 0,
+            total: 0
         }};
 
         // Collecter les lignes
+        let lineNumber = 1;
         document.querySelectorAll('#lignes-table tr:not(.ligne-vide)').forEach(tr => {{
-            const inputs = tr.querySelectorAll('input');
-            const tvaSelect = tr.querySelector('select');
-            if (inputs.length >= 3) {{
-                const produit = inputs[0].value;
-                const prix = parseFloat(inputs[1].value) || 0;
-                const qte = parseFloat(inputs[2].value) || 0;
-                const tauxTVA = parseFloat(tvaSelect?.value) || {tva_default};
+            const selects = tr.querySelectorAll('select');
+            const inputs = tr.querySelectorAll('input[type="number"]');
+            // selects[0] = produit, selects[1] = niveau prix, selects[2] = TVA
+            // inputs[0] = prix, inputs[1] = quantité
+            if (inputs.length >= 2 && selects.length >= 3) {{
+                const produitSelect = selects[0];
+                const selectedOption = produitSelect.options[produitSelect.selectedIndex];
+                const productId = produitSelect.value || null;
+                const productCode = selectedOption?.dataset?.code || '';
+                const productName = selectedOption?.dataset?.nom || '';
+                const prix = parseFloat(inputs[0].value) || 0;
+                const qte = parseFloat(inputs[1].value) || 0;
+                const tauxTVA = parseFloat(selects[2]?.value) || {tva_default};
 
-                if (produit || prix > 0) {{
+                if (productId || prix > 0) {{
+                    const subtotal = prix * qte;
+                    const taxAmount = subtotal * (tauxTVA / 100);
                     data.lignes.push({{
-                        produit: produit,
-                        prix_unitaire: prix,
-                        quantite: qte,
-                        taux_tva: tauxTVA,
-                        montant_ht: prix * qte,
-                        montant_tva: (prix * qte) * (tauxTVA / 100)
+                        line_number: lineNumber++,
+                        product_id: productId,
+                        product_code: productCode,
+                        description: productName,
+                        quantity: qte,
+                        unit_price: prix,
+                        tax_rate: tauxTVA,
+                        subtotal: subtotal,
+                        tax_amount: taxAmount,
+                        total: subtotal + taxAmount
                     }});
                 }}
             }}
@@ -4568,10 +4592,10 @@ def generate_document_form(module, module_name: str) -> str:
 
         // Calculer les totaux
         data.lignes.forEach(ligne => {{
-            data.total_ht += ligne.montant_ht;
-            data.total_tva += ligne.montant_tva;
+            data.subtotal += ligne.subtotal;
+            data.tax_amount += ligne.tax_amount;
         }});
-        data.total_ttc = data.total_ht + data.total_tva;
+        data.total = data.subtotal + data.tax_amount;
 
         return data;
     }}
