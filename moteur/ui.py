@@ -4437,6 +4437,27 @@ def generate_document_form(module, module_name: str) -> str:
     let lignes = [];
     let ligneIndex = 0;
 
+    function getProduitsOptions() {{
+        const produits = window.produitsData || [];
+        let options = '<option value="">-- Sélectionner un produit --</option>';
+        produits.forEach(p => {{
+            const nom = p.name || p.nom || p.designation || p.libelle || '';
+            const prix = p.prix_vente || p.prix || p.price || p.unit_price || 0;
+            options += `<option value="${{p.id}}" data-prix="${{prix}}" data-nom="${{nom}}">${{nom}}</option>`;
+        }});
+        return options;
+    }}
+
+    function onProduitChange(select) {{
+        const selectedOption = select.options[select.selectedIndex];
+        const tr = select.closest('tr');
+        const prixInput = tr.querySelectorAll('input[type="number"]')[0];
+        if (selectedOption && selectedOption.dataset.prix) {{
+            prixInput.value = parseFloat(selectedOption.dataset.prix) || 0;
+        }}
+        calculerTotaux();
+    }}
+
     function ajouterLigne() {{
         const tbody = document.getElementById('lignes-table');
         const videRow = tbody.querySelector('.ligne-vide');
@@ -4444,7 +4465,7 @@ def generate_document_form(module, module_name: str) -> str:
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" class="input" placeholder="Nom du produit" onchange="calculerTotaux()"></td>
+            <td><select class="input" onchange="onProduitChange(this)">${{getProduitsOptions()}}</select></td>
             <td><input type="number" class="input" value="0" step="0.01" style="width:80px" onchange="calculerTotaux()"></td>
             <td><input type="number" class="input" value="1" style="width:60px" onchange="calculerTotaux()"></td>
             <td><select class="input" style="width:100px" onchange="calculerTotaux()">{tva_options_html}</select></td>
@@ -4618,6 +4639,24 @@ def generate_document_form(module, module_name: str) -> str:
             }}
         }} catch (e) {{
             console.error('Erreur chargement clients:', e);
+        }}
+
+        // Charger les produits
+        try {{
+            const respProduits = await fetch('/api/produits', {{
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + authToken
+                }}
+            }});
+            if (respProduits.ok) {{
+                const dataProduits = await respProduits.json();
+                window.produitsData = dataProduits.items || dataProduits || [];
+                console.log('Produits chargés:', window.produitsData.length);
+            }}
+        }} catch (e) {{
+            console.error('Erreur chargement produits:', e);
+            window.produitsData = [];
         }}
 
         // Date par defaut : aujourd'hui + 30 jours
