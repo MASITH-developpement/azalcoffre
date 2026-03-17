@@ -6958,14 +6958,9 @@ def generate_list_with_bulk_actions(
         </div>
         '''
 
-    # Bouton spécial wizard pour interventions
-    is_interventions = module_name.lower() == 'interventions'
-    if is_interventions:
-        nouveau_btn = '<button class="btn btn-primary" onclick="openInterventionWizard()">+ Nouveau</button>'
-        wizard_html = generate_intervention_wizard()
-    else:
-        nouveau_btn = f'<a href="/ui/{module_name}/nouveau" class="btn btn-primary">+ Nouveau</a>'
-        wizard_html = ''
+    # Bouton création standard (fenêtre normale)
+    nouveau_btn = f'<a href="/ui/{module_name}/nouveau" class="btn btn-primary">+ Nouveau</a>'
+    wizard_html = ''
 
     return f'''
     <div class="list-container">
