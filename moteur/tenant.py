@@ -17,8 +17,22 @@ import structlog
 
 from .config import settings
 from .guardian import Guardian, CREATEUR_EMAIL
+from .error_pages import render_error_page
 
 logger = structlog.get_logger()
+
+
+def _is_html_request(request: Request) -> bool:
+    """Détermine si la requête attend une réponse HTML."""
+    path = request.url.path
+    # Routes UI qui attendent du HTML
+    if path.startswith("/ui/") or path in ["/login", "/inscription", "/waitlist", "/partenaires"]:
+        return True
+    # Vérifier le header Accept
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept and "application/json" not in accept:
+        return True
+    return False
 
 # =============================================================================
 # Contexte Tenant (Async-safe avec contextvars)
@@ -154,6 +168,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         if not user:
             # Pas d'utilisateur = pas d'accès
+            if _is_html_request(request):
+                return render_error_page(401, request)
             return Response(
                 content='{"detail": "Non authentifié"}',
                 status_code=401,
@@ -166,6 +182,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
         user_id = user.get("id")
 
         if not user_tenant_id and user_email != CREATEUR_EMAIL:
+            if _is_html_request(request):
+                return render_error_page(400, request, "Tenant non défini")
             return Response(
                 content='{"detail": "Tenant non défini"}',
                 status_code=400,
@@ -185,6 +203,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
             if check.blocked:
                 # Message neutre - Guardian invisible
+                if _is_html_request(request):
+                    return render_error_page(404, request)
                 return Response(
                     content=f'{{"detail": "{check.neutral_message}"}}',
                     status_code=404,

@@ -1074,6 +1074,20 @@ async def ai_plugin_json():
 # Exception handlers
 # =============================================================================
 from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from .error_pages import render_error_page
+
+def _is_html_request(request: Request) -> bool:
+    """Détermine si la requête attend une réponse HTML."""
+    path = request.url.path
+    # Routes UI qui attendent du HTML
+    if path.startswith("/ui/") or path in ["/login", "/inscription", "/waitlist", "/partenaires"]:
+        return True
+    # Vérifier le header Accept
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept and "application/json" not in accept:
+        return True
+    return False
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -1115,6 +1129,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     if autopilot:
         autopilot.analyze(error_log)
 
+    # Retourner une page HTML stylisée pour les requêtes UI
+    if _is_html_request(request):
+        return render_error_page(422, request, "Les données envoyées ne sont pas valides.")
+
     return JSONResponse(
         status_code=422,
         content={
@@ -1148,6 +1166,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
                 logger.warning("http_fix_failed", error=str(e))
 
         asyncio.create_task(fix_http_error())
+
+    # Retourner une page HTML stylisée pour les requêtes UI
+    if _is_html_request(request):
+        return render_error_page(status_code, request, str(exc.detail) if exc.detail else None)
 
     return JSONResponse(
         status_code=exc.status_code,
@@ -1210,8 +1232,41 @@ async def general_exception_handler(request: Request, exc: Exception):
     # Lancer l'analyse en arrière-plan (fire-and-forget)
     asyncio.create_task(analyze_in_background())
 
+    # Retourner une page HTML stylisée pour les requêtes UI
+    if _is_html_request(request):
+        return render_error_page(500, request)
+
     # Message neutre IMMÉDIAT pour l'utilisateur (Guardian invisible)
     return JSONResponse(
         status_code=500,
         content={"detail": "Une erreur est survenue"}
     )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def starlette_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Gestion des erreurs HTTP Starlette (404 sur routes inexistantes, etc.)."""
+    status_code = exc.status_code
+
+    # Log pour les erreurs significatives
+    if status_code >= 400:
+        logger.warning("starlette_http_error", path=request.url.path, status=status_code, detail=exc.detail)
+
+    # Retourner une page HTML stylisée pour les requêtes UI
+    if _is_html_request(request):
+        return render_error_page(status_code, request, str(exc.detail) if exc.detail else None)
+
+    return JSONResponse(
+        status_code=status_code,
+        content={"detail": exc.detail or "Une erreur est survenue"}
+    )
+
+
+# =============================================================================
+# Catch-all route pour 404 sur les chemins UI
+# IMPORTANT: Cette route doit être définie EN DERNIER
+# =============================================================================
+@app.get("/ui/{path:path}", response_class=HTMLResponse, include_in_schema=False)
+async def ui_catch_all(request: Request, path: str):
+    """Catch-all pour les routes UI inexistantes."""
+    return render_error_page(404, request, f"La page '/ui/{path}' n'existe pas.")
