@@ -7,62 +7,78 @@ champs:
   # Identité entreprise
   - nom: siret
     type: text
+    groupe: Informations
     obligatoire: true
     label: "SIRET"
-    validation: "^[0-9]{14}$"
+    validation:
+      pattern: "^[0-9]{14}$"
     aide: "14 chiffres sans espaces"
 
   - nom: siren
     type: text
+    groupe: Informations
     label: "SIREN"
-    validation: "^[0-9]{9}$"
+    validation:
+      pattern: "^[0-9]{9}$"
     calcule: "siret[:9]"
 
   - nom: tva_intra
     type: text
+    groupe: Montants
     obligatoire: true
     label: "N° TVA Intracommunautaire"
-    validation: "^FR[0-9A-Z]{2}[0-9]{9}$"
+    validation:
+      pattern: "^FR[0-9A-Z]{2}[0-9]{9}$"
     aide: "Format FR + 2 caractères + 9 chiffres"
 
   - nom: raison_sociale
     type: text
+    groupe: Informations
     obligatoire: true
     label: "Raison sociale"
 
   - nom: adresse_ligne1
     type: text
+    groupe: Contact
     obligatoire: true
     label: "Adresse"
 
   - nom: adresse_ligne2
     type: text
+    groupe: Contact
     label: "Complément d'adresse"
 
   - nom: code_postal
     type: text
+    groupe: Identification
     obligatoire: true
-    validation: "^[0-9]{5}$"
+    validation:
+      pattern: "^[0-9]{5}$"
 
   - nom: ville
     type: text
+    groupe: Contact
     obligatoire: true
 
   - nom: pays
     type: text
+    groupe: Contact
     defaut: "FR"
 
   - nom: email_facturation
     type: email
+    groupe: Contact
     obligatoire: true
     label: "Email facturation"
 
   - nom: telephone
     type: tel
+    groupe: Contact
 
   # Configuration Factur-X
   - nom: profil_facturx
     type: select
+    groupe: Informations
     options: [MINIMUM, BASIC_WL, BASIC, EN16931, EXTENDED]
     defaut: EN16931
     label: "Profil Factur-X"
@@ -70,6 +86,7 @@ champs:
 
   - nom: mode_envoi
     type: select
+    groupe: Configuration
     options: [PPF, CHORUS_PRO, MANUEL]
     defaut: PPF
     label: "Mode d'envoi par défaut"
@@ -78,34 +95,40 @@ champs:
   # IDs Chorus Pro (cache)
   - nom: chorus_id_structure
     type: number
+    groupe: Informations
     label: "ID Structure Chorus Pro"
     lecture_seule: true
     aide: "Rempli automatiquement"
 
   - nom: chorus_service_code
     type: text
+    groupe: Identification
     label: "Code service Chorus Pro"
 
   # Compteurs
   - nom: prefixe_facture
     type: text
+    groupe: Informations
     defaut: "FA"
     label: "Préfixe numéros facture"
 
   - nom: prochain_numero
     type: number
+    groupe: Identification
     defaut: 1
     label: "Prochain numéro"
 
   # Activation
   - nom: demat_active
     type: boolean
+    groupe: Informations
     defaut: false
     label: "Dématérialisation activée"
     aide: "Activer une fois la configuration validée"
 
   - nom: date_activation
     type: datetime
+    groupe: Dates
     lecture_seule: true
 
 actions:
