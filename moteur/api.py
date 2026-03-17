@@ -260,6 +260,7 @@ class GenericCRUDRouter:
             """Liste les enregistrements avec filtres dynamiques.
 
             Filtres supportes via query params:
+            - ?search=terme : recherche textuelle (nom, email, etc.)
             - ?champ=valeur : filtre exact
             - ?champ_gte=valeur : >= (greater than or equal)
             - ?champ_lte=valeur : <= (less than or equal)
@@ -268,10 +269,13 @@ class GenericCRUDRouter:
             """
             # Extraire les filtres dynamiques des query params
             filters = {}
-            reserved_params = {'skip', 'limit', 'order_by', 'order_dir', 'include_archived', 'archived_only'}
+            search_term = None
+            reserved_params = {'skip', 'limit', 'order_by', 'order_dir', 'include_archived', 'archived_only', 'search'}
 
             for key, value in request.query_params.items():
                 if key in reserved_params:
+                    if key == 'search' and value:
+                        search_term = value
                     continue
 
                 # Operateurs de comparaison
@@ -296,16 +300,26 @@ class GenericCRUDRouter:
             # Pour les modules createur_only, utiliser SYSTEM_TENANT_ID
             query_tenant_id = SYSTEM_TENANT_ID if is_createur_only else tenant_id
 
-            items = Database.query(
-                self.table_name,
-                query_tenant_id,
-                filters=filters if filters else None,
-                limit=limit,
-                offset=skip,
-                order_by=order,
-                include_archived=include_archived,
-                archived_only=archived_only
-            )
+            # Si recherche textuelle, utiliser Database.search_table
+            if search_term:
+                items = Database.search_table(
+                    self.table_name,
+                    query_tenant_id,
+                    search_term,
+                    limit=limit,
+                    include_archived=include_archived
+                )
+            else:
+                items = Database.query(
+                    self.table_name,
+                    query_tenant_id,
+                    filters=filters if filters else None,
+                    limit=limit,
+                    offset=skip,
+                    order_by=order,
+                    include_archived=include_archived,
+                    archived_only=archived_only
+                )
             return {"items": items, "total": len(items)}
 
         # =================================================================

@@ -31,33 +31,56 @@ logger = structlog.get_logger()
 # Ce mapping contient les objets SQLAlchemy (non sérialisables en YAML).
 # =============================================================================
 TYPE_MAPPING = {
-    # Texte
+    # Texte (FR + EN aliases)
     "texte": String(255),
+    "text": String(255),
+    "string": String(255),
     "texte court": String(100),
     "texte long": Text,
+    "textarea": Text,
     "email": String(255),
     "telephone": String(20),
+    "tel": String(20),
+    "phone": String(20),
     "url": String(500),
 
-    # Nombres
+    # Nombres (FR + EN aliases)
     "nombre": Numeric(15, 2),
+    "number": Numeric(15, 2),
     "entier": Integer,
+    "integer": Integer,
+    "int": Integer,
     "monnaie": Numeric(15, 2),
+    "money": Numeric(15, 2),
     "pourcentage": Numeric(5, 2),
 
     # Dates
     "date": Date,
     "datetime": DateTime,
     "heure": String(8),
+    "time": String(8),
 
-    # Booléen
+    # Booléen (FR + EN aliases)
     "oui/non": Boolean,
     "booleen": Boolean,
+    "boolean": Boolean,
+    "bool": Boolean,
+
+    # Sélection
+    "select": String(100),
+    "enum": String(100),
+
+    # Relations
+    "relation": UUID(as_uuid=True),
+    "lien": UUID(as_uuid=True),
 
     # Spéciaux
     "uuid": UUID(as_uuid=True),
     "json": JSONB,
+    "jsonb": JSONB,
+    "tags": JSONB,
     "fichier": String(500),
+    "file": String(500),
     "image": String(500),
 }
 
@@ -195,8 +218,74 @@ class Database:
         # Créer en base si n'existe pas
         table.create(cls._engine, checkfirst=True)
 
+        # Synchroniser les colonnes manquantes (si table existait déjà)
+        cls._sync_missing_columns(module_name, columns)
+
         logger.info("table_created", table=module_name, columns=len(columns))
         return table
+
+    @classmethod
+    def _sync_missing_columns(cls, table_name: str, expected_columns: List[Column]):
+        """
+        Ajoute les colonnes manquantes à une table existante.
+        Résout le problème des tables créées avant l'ajout de nouveaux champs YAML.
+        """
+        with cls.get_session() as session:
+            try:
+                # Récupérer les colonnes existantes
+                check_sql = text('''
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_schema = 'azalplus'
+                    AND table_name = :table_name
+                ''')
+                result = session.execute(check_sql, {"table_name": table_name.lower()})
+                existing_columns = {row.column_name for row in result}
+
+                if not existing_columns:
+                    return  # Table n'existe pas encore, sera créée par table.create()
+
+                # Ajouter les colonnes manquantes
+                for col in expected_columns:
+                    if col.name.lower() not in existing_columns:
+                        # Déterminer le type SQL
+                        sql_type = cls._column_type_to_sql(col.type)
+                        if sql_type:
+                            nullable = "NULL" if col.nullable else "NOT NULL"
+                            alter_sql = text(f'''
+                                ALTER TABLE azalplus.{table_name}
+                                ADD COLUMN IF NOT EXISTS {col.name} {sql_type} {nullable}
+                            ''')
+                            try:
+                                session.execute(alter_sql)
+                                logger.info("column_added", table=table_name, column=col.name)
+                            except Exception as e:
+                                logger.warning("column_add_failed", table=table_name, column=col.name, error=str(e))
+
+                session.commit()
+            except Exception as e:
+                logger.error("sync_columns_error", table=table_name, error=str(e))
+
+    @classmethod
+    def _column_type_to_sql(cls, col_type) -> Optional[str]:
+        """Convertit un type SQLAlchemy en type SQL PostgreSQL."""
+        type_name = str(col_type)
+        type_map = {
+            "UUID": "UUID",
+            "VARCHAR": "VARCHAR(255)",
+            "TEXT": "TEXT",
+            "INTEGER": "INTEGER",
+            "NUMERIC": "NUMERIC(15,2)",
+            "BOOLEAN": "BOOLEAN",
+            "DATE": "DATE",
+            "DATETIME": "TIMESTAMP",
+            "TIMESTAMP": "TIMESTAMP",
+            "JSONB": "JSONB",
+        }
+        for key, value in type_map.items():
+            if key in type_name.upper():
+                return value
+        return "TEXT"  # Défaut sécurisé
 
     # Tracking des champs encryptés par module
     _encrypted_fields: Dict[str, List[str]] = {}
@@ -817,20 +906,32 @@ class Database:
 
         # Champs par defaut a chercher
         if not search_fields:
-            search_fields = ["nom", "reference", "raison_sociale", "email", "numero", "titre", "description", "prenom"]
+            search_fields = ["nom", "name", "reference", "raison_sociale", "email", "numero", "titre", "title", "description", "prenom", "code", "contact_name"]
 
         # Condition d'archivage
         archive_condition = "" if include_archived else "AND (archived = false OR archived IS NULL)"
 
         with cls.get_session() as session:
             try:
-                # Construire la clause WHERE avec ILIKE pour chaque champ
-                where_clauses = []
-                for field in search_fields:
-                    where_clauses.append(f"COALESCE(CAST({field} AS TEXT), '') ILIKE :search_term")
+                # D'abord, récupérer les colonnes qui existent réellement dans la table
+                col_query = text("""
+                    SELECT column_name FROM information_schema.columns
+                    WHERE table_schema = 'azalplus' AND table_name = :table_name
+                """)
+                col_result = session.execute(col_query, {"table_name": table_name})
+                existing_columns = {row[0] for row in col_result.fetchall()}
 
-                if not where_clauses:
+                # Filtrer les champs de recherche pour ne garder que ceux qui existent
+                valid_search_fields = [f for f in search_fields if f in existing_columns]
+
+                if not valid_search_fields:
+                    logger.debug("search_table_no_valid_fields", table=table_name, requested=search_fields, existing=list(existing_columns))
                     return []
+
+                # Construire la clause WHERE avec ILIKE pour chaque champ valide
+                where_clauses = []
+                for field in valid_search_fields:
+                    where_clauses.append(f"COALESCE(CAST({field} AS TEXT), '') ILIKE :search_term")
 
                 search_condition = " OR ".join(where_clauses)
 
