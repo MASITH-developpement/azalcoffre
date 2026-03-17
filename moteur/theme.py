@@ -279,16 +279,16 @@ input[type="button"], select, .select, label[for], .clickable {{
     padding-right: 48px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--white);
 }}
 .sidebar-logo-icon {{
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
 }}
 
 .sidebar-nav {{

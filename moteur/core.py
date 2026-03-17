@@ -247,6 +247,7 @@ async def timing_middleware(request: Request, call_next: Callable):
 GUARDIAN_EXEMPT_PATHS = [
     "/guardian/frontend-error",  # Reçoit des stack traces, code JS, etc.
     "/api/v1/technicien/intervention/",  # Upload photos base64, signatures
+    "/api/admin/ambiance/custom",  # Codes couleurs hex (#XXXXXX)
 ]
 
 @app.middleware("http")
@@ -718,23 +719,49 @@ async def change_ambiance(request: Request):
     """Changer l'ambiance visuelle de l'interface."""
     import shutil
     import random
+    import yaml
 
     try:
         data = await request.json()
         ambiance = data.get("ambiance", "calme")
 
+        # Chemins des fichiers
+        base_dir = Path(__file__).parent.parent
+        assets_dir = base_dir / "assets"
+        target_file = assets_dir / "style.css"
+        themes_config = base_dir / "config" / "themes.yml"
+
+        # Lire les thèmes depuis config/themes.yml (AZAP-NC-001)
+        available_styles = {}
+        if themes_config.exists():
+            with open(themes_config, 'r', encoding='utf-8') as f:
+                themes_data = yaml.safe_load(f)
+                if themes_data and 'themes' in themes_data:
+                    for key, theme in themes_data['themes'].items():
+                        available_styles[key] = theme.get('fichier', f"ambiance_{key}.css")
+
+        # Fallback: scanner les fichiers CSS si themes.yml n'existe pas
+        if not available_styles:
+            for css_file in assets_dir.glob("*.css"):
+                if css_file.name == "style.css":
+                    continue
+                name = css_file.stem
+                if name.startswith("ambiance_"):
+                    style_key = name.replace("ambiance_", "")
+                elif name.startswith("style_"):
+                    style_key = name.replace("style_", "")
+                else:
+                    style_key = name
+                available_styles[style_key] = css_file.name
+
         # Valider l'ambiance
-        valid_ambiances = ["energique", "calme", "premium", "corporate"]
-        if ambiance not in valid_ambiances:
+        if ambiance not in available_styles:
             return JSONResponse(
                 status_code=400,
-                content={"detail": f"Ambiance invalide. Choisir parmi: {', '.join(valid_ambiances)}"}
+                content={"detail": f"Ambiance invalide. Choisir parmi: {', '.join(sorted(available_styles.keys()))}"}
             )
 
-        # Chemins des fichiers
-        assets_dir = Path(__file__).parent.parent / "assets"
-        source_file = assets_dir / f"ambiance_{ambiance}.css"
-        target_file = assets_dir / "style.css"
+        source_file = assets_dir / available_styles[ambiance]
 
         if not source_file.exists():
             return JSONResponse(
@@ -768,6 +795,104 @@ async def change_ambiance(request: Request):
             status_code=500,
             content={"detail": f"Erreur: {str(e)}"}
         )
+
+
+@app.post("/api/admin/ambiance/custom")
+async def apply_custom_ambiance(request: Request):
+    """Appliquer une ambiance personnalisée en modifiant les variables CSS du template premium."""
+    import re
+
+    try:
+        data = await request.json()
+
+        # Extraire les couleurs
+        primary = data.get("primary", "#635BFF")
+        primary_dark = data.get("primary_dark", "#5851EA")
+        sidebar = data.get("sidebar", "#0A2540")
+        sidebar_hover = data.get("sidebar_hover", "#0F3358")
+        accent = data.get("accent", "#00D4FF")
+        background = data.get("background", "#F6F9FC")
+        success = data.get("success", "#30D158")
+        error = data.get("error", "#FF453A")
+        radius = data.get("radius", 6)
+
+        # Lire le CSS premium comme base
+        base_dir = Path(__file__).parent.parent
+        assets_dir = base_dir / "assets"
+        premium_css = (assets_dir / "ambiance_premium.css").read_text(encoding="utf-8")
+
+        # Remplacer les couleurs dans :root
+        replacements = [
+            (r'--primary: #[0-9A-Fa-f]{6};', f'--primary: {primary};'),
+            (r'--primary-dark: #[0-9A-Fa-f]{6};', f'--primary-dark: {primary_dark};'),
+            (r'--primary-light: #[0-9A-Fa-f]{6};', f'--primary-light: {lighten_color(primary, 0.9)};'),
+            (r'--primary-50: #[0-9A-Fa-f]{6};', f'--primary-50: {lighten_color(primary, 0.95)};'),
+            (r'--accent: #[0-9A-Fa-f]{6};', f'--accent: {accent};'),
+            (r'--sidebar-bg: #[0-9A-Fa-f]{6};', f'--sidebar-bg: {sidebar};'),
+            (r'--sidebar-hover: #[0-9A-Fa-f]{6};', f'--sidebar-hover: {sidebar_hover};'),
+            (r'--success: #[0-9A-Fa-f]{6};', f'--success: {success};'),
+            (r'--success-light: #[0-9A-Fa-f]{6};', f'--success-light: {lighten_color(success, 0.85)};'),
+            (r'--error: #[0-9A-Fa-f]{6};', f'--error: {error};'),
+            (r'--error-light: #[0-9A-Fa-f]{6};', f'--error-light: {lighten_color(error, 0.85)};'),
+            (r'--info: #[0-9A-Fa-f]{6};', f'--info: {accent};'),
+            (r'--info-light: #[0-9A-Fa-f]{6};', f'--info-light: {lighten_color(accent, 0.85)};'),
+            (r'--radius: \d+px;', f'--radius: {radius}px;'),
+            (r'--radius-lg: \d+px;', f'--radius-lg: {radius + 4}px;'),
+        ]
+
+        custom_css = premium_css
+        for pattern, replacement in replacements:
+            custom_css = re.sub(pattern, replacement, custom_css)
+
+        # Remplacer le commentaire d'en-tête
+        custom_css = re.sub(
+            r'/\* =+\s+AZALPLUS - Ambiance Premium.*?=+ \*/',
+            '''/* =============================================================================
+   AZALPLUS - Ambiance Personnalisée
+   Générée depuis le template Premium avec vos couleurs
+   ============================================================================= */''',
+            custom_css,
+            flags=re.DOTALL
+        )
+
+        # Remplacer le fond de page
+        custom_css = re.sub(
+            r'background: linear-gradient\(180deg, var\(--gray-50\) 0%, var\(--white\) 100%\);',
+            f'background: {background};',
+            custom_css
+        )
+
+        # Écrire le fichier CSS
+        target_file = assets_dir / "style.css"
+        target_file.write_text(custom_css, encoding="utf-8")
+
+        logger.info("custom_ambiance_applied", primary=primary, sidebar=sidebar)
+
+        return JSONResponse(
+            status_code=200,
+            content={"message": "Ambiance personnalisée appliquée avec succès"}
+        )
+
+    except Exception as e:
+        logger.error("custom_ambiance_error", error=str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Erreur: {str(e)}"}
+        )
+
+
+def lighten_color(hex_color: str, factor: float) -> str:
+    """Éclaircir une couleur hex."""
+    hex_color = hex_color.lstrip('#')
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+
+    r = min(255, int(r + (255 - r) * factor))
+    g = min(255, int(g + (255 - g) * factor))
+    b = min(255, int(b + (255 - b) * factor))
+
+    return f"#{r:02X}{g:02X}{b:02X}"
 
 
 @app.post("/api/public/waitlist")

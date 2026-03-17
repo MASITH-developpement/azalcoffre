@@ -1008,10 +1008,58 @@ async def dashboard(request: Request, user: dict = Depends(require_auth)):
 @ui_router.get("/parametres/theme", response_class=HTMLResponse)
 async def theme_settings(request: Request, user: dict = Depends(require_auth)):
     """Page de personnalisation du thème des documents."""
+    import yaml
+
+    # Charger les thèmes depuis config/themes.yml (AZAP-NC-001: zéro liste hardcodée)
+    themes_config = Path(__file__).parent.parent / "config" / "themes.yml"
+    themes = {}
+    if themes_config.exists():
+        with open(themes_config, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+            if data and 'themes' in data:
+                themes = data['themes']
+
+    # Générer les cartes de thème dynamiquement
+    themes_cards_html = ""
+    for key, theme in themes.items():
+        nom = theme.get('nom', key.capitalize())
+        inspiration = theme.get('inspiration', '')
+        description = theme.get('description', '')
+        couleurs = theme.get('couleurs', {})
+        gradient = theme.get('gradient', couleurs.get('sidebar', '#714B67'))
+        has_border = theme.get('border', False)
+
+        primary = couleurs.get('primary', '#714B67')
+        sidebar = couleurs.get('sidebar', '#714B67')
+        background = couleurs.get('background', '#FFFFFF')
+
+        preview_style = f"background: {gradient};"
+        if has_border:
+            preview_style += " border: 2px solid #EBEAE6;"
+
+        bg_border = "border: 1px solid #ddd;" if background in ['#FFFFFF', '#F7F6F3', '#FBFAF9', '#F6F9FC', '#F3F3F3', '#F0F0F0', '#F9FAFB'] else ""
+        sidebar_border = "border: 1px solid #ddd;" if sidebar in ['#FFFFFF', '#F7F6F3', '#FBFAF9'] else ""
+
+        themes_cards_html += f'''
+                    <div class="style-card" data-style="{key}" onclick="selectStyle(\'{key}\', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 48px; height: 48px; {preview_style} border-radius: 8px;"></div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">{nom}</h3>
+                                <span style="font-size: 12px; color: var(--gray-500);">{inspiration}</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-600);">{description}</p>
+                        <div style="margin-top: 12px; display: flex; gap: 6px;">
+                            <span style="width: 20px; height: 20px; background: {primary}; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: {sidebar}; border-radius: 4px; {sidebar_border}"></span>
+                            <span style="width: 20px; height: 20px; background: {background}; border-radius: 4px; {bg_border}"></span>
+                        </div>
+                    </div>'''
 
     html = generate_layout(
         title="Style des documents",
-        content='''
+        content=f'''
         <!-- Onglets -->
         <div class="tabs-container" style="background: var(--white); border-radius: var(--radius-lg) var(--radius-lg) 0 0; margin-bottom: 0;">
             <div class="tabs">
@@ -1113,19 +1161,19 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
         </div>
 
         <style>
-            .theme-option { margin-bottom: 24px; }
-            .color-options { display: flex; gap: 8px; margin-top: 8px; }
-            .color-btn {
+            .theme-option {{ margin-bottom: 24px; }}
+            .color-options {{ display: flex; gap: 8px; margin-top: 8px; }}
+            .color-btn {{
                 width: 32px; height: 32px;
                 border-radius: 50%;
                 border: 2px solid transparent;
                 cursor: pointer;
                 transition: all 0.15s;
-            }
-            .color-btn:hover { transform: scale(1.1); }
-            .color-btn.active { border-color: var(--gray-900); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--gray-400); }
-            .style-options { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-            .style-btn {
+            }}
+            .color-btn:hover {{ transform: scale(1.1); }}
+            .color-btn.active {{ border-color: var(--gray-900); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--gray-400); }}
+            .style-options {{ display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }}
+            .style-btn {{
                 padding: 8px 16px;
                 border: 1px solid var(--gray-300);
                 background: white;
@@ -1137,29 +1185,29 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
                 align-items: center;
                 gap: 6px;
                 transition: all 0.15s;
-            }
-            .style-btn:hover { border-color: var(--gray-400); }
-            .style-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
-            .style-preview { width: 60px; height: 40px; background: var(--gray-100); border-radius: 4px; }
+            }}
+            .style-btn:hover {{ border-color: var(--gray-400); }}
+            .style-btn.active {{ border-color: var(--primary); background: var(--primary-light); color: var(--primary); }}
+            .style-preview {{ width: 60px; height: 40px; background: var(--gray-100); border-radius: 4px; }}
         </style>
 
         <script>
-            document.querySelectorAll('.color-btn').forEach(btn => {
-                btn.onclick = () => {
+            document.querySelectorAll('.color-btn').forEach(btn => {{
+                btn.onclick = () => {{
                     document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                };
-            });
-            document.querySelectorAll('.style-btn').forEach(btn => {
-                btn.onclick = () => {
+                }};
+            }});
+            document.querySelectorAll('.style-btn').forEach(btn => {{
+                btn.onclick = () => {{
                     const parent = btn.closest('.style-options');
                     parent.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                };
-            });
-            function saveTheme() {
+                }};
+            }});
+            function saveTheme() {{
                 alert('Thème enregistré ! (à implémenter avec API)');
-            }
+            }}
         </script>
         </div>
         </div>
@@ -1167,154 +1215,133 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
         <!-- Tab Ambiance -->
         <div id="tab-ambiance" class="tab-content" style="display: none;">
         <div class="card" style="border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
-            <div class="card-header">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2 class="card-title">Choisir l'ambiance de l'interface</h2>
+                <button class="btn btn-secondary" onclick="toggleCustomTheme()" id="btn-create-theme">
+                    <span>✨</span> Créer mon ambiance
+                </button>
             </div>
             <div class="card-body">
-                <p style="color: var(--gray-600); margin-bottom: 24px;">Sélectionnez l'ambiance visuelle qui correspond à votre style de travail</p>
+                <!-- Section thèmes prédéfinis -->
+                <div id="predefined-themes">
+                    <p style="color: var(--gray-600); margin-bottom: 24px;">Sélectionnez l'ambiance visuelle qui correspond à votre style de travail</p>
 
-                <div class="style-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-
-                    <!-- Ambiance Énergique -->
-                    <div class="style-card" data-style="energique" onclick="selectStyle('energique', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%); border-radius: 8px;"></div>
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Énergique</h3>
-                                <span style="font-size: 12px; color: var(--gray-500);">Linear, Vercel</span>
-                            </div>
-                        </div>
-                        <p style="font-size: 13px; color: var(--gray-600);">Contrastes forts, accents vifs, sidebar sombre. Pour les équipes dynamiques.</p>
-                        <div style="margin-top: 12px; display: flex; gap: 6px;">
-                            <span style="width: 20px; height: 20px; background: #8B5CF6; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #0F0F0F; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #FAFAFA; border-radius: 4px; border: 1px solid #ddd;"></span>
-                        </div>
+                    <div class="style-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                        {themes_cards_html}
                     </div>
 
-                    <!-- Ambiance Calme -->
-                    <div class="style-card" data-style="calme" onclick="selectStyle('calme', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 48px; height: 48px; background: #F7F6F3; border: 2px solid #EBEAE6; border-radius: 8px;"></div>
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Calme</h3>
-                                <span style="font-size: 12px; color: var(--gray-500);">Notion, Basecamp</span>
-                            </div>
-                        </div>
-                        <p style="font-size: 13px; color: var(--gray-600);">Tons neutres, beaucoup de blanc, minimaliste. Pour la concentration.</p>
-                        <div style="margin-top: 12px; display: flex; gap: 6px;">
-                            <span style="width: 20px; height: 20px; background: #37352F; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #F7F6F3; border-radius: 4px; border: 1px solid #ddd;"></span>
-                            <span style="width: 20px; height: 20px; background: #FFFFFF; border-radius: 4px; border: 1px solid #ddd;"></span>
-                        </div>
+                    <div class="flex justify-end gap-2" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200);">
+                        <button class="btn btn-primary" onclick="applyStyle()">Appliquer l'ambiance</button>
                     </div>
-
-                    <!-- Ambiance Premium -->
-                    <div class="style-card" data-style="premium" onclick="selectStyle('premium', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 48px; height: 48px; background: linear-gradient(180deg, #0A2540 0%, #635BFF 100%); border-radius: 8px;"></div>
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Premium</h3>
-                                <span style="font-size: 12px; color: var(--gray-500);">Stripe, Mercury</span>
-                            </div>
-                        </div>
-                        <p style="font-size: 13px; color: var(--gray-600);">Dégradés subtils, ombres douces, sophistiqué. Pour une image haut de gamme.</p>
-                        <div style="margin-top: 12px; display: flex; gap: 6px;">
-                            <span style="width: 20px; height: 20px; background: #635BFF; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #0A2540; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #F6F9FC; border-radius: 4px; border: 1px solid #ddd;"></span>
-                        </div>
-                    </div>
-
-                    <!-- Ambiance Corporate -->
-                    <div class="style-card" data-style="corporate" onclick="selectStyle('corporate', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 48px; height: 48px; background: #032D60; border-radius: 8px;"></div>
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Corporate</h3>
-                                <span style="font-size: 12px; color: var(--gray-500);">Salesforce</span>
-                            </div>
-                        </div>
-                        <p style="font-size: 13px; color: var(--gray-600);">Bleu dominant, structuré, professionnel. Pour les entreprises établies.</p>
-                        <div style="margin-top: 12px; display: flex; gap: 6px;">
-                            <span style="width: 20px; height: 20px; background: #0176D3; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #032D60; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #F3F3F3; border-radius: 4px; border: 1px solid #ddd;"></span>
-                        </div>
-                    </div>
-
-                    <!-- Style Odoo -->
-                    <div class="style-card" data-style="odoo" onclick="selectStyle('odoo', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 48px; height: 48px; background: #714B67; border-radius: 8px;"></div>
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Odoo</h3>
-                                <span style="font-size: 12px; color: var(--gray-500);">Odoo ERP</span>
-                            </div>
-                        </div>
-                        <p style="font-size: 13px; color: var(--gray-600);">Violet/Bordeaux élégant, interface ERP classique. Pour les habitués d'Odoo.</p>
-                        <div style="margin-top: 12px; display: flex; gap: 6px;">
-                            <span style="width: 20px; height: 20px; background: #714B67; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #714B67; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #F0F0F0; border-radius: 4px; border: 1px solid #ddd;"></span>
-                        </div>
-                    </div>
-
-                    <!-- Style Pennylane -->
-                    <div class="style-card" data-style="penny" onclick="selectStyle('penny', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 48px; height: 48px; background: #1E3A5F; border-radius: 8px;"></div>
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Pennylane</h3>
-                                <span style="font-size: 12px; color: var(--gray-500);">Pennylane</span>
-                            </div>
-                        </div>
-                        <p style="font-size: 13px; color: var(--gray-600);">Bleu marine professionnel, interface comptable moderne. Pour les experts-comptables.</p>
-                        <div style="margin-top: 12px; display: flex; gap: 6px;">
-                            <span style="width: 20px; height: 20px; background: #1E3A5F; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #1E3A5F; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #FFFFFF; border-radius: 4px; border: 1px solid #ddd;"></span>
-                        </div>
-                    </div>
-
-                    <!-- Style Axonaut -->
-                    <div class="style-card" data-style="axo" onclick="selectStyle('axo', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 48px; height: 48px; background: #2563EB; border-radius: 8px;"></div>
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Axonaut</h3>
-                                <span style="font-size: 12px; color: var(--gray-500);">Axonaut</span>
-                            </div>
-                        </div>
-                        <p style="font-size: 13px; color: var(--gray-600);">Sidebar blanche, bleu vif, interface aérée. Pour la simplicité.</p>
-                        <div style="margin-top: 12px; display: flex; gap: 6px;">
-                            <span style="width: 20px; height: 20px; background: #2563EB; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #FFFFFF; border-radius: 4px; border: 1px solid #ddd;"></span>
-                            <span style="width: 20px; height: 20px; background: #F9FAFB; border-radius: 4px; border: 1px solid #ddd;"></span>
-                        </div>
-                    </div>
-
-                    <!-- Style Sage -->
-                    <div class="style-card" data-style="sage" onclick="selectStyle('sage', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 48px; height: 48px; background: #00A651; border-radius: 8px;"></div>
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Sage</h3>
-                                <span style="font-size: 12px; color: var(--gray-500);">Sage</span>
-                            </div>
-                        </div>
-                        <p style="font-size: 13px; color: var(--gray-600);">Vert dominant, interface comptable traditionnelle. Pour les fidèles de Sage.</p>
-                        <div style="margin-top: 12px; display: flex; gap: 6px;">
-                            <span style="width: 20px; height: 20px; background: #00A651; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #00A651; border-radius: 4px;"></span>
-                            <span style="width: 20px; height: 20px; background: #FFFFFF; border-radius: 4px; border: 1px solid #ddd;"></span>
-                        </div>
-                    </div>
-
                 </div>
 
-                <div class="flex justify-end gap-2" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200);">
-                    <button class="btn btn-primary" onclick="applyStyle()">Appliquer l'ambiance</button>
+                <!-- Section création ambiance personnalisée -->
+                <div id="custom-theme-creator" style="display: none;">
+                    <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                        <!-- Formulaire de création -->
+                        <div style="flex: 1; min-width: 300px;">
+                            <h3 style="margin-bottom: 16px; color: var(--gray-800);">Personnaliser les couleurs</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group">
+                                    <label class="label">Couleur primaire</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="color" id="custom-primary" value="#3454D1" style="width: 50px; height: 38px; border: none; border-radius: var(--radius); cursor: pointer;" onchange="syncColorFromPicker('primary')">
+                                        <input type="text" id="custom-primary-hex" value="#3454D1" class="form-control" style="flex: 1;" oninput="syncColorFromHex('primary')">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Primaire foncée</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="color" id="custom-primary-dark" value="#2a44a8" style="width: 50px; height: 38px; border: none; border-radius: var(--radius); cursor: pointer;" onchange="syncColorFromPicker('primary-dark')">
+                                        <input type="text" id="custom-primary-dark-hex" value="#2a44a8" class="form-control" style="flex: 1;" oninput="syncColorFromHex('primary-dark')">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Sidebar</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="color" id="custom-sidebar" value="#1E3A8A" style="width: 50px; height: 38px; border: none; border-radius: var(--radius); cursor: pointer;" onchange="syncColorFromPicker('sidebar')">
+                                        <input type="text" id="custom-sidebar-hex" value="#1E3A8A" class="form-control" style="flex: 1;" oninput="syncColorFromHex('sidebar')">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Sidebar hover</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="color" id="custom-sidebar-hover" value="#1e40af" style="width: 50px; height: 38px; border: none; border-radius: var(--radius); cursor: pointer;" onchange="syncColorFromPicker('sidebar-hover')">
+                                        <input type="text" id="custom-sidebar-hover-hex" value="#1e40af" class="form-control" style="flex: 1;" oninput="syncColorFromHex('sidebar-hover')">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Accent</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="color" id="custom-accent" value="#6B9FFF" style="width: 50px; height: 38px; border: none; border-radius: var(--radius); cursor: pointer;" onchange="syncColorFromPicker('accent')">
+                                        <input type="text" id="custom-accent-hex" value="#6B9FFF" class="form-control" style="flex: 1;" oninput="syncColorFromHex('accent')">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Fond de page</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="color" id="custom-background" value="#F1F5F9" style="width: 50px; height: 38px; border: none; border-radius: var(--radius); cursor: pointer;" onchange="syncColorFromPicker('background')">
+                                        <input type="text" id="custom-background-hex" value="#F1F5F9" class="form-control" style="flex: 1;" oninput="syncColorFromHex('background')">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Succès</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="color" id="custom-success" value="#10B981" style="width: 50px; height: 38px; border: none; border-radius: var(--radius); cursor: pointer;" onchange="syncColorFromPicker('success')">
+                                        <input type="text" id="custom-success-hex" value="#10B981" class="form-control" style="flex: 1;" oninput="syncColorFromHex('success')">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Erreur</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="color" id="custom-error" value="#EF4444" style="width: 50px; height: 38px; border: none; border-radius: var(--radius); cursor: pointer;" onchange="syncColorFromPicker('error')">
+                                        <input type="text" id="custom-error-hex" value="#EF4444" class="form-control" style="flex: 1;" oninput="syncColorFromHex('error')">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label class="label">Rayon des bordures: <span id="radius-value">8</span>px</label>
+                                <input type="range" id="custom-radius" min="0" max="20" value="8" style="width: 100%;" oninput="document.getElementById('radius-value').textContent = this.value; updatePreview();">
+                            </div>
+                        </div>
+                        <!-- Aperçu en direct -->
+                        <div style="flex: 1; min-width: 300px;">
+                            <h3 style="margin-bottom: 16px; color: var(--gray-800);">Aperçu</h3>
+                            <div id="theme-preview" style="border: 1px solid var(--gray-200); border-radius: var(--radius-lg); overflow: hidden; height: 320px;">
+                                <div id="preview-sidebar" style="width: 60px; height: 100%; float: left; background: #1E3A8A; padding: 12px 8px;">
+                                    <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 16px;"></div>
+                                    <div id="preview-sidebar-active" style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px; margin-bottom: 8px;"></div>
+                                    <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 8px;"></div>
+                                    <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.1); border-radius: 8px;"></div>
+                                </div>
+                                <div id="preview-content" style="margin-left: 60px; height: 100%; background: #F1F5F9; padding: 16px;">
+                                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; display: flex; gap: 8px;">
+                                        <div id="preview-btn-primary" style="background: #3454D1; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px;">Bouton</div>
+                                        <div style="background: var(--gray-200); padding: 6px 12px; border-radius: 6px; font-size: 12px;">Secondaire</div>
+                                    </div>
+                                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                            <span id="preview-badge-success" style="background: #D1FAE5; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Payé</span>
+                                            <span id="preview-badge-error" style="background: #FEE2E2; color: #DC2626; padding: 2px 8px; border-radius: 4px; font-size: 11px;">En retard</span>
+                                        </div>
+                                        <div style="height: 8px; background: var(--gray-200); border-radius: 4px; margin-bottom: 6px;"></div>
+                                        <div style="height: 8px; background: var(--gray-200); border-radius: 4px; width: 70%;"></div>
+                                    </div>
+                                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                                        <div id="preview-accent-bar" style="height: 4px; background: #6B9FFF; border-radius: 2px; margin-bottom: 8px; width: 40%;"></div>
+                                        <div style="height: 8px; background: var(--gray-200); border-radius: 4px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between gap-2" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200);">
+                        <button class="btn btn-secondary" onclick="toggleCustomTheme()">← Retour aux thèmes</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" onclick="resetCustomTheme()">Réinitialiser</button>
+                            <button class="btn btn-primary" onclick="applyCustomTheme()">Appliquer mon ambiance</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1323,52 +1350,168 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
         <script>
             let selectedStyle = null;
 
-            function showTab(tabName, element) {
+            function showTab(tabName, element) {{
                 event.preventDefault();
                 document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.getElementById('tab-' + tabName).style.display = 'block';
                 element.classList.add('active');
-            }
+            }}
 
-            function selectStyle(style, element) {
+            function selectStyle(style, element) {{
                 selectedStyle = style;
-                document.querySelectorAll('.style-card').forEach(card => {
+                document.querySelectorAll('.style-card').forEach(card => {{
                     card.style.borderColor = 'var(--gray-200)';
                     const badge = card.querySelector('div > div:last-of-type > span');
                     if (badge) badge.textContent = '';
-                });
+                }});
                 element.style.borderColor = 'var(--primary)';
                 element.style.boxShadow = '0 0 0 3px rgba(113, 75, 103, 0.15)';
                 const badge = element.querySelector('div > div:last-of-type > span');
                 if (badge) badge.textContent = 'Sélectionné';
-            }
+            }}
 
-            async function applyStyle() {
-                if (!selectedStyle) {
+            async function applyStyle() {{
+                if (!selectedStyle) {{
                     alert('Veuillez sélectionner une ambiance');
                     return;
-                }
-                try {
-                    const response = await fetch('/api/admin/ambiance', {
+                }}
+                try {{
+                    const response = await fetch('/api/admin/ambiance', {{
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {{ 'Content-Type': 'application/json' }},
                         credentials: 'include',
-                        body: JSON.stringify({ ambiance: selectedStyle })
-                    });
+                        body: JSON.stringify({{ ambiance: selectedStyle }})
+                    }});
 
-                    if (response.ok) {
+                    if (response.ok) {{
                         const data = await response.json();
                         alert('Ambiance "' + selectedStyle + '" appliquée ! La page va se recharger.');
                         window.location.reload();
-                    } else {
+                    }} else {{
                         const err = await response.json();
                         alert('Erreur: ' + (err.detail || 'Erreur inconnue'));
-                    }
-                } catch(e) {
+                    }}
+                }} catch(e) {{
                     alert('Erreur: ' + e.message);
-                }
-            }
+                }}
+            }}
+
+            // === CUSTOM THEME FUNCTIONS ===
+            function toggleCustomTheme() {{
+                const predefined = document.getElementById('predefined-themes');
+                const custom = document.getElementById('custom-theme-creator');
+                const btn = document.getElementById('btn-create-theme');
+                if (custom.style.display === 'none') {{
+                    predefined.style.display = 'none';
+                    custom.style.display = 'block';
+                    btn.innerHTML = '← Retour aux thèmes';
+                }} else {{
+                    predefined.style.display = 'block';
+                    custom.style.display = 'none';
+                    btn.innerHTML = '<span>✨</span> Créer mon ambiance';
+                }}
+            }}
+
+            function syncColorFromPicker(field) {{
+                const picker = document.getElementById('custom-' + field);
+                const hex = document.getElementById('custom-' + field + '-hex');
+                hex.value = picker.value.toUpperCase();
+                updatePreview();
+            }}
+
+            function syncColorFromHex(field) {{
+                const picker = document.getElementById('custom-' + field);
+                const hex = document.getElementById('custom-' + field + '-hex');
+                if (/^#[0-9A-Fa-f]{{6}}$/.test(hex.value)) {{
+                    picker.value = hex.value;
+                    updatePreview();
+                }}
+            }}
+
+            function updatePreview() {{
+                const primary = document.getElementById('custom-primary').value;
+                const sidebar = document.getElementById('custom-sidebar').value;
+                const accent = document.getElementById('custom-accent').value;
+                const background = document.getElementById('custom-background').value;
+                const success = document.getElementById('custom-success').value;
+                const error = document.getElementById('custom-error').value;
+                const radius = document.getElementById('custom-radius').value;
+
+                document.getElementById('preview-sidebar').style.background = sidebar;
+                document.getElementById('preview-content').style.background = background;
+                document.getElementById('preview-btn-primary').style.background = primary;
+                document.getElementById('preview-btn-primary').style.borderRadius = radius + 'px';
+                document.getElementById('preview-accent-bar').style.background = accent;
+
+                // Success/error badges
+                const successLight = lightenColor(success, 0.85);
+                const errorLight = lightenColor(error, 0.85);
+                document.getElementById('preview-badge-success').style.background = successLight;
+                document.getElementById('preview-badge-success').style.color = success;
+                document.getElementById('preview-badge-error').style.background = errorLight;
+                document.getElementById('preview-badge-error').style.color = error;
+            }}
+
+            function lightenColor(hex, percent) {{
+                const num = parseInt(hex.replace('#', ''), 16);
+                const r = Math.min(255, Math.floor((num >> 16) + (255 - (num >> 16)) * percent));
+                const g = Math.min(255, Math.floor(((num >> 8) & 0x00FF) + (255 - ((num >> 8) & 0x00FF)) * percent));
+                const b = Math.min(255, Math.floor((num & 0x0000FF) + (255 - (num & 0x0000FF)) * percent));
+                return '#' + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1).toUpperCase();
+            }}
+
+            function resetCustomTheme() {{
+                const defaults = {{
+                    'primary': '#3454D1', 'primary-dark': '#2a44a8',
+                    'sidebar': '#1E3A8A', 'sidebar-hover': '#1e40af',
+                    'accent': '#6B9FFF', 'background': '#F1F5F9',
+                    'success': '#10B981', 'error': '#EF4444'
+                }};
+                for (const [key, val] of Object.entries(defaults)) {{
+                    document.getElementById('custom-' + key).value = val;
+                    document.getElementById('custom-' + key + '-hex').value = val;
+                }}
+                document.getElementById('custom-radius').value = 8;
+                document.getElementById('radius-value').textContent = '8';
+                updatePreview();
+            }}
+
+            async function applyCustomTheme() {{
+                const theme = {{
+                    primary: document.getElementById('custom-primary').value,
+                    primary_dark: document.getElementById('custom-primary-dark').value,
+                    sidebar: document.getElementById('custom-sidebar').value,
+                    sidebar_hover: document.getElementById('custom-sidebar-hover').value,
+                    accent: document.getElementById('custom-accent').value,
+                    background: document.getElementById('custom-background').value,
+                    success: document.getElementById('custom-success').value,
+                    error: document.getElementById('custom-error').value,
+                    radius: parseInt(document.getElementById('custom-radius').value)
+                }};
+
+                try {{
+                    const response = await fetch('/api/admin/ambiance/custom', {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        credentials: 'include',
+                        body: JSON.stringify(theme)
+                    }});
+
+                    if (response.ok) {{
+                        alert('Votre ambiance personnalisée a été appliquée ! La page va se recharger.');
+                        window.location.reload();
+                    }} else {{
+                        const err = await response.json();
+                        alert('Erreur: ' + (err.detail || 'Erreur inconnue'));
+                    }}
+                }} catch(e) {{
+                    alert('Erreur: ' + e.message);
+                }}
+            }}
+
+            // Init preview on load
+            document.addEventListener('DOMContentLoaded', updatePreview);
         </script>
         ''',
         user=user,
@@ -7107,7 +7250,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="sidebar-logo-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24" class="sidebar-logo-icon">
                     <circle cx="256" cy="256" r="256" fill="#3454D1"/>
                     <circle cx="380" cy="120" r="24" fill="#6B9FFF"/>
                     <text x="200" y="360" font-family="Inter, Montserrat, Arial, sans-serif" font-weight="800" font-size="280" fill="#FFFFFF">A</text>

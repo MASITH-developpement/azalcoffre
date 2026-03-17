@@ -120,6 +120,9 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/api/creation/aides-financements",
         # Prometheus metrics (filtré par IP dans le handler)
         "/metrics",
+        # Ambiance personnalisée (utilisateur connecté via cookie)
+        "/api/admin/ambiance/custom",
+        "/api/admin/ambiance",
         # === SEO & Referencing (public) ===
         "/robots.txt",
         "/sitemap.xml",
