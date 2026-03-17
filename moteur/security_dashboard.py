@@ -100,8 +100,13 @@ def generate_dashboard_data():
     with open(OUTPUT_FILE, "w") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-    print(f"[OK] Dashboard data generated: {OUTPUT_FILE}")
-    print(f"     Total: {total}, Blocked: {blocked}, IPs: {unique_ips}")
+    logger.info(
+        "dashboard_data_generated",
+        output_file=str(OUTPUT_FILE),
+        total=total,
+        blocked=blocked,
+        unique_ips=unique_ips
+    )
 
     return data
 

@@ -10,9 +10,12 @@ from pathlib import Path
 # Ajouter le répertoire parent au path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import structlog
 from moteur.security_alerts import send_daily_report
 
+logger = structlog.get_logger()
+
 if __name__ == "__main__":
-    print("[SECURITY] Envoi du rapport journalier...")
+    logger.info("daily_report_starting")
     send_daily_report()
-    print("[SECURITY] Rapport envoyé avec succès")
+    logger.info("daily_report_sent")

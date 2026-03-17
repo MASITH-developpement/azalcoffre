@@ -386,6 +386,9 @@ def send_digest_mensuel(destinataire: str = "contact@stephane-moreau.fr"):
 
 
 if __name__ == "__main__":
-    print("[DIGEST] Envoi du digest mensuel...")
+    logger.info("digest_mensuel_starting")
     success = send_digest_mensuel()
-    print("[DIGEST] ✅ Envoyé!" if success else "[DIGEST] ❌ Échec")
+    if success:
+        logger.info("digest_mensuel_complete", status="success")
+    else:
+        logger.error("digest_mensuel_complete", status="failed")

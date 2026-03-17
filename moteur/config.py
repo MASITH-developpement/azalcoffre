@@ -48,14 +48,13 @@ class Settings(BaseSettings):
     JWT_REFRESH_EXPIRE_DAYS: int = Field(default=7)
 
     # =========================================================================
-    # CORS
+    # CORS (configurable via env var, séparés par virgule)
+    # Exemple: CORS_ORIGINS=https://app.example.com,https://admin.example.com
     # =========================================================================
     CORS_ORIGINS: List[str] = Field(default=[
         "http://localhost:3000",
         "http://localhost:5174",
         "http://localhost:8888",
-        "http://57.128.7.20:5174",
-        "http://57.128.7.20:8888",
         "http://127.0.0.1:5174",
         "http://127.0.0.1:8888",
     ])
