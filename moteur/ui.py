@@ -226,6 +226,92 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         </div>
         '''
 
+    elif field.type == "money":
+        # Champ monétaire avec formatage
+        return f'''
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <div class="input-with-suffix">
+                    <input type="number" class="o-field-char" id="{field_id}" name="{field.nom}"
+                           step="0.01" min="0" value="{escaped_value}" {required_attr}>
+                    <span class="input-suffix">EUR</span>
+                </div>
+            </div>
+        </div>
+        '''
+
+    elif field.type == "tags":
+        # Champ tags - input avec séparation par virgule
+        tags_value = ", ".join(value) if isinstance(value, list) else (escaped_value or "")
+        return f'''
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <input type="text" class="o-field-char" id="{field_id}" name="{field.nom}"
+                       value="{tags_value}" {required_attr} placeholder="Tag1, Tag2, Tag3...">
+                <small class="form-help">Séparer les tags par des virgules</small>
+            </div>
+        </div>
+        '''
+
+    elif field.type == "json":
+        # Champ JSON - textarea avec validation
+        json_value = value
+        if isinstance(value, (dict, list)):
+            import json as json_module
+            json_value = json_module.dumps(value, indent=2, ensure_ascii=False)
+        else:
+            json_value = escaped_value or "{}"
+        return f'''
+        <div class="o-field-row" style="grid-template-columns: 150px 1fr;">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <textarea class="o-field-text o-field-json" id="{field_id}" name="{field.nom}" rows="4" {required_attr}>{json_value}</textarea>
+                <small class="form-help">Format JSON</small>
+            </div>
+        </div>
+        '''
+
+    elif field.type == "tel":
+        # Champ téléphone
+        return f'''
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <input type="tel" class="o-field-char" id="{field_id}" name="{field.nom}"
+                       value="{escaped_value}" {required_attr} placeholder="+33 1 23 45 67 89">
+            </div>
+        </div>
+        '''
+
+    elif field.type == "url":
+        # Champ URL
+        return f'''
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <input type="url" class="o-field-char" id="{field_id}" name="{field.nom}"
+                       value="{escaped_value}" {required_attr} placeholder="https://...">
+            </div>
+        </div>
+        '''
+
+    elif field.type in ["file", "image"]:
+        # Champ fichier/image
+        file_accept = "image/*" if field.type == "image" else "*/*"
+        current_file = f'<small class="form-help">Fichier actuel: {escaped_value}</small>' if escaped_value else ""
+        return f'''
+        <div class="o-field-row">
+            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+            <div class="o-field-widget">
+                <input type="file" class="o-field-char" id="{field_id}" name="{field.nom}"
+                       accept="{file_accept}" {required_attr}>
+                {current_file}
+            </div>
+        </div>
+        '''
+
     else:  # texte par défaut
         # Vérifier si autocomplétion IA est activée pour ce champ
         has_autocompletion = getattr(field, 'autocompletion', False)
@@ -1154,6 +1240,74 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
                             <span style="width: 20px; height: 20px; background: #0176D3; border-radius: 4px;"></span>
                             <span style="width: 20px; height: 20px; background: #032D60; border-radius: 4px;"></span>
                             <span style="width: 20px; height: 20px; background: #F3F3F3; border-radius: 4px; border: 1px solid #ddd;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Style Odoo -->
+                    <div class="style-card" data-style="odoo" onclick="selectStyle('odoo', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 48px; height: 48px; background: #714B67; border-radius: 8px;"></div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Odoo</h3>
+                                <span style="font-size: 12px; color: var(--gray-500);">Odoo ERP</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-600);">Violet/Bordeaux élégant, interface ERP classique. Pour les habitués d'Odoo.</p>
+                        <div style="margin-top: 12px; display: flex; gap: 6px;">
+                            <span style="width: 20px; height: 20px; background: #714B67; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #714B67; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #F0F0F0; border-radius: 4px; border: 1px solid #ddd;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Style Pennylane -->
+                    <div class="style-card" data-style="penny" onclick="selectStyle('penny', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 48px; height: 48px; background: #1E3A5F; border-radius: 8px;"></div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Pennylane</h3>
+                                <span style="font-size: 12px; color: var(--gray-500);">Pennylane</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-600);">Bleu marine professionnel, interface comptable moderne. Pour les experts-comptables.</p>
+                        <div style="margin-top: 12px; display: flex; gap: 6px;">
+                            <span style="width: 20px; height: 20px; background: #1E3A5F; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #1E3A5F; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #FFFFFF; border-radius: 4px; border: 1px solid #ddd;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Style Axonaut -->
+                    <div class="style-card" data-style="axo" onclick="selectStyle('axo', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 48px; height: 48px; background: #2563EB; border-radius: 8px;"></div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Axonaut</h3>
+                                <span style="font-size: 12px; color: var(--gray-500);">Axonaut</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-600);">Sidebar blanche, bleu vif, interface aérée. Pour la simplicité.</p>
+                        <div style="margin-top: 12px; display: flex; gap: 6px;">
+                            <span style="width: 20px; height: 20px; background: #2563EB; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #FFFFFF; border-radius: 4px; border: 1px solid #ddd;"></span>
+                            <span style="width: 20px; height: 20px; background: #F9FAFB; border-radius: 4px; border: 1px solid #ddd;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Style Sage -->
+                    <div class="style-card" data-style="sage" onclick="selectStyle('sage', this)" style="border: 2px solid var(--gray-200); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="width: 48px; height: 48px; background: #00A651; border-radius: 8px;"></div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 600; color: var(--gray-800);">Sage</h3>
+                                <span style="font-size: 12px; color: var(--gray-500);">Sage</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--gray-600);">Vert dominant, interface comptable traditionnelle. Pour les fidèles de Sage.</p>
+                        <div style="margin-top: 12px; display: flex; gap: 6px;">
+                            <span style="width: 20px; height: 20px; background: #00A651; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #00A651; border-radius: 4px;"></span>
+                            <span style="width: 20px; height: 20px; background: #FFFFFF; border-radius: 4px; border: 1px solid #ddd;"></span>
                         </div>
                     </div>
 
@@ -3686,77 +3840,52 @@ def organize_intervention_fields(module) -> dict:
 
 
 def organize_fields_into_sections(module) -> dict:
-    """Organise les champs en sections logiques basées sur leur nom/type."""
+    """Organise les champs en sections basées sur l'attribut 'groupe' du champ."""
 
     # Organisation specifique pour les interventions
     module_name = getattr(module, 'nom', '').lower()
     if 'intervention' in module_name:
         return organize_intervention_fields(module)
 
-    # Sections universelles ordonnées
-    sections = {
-        "Identification": [],    # Code, nom, type, statut
-        "Contact": [],           # Email, téléphone, civilité, contact
-        "Adresse": [],           # Adresse, ville, code postal, pays
-        "Informations légales": [],  # SIRET, TVA, forme juridique
-        "Commercial": [],        # Commercial assigné, conditions paiement
-        "Dates & Planning": [],  # Dates prévues, exécution
-        "Montants": [],          # Prix, totaux, TVA
-        "Notes": [],             # Notes, commentaires, description
-        "Liens": [],             # Relations vers autres modules
-        "Autres": []
-    }
+    # Utiliser les groupes définis dans les YAML
+    sections = {}
 
     for nom, field in module.champs.items():
         if field.type in ["auto", "calcul"]:
             continue
 
-        nom_lower = nom.lower()
+        # Utiliser l'attribut groupe du champ (prioritaire)
+        groupe = getattr(field, 'groupe', None)
 
-        # === IDENTIFICATION ===
-        if any(x in nom_lower for x in ["code", "name", "nom", "type", "statut", "status", "titre", "title", "reference", "numero"]):
-            sections["Identification"].append((nom, field))
-
-        # === CONTACT ===
-        elif any(x in nom_lower for x in ["email", "phone", "tel", "mobile", "fax", "contact", "civilite", "website", "linkedin"]):
-            sections["Contact"].append((nom, field))
-
-        # === ADRESSE ===
-        elif any(x in nom_lower for x in ["address", "adresse", "city", "ville", "postal", "zip", "country", "pays", "state", "region", "departement"]):
-            sections["Adresse"].append((nom, field))
-
-        # === INFORMATIONS LÉGALES ===
-        elif any(x in nom_lower for x in ["tax_id", "tva_intra", "siret", "siren", "registration", "legal", "raison_sociale", "forme_juridique"]):
-            sections["Informations légales"].append((nom, field))
-
-        # === COMMERCIAL ===
-        elif any(x in nom_lower for x in ["assigned", "commercial", "payment", "paiement", "credit", "discount", "remise", "currency", "devise", "industry", "secteur", "segment", "source", "score", "revenue", "order_count", "size", "employee"]):
-            sections["Commercial"].append((nom, field))
-
-        # === DATES & PLANNING ===
-        elif any(x in nom_lower for x in ["date", "debut", "fin", "validite", "expir", "duree", "arrivee", "demarrage", "prevue"]):
-            sections["Dates & Planning"].append((nom, field))
-
-        # === MONTANTS ===
-        elif any(x in nom_lower for x in ["montant", "prix", "total", "tva", "ht", "ttc", "facturable", "solde"]):
-            sections["Montants"].append((nom, field))
-
-        # === NOTES ===
-        elif any(x in nom_lower for x in ["note", "comment", "description", "observation", "materiel"]):
-            sections["Notes"].append((nom, field))
-        elif field.type in ["textarea", "texte long"]:
-            sections["Notes"].append((nom, field))
-
-        # === LIENS (relations) ===
-        elif field.type in ["lien", "relation"]:
-            sections["Liens"].append((nom, field))
-
-        # === AUTRES ===
+        if groupe:
+            if groupe not in sections:
+                sections[groupe] = []
+            sections[groupe].append((nom, field))
         else:
+            # Fallback pour les champs sans groupe
+            if "Autres" not in sections:
+                sections["Autres"] = []
             sections["Autres"].append((nom, field))
 
-    # Supprimer les sections vides et retourner dans l'ordre
-    return {k: v for k, v in sections.items() if v}
+    # Ordre préférentiel des sections
+    ordre_sections = [
+        "Identification", "Informations", "Contact", "Relations",
+        "Montants", "Quantites", "Dates", "Statut",
+        "Fichiers", "Configuration", "Securite", "Metadata", "Notes", "Autres"
+    ]
+
+    # Trier les sections selon l'ordre préférentiel
+    sections_ordonnees = {}
+    for section in ordre_sections:
+        if section in sections:
+            sections_ordonnees[section] = sections[section]
+
+    # Ajouter les sections non prévues à la fin
+    for section, champs in sections.items():
+        if section not in sections_ordonnees:
+            sections_ordonnees[section] = champs
+
+    return sections_ordonnees
 
 
 def generate_sectioned_form(module_name: str, sections: dict, module) -> str:
@@ -4016,9 +4145,9 @@ def generate_form_scripts(module_name: str) -> str:
                         sessionStorage.setItem('newlyCreatedId', result.id);
                         sessionStorage.setItem('newlyCreatedField', selectField);
                     }}
-                    setTimeout(() => {{ window.location.href = decodedUrl; }}, 800);
+                    setTimeout(() => {{ window.location.href = decodedUrl; }}, 2000);
                 }} else {{
-                    setTimeout(() => {{ window.location.href = '/ui/{module_name}'; }}, 1500);
+                    setTimeout(() => {{ window.location.href = '/ui/{module_name}'; }}, 2000);
                 }}
             }} else {{
                 const err = await response.json().catch(() => ({{}}));
@@ -4413,7 +4542,7 @@ def generate_document_form(module, module_name: str) -> str:
                     </table>
 
                     <div class="doc-actions" style="margin-top: 12px;">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="ajouterLigne()">+ Ajouter un produit</button>
+                        <button type="button" id="btn-ajouter-produit" class="btn btn-secondary btn-sm" onclick="ajouterLigne()" disabled title="Chargement des produits...">+ Ajouter un produit</button>
                         <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une section</button>
                         <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une note</button>
                     </div>
@@ -4791,10 +4920,22 @@ def generate_document_form(module, module_name: str) -> str:
                 const dataProduits = await respProduits.json();
                 window.produitsData = dataProduits.items || dataProduits || [];
                 console.log('Produits chargés:', window.produitsData.length);
+                // Activer le bouton ajouter produit
+                const btnAjouterProduit = document.getElementById('btn-ajouter-produit');
+                if (btnAjouterProduit) {{
+                    btnAjouterProduit.disabled = false;
+                    btnAjouterProduit.title = '';
+                }}
             }}
         }} catch (e) {{
             console.error('Erreur chargement produits:', e);
             window.produitsData = [];
+            // Activer quand même le bouton pour permettre saisie manuelle
+            const btnAjouterProduit = document.getElementById('btn-ajouter-produit');
+            if (btnAjouterProduit) {{
+                btnAjouterProduit.disabled = false;
+                btnAjouterProduit.title = 'Produits non chargés - saisie manuelle possible';
+            }}
         }}
 
         // Charger les commerciaux (employés)
@@ -5171,6 +5312,20 @@ async def module_detail(
         function getToken() {{
             const params = new URLSearchParams(window.location.search);
             return params.get('token') || localStorage.getItem('auth_token') || '';
+        }}
+
+        function openPrintPreview() {{
+            // Ajouter classe pour mode aperçu
+            document.body.classList.add('print-preview-mode');
+            // Afficher le contenu print-only
+            document.querySelectorAll('.print-only').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.no-print').forEach(el => el.style.opacity = '0.3');
+            // Notification
+            alert('Aperçu avant impression. Cliquez sur Imprimer pour lancer l\\'impression ou fermez ce message pour revenir.');
+            // Restaurer
+            document.body.classList.remove('print-preview-mode');
+            document.querySelectorAll('.print-only').forEach(el => el.style.display = '');
+            document.querySelectorAll('.no-print').forEach(el => el.style.opacity = '');
         }}
 
         async function saveItem() {{
@@ -6865,6 +7020,9 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title} - AZALPLUS</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="apple-touch-icon" href="/static/logo.png">
     <!-- Error Reporter INLINE - capture immédiate avant tout autre script -->
     <script>
     (function(){{
@@ -6918,7 +7076,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- CSS genere depuis theme.yml -->
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/assets/style.css">
     <script>
     // Notification bell - defined early so onclick works
     var notifPanelOpen = false;
@@ -7853,7 +8011,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         if (!dtPickerState.technicianId) return;
 
         try {{
-            const response = await fetch(`/api/v1/utilisateurs/${{dtPickerState.technicianId}}`, {{
+            const response = await fetch(`/api/utilisateurs/${{dtPickerState.technicianId}}`, {{
                 credentials: 'include'
             }});
             if (response.ok) {{
@@ -7861,7 +8019,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                 techInfo.textContent = `Technicien: ${{tech.nom || tech.name || tech.email}}`;
 
                 // Charger les interventions planifiées
-                const intResponse = await fetch(`/api/v1/interventions?intervenant_id=${{dtPickerState.technicianId}}&statut=PLANIFIEE,EN_COURS,SUR_SITE`, {{
+                const intResponse = await fetch(`/api/interventions?intervenant_id=${{dtPickerState.technicianId}}&statut=PLANIFIEE,EN_COURS,SUR_SITE`, {{
                     credentials: 'include'
                 }});
                 if (intResponse.ok) {{
