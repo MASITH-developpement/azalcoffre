@@ -8,6 +8,7 @@ Orchestre tous les composants : DB, API, UI, Guardian, etc.
 
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
@@ -162,6 +163,9 @@ L'API utilise JWT (JSON Web Tokens). Obtenez un token via `/api/auth/login`.
 # Middlewares
 # =============================================================================
 
+# GZip compression (minimum 500 bytes)
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -184,6 +188,41 @@ app.add_middleware(RateLimitMiddleware)
 # CSRF Middleware (protection formulaires HTML)
 # Exempte automatiquement les API REST avec JWT
 app.add_middleware(CSRFMiddleware)
+
+# Security Headers Middleware
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next: Callable):
+    """Ajoute les headers de sécurité sur toutes les réponses."""
+    response = await call_next(request)
+
+    # Protection contre le clickjacking
+    response.headers["X-Frame-Options"] = "DENY"
+
+    # Protection contre le MIME sniffing
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    # Protection XSS (navigateurs anciens)
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+
+    # Referrer Policy
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+    # Permissions Policy (ex-Feature-Policy)
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+
+    # Content Security Policy (mode rapport pour ne pas casser l'existant)
+    if not request.url.path.startswith("/api/"):
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://api.anthropic.com https://api.openai.com; "
+            "frame-ancestors 'none';"
+        )
+
+    return response
 
 # Request timing middleware + Prometheus
 @app.middleware("http")
