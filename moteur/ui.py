@@ -7214,7 +7214,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- CSS genere depuis theme.yml -->
-    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="stylesheet" href="/assets/style.css?v=20260318f">
     <script>
     // Notification bell - defined early so onclick works
     var notifPanelOpen = false;

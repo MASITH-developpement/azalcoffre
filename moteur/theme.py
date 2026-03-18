@@ -553,41 +553,54 @@ input[type="button"], select, .select, label[for], .clickable {{
 /* ==========================================================================
    FORMS - Stacked layout on mobile
    ========================================================================== */
-.form-group {{ margin-bottom: {esp.get("md", "16px")}; }}
+.form-group {{ margin-bottom: 12px; }}
 .label {{
     display: block;
-    font-size: {typo.get("taille_petite", "13px")};
+    font-size: 12px;
     font-weight: 500;
-    color: var(--gray-600);
-    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-500);
+    margin-bottom: 8px;
 }}
-.input, .select, textarea {{
+.input, .select, textarea, .o-field-char, .o-field-text {{
     width: 100%;
-    padding: 12px;
-    min-height: var(--touch-min);
-    font-size: 16px;
-    border: 1px solid var(--gray-200);
-    border-radius: {inp.get("rayon", "6px")};
-    background: var(--gray-50);
-    color: var(--gray-900);
-    transition: all 0.15s;
+    padding: 16px 20px;
+    min-height: 56px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    border-radius: 14px;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s ease;
     -webkit-appearance: none;
     appearance: none;
 }}
-.input:focus, .select:focus, textarea:focus {{
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-light);
+.input:hover, .select:hover, textarea:hover, .o-field-char:hover, .o-field-text:hover {{
+    background: var(--gray-50);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(52, 84, 209, 0.1);
 }}
-.input::placeholder {{ color: var(--gray-400); }}
+.input:focus, .select:focus, textarea:focus, .o-field-char:focus, .o-field-text:focus {{
+    outline: none;
+    background: var(--white);
+    box-shadow: inset 0 0 0 2px var(--primary), 0 4px 20px rgba(52, 84, 209, 0.15);
+}}
+.input::placeholder, textarea::placeholder, .o-field-char::placeholder, .o-field-text::placeholder {{
+    color: var(--gray-400);
+    font-weight: 400;
+}}
 
 /* Select arrow */
 .select {{
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 12px center;
+    background-position: right 0 center;
     background-repeat: no-repeat;
-    background-size: 20px;
-    padding-right: 40px;
+    background-size: 14px;
+    padding-right: 20px;
+    cursor: pointer;
 }}
 
 /* Form grid - Single column on mobile */
@@ -1145,11 +1158,11 @@ input[type="button"], select, .select, label[for], .clickable {{
         min-height: 44px;
     }}
 
-    /* Inputs smaller */
-    .input, .select, textarea {{
-        padding: {inp.get("padding", "9px 12px")};
-        min-height: 38px;
-        font-size: {typo.get("taille_base", "14px")};
+    /* Inputs - Style Premium */
+    .input, .select, textarea, .o-field-char, .o-field-text {{
+        padding: 16px 20px;
+        min-height: 56px;
+        font-size: 15px;
     }}
 
     /* Card body padding */

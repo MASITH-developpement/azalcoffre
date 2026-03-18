@@ -281,22 +281,57 @@ a:hover { color: var(--primary-dark); }
     border-color: var(--gray-300);
 }
 
-/* Inputs Premium */
-.form-control {
+/* Inputs - Style Premium AZALPLUS */
+.form-control, .input, .select, textarea, .o-field-char, .o-field-text {
     width: 100%;
-    padding: 11px 14px;
-    font-size: var(--font-size-lg);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius);
-    background: var(--white);
-    box-shadow: var(--shadow-sm);
-    transition: all 0.15s;
+    padding: 16px 20px;
+    min-height: 56px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    border-radius: 14px;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    letter-spacing: 0.01em;
 }
 
-.form-control:focus {
+.form-control:hover, .input:hover, .select:hover, textarea:hover, .o-field-char:hover, .o-field-text:hover {
+    background: var(--gray-50);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(52, 84, 209, 0.1);
+}
+
+.form-control:focus, .input:focus, .select:focus, textarea:focus, .o-field-char:focus, .o-field-text:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+    background: var(--white);
+    box-shadow: inset 0 0 0 2px var(--primary), 0 4px 20px rgba(52, 84, 209, 0.15);
+}
+
+.form-control::placeholder, .input::placeholder, textarea::placeholder, .o-field-char::placeholder, .o-field-text::placeholder {
+    color: var(--gray-400);
+    font-weight: 400;
+}
+
+/* Labels - Style moderne */
+.label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+    margin-bottom: 6px;
+}
+
+/* Select avec flèche moderne */
+select.form-control, .select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+    cursor: pointer;
 }
 
 /* Badges Premium */
