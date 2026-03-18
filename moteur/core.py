@@ -645,6 +645,64 @@ async def partenaires_page():
     return HTMLResponse(content="<h1>Partenaires</h1>")
 
 # =============================================================================
+# Test Error Pages (TEMPORAIRE - à supprimer après validation)
+# =============================================================================
+@app.get("/test-erreurs", response_class=HTMLResponse)
+async def test_erreurs_index():
+    """Page index pour tester les pages d'erreur."""
+    return HTMLResponse(content="""
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Pages d'Erreur | AZALPLUS</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f5f5f5; padding: 40px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: #1f2937; margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+        a { display: block; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; text-align: center; font-weight: 500; transition: transform 0.2s; }
+        a:hover { transform: translateY(-3px); }
+        .code { font-size: 32px; font-weight: 800; }
+        .label { font-size: 12px; opacity: 0.9; margin-top: 8px; }
+        .warning { background: #fef3c7; border: 1px solid #f59e0b; padding: 16px; border-radius: 8px; margin-top: 30px; color: #92400e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Test des Pages d'Erreur</h1>
+        <p style="color: #6b7280; margin-bottom: 30px;">Cliquez sur un code pour voir la page d'erreur correspondante.</p>
+        <div class="grid">
+            <a href="/test-erreurs/400"><div class="code">400</div><div class="label">Requête invalide</div></a>
+            <a href="/test-erreurs/401"><div class="code">401</div><div class="label">Non authentifié</div></a>
+            <a href="/test-erreurs/403"><div class="code">403</div><div class="label">Accès refusé</div></a>
+            <a href="/test-erreurs/404"><div class="code">404</div><div class="label">Page introuvable</div></a>
+            <a href="/test-erreurs/405"><div class="code">405</div><div class="label">Méthode non autorisée</div></a>
+            <a href="/test-erreurs/408"><div class="code">408</div><div class="label">Timeout</div></a>
+            <a href="/test-erreurs/422"><div class="code">422</div><div class="label">Données invalides</div></a>
+            <a href="/test-erreurs/429"><div class="code">429</div><div class="label">Trop de requêtes</div></a>
+            <a href="/test-erreurs/500"><div class="code">500</div><div class="label">Erreur serveur</div></a>
+            <a href="/test-erreurs/502"><div class="code">502</div><div class="label">Bad Gateway</div></a>
+            <a href="/test-erreurs/503"><div class="code">503</div><div class="label">Service indisponible</div></a>
+            <a href="/test-erreurs/504"><div class="code">504</div><div class="label">Gateway Timeout</div></a>
+        </div>
+        <div class="warning">
+            ⚠️ <strong>Page temporaire</strong> - Cette page sera supprimée après validation.
+        </div>
+    </div>
+</body>
+</html>
+""")
+
+@app.get("/test-erreurs/{code}", response_class=HTMLResponse)
+async def test_erreur_page(request: Request, code: int):
+    """Affiche une page d'erreur pour test."""
+    if code not in [400, 401, 403, 404, 405, 408, 422, 429, 500, 502, 503, 504]:
+        code = 404
+    return render_error_page(code, request)
+
+# =============================================================================
 # Landing Page (public)
 # =============================================================================
 @app.get("/LANDING_PAGE_AZALPLUS.html", response_class=HTMLResponse)

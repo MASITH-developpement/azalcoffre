@@ -127,6 +127,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/LANDING_PAGE_AZALPLUS.html",
         # Partenaires (public)
         "/partenaires",
+        # Test pages d'erreur (TEMPORAIRE)
+        "/test-erreurs",
         # Création Entreprise - Outils publics
         "/api/creation/simulateur-statut/public",
         "/api/creation/checklist-creation",
