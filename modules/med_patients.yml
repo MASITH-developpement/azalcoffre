@@ -1,0 +1,280 @@
+# =============================================================================
+# AZALMED - Module Patients
+# =============================================================================
+# Fiche patient avec informations médicales et administratives
+# Conforme RGPD santé - Conservation 20 ans
+
+nom: Patients
+icone: user-injured
+menu: AZALMED
+description: Gestion des patients et de leur dossier médical
+
+champs:
+  # ---------------------------------------------------------------------------
+  # Identification
+  # ---------------------------------------------------------------------------
+  - nom: numero_patient
+    type: text
+    groupe: Identification
+    obligatoire: false
+    description: "Numéro patient (auto-généré)"
+    readonly: true
+
+  - nom: civilite
+    type: select
+    groupe: Identification
+    obligatoire: true
+    options: [M., Mme, Dr, Pr]
+    defaut: M.
+    description: Civilité
+
+  - nom: nom
+    type: text
+    groupe: Identification
+    obligatoire: true
+    description: Nom de famille
+
+  - nom: prenom
+    type: text
+    groupe: Identification
+    obligatoire: true
+    description: Prénom
+
+  - nom: nom_naissance
+    type: text
+    groupe: Identification
+    obligatoire: false
+    description: Nom de naissance (si différent)
+
+  - nom: date_naissance
+    type: date
+    groupe: Identification
+    obligatoire: true
+    description: Date de naissance
+
+  - nom: sexe
+    type: select
+    groupe: Identification
+    obligatoire: true
+    options: [M, F]
+    description: Sexe
+
+  - nom: numero_secu
+    type: text
+    groupe: Identification
+    obligatoire: false
+    description: "Numéro de sécurité sociale (15 chiffres)"
+
+  # ---------------------------------------------------------------------------
+  # Contact
+  # ---------------------------------------------------------------------------
+  - nom: email
+    type: email
+    groupe: Contact
+    obligatoire: false
+    description: Adresse email
+
+  - nom: telephone
+    type: tel
+    groupe: Contact
+    obligatoire: false
+    description: Téléphone principal
+
+  - nom: telephone_secondaire
+    type: tel
+    groupe: Contact
+    obligatoire: false
+    description: Téléphone secondaire
+
+  - nom: adresse
+    type: textarea
+    groupe: Contact
+    obligatoire: false
+    description: Adresse complète
+
+  - nom: code_postal
+    type: text
+    groupe: Contact
+    obligatoire: false
+    description: Code postal
+
+  - nom: ville
+    type: text
+    groupe: Contact
+    obligatoire: false
+    description: Ville
+
+  - nom: pays
+    type: text
+    groupe: Contact
+    obligatoire: false
+    defaut: France
+    description: Pays
+
+  # ---------------------------------------------------------------------------
+  # Personne de confiance
+  # ---------------------------------------------------------------------------
+  - nom: personne_confiance_nom
+    type: text
+    groupe: Personne de confiance
+    obligatoire: false
+    description: Nom de la personne de confiance
+
+  - nom: personne_confiance_lien
+    type: text
+    groupe: Personne de confiance
+    obligatoire: false
+    description: "Lien (conjoint, parent, enfant...)"
+
+  - nom: personne_confiance_tel
+    type: tel
+    groupe: Personne de confiance
+    obligatoire: false
+    description: Téléphone personne de confiance
+
+  # ---------------------------------------------------------------------------
+  # Médical
+  # ---------------------------------------------------------------------------
+  - nom: medecin_traitant
+    type: text
+    groupe: Médical
+    obligatoire: false
+    description: Nom du médecin traitant
+
+  - nom: groupe_sanguin
+    type: select
+    groupe: Médical
+    obligatoire: false
+    options: [A+, A-, B+, B-, AB+, AB-, O+, O-, Inconnu]
+    defaut: Inconnu
+    description: Groupe sanguin
+
+  - nom: allergies
+    type: tags
+    groupe: Médical
+    obligatoire: false
+    description: "Allergies connues (médicaments, aliments...)"
+
+  - nom: antecedents
+    type: textarea
+    groupe: Médical
+    obligatoire: false
+    description: Antécédents médicaux
+
+  - nom: traitements_en_cours
+    type: textarea
+    groupe: Médical
+    obligatoire: false
+    description: Traitements en cours
+
+  - nom: notes_medicales
+    type: textarea
+    groupe: Médical
+    obligatoire: false
+    description: Notes médicales confidentielles
+
+  # ---------------------------------------------------------------------------
+  # Administratif
+  # ---------------------------------------------------------------------------
+  - nom: mutuelle
+    type: text
+    groupe: Administratif
+    obligatoire: false
+    description: Nom de la mutuelle
+
+  - nom: numero_mutuelle
+    type: text
+    groupe: Administratif
+    obligatoire: false
+    description: Numéro adhérent mutuelle
+
+  - nom: statut
+    type: select
+    groupe: Administratif
+    obligatoire: true
+    defaut: ACTIF
+    options: [ACTIF, INACTIF, DECEDE, ARCHIVE]
+    description: Statut du patient
+
+  - nom: date_premiere_consultation
+    type: date
+    groupe: Administratif
+    obligatoire: false
+    description: Date de première consultation
+
+  - nom: date_derniere_consultation
+    type: date
+    groupe: Administratif
+    obligatoire: false
+    description: Date de dernière consultation
+
+  - nom: praticien_id
+    type: relation
+    groupe: Administratif
+    obligatoire: false
+    relation: Praticiens
+    description: Praticien référent
+
+  # ---------------------------------------------------------------------------
+  # RGPD
+  # ---------------------------------------------------------------------------
+  - nom: consentement_rgpd
+    type: boolean
+    groupe: RGPD
+    obligatoire: false
+    defaut: false
+    description: Consentement RGPD obtenu
+
+  - nom: date_consentement_rgpd
+    type: datetime
+    groupe: RGPD
+    obligatoire: false
+    description: Date du consentement RGPD
+
+  - nom: consentement_email
+    type: boolean
+    groupe: RGPD
+    obligatoire: false
+    defaut: false
+    description: Accepte les communications par email
+
+  - nom: consentement_sms
+    type: boolean
+    groupe: RGPD
+    obligatoire: false
+    defaut: false
+    description: Accepte les communications par SMS
+
+# ---------------------------------------------------------------------------
+# Workflow
+# ---------------------------------------------------------------------------
+workflow:
+  ACTIF -> INACTIF: "Désactiver le patient"
+  ACTIF -> ARCHIVE: "Archiver le dossier"
+  INACTIF -> ACTIF: "Réactiver le patient"
+  INACTIF -> ARCHIVE: "Archiver le dossier"
+  ACTIF -> DECEDE: "Marquer comme décédé"
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+actions:
+  - exporter_dossier
+  - envoyer_email
+  - nouvelle_consultation
+  - nouveau_consentement
+
+# ---------------------------------------------------------------------------
+# Recherche
+# ---------------------------------------------------------------------------
+recherche:
+  champs: [nom, prenom, email, telephone, numero_secu]
+  tri_defaut: nom
+  ordre_defaut: asc
+
+# ---------------------------------------------------------------------------
+# Liste
+# ---------------------------------------------------------------------------
+liste:
+  colonnes: [nom, prenom, date_naissance, telephone, statut, date_derniere_consultation]
+  filtres: [statut, praticien_id]

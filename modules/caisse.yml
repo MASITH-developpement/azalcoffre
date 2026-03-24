@@ -13,6 +13,7 @@ champs:
   # Identification
   - nom: code
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Code caisse (CAISSE-01, CAISSE-02...)
@@ -20,12 +21,14 @@ champs:
 
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom de la caisse
     autocompletion: true
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: FERMEE
     options: [FERMEE, OUVERTE, EN_PAUSE, EN_CLOTURE]
@@ -34,6 +37,7 @@ champs:
   # Etablissement
   - nom: etablissement_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Etablissements
     description: Etablissement associe
@@ -42,6 +46,7 @@ champs:
   # Caissier actuel
   - nom: caissier_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Caissier en cours
@@ -50,23 +55,27 @@ champs:
   # Session en cours
   - nom: session_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: ID session active
 
   - nom: session_opened_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Heure ouverture session
 
   # Fond de caisse
   - nom: fond_caisse
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 100
     description: Fond de caisse (especes)
 
   - nom: fond_caisse_actuel
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Montant actuel en caisse
@@ -74,6 +83,7 @@ champs:
   # Totaux session
   - nom: total_ventes
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -81,6 +91,7 @@ champs:
 
   - nom: total_especes
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -88,6 +99,7 @@ champs:
 
   - nom: total_cb
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -95,6 +107,7 @@ champs:
 
   - nom: total_cheques
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -102,6 +115,7 @@ champs:
 
   - nom: total_autres
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -109,6 +123,7 @@ champs:
 
   - nom: nombre_tickets
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     readonly: true
@@ -117,28 +132,33 @@ champs:
   # Conformite NF525
   - nom: nf525_certified
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Certification NF525
 
   - nom: nf525_certificate_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: Numero certificat NF525
 
   - nom: signature_key
     type: text
+    groupe: Securite
     obligatoire: false
     description: Cle de signature (chiffree)
 
   - nom: last_z_number
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Dernier numero Z
 
   - nom: last_ticket_number
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Dernier numero ticket
@@ -146,30 +166,35 @@ champs:
   # Equipement
   - nom: imprimante_ticket
     type: text
+    groupe: Informations
     obligatoire: false
     description: Imprimante thermique connectee
     autocompletion: true
 
   - nom: tiroir_caisse
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Tiroir caisse connecte
 
   - nom: scanner_code_barres
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Scanner code-barres actif
 
   - nom: terminal_cb
     type: text
+    groupe: Informations
     obligatoire: false
     description: Terminal CB associe
     autocompletion: true
 
   - nom: tap_to_pay
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Encaissement NFC smartphone
@@ -177,30 +202,35 @@ champs:
   # Configuration
   - nom: mode_kiosque
     type: boolean
+    groupe: Configuration
     obligatoire: false
     defaut: false
     description: Mode plein ecran
 
   - nom: afficher_stock
     type: boolean
+    groupe: Quantites
     obligatoire: false
     defaut: true
     description: Afficher stock disponible
 
   - nom: autoriser_prix_negatif
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Autoriser remboursements
 
   - nom: demander_client
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Demander client a chaque vente
 
   - nom: ticket_par_defaut
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: TICKET
     options: [TICKET, FACTURE_SIMPLIFIEE, FACTURE]
@@ -227,12 +257,14 @@ tickets:
   champs:
     - nom: number
       type: text
+      groupe: Informations
       obligatoire: true
       unique: true
       description: Numero ticket (sequentiel)
 
     - nom: type
       type: select
+      groupe: Informations
       obligatoire: true
       defaut: VENTE
       options: [VENTE, AVOIR, ANNULATION]
@@ -240,78 +272,92 @@ tickets:
 
     - nom: date
       type: datetime
+      groupe: Dates
       obligatoire: true
       auto: now
       description: Date/heure
 
     - nom: caissier_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Utilisateurs
       description: Caissier
 
     - nom: customer_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Clients
       description: Client (optionnel)
 
     - nom: subtotal
       type: number
+      groupe: Informations
       obligatoire: true
       description: Total HT
 
     - nom: tax_amount
       type: number
+      groupe: Informations
       obligatoire: true
       description: Total TVA
 
     - nom: total
       type: number
+      groupe: Montants
       obligatoire: true
       description: Total TTC
 
     - nom: paiements
       type: json
+      groupe: Metadata
       obligatoire: true
       description: Ventilation paiements [{mode, montant}]
 
     - nom: rendu_monnaie
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 0
       description: Rendu monnaie
 
     - nom: signature_nf525
       type: text
+      groupe: Informations
       obligatoire: true
       description: Signature electronique NF525
 
     - nom: ticket_precedent_signature
       type: text
+      groupe: Informations
       obligatoire: false
       description: Signature ticket precedent (chaine)
 
     - nom: ticket_imprime
       type: boolean
+      groupe: Informations
       obligatoire: false
       defaut: false
       description: Ticket imprime
 
     - nom: email_envoye
       type: boolean
+      groupe: Contact
       obligatoire: false
       defaut: false
       description: Ticket envoye par email
 
     - nom: annule
       type: boolean
+      groupe: Informations
       obligatoire: false
       defaut: false
       description: Ticket annule
 
     - nom: motif_annulation
       type: text
+      groupe: Informations
       obligatoire: false
       description: Motif annulation
 
@@ -320,34 +366,40 @@ mouvements:
   champs:
     - nom: type
       type: select
+      groupe: Informations
       obligatoire: true
       options: [ENTREE, SORTIE]
       description: Type mouvement
 
     - nom: montant
       type: number
+      groupe: Montants
       obligatoire: true
       description: Montant
 
     - nom: motif
       type: select
+      groupe: Informations
       obligatoire: true
       options: [FOND_CAISSE, RETRAIT_BANQUE, DEPENSE, RENDU_MONNAIE_ERREUR, AUTRE]
       description: Motif
 
     - nom: commentaire
       type: text
+      groupe: Notes
       obligatoire: false
       description: Commentaire
 
     - nom: caissier_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Utilisateurs
       description: Caissier
 
     - nom: date
       type: datetime
+      groupe: Dates
       obligatoire: true
       auto: now
       description: Date/heure

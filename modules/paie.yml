@@ -17,6 +17,7 @@ champs:
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro bulletin"
     obligatoire: true
     unique: true
@@ -25,23 +26,27 @@ champs:
 
   - nom: employe_id
     type: relation
+    groupe: Relations
     libelle: "Employé"
     relation: employes
     obligatoire: true
 
   - nom: periode
     type: text
+    groupe: Informations
     libelle: "Période"
     obligatoire: true
     placeholder: "AAAA-MM"
 
   - nom: date_emission
     type: date
+    groupe: Dates
     libelle: "Date d'émission"
     defaut: "today"
 
   - nom: date_paiement
     type: date
+    groupe: Dates
     libelle: "Date de paiement"
 
   # ==========================================================================
@@ -49,26 +54,32 @@ champs:
   # ==========================================================================
   - nom: employeur_siret
     type: text
+    groupe: Informations
     libelle: "SIRET employeur"
 
   - nom: employeur_raison_sociale
     type: text
+    groupe: Informations
     libelle: "Raison sociale"
 
   - nom: employeur_adresse
     type: textarea
+    groupe: Contact
     libelle: "Adresse employeur"
 
   - nom: code_ape
     type: text
+    groupe: Identification
     libelle: "Code APE"
 
   - nom: convention_collective
     type: text
+    groupe: Informations
     libelle: "Convention collective"
 
   - nom: idcc
     type: text
+    groupe: Informations
     libelle: "IDCC"
 
   # ==========================================================================
@@ -76,38 +87,47 @@ champs:
   # ==========================================================================
   - nom: matricule
     type: text
+    groupe: Informations
     libelle: "Matricule"
 
   - nom: nom_complet
     type: text
+    groupe: Identification
     libelle: "Nom complet"
 
   - nom: numero_ss
     type: text
+    groupe: Informations
     libelle: "N° Sécurité Sociale"
 
   - nom: date_entree
     type: date
+    groupe: Dates
     libelle: "Date d'entrée"
 
   - nom: date_anciennete
     type: date
+    groupe: Dates
     libelle: "Date ancienneté"
 
   - nom: emploi
     type: text
+    groupe: Informations
     libelle: "Emploi"
 
   - nom: qualification
     type: text
+    groupe: Informations
     libelle: "Qualification"
 
   - nom: coefficient
     type: text
+    groupe: Informations
     libelle: "Coefficient/Niveau"
 
   - nom: categorie
     type: select
+    groupe: Informations
     libelle: "Catégorie"
     options:
       - CADRE
@@ -116,6 +136,7 @@ champs:
 
   - nom: type_contrat
     type: select
+    groupe: Informations
     libelle: "Type contrat"
     options:
       - CDI
@@ -130,6 +151,7 @@ champs:
   # ==========================================================================
   - nom: temps_travail
     type: select
+    groupe: Informations
     libelle: "Temps de travail"
     options:
       - TEMPS_PLEIN
@@ -139,32 +161,39 @@ champs:
 
   - nom: horaire_mensuel
     type: number
+    groupe: Informations
     libelle: "Horaire mensuel"
     defaut: 151.67
 
   - nom: taux_activite
     type: number
+    groupe: Montants
     libelle: "Taux d'activité (%)"
     defaut: 100
 
   - nom: heures_travaillees
     type: number
+    groupe: Informations
     libelle: "Heures travaillées"
 
   - nom: heures_supplementaires_25
     type: number
+    groupe: Informations
     libelle: "Heures sup 25%"
 
   - nom: heures_supplementaires_50
     type: number
+    groupe: Informations
     libelle: "Heures sup 50%"
 
   - nom: heures_complementaires
     type: number
+    groupe: Informations
     libelle: "Heures complémentaires"
 
   - nom: heures_absence
     type: number
+    groupe: Informations
     libelle: "Heures absence"
 
   # ==========================================================================
@@ -172,35 +201,43 @@ champs:
   # ==========================================================================
   - nom: salaire_base
     type: money
+    groupe: Montants
     libelle: "Salaire de base"
     obligatoire: true
 
   - nom: taux_horaire
     type: money
+    groupe: Montants
     libelle: "Taux horaire"
 
   - nom: prime_anciennete
     type: money
+    groupe: Montants
     libelle: "Prime ancienneté"
 
   - nom: prime_13eme_mois
     type: money
+    groupe: Montants
     libelle: "13ème mois"
 
   - nom: prime_vacances
     type: money
+    groupe: Montants
     libelle: "Prime vacances"
 
   - nom: prime_exceptionnelle
     type: money
+    groupe: Montants
     libelle: "Prime exceptionnelle"
 
   - nom: prime_objectifs
     type: money
+    groupe: Montants
     libelle: "Prime objectifs"
 
   - nom: autres_primes
     type: money
+    groupe: Montants
     libelle: "Autres primes"
 
   # ==========================================================================
@@ -208,30 +245,37 @@ champs:
   # ==========================================================================
   - nom: indemnite_transport
     type: money
+    groupe: Montants
     libelle: "Indemnité transport"
 
   - nom: indemnite_repas
     type: money
+    groupe: Montants
     libelle: "Indemnité repas"
 
   - nom: titres_restaurant
     type: number
+    groupe: Informations
     libelle: "Titres restaurant"
 
   - nom: indemnite_km
     type: money
+    groupe: Montants
     libelle: "Indemnités km"
 
   - nom: avantage_nature_vehicule
     type: money
+    groupe: Montants
     libelle: "Avantage véhicule"
 
   - nom: avantage_nature_logement
     type: money
+    groupe: Montants
     libelle: "Avantage logement"
 
   - nom: avantage_nature_nourriture
     type: money
+    groupe: Montants
     libelle: "Avantage nourriture"
 
   # ==========================================================================
@@ -239,10 +283,12 @@ champs:
   # ==========================================================================
   - nom: jours_absence
     type: number
+    groupe: Informations
     libelle: "Jours d'absence"
 
   - nom: type_absence
     type: select
+    groupe: Informations
     libelle: "Type absence"
     options:
       - MALADIE
@@ -254,18 +300,22 @@ champs:
 
   - nom: retenue_absence
     type: money
+    groupe: Montants
     libelle: "Retenue absence"
 
   - nom: ijss
     type: money
+    groupe: Montants
     libelle: "IJSS"
 
   - nom: complement_employeur
     type: money
+    groupe: Montants
     libelle: "Complément employeur"
 
   - nom: subrogation
     type: boolean
+    groupe: Informations
     libelle: "Subrogation"
     defaut: false
 
@@ -274,31 +324,38 @@ champs:
   # ==========================================================================
   - nom: brut_mensuel
     type: money
+    groupe: Montants
     libelle: "Brut mensuel"
 
   - nom: brut_soumis_cotisations
     type: money
+    groupe: Montants
     libelle: "Brut soumis cotisations"
 
   - nom: plafond_ss
     type: money
+    groupe: Montants
     libelle: "Plafond SS"
     defaut: 3864
 
   - nom: tranche_a
     type: money
+    groupe: Montants
     libelle: "Tranche A"
 
   - nom: tranche_b
     type: money
+    groupe: Montants
     libelle: "Tranche B"
 
   - nom: tranche_1
     type: money
+    groupe: Montants
     libelle: "Tranche 1"
 
   - nom: tranche_2
     type: money
+    groupe: Montants
     libelle: "Tranche 2"
 
   # ==========================================================================
@@ -306,62 +363,77 @@ champs:
   # ==========================================================================
   - nom: cotisation_maladie
     type: money
+    groupe: Montants
     libelle: "Maladie salariale"
 
   - nom: cotisation_vieillesse_plafonnee
     type: money
+    groupe: Montants
     libelle: "Vieillesse plafonnée"
 
   - nom: cotisation_vieillesse_deplafonnee
     type: money
+    groupe: Montants
     libelle: "Vieillesse déplafonnée"
 
   - nom: cotisation_retraite_t1
     type: money
+    groupe: Montants
     libelle: "Retraite T1"
 
   - nom: cotisation_retraite_t2
     type: money
+    groupe: Montants
     libelle: "Retraite T2"
 
   - nom: cotisation_ceg
     type: money
+    groupe: Montants
     libelle: "CEG"
 
   - nom: cotisation_cet
     type: money
+    groupe: Montants
     libelle: "CET"
 
   - nom: cotisation_apec
     type: money
+    groupe: Montants
     libelle: "APEC"
 
   - nom: cotisation_chomage
     type: money
+    groupe: Montants
     libelle: "Chômage"
 
   - nom: cotisation_prevoyance
     type: money
+    groupe: Montants
     libelle: "Prévoyance"
 
   - nom: cotisation_mutuelle
     type: money
+    groupe: Montants
     libelle: "Mutuelle"
 
   - nom: csg_deductible
     type: money
+    groupe: Montants
     libelle: "CSG déductible"
 
   - nom: csg_non_deductible
     type: money
+    groupe: Montants
     libelle: "CSG non déductible"
 
   - nom: crds
     type: money
+    groupe: Montants
     libelle: "CRDS"
 
   - nom: total_cotisations_salariales
     type: money
+    groupe: Montants
     libelle: "Total cotisations salariales"
 
   # ==========================================================================
@@ -369,54 +441,67 @@ champs:
   # ==========================================================================
   - nom: patronal_maladie
     type: money
+    groupe: Montants
     libelle: "Maladie patronale"
 
   - nom: patronal_vieillesse
     type: money
+    groupe: Montants
     libelle: "Vieillesse patronale"
 
   - nom: patronal_allocations_familiales
     type: money
+    groupe: Montants
     libelle: "Allocations familiales"
 
   - nom: patronal_accident_travail
     type: money
+    groupe: Montants
     libelle: "Accident travail"
 
   - nom: patronal_retraite
     type: money
+    groupe: Montants
     libelle: "Retraite patronale"
 
   - nom: patronal_chomage
     type: money
+    groupe: Montants
     libelle: "Chômage patronal"
 
   - nom: patronal_ags
     type: money
+    groupe: Montants
     libelle: "AGS"
 
   - nom: patronal_fnal
     type: money
+    groupe: Montants
     libelle: "FNAL"
 
   - nom: patronal_formation
     type: money
+    groupe: Montants
     libelle: "Formation"
 
   - nom: patronal_taxe_apprentissage
     type: money
+    groupe: Montants
     libelle: "Taxe apprentissage"
 
   - nom: patronal_prevoyance
     type: money
+    groupe: Montants
     libelle: "Prévoyance patronale"
 
   - nom: patronal_mutuelle
     type: money
+    groupe: Montants
     libelle: "Mutuelle patronale"
 
   - nom: total_cotisations_patronales
     type: money
+    groupe: Montants
     libelle: "Total cotisations patronales"
 
   # ==========================================================================
@@ -424,14 +509,17 @@ champs:
   # ==========================================================================
   - nom: reduction_fillon
     type: money
+    groupe: Montants
     libelle: "Réduction Fillon"
 
   - nom: exoneration_heures_sup
     type: money
+    groupe: Montants
     libelle: "Exo heures sup"
 
   - nom: reduction_cotisations_salariales
     type: money
+    groupe: Montants
     libelle: "Réduction cotisations salariales"
 
   # ==========================================================================
@@ -439,22 +527,27 @@ champs:
   # ==========================================================================
   - nom: net_avant_impot
     type: money
+    groupe: Montants
     libelle: "Net avant impôt"
 
   - nom: net_imposable
     type: money
+    groupe: Montants
     libelle: "Net imposable"
 
   - nom: taux_prelevement
     type: number
+    groupe: Montants
     libelle: "Taux PAS (%)"
 
   - nom: impot_source
     type: money
+    groupe: Montants
     libelle: "Impôt à la source"
 
   - nom: net_a_payer
     type: money
+    groupe: Montants
     libelle: "Net à payer"
     obligatoire: true
 
@@ -463,18 +556,22 @@ champs:
   # ==========================================================================
   - nom: acompte
     type: money
+    groupe: Montants
     libelle: "Acompte"
 
   - nom: avance
     type: money
+    groupe: Montants
     libelle: "Avance"
 
   - nom: saisie_arret
     type: money
+    groupe: Montants
     libelle: "Saisie-arrêt"
 
   - nom: pension_alimentaire
     type: money
+    groupe: Montants
     libelle: "Pension alimentaire"
 
   # ==========================================================================
@@ -482,18 +579,22 @@ champs:
   # ==========================================================================
   - nom: cumul_brut
     type: money
+    groupe: Montants
     libelle: "Cumul brut"
 
   - nom: cumul_net_imposable
     type: money
+    groupe: Montants
     libelle: "Cumul net imposable"
 
   - nom: cumul_impot_source
     type: money
+    groupe: Montants
     libelle: "Cumul PAS"
 
   - nom: cumul_heures
     type: number
+    groupe: Informations
     libelle: "Cumul heures"
 
   # ==========================================================================
@@ -501,30 +602,37 @@ champs:
   # ==========================================================================
   - nom: cp_acquis_n1
     type: number
+    groupe: Informations
     libelle: "CP acquis N-1"
 
   - nom: cp_pris_n1
     type: number
+    groupe: Informations
     libelle: "CP pris N-1"
 
   - nom: cp_solde_n1
     type: number
+    groupe: Informations
     libelle: "Solde CP N-1"
 
   - nom: cp_acquis_n
     type: number
+    groupe: Informations
     libelle: "CP en cours"
 
   - nom: rtt_acquis
     type: number
+    groupe: Informations
     libelle: "RTT acquis"
 
   - nom: rtt_pris
     type: number
+    groupe: Informations
     libelle: "RTT pris"
 
   - nom: rtt_solde
     type: number
+    groupe: Informations
     libelle: "Solde RTT"
 
   # ==========================================================================
@@ -532,15 +640,18 @@ champs:
   # ==========================================================================
   - nom: dsn_id
     type: text
+    groupe: Relations
     libelle: "DSN"
 
   - nom: integre_dsn
     type: boolean
+    groupe: Informations
     libelle: "Intégré DSN"
     defaut: false
 
   - nom: dsn_type
     type: select
+    groupe: Informations
     libelle: "Type DSN"
     options:
       - MENSUELLE
@@ -550,10 +661,12 @@ champs:
 
   - nom: dsn_periode
     type: text
+    groupe: Informations
     libelle: "Période DSN"
 
   - nom: dsn_statut
     type: select
+    groupe: Informations
     libelle: "Statut DSN"
     options:
       - A_GENERER
@@ -567,19 +680,19 @@ champs:
   # ==========================================================================
   - nom: mode_paiement
     type: select
+    groupe: Configuration
     libelle: "Mode paiement"
-    options:
-      - VIREMENT
-      - CHEQUE
-      - ESPECES
+    options: $modes_paiement.valeurs
     defaut: VIREMENT
 
   - nom: iban
     type: text
+    groupe: Informations
     libelle: "IBAN"
 
   - nom: reference_paiement
     type: text
+    groupe: Informations
     libelle: "Référence paiement"
 
   # ==========================================================================
@@ -587,15 +700,18 @@ champs:
   # ==========================================================================
   - nom: pdf_bulletin
     type: text
+    groupe: Informations
     libelle: "PDF bulletin"
 
   - nom: envoye_salarie
     type: boolean
+    groupe: Informations
     libelle: "Envoyé au salarié"
     defaut: false
 
   - nom: date_envoi
     type: datetime
+    groupe: Dates
     libelle: "Date d'envoi"
 
   # ==========================================================================
@@ -603,6 +719,7 @@ champs:
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - BROUILLON
@@ -614,14 +731,17 @@ champs:
 
   - nom: date_validation
     type: datetime
+    groupe: Dates
     libelle: "Date validation"
 
   - nom: valide_par
     type: text
+    groupe: Informations
     libelle: "Validé par"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

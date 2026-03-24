@@ -145,6 +145,34 @@ DOCUMENT_MODULES = {"devis", "facture", "factures", "commande", "commandes", "bo
 
 # Statuts brouillon par module - chargés depuis constants.yml via get_statut_defaut()
 
+
+def _parse_json_strings_in_dict(data: Dict[str, Any], json_fields: set) -> Dict[str, Any]:
+    """
+    Parse les chaînes JSON en objets Python pour les champs JSON/JSONB.
+
+    Les formulaires HTML envoient souvent les champs JSON comme des chaînes
+    (ex: '{}' au lieu de {}). Cette fonction les convertit.
+    """
+    import json as json_module
+    if not data or not json_fields:
+        return data
+
+    result = dict(data)
+    for field_name in json_fields:
+        if field_name in result and isinstance(result[field_name], str):
+            value = result[field_name].strip()
+            # Parse JSON strings
+            if value in ('', 'null', 'None'):
+                result[field_name] = None
+            elif (value.startswith('{') and value.endswith('}')) or \
+                 (value.startswith('[') and value.endswith(']')):
+                try:
+                    result[field_name] = json_module.loads(value)
+                except (json_module.JSONDecodeError, ValueError):
+                    pass  # Keep as-is if parsing fails
+    return result
+
+
 # =============================================================================
 # Router principal
 # =============================================================================
@@ -167,6 +195,14 @@ def generate_pydantic_model(module: ModuleDefinition, mode: str = "create"):
         python_type = _get_python_type(field_def)
         # Tous les champs optionnels - la validation se fait après
         fields[nom] = (Optional[python_type], field_def.defaut)
+
+    # Ajouter le champ 'lignes' pour les modules documents (devis, factures, etc.)
+    module_lower = module.nom.lower()
+    if module_lower in DOCUMENT_MODULES or module_lower in ["devis", "factures", "facture", "avoirs", "avoir", "bons_livraison", "contrats", "contrat", "notes_frais"]:
+        fields["lignes"] = (Optional[List[Dict[str, Any]]], [])
+
+    # Ajouter custom_fields pour tous les modules
+    fields["custom_fields"] = (Optional[Dict[str, Any]], {})
 
     model_name = f"{module.nom.title()}{mode.title()}"
     return create_model(model_name, **fields)
@@ -212,8 +248,9 @@ def _get_python_type(field_def: FieldDefinition):
         # Choice types
         "enum": str,
         "select": str,
-        # Complex types
-        "json": dict,
+        # Complex types - JSON accepts both dict and string (forms send strings)
+        "json": Any,
+        "jsonb": Any,
         "tags": list,
         # File types
         "fichier": str,
@@ -232,6 +269,12 @@ class GenericCRUDRouter:
     def __init__(self, module: ModuleDefinition):
         self.module = module
         self.table_name = module.nom
+
+        # Identifier les champs JSON/JSONB pour le parsing
+        self.json_fields = {
+            nom for nom, field_def in module.champs.items()
+            if field_def.type.lower() in ('json', 'jsonb')
+        }
 
         # Générer les modèles Pydantic
         self.CreateModel = generate_pydantic_model(module, "create")
@@ -408,6 +451,9 @@ class GenericCRUDRouter:
             # Validation des donnees avant insertion
             data_dict = data.model_dump(exclude_unset=True)
 
+            # Parser les champs JSON qui arrivent comme strings depuis les formulaires
+            data_dict = _parse_json_strings_in_dict(data_dict, self.json_fields)
+
             # Auto-generate reference/code/numero if configured
             config = AUTO_NUMBER_CONFIG.get(self.table_name.lower())
             if config:
@@ -485,9 +531,9 @@ class GenericCRUDRouter:
 
             # Validation des donnees avant mise a jour
             data_dict = data.model_dump(exclude_unset=True, exclude_none=True)
-            # Validation désactivée - la base de données gère les contraintes et défauts
-            # La validation stricte des champs obligatoires bloquait les créations légitimes
-            pass
+
+            # Parser les champs JSON qui arrivent comme strings depuis les formulaires
+            data_dict = _parse_json_strings_in_dict(data_dict, self.json_fields)
 
             # Copier l'ancien enregistrement pour les workflows et l'audit
             old_record = deepcopy(existing) if existing else None

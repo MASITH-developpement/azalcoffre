@@ -9,18 +9,21 @@ description: Gestion des sauvegardes et restaurations
 champs:
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference sauvegarde
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [COMPLETE, INCREMENTALE, DIFFERENTIELLE, SELECTIVE]
     description: Type sauvegarde
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: EN_COURS
     options: [EN_COURS, REUSSIE, ECHOUEE, ANNULEE]
@@ -28,26 +31,31 @@ champs:
 
   - nom: date_debut
     type: datetime
+    groupe: Dates
     obligatoire: true
     description: Date debut
 
   - nom: date_fin
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date fin
 
   - nom: duree_secondes
     type: number
+    groupe: Informations
     obligatoire: false
     description: Duree (secondes)
 
   - nom: taille_octets
     type: number
+    groupe: Informations
     obligatoire: false
     description: Taille (octets)
 
   - nom: stockage
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: LOCAL
     options: [LOCAL, S3, GCS, AZURE_BLOB, SFTP]
@@ -55,26 +63,31 @@ champs:
 
   - nom: chemin
     type: text
+    groupe: Informations
     obligatoire: false
     description: Chemin fichier
 
   - nom: modules_inclus
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Modules inclus
 
   - nom: nb_enregistrements
     type: number
+    groupe: Quantites
     obligatoire: false
     description: Nombre enregistrements
 
   - nom: checksum
     type: text
+    groupe: Informations
     obligatoire: false
     description: Checksum SHA256
 
   - nom: compression
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: GZIP
     options: [AUCUNE, GZIP, ZSTD, LZ4]
@@ -82,50 +95,59 @@ champs:
 
   - nom: chiffrement
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Chiffrement AES-256
 
   - nom: retention_jours
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 30
     description: Retention (jours)
 
   - nom: date_expiration
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date expiration
 
   - nom: automatique
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Sauvegarde automatique
 
   - nom: planification
     type: text
+    groupe: Informations
     obligatoire: false
     description: Planification CRON
 
   - nom: erreur_detail
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Detail erreur
 
   - nom: lance_par_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Lance par
 
   - nom: restaurations
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Historique restaurations
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

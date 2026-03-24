@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Portefeuille corps -->
-  <rect x="2" y="6" width="20" height="14" rx="2" fill="#93C5FD"/>
-  <!-- Rabat -->
-  <path d="M2 8c0-2.2 1.8-4 4-4h12c2.2 0 4 1.8 4 4H2z" fill="#2563EB"/>
-  <!-- Poche carte -->
-  <rect x="14" y="11" width="8" height="6" rx="1" fill="#2563EB"/>
-  <circle cx="18" cy="14" r="2" fill="#93C5FD"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Portefeuille corps --><rect x="2" y="6" width="20" height="14" rx="2" fill="#93C5FD"/><!-- Rabat --><path d="M2 8c0-2.2 1.8-4 4-4h12c2.2 0 4 1.8 4 4H2z" fill="#2563EB"/><!-- Poche carte --><rect x="14" y="11" width="8" height="6" rx="1" fill="#2563EB"/><circle cx="18" cy="14" r="2" fill="#93C5FD"/></svg> 

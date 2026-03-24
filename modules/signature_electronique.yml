@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro"
     obligatoire: true
     unique: true
@@ -24,6 +25,7 @@ champs:
 
   - nom: type_document
     type: select
+    groupe: Informations
     libelle: "Type document"
     obligatoire: true
     options:
@@ -39,11 +41,13 @@ champs:
 
   - nom: titre
     type: text
+    groupe: Identification
     libelle: "Titre"
     obligatoire: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     libelle: "Description"
 
   # ==========================================================================
@@ -51,30 +55,36 @@ champs:
   # ==========================================================================
   - nom: document_source_type
     type: text
+    groupe: Informations
     libelle: "Type source"
     description: "devis, contrats, etc."
 
   - nom: document_source_id
     type: text
+    groupe: Relations
     libelle: "ID source"
 
   - nom: fichier_original
     type: text
+    groupe: Fichiers
     libelle: "Fichier original"
     description: "Chemin PDF à signer"
 
   - nom: fichier_signe
     type: text
+    groupe: Fichiers
     libelle: "Fichier signé"
     description: "PDF avec signatures"
 
   - nom: hash_document
     type: text
+    groupe: Informations
     libelle: "Hash SHA-256"
     description: "Empreinte du document"
 
   - nom: taille_fichier
     type: number
+    groupe: Fichiers
     libelle: "Taille (octets)"
 
   # ==========================================================================
@@ -82,27 +92,33 @@ champs:
   # ==========================================================================
   - nom: demandeur_id
     type: text
+    groupe: Relations
     libelle: "Demandeur"
     description: "Utilisateur ayant initié"
 
   - nom: demandeur_nom
     type: text
+    groupe: Identification
     libelle: "Nom demandeur"
 
   - nom: demandeur_email
     type: email
+    groupe: Contact
     libelle: "Email demandeur"
 
   - nom: date_creation
     type: datetime
+    groupe: Dates
     libelle: "Date création"
 
   - nom: date_envoi
     type: datetime
+    groupe: Dates
     libelle: "Date envoi"
 
   - nom: date_expiration
     type: datetime
+    groupe: Dates
     libelle: "Date expiration"
     description: "Limite pour signer"
 
@@ -111,25 +127,30 @@ champs:
   # ==========================================================================
   - nom: signataires
     type: json
+    groupe: Metadata
     libelle: "Signataires"
     description: "Liste des signataires avec ordre et statut"
     # Structure: [{ordre, nom, email, telephone, type, statut, date_signature, ip, certificat}]
 
   - nom: nombre_signataires
     type: number
+    groupe: Informations
     libelle: "Nb signataires"
 
   - nom: signatures_requises
     type: number
+    groupe: Informations
     libelle: "Signatures requises"
 
   - nom: signatures_obtenues
     type: number
+    groupe: Informations
     libelle: "Signatures obtenues"
     defaut: 0
 
   - nom: ordre_signature
     type: select
+    groupe: Informations
     libelle: "Ordre signature"
     options:
       - SEQUENTIEL
@@ -141,23 +162,28 @@ champs:
   # ==========================================================================
   - nom: client_id
     type: relation
+    groupe: Relations
     libelle: "Client"
     relation: clients
 
   - nom: signataire_nom
     type: text
+    groupe: Identification
     libelle: "Nom signataire"
 
   - nom: signataire_email
     type: email
+    groupe: Contact
     libelle: "Email signataire"
 
   - nom: signataire_telephone
     type: tel
+    groupe: Contact
     libelle: "Tél. signataire"
 
   - nom: signataire_fonction
     type: text
+    groupe: Informations
     libelle: "Fonction"
 
   # ==========================================================================
@@ -165,6 +191,7 @@ champs:
   # ==========================================================================
   - nom: methode_signature
     type: select
+    groupe: Informations
     libelle: "Méthode"
     options:
       - SIMPLE
@@ -175,6 +202,7 @@ champs:
 
   - nom: authentification
     type: select
+    groupe: Informations
     libelle: "Authentification"
     options:
       - EMAIL
@@ -185,14 +213,17 @@ champs:
 
   - nom: code_otp
     type: text
+    groupe: Identification
     libelle: "Code OTP"
 
   - nom: code_otp_expiration
     type: datetime
+    groupe: Identification
     libelle: "Expiration OTP"
 
   - nom: tentatives_otp
     type: number
+    groupe: Informations
     libelle: "Tentatives OTP"
     defaut: 0
 
@@ -201,15 +232,18 @@ champs:
   # ==========================================================================
   - nom: token_signature
     type: text
+    groupe: Securite
     libelle: "Token"
     description: "Token unique pour lien de signature"
 
   - nom: lien_signature
     type: text
+    groupe: Informations
     libelle: "Lien signature"
 
   - nom: lien_consultation
     type: text
+    groupe: Informations
     libelle: "Lien consultation"
     description: "Pour voir le document signé"
 
@@ -218,22 +252,27 @@ champs:
   # ==========================================================================
   - nom: date_signature
     type: datetime
+    groupe: Dates
     libelle: "Date signature"
 
   - nom: ip_signature
     type: text
+    groupe: Informations
     libelle: "IP signature"
 
   - nom: user_agent_signature
     type: text
+    groupe: Relations
     libelle: "User Agent"
 
   - nom: geolocalisation
     type: text
+    groupe: Informations
     libelle: "Géolocalisation"
 
   - nom: signature_visuelle
     type: text
+    groupe: Informations
     libelle: "Signature visuelle"
     description: "Image signature manuscrite (base64)"
 
@@ -242,21 +281,25 @@ champs:
   # ==========================================================================
   - nom: certificat_signature
     type: text
+    groupe: Informations
     libelle: "Certificat"
     description: "Certificat X.509 utilisé"
 
   - nom: horodatage_tsa
     type: text
+    groupe: Informations
     libelle: "Horodatage TSA"
     description: "Token d'horodatage qualifié"
 
   - nom: autorite_horodatage
     type: text
+    groupe: Informations
     libelle: "TSA"
     defaut: "Universign"
 
   - nom: cachet_serveur
     type: text
+    groupe: Informations
     libelle: "Cachet serveur"
     description: "Signature serveur du document"
 
@@ -265,16 +308,19 @@ champs:
   # ==========================================================================
   - nom: fichier_preuve
     type: text
+    groupe: Fichiers
     libelle: "Fichier preuve"
     description: "Dossier de preuve PDF"
 
   - nom: journal_audit
     type: json
+    groupe: Metadata
     libelle: "Journal audit"
     description: "Toutes les actions horodatées"
 
   - nom: empreinte_preuve
     type: text
+    groupe: Informations
     libelle: "Hash preuve"
 
   # ==========================================================================
@@ -282,25 +328,30 @@ champs:
   # ==========================================================================
   - nom: rappel_automatique
     type: boolean
+    groupe: Informations
     libelle: "Rappels auto"
     defaut: true
 
   - nom: frequence_rappel
     type: number
+    groupe: Informations
     libelle: "Fréquence rappel (j)"
     defaut: 3
 
   - nom: nombre_rappels
     type: number
+    groupe: Informations
     libelle: "Rappels envoyés"
     defaut: 0
 
   - nom: dernier_rappel
     type: datetime
+    groupe: Dates
     libelle: "Dernier rappel"
 
   - nom: max_rappels
     type: number
+    groupe: Informations
     libelle: "Max rappels"
     defaut: 3
 
@@ -309,28 +360,34 @@ champs:
   # ==========================================================================
   - nom: annule
     type: boolean
+    groupe: Informations
     libelle: "Annulé"
     defaut: false
 
   - nom: date_annulation
     type: datetime
+    groupe: Dates
     libelle: "Date annulation"
 
   - nom: motif_annulation
     type: text
+    groupe: Informations
     libelle: "Motif annulation"
 
   - nom: refuse
     type: boolean
+    groupe: Informations
     libelle: "Refusé"
     defaut: false
 
   - nom: date_refus
     type: datetime
+    groupe: Dates
     libelle: "Date refus"
 
   - nom: motif_refus
     type: text
+    groupe: Informations
     libelle: "Motif refus"
 
   # ==========================================================================
@@ -338,6 +395,7 @@ champs:
   # ==========================================================================
   - nom: provider
     type: select
+    groupe: Informations
     libelle: "Provider"
     options:
       - INTERNE
@@ -349,15 +407,18 @@ champs:
 
   - nom: provider_id
     type: text
+    groupe: Relations
     libelle: "ID Provider"
     description: "ID chez le prestataire"
 
   - nom: provider_statut
     type: text
+    groupe: Informations
     libelle: "Statut provider"
 
   - nom: webhook_url
     type: text
+    groupe: Fichiers
     libelle: "Webhook URL"
 
   # ==========================================================================
@@ -365,6 +426,7 @@ champs:
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - BROUILLON
@@ -382,26 +444,31 @@ champs:
   # ==========================================================================
   - nom: archive
     type: boolean
+    groupe: Statut
     libelle: "Archivé"
     defaut: false
 
   - nom: date_archivage
     type: datetime
+    groupe: Dates
     libelle: "Date archivage"
 
   - nom: coffre_fort_id
     type: text
+    groupe: Relations
     libelle: "Coffre-fort"
     description: "ID dans le coffre-fort numérique"
 
   - nom: duree_conservation
     type: number
+    groupe: Informations
     libelle: "Conservation (ans)"
     defaut: 10
 
   # Notes
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

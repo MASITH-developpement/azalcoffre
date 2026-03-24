@@ -7,6 +7,7 @@ description: Actes medicaux et rendez-vous
 champs:
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference consultation (CONS-YYYYMMDD-XXXX)
@@ -14,6 +15,7 @@ champs:
 
   - nom: patient_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Patients
     description: Patient concerne
@@ -21,6 +23,7 @@ champs:
 
   - nom: practitioner_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Praticiens
     description: Praticien realisant la consultation
@@ -28,84 +31,99 @@ champs:
 
   - nom: consultation_date
     type: datetime
+    groupe: Dates
     obligatoire: true
     description: Date et heure de la consultation
 
   - nom: duration_minutes
     type: number
+    groupe: Informations
     obligatoire: false
     description: Duree en minutes
 
   - nom: chief_complaint
     type: textarea
+    groupe: Notes
     obligatoire: false
     chiffre: true
     description: Motif de consultation
 
   - nom: clinical_examination
     type: textarea
+    groupe: Notes
     obligatoire: false
     chiffre: true
     description: Examen clinique
 
   - nom: vital_signs
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Constantes vitales
 
   - nom: diagnosis
     type: textarea
+    groupe: Notes
     obligatoire: false
     chiffre: true
     description: Diagnostic
 
   - nom: icd10_codes
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Codes CIM-10
 
   - nom: treatment_plan
     type: textarea
+    groupe: Notes
     obligatoire: false
     chiffre: true
     description: Plan de traitement
 
   - nom: clinical_notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     chiffre: true
     description: Notes cliniques
 
   - nom: patient_instructions
     type: textarea
+    groupe: Notes
     obligatoire: false
     chiffre: true
     description: Recommandations au patient
 
   - nom: follow_up_required
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Suivi necessaire
 
   - nom: follow_up_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de suivi prevue
 
   - nom: is_signed
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: false
     description: Consultation signee
 
   - nom: signed_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de signature
 
   - nom: is_locked
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: false
     description: Consultation verrouillee
@@ -115,6 +133,7 @@ rendez_vous:
   champs:
     - nom: reference
       type: text
+      groupe: Identification
       obligatoire: true
       unique: true
       description: Reference RDV (RDV-YYYYMMDD-XXXX)
@@ -122,18 +141,21 @@ rendez_vous:
 
     - nom: patient_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Patients
       autocompletion: true
 
     - nom: practitioner_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Praticiens
       autocompletion: true
 
     - nom: appointment_type
       type: select
+      groupe: Informations
       obligatoire: false
       defaut: CONSULTATION
       options: [CONSULTATION, FOLLOW_UP, EMERGENCY, VACCINATION, EXAMINATION, PROCEDURE, TELEHEALTH, OTHER]
@@ -141,6 +163,7 @@ rendez_vous:
 
     - nom: status
       type: select
+      groupe: Statut
       obligatoire: true
       defaut: SCHEDULED
       options: [SCHEDULED, CONFIRMED, WAITING, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW]
@@ -148,34 +171,40 @@ rendez_vous:
 
     - nom: scheduled_start
       type: datetime
+      groupe: Dates
       obligatoire: true
       description: Debut prevu
 
     - nom: scheduled_end
       type: datetime
+      groupe: Dates
       obligatoire: true
       description: Fin prevue
 
     - nom: reason
       type: textarea
+      groupe: Notes
       obligatoire: false
       chiffre: true
       description: Motif du rendez-vous
 
     - nom: is_telehealth
       type: boolean
+      groupe: Statut
       obligatoire: false
       defaut: false
       description: Teleconsultation
 
     - nom: telehealth_link
       type: text
+      groupe: Informations
       obligatoire: false
       description: Lien de teleconsultation
       autocompletion: true
 
     - nom: reminder_sent
       type: boolean
+      groupe: Informations
       obligatoire: false
       defaut: false
       description: Rappel envoye
@@ -185,6 +214,7 @@ ordonnances:
   champs:
     - nom: reference
       type: text
+      groupe: Identification
       obligatoire: true
       unique: true
       description: Reference ordonnance (ORD-YYYYMMDD-XXXX)
@@ -192,24 +222,28 @@ ordonnances:
 
     - nom: patient_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Patients
       autocompletion: true
 
     - nom: practitioner_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Praticiens
       autocompletion: true
 
     - nom: consultation_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Consultations
       autocompletion: true
 
     - nom: status
       type: select
+      groupe: Statut
       obligatoire: true
       defaut: DRAFT
       options: [DRAFT, ACTIVE, DISPENSED, COMPLETED, CANCELLED, EXPIRED]
@@ -217,40 +251,47 @@ ordonnances:
 
     - nom: prescription_date
       type: date
+      groupe: Dates
       obligatoire: true
       description: Date de prescription
 
     - nom: expiry_date
       type: date
+      groupe: Dates
       obligatoire: false
       description: Date d'expiration
 
     - nom: medications
       type: json
+      groupe: Metadata
       obligatoire: true
       chiffre: true
       description: Liste des medicaments
 
     - nom: is_renewable
       type: boolean
+      groupe: Statut
       obligatoire: false
       defaut: false
       description: Ordonnance renouvelable
 
     - nom: max_renewals
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 0
       description: Nombre max de renouvellements
 
     - nom: is_ald
       type: boolean
+      groupe: Statut
       obligatoire: false
       defaut: false
       description: Affection Longue Duree
 
     - nom: is_signed
       type: boolean
+      groupe: Statut
       obligatoire: false
       defaut: false
       description: Ordonnance signee

@@ -1,0 +1,256 @@
+# =============================================================================
+# AZALMED - Module Praticiens
+# =============================================================================
+# Profil des professionnels de santé utilisant AZALMED
+
+nom: Praticiens
+icone: user-md
+menu: AZALMED
+description: Gestion des praticiens et de leur profil
+
+champs:
+  # ---------------------------------------------------------------------------
+  # Identification
+  # ---------------------------------------------------------------------------
+  - nom: civilite
+    type: select
+    groupe: Identification
+    obligatoire: true
+    options: [Dr, Pr, M., Mme]
+    defaut: Dr
+    description: Civilité
+
+  - nom: nom
+    type: text
+    groupe: Identification
+    obligatoire: true
+    description: Nom de famille
+
+  - nom: prenom
+    type: text
+    groupe: Identification
+    obligatoire: true
+    description: Prénom
+
+  - nom: email
+    type: email
+    groupe: Identification
+    obligatoire: true
+    description: Email professionnel
+
+  - nom: telephone
+    type: tel
+    groupe: Identification
+    obligatoire: false
+    description: Téléphone professionnel
+
+  # ---------------------------------------------------------------------------
+  # Professionnel
+  # ---------------------------------------------------------------------------
+  - nom: specialite
+    type: select
+    groupe: Professionnel
+    obligatoire: true
+    options:
+      - Médecine générale
+      - Cardiologie
+      - Dermatologie
+      - Gynécologie
+      - Ophtalmologie
+      - ORL
+      - Pédiatrie
+      - Psychiatrie
+      - Radiologie
+      - Chirurgie générale
+      - Chirurgie orthopédique
+      - Chirurgie plastique
+      - Anesthésie-réanimation
+      - Neurologie
+      - Gastro-entérologie
+      - Pneumologie
+      - Rhumatologie
+      - Urologie
+      - Endocrinologie
+      - Oncologie
+      - Autre
+    description: Spécialité médicale
+
+  - nom: sous_specialite
+    type: text
+    groupe: Professionnel
+    obligatoire: false
+    description: Sous-spécialité ou DU/DIU
+
+  - nom: numero_rpps
+    type: text
+    groupe: Professionnel
+    obligatoire: true
+    description: "Numéro RPPS (11 chiffres)"
+
+  - nom: numero_adeli
+    type: text
+    groupe: Professionnel
+    obligatoire: false
+    description: "Numéro ADELI (9 chiffres)"
+
+  - nom: numero_ordre
+    type: text
+    groupe: Professionnel
+    obligatoire: false
+    description: Numéro d'inscription à l'Ordre
+
+  # ---------------------------------------------------------------------------
+  # Cabinet
+  # ---------------------------------------------------------------------------
+  - nom: nom_cabinet
+    type: text
+    groupe: Cabinet
+    obligatoire: false
+    description: Nom du cabinet ou établissement
+
+  - nom: adresse_cabinet
+    type: textarea
+    groupe: Cabinet
+    obligatoire: false
+    description: Adresse du cabinet
+
+  - nom: code_postal_cabinet
+    type: text
+    groupe: Cabinet
+    obligatoire: false
+    description: Code postal
+
+  - nom: ville_cabinet
+    type: text
+    groupe: Cabinet
+    obligatoire: false
+    description: Ville
+
+  - nom: telephone_cabinet
+    type: tel
+    groupe: Cabinet
+    obligatoire: false
+    description: Téléphone du cabinet
+
+  - nom: site_web
+    type: text
+    groupe: Cabinet
+    obligatoire: false
+    description: Site web
+
+  # ---------------------------------------------------------------------------
+  # Abonnement AZALMED
+  # ---------------------------------------------------------------------------
+  - nom: offre
+    type: select
+    groupe: Abonnement
+    obligatoire: true
+    defaut: SOLO
+    options: [SOLO, PRO, PREMIUM, CABINET]
+    description: Offre souscrite
+
+  - nom: date_souscription
+    type: date
+    groupe: Abonnement
+    obligatoire: false
+    description: Date de souscription
+
+  - nom: date_fin_essai
+    type: date
+    groupe: Abonnement
+    obligatoire: false
+    description: Fin de la période d'essai
+
+  - nom: statut_abonnement
+    type: select
+    groupe: Abonnement
+    obligatoire: true
+    defaut: ESSAI
+    options: [ESSAI, ACTIF, SUSPENDU, RESILIE]
+    description: Statut de l'abonnement
+
+  # ---------------------------------------------------------------------------
+  # Préférences VEILLE
+  # ---------------------------------------------------------------------------
+  - nom: veille_active
+    type: boolean
+    groupe: Veille
+    obligatoire: false
+    defaut: true
+    description: Veille médicale activée
+
+  - nom: veille_frequence
+    type: select
+    groupe: Veille
+    obligatoire: false
+    defaut: QUOTIDIEN
+    options: [QUOTIDIEN, HEBDOMADAIRE, MENSUEL]
+    description: Fréquence du digest
+
+  - nom: veille_themes
+    type: tags
+    groupe: Veille
+    obligatoire: false
+    description: "Thèmes d'intérêt pour la veille"
+
+  - nom: veille_sources
+    type: tags
+    groupe: Veille
+    obligatoire: false
+    description: "Sources préférées (PubMed, HAS, ANSM...)"
+
+  # ---------------------------------------------------------------------------
+  # Paramètres
+  # ---------------------------------------------------------------------------
+  - nom: signature_email
+    type: textarea
+    groupe: Paramètres
+    obligatoire: false
+    description: Signature pour les emails
+
+  - nom: logo
+    type: image
+    groupe: Paramètres
+    obligatoire: false
+    description: Logo du cabinet
+
+  - nom: statut
+    type: select
+    groupe: Paramètres
+    obligatoire: true
+    defaut: ACTIF
+    options: [ACTIF, INACTIF]
+    description: Statut du compte
+
+# ---------------------------------------------------------------------------
+# Workflow
+# ---------------------------------------------------------------------------
+workflow:
+  ESSAI -> ACTIF: "Activer l'abonnement"
+  ACTIF -> SUSPENDU: "Suspendre l'abonnement"
+  SUSPENDU -> ACTIF: "Réactiver l'abonnement"
+  ACTIF -> RESILIE: "Résilier l'abonnement"
+  SUSPENDU -> RESILIE: "Résilier l'abonnement"
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+actions:
+  - modifier_offre
+  - exporter_donnees
+  - configurer_veille
+
+# ---------------------------------------------------------------------------
+# Recherche
+# ---------------------------------------------------------------------------
+recherche:
+  champs: [nom, prenom, email, specialite, numero_rpps]
+  tri_defaut: nom
+  ordre_defaut: asc
+
+# ---------------------------------------------------------------------------
+# Liste
+# ---------------------------------------------------------------------------
+liste:
+  colonnes: [nom, prenom, specialite, offre, statut_abonnement, statut]
+  filtres: [specialite, offre, statut_abonnement]

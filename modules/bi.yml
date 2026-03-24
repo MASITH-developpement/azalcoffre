@@ -9,11 +9,13 @@ description: Business Intelligence et tableaux de bord
 champs:
   - nom: name
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du tableau de bord
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: CUSTOM
     options: [DIRIGEANT, COMMERCIAL, FINANCIER, TECHNIQUE, RH, CUSTOM]
@@ -21,50 +23,59 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: ACTIF
-    options: [BROUILLON, ACTIF, ARCHIVE]
+    options: $statuts.bi.valeurs
     description: Statut
 
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: false
     description: Description
 
   - nom: proprietaire_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Utilisateurs
     description: Proprietaire
 
   - nom: partage
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Partage avec l'equipe
 
   - nom: roles_autorises
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Roles autorises
 
   - nom: widgets
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Configuration des widgets
 
   - nom: layout
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Disposition des widgets
 
   - nom: filtres_globaux
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Filtres globaux
 
   - nom: periode_defaut
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: MOIS_COURANT
     options: [JOUR, SEMAINE, MOIS_COURANT, TRIMESTRE, ANNEE, PERSONNALISE]
@@ -72,6 +83,7 @@ champs:
 
   - nom: rafraichissement
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: MANUEL
     options: [TEMPS_REEL, 5_MIN, 15_MIN, 1_HEURE, QUOTIDIEN, MANUEL]
@@ -79,35 +91,41 @@ champs:
 
   - nom: derniere_consultation
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Derniere consultation
 
   - nom: nb_consultations
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     description: Nombre de consultations
 
   - nom: favori
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Favori
 
   - nom: export_programme
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Export programme
 
   - nom: export_frequence
     type: select
+    groupe: Informations
     obligatoire: false
     options: [QUOTIDIEN, HEBDOMADAIRE, MENSUEL]
     description: Frequence export
 
   - nom: export_destinataires
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Destinataires export
 

@@ -9,16 +9,19 @@ champs:
   # Identification
   - nom: number
     type: text
+    groupe: Informations
     obligatoire: true
     description: Numéro de facture (auto-généré)
 
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: false
     description: Référence client
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: DRAFT
     options: [DRAFT, PENDING, VALIDATED, SENT, PAID, CANCELLED]
@@ -27,12 +30,14 @@ champs:
   # Relations
   - nom: customer_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Client
 
   - nom: opportunity_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Opportunites
     description: Opportunité liée
@@ -40,64 +45,75 @@ champs:
   # Dates
   - nom: date
     type: date
+    groupe: Dates
     obligatoire: true
     defaut: aujourd'hui
     description: Date de facture
 
   - nom: due_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date d'échéance
 
   - nom: delivery_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de livraison
 
   # Adresses (JSON)
   - nom: billing_address
     type: textarea
+    groupe: Contact
     obligatoire: false
     description: Adresse de facturation
 
   - nom: shipping_address
     type: textarea
+    groupe: Contact
     obligatoire: false
     description: Adresse de livraison
 
   # Montants
   - nom: subtotal
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Total HT
 
   - nom: discount_amount
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Montant remise
 
   - nom: discount_percent
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Remise (%)
 
   - nom: tax_amount
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Montant TVA
 
   - nom: total
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Total TTC
 
   - nom: currency
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Devises
     defaut: EUR
@@ -105,18 +121,21 @@ champs:
 
   - nom: exchange_rate
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 1.0
     description: Taux de change au moment de la création
 
   - nom: subtotal_base
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Total HT en devise de base (EUR)
 
   - nom: total_base
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Total TTC en devise de base (EUR)
@@ -124,63 +143,74 @@ champs:
   # Paiement
   - nom: payment_terms
     type: select
+    groupe: Informations
     obligatoire: false
     options: [IMMEDIATE, NET_15, NET_30, NET_45, NET_60, NET_90, END_OF_MONTH, CUSTOM]
     description: Conditions de paiement
 
   - nom: payment_method
     type: select
+    groupe: Informations
     obligatoire: false
     options: [BANK_TRANSFER, CHECK, CREDIT_CARD, CASH, DIRECT_DEBIT, PAYPAL, OTHER]
     description: Méthode de paiement
 
   - nom: paid_amount
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Montant payé
 
   - nom: remaining_amount
     type: number
+    groupe: Informations
     obligatoire: false
     description: Reste à payer (calculé)
 
   # Livraison
   - nom: shipping_method
     type: text
+    groupe: Informations
     obligatoire: false
     description: Mode de livraison
 
   - nom: shipping_cost
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Frais de livraison
 
   - nom: tracking_number
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numéro de suivi
 
   # Notes
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes visibles client
 
   - nom: internal_notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes internes
 
   - nom: terms
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Conditions générales
 
   # Document parent/lié
   - nom: parent_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Devis
     description: Devis source
@@ -188,6 +218,7 @@ champs:
   # PDF
   - nom: pdf_url
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: URL du PDF généré
 
@@ -196,6 +227,7 @@ champs:
   # =========================================
   - nom: facturx_status
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: NONE
     options: [NONE, GENERATING, GENERATED, SUBMITTED, DELIVERED, ACCEPTED, REJECTED, PAID]
@@ -203,6 +235,7 @@ champs:
 
   - nom: facturx_profile
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: BASIC
     options: [MINIMUM, BASIC_WL, BASIC, EN16931, EXTENDED]
@@ -210,73 +243,87 @@ champs:
 
   - nom: facturx_pdf_url
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: URL du PDF Factur-X (PDF/A-3 avec XML embarqué)
 
   - nom: facturx_xml_url
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: URL du XML Factur-X séparé
 
   - nom: ppf_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: Identifiant Portail Public de Facturation
 
   - nom: ppf_status
     type: select
+    groupe: Informations
     obligatoire: false
     options: [PENDING, SUBMITTED, ACKNOWLEDGED, DELIVERED, REJECTED]
     description: Statut PPF
 
   - nom: ppf_submitted_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date soumission PPF
 
   - nom: ppf_response
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Réponse PPF (JSON)
 
   - nom: chorus_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: Identifiant Chorus Pro (B2G)
 
   - nom: chorus_status
     type: select
+    groupe: Informations
     obligatoire: false
     options: [PENDING, DEPOSITED, RECEIVED, REJECTED, SUSPENDED, PAID]
     description: Statut Chorus Pro
 
   - nom: recipient_siret
     type: text
+    groupe: Informations
     obligatoire: false
     description: SIRET destinataire (14 chiffres)
 
   - nom: recipient_siren
     type: text
+    groupe: Informations
     obligatoire: false
     description: SIREN destinataire (9 chiffres)
 
   - nom: recipient_vat
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numéro TVA destinataire
 
   - nom: buyer_reference
     type: text
+    groupe: Informations
     obligatoire: false
     description: Référence acheteur (commande, marché)
 
   - nom: contract_reference
     type: text
+    groupe: Informations
     obligatoire: false
     description: Référence contrat
 
   - nom: is_b2g
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: false
     description: Facture B2G (administration publique)
@@ -284,55 +331,65 @@ champs:
   # Portail client
   - nom: access_token
     type: text
+    groupe: Securite
     obligatoire: false
     description: Token d'acces portail client
 
   # Attribution
   - nom: assigned_to
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
     description: Commercial responsable
 
   - nom: validated_by
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
     description: Validé par
 
   - nom: validated_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de validation
 
   # Signature electronique
   - nom: signature_client
     type: text
+    groupe: Informations
     obligatoire: false
     description: Image de la signature du client (base64)
 
   - nom: signature_date
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date et heure de signature
 
   - nom: signature_ip
     type: text
+    groupe: Informations
     obligatoire: false
     description: Adresse IP du client lors de la signature
 
   # Métadonnées
   - nom: created_by
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
 
   - nom: created_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
   - nom: updated_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
 # Lignes de facture (DocumentLine)
@@ -340,81 +397,95 @@ lignes:
   champs:
     - nom: line_number
       type: number
+      groupe: Informations
       obligatoire: true
       description: Numéro de ligne
 
     - nom: product_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Produits
       description: Produit référencé
 
     - nom: product_code
       type: text
+      groupe: Identification
       obligatoire: false
       description: Code produit
 
     - nom: description
       type: textarea
+      groupe: Informations
       obligatoire: true
       description: Description
 
     - nom: quantity
       type: number
+      groupe: Quantites
       obligatoire: true
       defaut: 1
       description: Quantité
 
     - nom: unit
       type: text
+      groupe: Quantites
       obligatoire: false
       defaut: pce
       description: Unité (pce, kg, h, etc.)
 
     - nom: unit_price
       type: number
+      groupe: Informations
       obligatoire: true
       defaut: 0
       description: Prix unitaire HT
 
     - nom: discount_percent
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 0
       description: Remise ligne (%)
 
     - nom: discount_amount
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 0
       description: Montant remise ligne
 
     - nom: subtotal
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 0
       description: Total ligne HT
 
     - nom: tax_rate
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 20.0
       description: Taux TVA (%)
 
     - nom: tax_amount
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 0
       description: Montant TVA ligne
 
     - nom: total
       type: number
+      groupe: Montants
       obligatoire: false
       defaut: 0
       description: Total ligne TTC
 
     - nom: notes
       type: textarea
+      groupe: Notes
       obligatoire: false
       description: Notes ligne
 
@@ -423,22 +494,26 @@ paiements:
   champs:
     - nom: reference
       type: text
+      groupe: Identification
       obligatoire: false
       description: Référence paiement
 
     - nom: method
       type: select
+      groupe: Informations
       obligatoire: true
       options: [BANK_TRANSFER, CHECK, CREDIT_CARD, CASH, DIRECT_DEBIT, PAYPAL, OTHER]
       description: Méthode de paiement
 
     - nom: amount
       type: number
+      groupe: Montants
       obligatoire: true
       description: Montant
 
     - nom: currency
       type: relation
+      groupe: Informations
       obligatoire: false
       relation: Devises
       defaut: EUR
@@ -446,38 +521,45 @@ paiements:
 
     - nom: exchange_rate
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 1.0
       description: Taux de change au moment du paiement
 
     - nom: amount_base
       type: number
+      groupe: Informations
       obligatoire: false
       description: Montant en devise de base (EUR)
 
     - nom: date
       type: date
+      groupe: Dates
       obligatoire: true
       defaut: aujourd'hui
       description: Date du paiement
 
     - nom: received_date
       type: date
+      groupe: Dates
       obligatoire: false
       description: Date de réception
 
     - nom: bank_account
       type: text
+      groupe: Informations
       obligatoire: false
       description: Compte bancaire
 
     - nom: transaction_id
       type: text
+      groupe: Relations
       obligatoire: false
       description: ID transaction
 
     - nom: notes
       type: textarea
+      groupe: Notes
       obligatoire: false
       description: Notes
 
@@ -485,10 +567,11 @@ workflow:
   DRAFT -> PENDING: si customer_id et lignes.count > 0
   PENDING -> VALIDATED: action valider
   VALIDATED -> SENT: action envoyer_email
-  VALIDATED -> facturx_status=GENERATING: action generer_facturx
   SENT -> PAID: si paid_amount >= total
   VALIDATED -> PAID: si paid_amount >= total
   SENT -> CANCELLED: action annuler
+  # Note: generer_facturx est une action disponible sur VALIDATED (voir actions ci-dessous)
+  # Elle modifie facturx_status directement sans changer le statut principal
 
 actions:
   - valider

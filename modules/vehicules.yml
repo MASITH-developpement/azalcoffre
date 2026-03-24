@@ -7,51 +7,60 @@ description: Gestion de la flotte de vehicules
 champs:
   - nom: code
     type: text
+    groupe: Identification
     obligatoire: true
     description: Code interne du vehicule
     autocompletion: true
 
   - nom: registration_number
     type: text
+    groupe: Informations
     obligatoire: true
     description: Numero d'immatriculation
     autocompletion: true
 
   - nom: vin
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero de chassis (VIN)
 
   - nom: internal_number
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero interne
 
   - nom: make
     type: text
+    groupe: Informations
     obligatoire: true
     description: Marque
     autocompletion: true
 
   - nom: model
     type: text
+    groupe: Informations
     obligatoire: true
     description: Modele
     autocompletion: true
 
   - nom: version
     type: text
+    groupe: Informations
     obligatoire: false
     description: Version/Finition
     autocompletion: true
 
   - nom: year
     type: number
+    groupe: Informations
     obligatoire: true
     description: Annee de mise en circulation
 
   - nom: vehicle_type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: car
     options: [car, van, truck, motorcycle, utility, bus, electric, hybrid, scooter]
@@ -59,6 +68,7 @@ champs:
 
   - nom: fuel_type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: diesel
     options: [gasoline, diesel, electric, hybrid, plugin_hybrid, lpg, cng, hydrogen, e85]
@@ -66,6 +76,7 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: available
     options: [available, assigned, in_use, maintenance, repair, out_of_service, reserved, sold, scrapped]
@@ -73,44 +84,52 @@ champs:
 
   - nom: color
     type: text
+    groupe: Informations
     obligatoire: false
     description: Couleur
     autocompletion: true
 
   - nom: seats
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 5
     description: Nombre de places
 
   - nom: doors
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 4
     description: Nombre de portes
 
   - nom: engine_capacity_cc
     type: number
+    groupe: Informations
     obligatoire: false
     description: Cylindree (cm3)
 
   - nom: power_hp
     type: number
+    groupe: Informations
     obligatoire: false
     description: Puissance (ch)
 
   - nom: fiscal_power
     type: number
+    groupe: Informations
     obligatoire: false
     description: Puissance fiscale (CV)
 
   - nom: co2_emissions
     type: number
+    groupe: Informations
     obligatoire: false
     description: Emissions CO2 (g/km)
 
   - nom: transmission
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: manual
     options: [manual, automatic, semi_auto]
@@ -118,58 +137,69 @@ champs:
 
   - nom: initial_mileage
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Kilometrage initial
 
   - nom: current_mileage
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Kilometrage actuel
 
   - nom: annual_mileage_limit
     type: number
+    groupe: Informations
     obligatoire: false
     description: Limite kilometrique annuelle
 
   - nom: fuel_capacity_liters
     type: number
+    groupe: Informations
     obligatoire: false
     description: Capacite reservoir (L)
 
   - nom: average_consumption
     type: number
+    groupe: Informations
     obligatoire: false
     description: Consommation moyenne (L/100km)
 
   - nom: battery_capacity_kwh
     type: number
+    groupe: Informations
     obligatoire: false
     description: Capacite batterie (kWh) - electriques
 
   - nom: purchase_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date d'achat
 
   - nom: purchase_price
     type: number
+    groupe: Informations
     obligatoire: false
     description: Prix d'achat
 
   - nom: current_value
     type: number
+    groupe: Informations
     obligatoire: false
     description: Valeur actuelle
 
   - nom: monthly_cost
     type: number
+    groupe: Informations
     obligatoire: false
     description: Cout mensuel estime (TCO)
 
   - nom: assigned_driver_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Employes
     description: Conducteur affecte
@@ -177,78 +207,93 @@ champs:
 
   - nom: department
     type: text
+    groupe: Informations
     obligatoire: false
     description: Service/Departement
     autocompletion: true
 
   - nom: cost_center
     type: text
+    groupe: Informations
     obligatoire: false
     description: Centre de cout
     autocompletion: true
 
   - nom: location_lat
     type: number
+    groupe: Informations
     obligatoire: false
     description: Latitude
 
   - nom: location_lng
     type: number
+    groupe: Informations
     obligatoire: false
     description: Longitude
 
   - nom: gps_device_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: ID boitier GPS
 
   - nom: first_registration_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date premiere immatriculation
 
   - nom: last_technical_inspection
     type: date
+    groupe: Dates
     obligatoire: false
     description: Dernier controle technique
 
   - nom: next_technical_inspection
     type: date
+    groupe: Dates
     obligatoire: false
     description: Prochain controle technique
 
   - nom: last_service_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Derniere revision
 
   - nom: next_service_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Prochaine revision
 
   - nom: next_service_mileage
     type: number
+    groupe: Informations
     obligatoire: false
     description: Kilometrage prochaine revision
 
   - nom: photo_url
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: URL photo
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 
   - nom: tags
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Tags
 
   - nom: is_active
     type: boolean
+    groupe: Statut
     obligatoire: true
     defaut: true
     description: Actif

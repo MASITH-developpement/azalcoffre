@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: matricule
     type: text
+    groupe: Informations
     libelle: "Matricule"
     obligatoire: true
     unique: true
@@ -24,6 +25,7 @@ champs:
 
   - nom: type_fiche
     type: select
+    groupe: Informations
     libelle: "Type"
     options:
       - EMPLOYE
@@ -39,6 +41,7 @@ champs:
   # ==========================================================================
   - nom: civilite
     type: select
+    groupe: Informations
     libelle: "Civilité"
     options:
       - M.
@@ -47,37 +50,45 @@ champs:
 
   - nom: nom
     type: text
+    groupe: Identification
     libelle: "Nom"
     obligatoire: true
 
   - nom: prenom
     type: text
+    groupe: Informations
     libelle: "Prénom"
     obligatoire: true
 
   - nom: nom_naissance
     type: text
+    groupe: Identification
     libelle: "Nom de naissance"
 
   - nom: date_naissance
     type: date
+    groupe: Dates
     libelle: "Date naissance"
 
   - nom: lieu_naissance
     type: text
+    groupe: Informations
     libelle: "Lieu naissance"
 
   - nom: nationalite
     type: text
+    groupe: Informations
     libelle: "Nationalité"
     defaut: "Française"
 
   - nom: numero_ss
     type: text
+    groupe: Informations
     libelle: "N° Sécurité Sociale"
 
   - nom: situation_familiale
     type: select
+    groupe: Informations
     libelle: "Situation familiale"
     options:
       - CELIBATAIRE
@@ -88,6 +99,7 @@ champs:
 
   - nom: nombre_enfants
     type: number
+    groupe: Informations
     libelle: "Nombre d'enfants"
     defaut: 0
 
@@ -96,38 +108,47 @@ champs:
   # ==========================================================================
   - nom: adresse
     type: textarea
+    groupe: Contact
     libelle: "Adresse"
 
   - nom: code_postal
     type: text
+    groupe: Identification
     libelle: "Code postal"
 
   - nom: ville
     type: text
+    groupe: Contact
     libelle: "Ville"
 
   - nom: telephone
     type: tel
+    groupe: Contact
     libelle: "Téléphone"
 
   - nom: mobile
     type: tel
+    groupe: Contact
     libelle: "Mobile"
 
   - nom: email_personnel
     type: email
+    groupe: Contact
     libelle: "Email personnel"
 
   - nom: email_professionnel
     type: email
+    groupe: Contact
     libelle: "Email pro"
 
   - nom: contact_urgence
     type: text
+    groupe: Relations
     libelle: "Contact urgence"
 
   - nom: tel_urgence
     type: tel
+    groupe: Contact
     libelle: "Tél. urgence"
 
   # ==========================================================================
@@ -135,6 +156,7 @@ champs:
   # ==========================================================================
   - nom: type_contrat
     type: select
+    groupe: Informations
     libelle: "Type contrat"
     options:
       - CDI
@@ -146,22 +168,27 @@ champs:
 
   - nom: date_entree
     type: date
+    groupe: Dates
     libelle: "Date d'entrée"
 
   - nom: date_anciennete
     type: date
+    groupe: Dates
     libelle: "Date ancienneté"
 
   - nom: date_fin_contrat
     type: date
+    groupe: Dates
     libelle: "Fin contrat"
 
   - nom: motif_fin_contrat
     type: text
+    groupe: Informations
     libelle: "Motif fin"
 
   - nom: periode_essai_fin
     type: date
+    groupe: Dates
     libelle: "Fin période essai"
 
   # ==========================================================================
@@ -169,27 +196,33 @@ champs:
   # ==========================================================================
   - nom: poste
     type: text
+    groupe: Informations
     libelle: "Poste"
 
   - nom: service
     type: text
+    groupe: Informations
     libelle: "Service"
 
   - nom: departement
     type: text
+    groupe: Informations
     libelle: "Département"
 
   - nom: etablissement
     type: text
+    groupe: Informations
     libelle: "Établissement"
 
   - nom: manager_id
     type: relation
+    groupe: Relations
     libelle: "Manager"
     relation: employes
 
   - nom: categorie
     type: select
+    groupe: Informations
     libelle: "Catégorie"
     options:
       - CADRE
@@ -198,14 +231,17 @@ champs:
 
   - nom: coefficient
     type: text
+    groupe: Informations
     libelle: "Coefficient"
 
   - nom: niveau
     type: text
+    groupe: Informations
     libelle: "Niveau"
 
   - nom: echelon
     type: text
+    groupe: Informations
     libelle: "Échelon"
 
   # ==========================================================================
@@ -213,6 +249,7 @@ champs:
   # ==========================================================================
   - nom: temps_travail
     type: select
+    groupe: Informations
     libelle: "Temps de travail"
     options:
       - TEMPS_PLEIN
@@ -222,21 +259,25 @@ champs:
 
   - nom: horaire_hebdo
     type: number
+    groupe: Informations
     libelle: "Heures/semaine"
     defaut: 35
 
   - nom: horaire_mensuel
     type: number
+    groupe: Informations
     libelle: "Heures/mois"
     defaut: 151.67
 
   - nom: taux_activite
     type: number
+    groupe: Montants
     libelle: "Taux activité (%)"
     defaut: 100
 
   - nom: forfait_jours
     type: number
+    groupe: Informations
     libelle: "Forfait jours/an"
 
   # ==========================================================================
@@ -244,36 +285,44 @@ champs:
   # ==========================================================================
   - nom: salaire_brut
     type: money
+    groupe: Montants
     libelle: "Salaire brut"
 
   - nom: salaire_net
     type: money
+    groupe: Montants
     libelle: "Salaire net"
 
   - nom: taux_horaire
     type: money
+    groupe: Montants
     libelle: "Taux horaire"
 
   - nom: prime_anciennete
     type: money
+    groupe: Montants
     libelle: "Prime ancienneté"
 
   - nom: avantages_nature
     type: money
+    groupe: Informations
     libelle: "Avantages nature"
 
   - nom: titres_restaurant
     type: boolean
+    groupe: Informations
     libelle: "Titres restaurant"
     defaut: false
 
   - nom: mutuelle
     type: boolean
+    groupe: Informations
     libelle: "Mutuelle"
     defaut: true
 
   - nom: prevoyance
     type: boolean
+    groupe: Informations
     libelle: "Prévoyance"
     defaut: true
 
@@ -282,34 +331,41 @@ champs:
   # ==========================================================================
   - nom: cp_acquis
     type: number
+    groupe: Informations
     libelle: "CP acquis"
     defaut: 0
 
   - nom: cp_pris
     type: number
+    groupe: Informations
     libelle: "CP pris"
     defaut: 0
 
   - nom: cp_solde
     type: number
+    groupe: Informations
     libelle: "Solde CP"
 
   - nom: rtt_acquis
     type: number
+    groupe: Informations
     libelle: "RTT acquis"
     defaut: 0
 
   - nom: rtt_pris
     type: number
+    groupe: Informations
     libelle: "RTT pris"
     defaut: 0
 
   - nom: rtt_solde
     type: number
+    groupe: Informations
     libelle: "Solde RTT"
 
   - nom: conges_exceptionnels
     type: json
+    groupe: Metadata
     libelle: "Congés exceptionnels"
 
   # ==========================================================================
@@ -317,6 +373,7 @@ champs:
   # ==========================================================================
   - nom: conge_type
     type: select
+    groupe: Informations
     libelle: "Type congé"
     options:
       - CP
@@ -330,22 +387,27 @@ champs:
 
   - nom: conge_date_debut
     type: date
+    groupe: Dates
     libelle: "Début congé"
 
   - nom: conge_date_fin
     type: date
+    groupe: Dates
     libelle: "Fin congé"
 
   - nom: conge_jours
     type: number
+    groupe: Informations
     libelle: "Jours congé"
 
   - nom: conge_motif
     type: text
+    groupe: Informations
     libelle: "Motif"
 
   - nom: conge_statut
     type: select
+    groupe: Informations
     libelle: "Statut congé"
     options:
       - DEMANDE
@@ -358,26 +420,32 @@ champs:
   # ==========================================================================
   - nom: temps_date
     type: date
+    groupe: Dates
     libelle: "Date"
 
   - nom: temps_heures
     type: number
+    groupe: Informations
     libelle: "Heures"
 
   - nom: temps_projet
     type: text
+    groupe: Informations
     libelle: "Projet"
 
   - nom: temps_tache
     type: text
+    groupe: Informations
     libelle: "Tâche"
 
   - nom: temps_description
     type: text
+    groupe: Informations
     libelle: "Description"
 
   - nom: temps_facturable
     type: boolean
+    groupe: Informations
     libelle: "Facturable"
     defaut: true
 
@@ -386,10 +454,12 @@ champs:
   # ==========================================================================
   - nom: frais_date
     type: date
+    groupe: Dates
     libelle: "Date frais"
 
   - nom: frais_type
     type: select
+    groupe: Informations
     libelle: "Type frais"
     options:
       - DEPLACEMENT
@@ -401,22 +471,27 @@ champs:
 
   - nom: frais_montant
     type: money
+    groupe: Montants
     libelle: "Montant"
 
   - nom: frais_tva
     type: money
+    groupe: Montants
     libelle: "TVA"
 
   - nom: frais_description
     type: text
+    groupe: Informations
     libelle: "Description"
 
   - nom: frais_justificatif
     type: text
+    groupe: Informations
     libelle: "Justificatif"
 
   - nom: frais_statut
     type: select
+    groupe: Informations
     libelle: "Statut"
     options:
       - BROUILLON
@@ -430,26 +505,32 @@ champs:
   # ==========================================================================
   - nom: formations
     type: json
+    groupe: Metadata
     libelle: "Formations"
 
   - nom: formation_titre
     type: text
+    groupe: Informations
     libelle: "Formation"
 
   - nom: formation_date
     type: date
+    groupe: Dates
     libelle: "Date formation"
 
   - nom: formation_duree
     type: number
+    groupe: Informations
     libelle: "Durée (h)"
 
   - nom: formation_organisme
     type: text
+    groupe: Informations
     libelle: "Organisme"
 
   - nom: formation_cout
     type: money
+    groupe: Montants
     libelle: "Coût"
 
   # ==========================================================================
@@ -457,14 +538,17 @@ champs:
   # ==========================================================================
   - nom: entretiens
     type: json
+    groupe: Metadata
     libelle: "Entretiens"
 
   - nom: dernier_entretien
     type: date
+    groupe: Dates
     libelle: "Dernier entretien"
 
   - nom: prochain_entretien
     type: date
+    groupe: Dates
     libelle: "Prochain entretien"
 
   # ==========================================================================
@@ -472,18 +556,22 @@ champs:
   # ==========================================================================
   - nom: photo
     type: text
+    groupe: Fichiers
     libelle: "Photo"
 
   - nom: documents
     type: json
+    groupe: Metadata
     libelle: "Documents"
 
   - nom: carte_identite
     type: text
+    groupe: Informations
     libelle: "Carte d'identité"
 
   - nom: rib
     type: text
+    groupe: Informations
     libelle: "RIB"
 
   # ==========================================================================
@@ -491,14 +579,17 @@ champs:
   # ==========================================================================
   - nom: iban
     type: text
+    groupe: Informations
     libelle: "IBAN"
 
   - nom: bic
     type: text
+    groupe: Informations
     libelle: "BIC"
 
   - nom: banque
     type: text
+    groupe: Informations
     libelle: "Banque"
 
   # ==========================================================================
@@ -506,6 +597,7 @@ champs:
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - ACTIF
@@ -517,10 +609,12 @@ champs:
 
   - nom: date_sortie
     type: date
+    groupe: Dates
     libelle: "Date sortie"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

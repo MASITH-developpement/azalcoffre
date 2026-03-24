@@ -13,19 +13,23 @@ ordre_menu: 3
 champs:
   - nom: code
     type: text
+    groupe: Identification
     libelle: "Code"
 
   - nom: name
     type: text
+    groupe: Identification
     libelle: "Nom"
     obligatoire: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     libelle: "Description"
 
   - nom: type
     type: select
+    groupe: Informations
     libelle: "Type"
     options:
       - PRODUIT
@@ -35,6 +39,7 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - ACTIVE
@@ -44,71 +49,86 @@ champs:
 
   - nom: category_id
     type: text
+    groupe: Relations
     libelle: "Catégorie"
 
   - nom: barcode
     type: text
+    groupe: Informations
     libelle: "Code-barres"
 
   - nom: sku
     type: text
+    groupe: Informations
     libelle: "SKU"
 
   - nom: unit
     type: text
+    groupe: Quantites
     libelle: "Unité"
     defaut: "unité"
 
   - nom: sale_price
     type: number
+    groupe: Informations
     libelle: "Prix de vente HT"
     obligatoire: true
 
   - nom: standard_cost
     type: number
+    groupe: Informations
     libelle: "Prix d'achat"
 
   - nom: tax_rate
     type: number
+    groupe: Informations
     libelle: "Taux TVA (%)"
     defaut: 20
 
   - nom: supplier_tax_rate
     type: number
+    groupe: Informations
     libelle: "Taux TVA achat (%)"
     defaut: 20
 
   - nom: stock_actuel
     type: number
+    groupe: Quantites
     libelle: "Stock actuel"
     defaut: 0
 
   - nom: stock_minimum
     type: number
+    groupe: Quantites
     libelle: "Stock minimum"
     defaut: 0
 
   - nom: is_sellable
     type: boolean
+    groupe: Statut
     libelle: "Vendable"
     defaut: true
 
   - nom: is_purchasable
     type: boolean
+    groupe: Statut
     libelle: "Achetable"
     defaut: true
 
   - nom: is_active
     type: boolean
+    groupe: Statut
     libelle: "Actif"
     defaut: true
 
   - nom: image_url
     type: text
+    groupe: Fichiers
     libelle: "Image URL"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Champs recherche

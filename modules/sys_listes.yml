@@ -1,0 +1,164 @@
+# =============================================================================
+# AZALPLUS - Module Listes Système (sys_listes)
+# =============================================================================
+# Table centrale pour toutes les listes/options dynamiques.
+# Remplace les options hardcodées dans les modules YAML.
+#
+# Priorité de résolution:
+#   1. DB: sys_listes WHERE code = 'statuts.factures' AND tenant_id = current
+#   2. DB: sys_listes WHERE code = 'statuts.factures' AND tenant_id IS NULL (système)
+#   3. Fallback: config/constants.yml
+#
+# Usage dans les modules:
+#   options: $statuts.factures        -> Résolu depuis sys_listes ou constants.yml
+#   options: $clients.types.valeurs   -> Résolu depuis sys_listes ou constants.yml
+# =============================================================================
+
+nom: Listes
+nom_pluriel: Listes
+icone: list
+menu: Parametres
+description: "Listes et options dynamiques du système"
+ordre_menu: 90
+acces: admin_only
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: code
+    type: text
+    libelle: "Code"
+    obligatoire: true
+    unique: true
+    description: "Chemin unique (ex: statuts.factures, clients.types.valeurs)"
+    placeholder: "statuts.factures"
+    groupe: Identification
+
+  - nom: nom
+    type: text
+    libelle: "Nom"
+    obligatoire: true
+    description: "Nom affiché"
+    groupe: Identification
+
+  - nom: description
+    type: textarea
+    libelle: "Description"
+    description: "Description de la liste"
+    groupe: Identification
+
+  - nom: categorie
+    type: select
+    groupe: Informations
+    libelle: "Catégorie"
+    options:
+      - STATUTS
+      - TYPES
+      - OPTIONS
+      - PARAMETRES
+      - DEVISES
+      - UNITES
+      - AUTRES
+    defaut: OPTIONS
+    groupe: Identification
+
+  # ==========================================================================
+  # VALEURS
+  # ==========================================================================
+  - nom: valeurs
+    type: json
+    libelle: "Valeurs"
+    obligatoire: true
+    description: "Liste des valeurs (tableau JSON)"
+    groupe: Informations
+    # Format: ["BROUILLON", "ACTIF", "ARCHIVE"]
+    # Ou format enrichi: [{"code": "BROUILLON", "nom": "Brouillon", "couleur": "gray"}]
+
+  - nom: valeur_defaut
+    type: text
+    libelle: "Valeur par défaut"
+    description: "Valeur sélectionnée par défaut"
+    groupe: Informations
+
+  - nom: format_valeurs
+    type: select
+    groupe: Informations
+    libelle: "Format des valeurs"
+    options:
+      - SIMPLE
+      - ENRICHI
+    defaut: SIMPLE
+    description: "SIMPLE: tableau de strings, ENRICHI: tableau d'objets avec code/nom/couleur"
+    groupe: Informations
+
+  # ==========================================================================
+  # MÉTADONNÉES
+  # ==========================================================================
+  - nom: module_cible
+    type: text
+    libelle: "Module cible"
+    description: "Module qui utilise cette liste (ex: factures, clients)"
+    groupe: Metadata
+
+  - nom: champ_cible
+    type: text
+    libelle: "Champ cible"
+    description: "Champ qui utilise cette liste (ex: status, type)"
+    groupe: Metadata
+
+  - nom: ordre
+    type: number
+    libelle: "Ordre"
+    defaut: 0
+    description: "Ordre d'affichage"
+    groupe: Metadata
+
+  - nom: actif
+    type: boolean
+    libelle: "Actif"
+    defaut: true
+    groupe: Metadata
+
+  - nom: modifiable
+    type: boolean
+    libelle: "Modifiable"
+    defaut: true
+    description: "Les utilisateurs peuvent-ils modifier cette liste?"
+    groupe: Metadata
+
+  - nom: is_system
+    type: boolean
+    libelle: "Liste système"
+    defaut: false
+    description: "Liste système (non supprimable)"
+    groupe: Metadata
+
+  # ==========================================================================
+  # COULEURS (pour les statuts)
+  # ==========================================================================
+  - nom: couleurs
+    type: json
+    libelle: "Couleurs"
+    description: "Mapping valeur -> couleur (ex: {\"BROUILLON\": \"gray\", \"ACTIF\": \"success\"})"
+    groupe: Configuration
+
+  - nom: icones
+    type: json
+    libelle: "Icônes"
+    description: "Mapping valeur -> icône Lucide (ex: {\"BROUILLON\": \"file\", \"ACTIF\": \"check\"})"
+    groupe: Configuration
+
+# Index pour recherche rapide
+index:
+  - champs: [code]
+    unique: true
+  - champs: [categorie]
+  - champs: [module_cible]
+  - champs: [actif]
+
+# Actions
+actions:
+  - dupliquer
+  - exporter
+  - importer_constants

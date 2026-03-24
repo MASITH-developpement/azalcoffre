@@ -1,0 +1,279 @@
+# =============================================================================
+# AZALMED - Module Documents (ARCHIVE)
+# =============================================================================
+# Coffre-fort numérique HDS - Archivage légal 20 ans
+# Chiffrement AES-256, intégrité SHA-256, horodatage TSA RFC 3161
+
+nom: Documents
+icone: archive
+menu: AZALMED
+description: "Coffre-fort médical certifié HDS - Archivage 20 ans"
+
+champs:
+  # ---------------------------------------------------------------------------
+  # Identification
+  # ---------------------------------------------------------------------------
+  - nom: reference
+    type: text
+    groupe: Identification
+    obligatoire: false
+    readonly: true
+    description: "Référence unique (auto-générée)"
+
+  - nom: titre
+    type: text
+    groupe: Identification
+    obligatoire: true
+    description: Titre du document
+
+  - nom: type_document
+    type: select
+    groupe: Identification
+    obligatoire: true
+    options:
+      - COMPTE_RENDU
+      - CONSENTEMENT
+      - ORDONNANCE
+      - RESULTAT_EXAMEN
+      - IMAGERIE
+      - COURRIER
+      - CERTIFICAT
+      - FACTURE
+      - AUTRE
+    description: Type de document
+
+  - nom: description
+    type: textarea
+    groupe: Identification
+    obligatoire: false
+    description: Description du document
+
+  # ---------------------------------------------------------------------------
+  # Relations
+  # ---------------------------------------------------------------------------
+  - nom: patient_id
+    type: relation
+    groupe: Relations
+    obligatoire: true
+    relation: Patients
+    description: Patient concerné
+
+  - nom: praticien_id
+    type: relation
+    groupe: Relations
+    obligatoire: true
+    relation: Praticiens
+    description: Praticien responsable
+
+  - nom: consultation_id
+    type: relation
+    groupe: Relations
+    obligatoire: false
+    relation: Consultations
+    description: Consultation liée
+
+  - nom: consentement_id
+    type: relation
+    groupe: Relations
+    obligatoire: false
+    relation: Consentements
+    description: Consentement lié
+
+  # ---------------------------------------------------------------------------
+  # Fichier
+  # ---------------------------------------------------------------------------
+  - nom: fichier
+    type: file
+    groupe: Fichier
+    obligatoire: true
+    description: Fichier à archiver
+
+  - nom: nom_fichier_original
+    type: text
+    groupe: Fichier
+    obligatoire: false
+    readonly: true
+    description: Nom du fichier original
+
+  - nom: taille_fichier
+    type: number
+    groupe: Fichier
+    obligatoire: false
+    readonly: true
+    description: "Taille en octets"
+
+  - nom: mime_type
+    type: text
+    groupe: Fichier
+    obligatoire: false
+    readonly: true
+    description: "Type MIME"
+
+  # ---------------------------------------------------------------------------
+  # Sécurité et intégrité
+  # ---------------------------------------------------------------------------
+  - nom: hash_sha256
+    type: text
+    groupe: Sécurité
+    obligatoire: false
+    readonly: true
+    description: "Empreinte SHA-256"
+
+  - nom: hash_sha512
+    type: text
+    groupe: Sécurité
+    obligatoire: false
+    readonly: true
+    description: "Empreinte SHA-512 (documents critiques)"
+
+  - nom: est_chiffre
+    type: boolean
+    groupe: Sécurité
+    obligatoire: false
+    defaut: true
+    readonly: true
+    description: Document chiffré AES-256
+
+  - nom: cle_chiffrement_id
+    type: text
+    groupe: Sécurité
+    obligatoire: false
+    readonly: true
+    description: "Identifiant de la clé de chiffrement"
+
+  # ---------------------------------------------------------------------------
+  # Horodatage TSA
+  # ---------------------------------------------------------------------------
+  - nom: tsa_timestamp
+    type: datetime
+    groupe: Horodatage
+    obligatoire: false
+    readonly: true
+    description: "Horodatage TSA RFC 3161"
+
+  - nom: tsa_token
+    type: text
+    groupe: Horodatage
+    obligatoire: false
+    readonly: true
+    description: "Token TSA"
+
+  - nom: tsa_autorite
+    type: text
+    groupe: Horodatage
+    obligatoire: false
+    readonly: true
+    description: "Autorité d'horodatage"
+
+  # ---------------------------------------------------------------------------
+  # Rétention
+  # ---------------------------------------------------------------------------
+  - nom: date_creation
+    type: datetime
+    groupe: Rétention
+    obligatoire: false
+    readonly: true
+    description: Date de création
+
+  - nom: date_archivage
+    type: datetime
+    groupe: Rétention
+    obligatoire: false
+    readonly: true
+    description: Date d'archivage
+
+  - nom: duree_retention_ans
+    type: number
+    groupe: Rétention
+    obligatoire: false
+    defaut: 20
+    description: "Durée de rétention (années)"
+
+  - nom: date_fin_retention
+    type: date
+    groupe: Rétention
+    obligatoire: false
+    readonly: true
+    description: Date de fin de rétention légale
+
+  - nom: est_retention_legale
+    type: boolean
+    groupe: Rétention
+    obligatoire: false
+    defaut: true
+    description: Soumis à rétention légale
+
+  # ---------------------------------------------------------------------------
+  # Statut
+  # ---------------------------------------------------------------------------
+  - nom: statut
+    type: select
+    groupe: Statut
+    obligatoire: true
+    defaut: ACTIF
+    options: [BROUILLON, ACTIF, ARCHIVE, SUPPRIME]
+    description: Statut du document
+
+  - nom: est_confidentiel
+    type: boolean
+    groupe: Statut
+    obligatoire: false
+    defaut: false
+    description: Document confidentiel (accès restreint)
+
+  # ---------------------------------------------------------------------------
+  # Audit
+  # ---------------------------------------------------------------------------
+  - nom: nombre_consultations
+    type: number
+    groupe: Audit
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre de consultations
+
+  - nom: derniere_consultation
+    type: datetime
+    groupe: Audit
+    obligatoire: false
+    readonly: true
+    description: Dernière consultation
+
+  - nom: dernier_consulteur
+    type: text
+    groupe: Audit
+    obligatoire: false
+    readonly: true
+    description: Dernier utilisateur ayant consulté
+
+# ---------------------------------------------------------------------------
+# Workflow
+# ---------------------------------------------------------------------------
+workflow:
+  BROUILLON -> ACTIF: "Archiver le document"
+  ACTIF -> ARCHIVE: "Archiver (fin de rétention)"
+  ACTIF -> SUPPRIME: "Supprimer (si autorisé)"
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+actions:
+  - telecharger
+  - verifier_integrite
+  - generer_attestation
+  - partager_patient
+
+# ---------------------------------------------------------------------------
+# Recherche
+# ---------------------------------------------------------------------------
+recherche:
+  champs: [titre, reference, type_document]
+  tri_defaut: date_creation
+  ordre_defaut: desc
+
+# ---------------------------------------------------------------------------
+# Liste
+# ---------------------------------------------------------------------------
+liste:
+  colonnes: [reference, titre, type_document, patient_id, date_creation, statut]
+  filtres: [type_document, statut, praticien_id, est_confidentiel]

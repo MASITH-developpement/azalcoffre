@@ -16,263 +16,315 @@ champs:
   # === PÉRIODE ===
   - nom: mois
     type: date
+    groupe: Dates
     obligatoire: true
     description: "Premier jour du mois concerné"
 
   - nom: periode_label
     type: text
+    groupe: Informations
     description: "Libellé du mois (ex: Mars 2026)"
 
   # === COMMERCIAL ===
   - nom: nb_devis
     type: entier
+    groupe: Quantites
     defaut: 0
     description: "Nombre de devis émis"
 
   - nom: montant_devis
     type: money
+    groupe: Montants
     defaut: 0
     description: "Montant total des devis"
 
   - nom: nb_commandes
     type: entier
+    groupe: Quantites
     defaut: 0
     description: "Nombre de commandes"
 
   - nom: montant_commandes
     type: money
+    groupe: Montants
     defaut: 0
     description: "Montant total des commandes"
 
   - nom: nb_factures
     type: entier
+    groupe: Quantites
     defaut: 0
     description: "Nombre de factures émises"
 
   - nom: ca_mois
     type: money
+    groupe: Montants
     defaut: 0
     description: "Chiffre d'affaires du mois"
 
   - nom: panier_moyen
     type: money
+    groupe: Montants
     defaut: 0
     description: "Panier moyen (CA / nb factures)"
 
   # === LEADS / PROSPECTION ===
   - nom: nb_nouveaux_leads
     type: entier
+    groupe: Quantites
     defaut: 0
     description: "Nouveaux leads/prospects"
 
   - nom: nb_leads_convertis
     type: entier
+    groupe: Quantites
     defaut: 0
     description: "Leads convertis en clients"
 
   - nom: taux_conversion
     type: number
+    groupe: Montants
     defaut: 0
     description: "Taux de conversion leads (%)"
 
   # === INTERVENTIONS ===
   - nom: nb_interventions
     type: entier
+    groupe: Quantites
     defaut: 0
     description: "Nombre d'interventions réalisées"
 
   - nom: heures_intervention
     type: number
+    groupe: Informations
     defaut: 0
     description: "Total heures d'intervention"
 
   - nom: ca_interventions
     type: money
+    groupe: Montants
     defaut: 0
     description: "CA généré par les interventions"
 
   # === FLOTTE / VÉHICULES ===
   - nom: nb_vehicules
     type: entier
+    groupe: Quantites
     defaut: 0
     description: "Nombre de véhicules actifs"
 
   - nom: km_total
     type: entier
+    groupe: Montants
     defaut: 0
     description: "Kilomètres parcourus (total flotte)"
 
   - nom: km_moyen_vehicule
     type: number
+    groupe: Informations
     defaut: 0
     description: "Km moyen par véhicule"
 
   - nom: ratio_km_intervention
     type: number
+    groupe: Informations
     defaut: 0
     description: "Ratio km / intervention"
 
   - nom: cout_carburant
     type: money
+    groupe: Montants
     defaut: 0
     description: "Coût carburant du mois"
 
   # === TRÉSORERIE ===
   - nom: tresorerie_debut
     type: money
+    groupe: Montants
     defaut: 0
     description: "Trésorerie début de mois"
 
   - nom: tresorerie_fin
     type: money
+    groupe: Montants
     defaut: 0
     description: "Trésorerie fin de mois"
 
   - nom: evolution_tresorerie
     type: money
+    groupe: Montants
     defaut: 0
     description: "Évolution trésorerie (fin - début)"
 
   - nom: montant_encaisse
     type: money
+    groupe: Montants
     defaut: 0
     description: "Montant total encaissé"
 
   - nom: montant_decaisse
     type: money
+    groupe: Montants
     defaut: 0
     description: "Montant total décaissé"
 
   # === TVA ===
   - nom: tva_collectee
     type: money
+    groupe: Montants
     defaut: 0
     description: "TVA collectée (sur ventes)"
 
   - nom: tva_deductible
     type: money
+    groupe: Montants
     defaut: 0
     description: "TVA déductible (sur achats)"
 
   - nom: tva_a_payer
     type: money
+    groupe: Montants
     defaut: 0
     description: "TVA nette à payer (collectée - déductible)"
 
   # === RH / MASSE SALARIALE ===
   - nom: nb_employes
     type: entier
+    groupe: Quantites
     defaut: 0
     description: "Nombre d'employés"
 
   - nom: masse_salariale
     type: money
+    groupe: Montants
     defaut: 0
     description: "Masse salariale brute"
 
   - nom: charges_sociales
     type: money
+    groupe: Montants
     defaut: 0
     description: "Charges sociales patronales"
 
   - nom: cout_total_rh
     type: money
+    groupe: Montants
     defaut: 0
     description: "Coût total RH (salaires + charges)"
 
   # === RENTABILITÉ ===
   - nom: total_charges
     type: money
+    groupe: Montants
     defaut: 0
     description: "Total des charges du mois"
 
   - nom: resultat_brut
     type: money
+    groupe: Montants
     defaut: 0
     description: "Résultat brut (CA - charges)"
 
   - nom: taux_rentabilite
     type: number
+    groupe: Montants
     defaut: 0
     description: "Taux de rentabilité (%)"
 
   - nom: marge_brute
     type: money
+    groupe: Montants
     defaut: 0
     description: "Marge brute"
 
   - nom: taux_marge
     type: number
+    groupe: Montants
     defaut: 0
     description: "Taux de marge (%)"
 
   # === GRAPHIQUES (données JSON) ===
   - nom: graph_ca_jour
     type: json
+    groupe: Metadata
     description: "CA par jour [{jour, montant}]"
 
   - nom: graph_depenses_categorie
     type: json
+    groupe: Informations
     description: "Dépenses par catégorie [{categorie, montant}]"
 
   - nom: graph_interventions_jour
     type: json
+    groupe: Metadata
     description: "Interventions par jour [{jour, count}]"
 
   - nom: graph_rentabilite_mois
     type: json
+    groupe: Metadata
     description: "Évolution rentabilité [{mois, taux}]"
 
   - nom: graph_ca_vs_objectif
     type: json
+    groupe: Metadata
     description: "CA vs Objectif [{mois, ca, objectif}]"
 
   # === COMPARAISON ===
   - nom: ca_mois_precedent
     type: money
+    groupe: Montants
     defaut: 0
     description: "CA du mois précédent"
 
   - nom: evolution_ca_pct
     type: number
+    groupe: Informations
     defaut: 0
     description: "Évolution CA vs mois précédent (%)"
 
   - nom: ca_meme_mois_annee_prec
     type: money
+    groupe: Montants
     defaut: 0
     description: "CA même mois année précédente"
 
   - nom: evolution_ca_annuel_pct
     type: number
+    groupe: Informations
     defaut: 0
     description: "Évolution CA vs année précédente (%)"
 
   # === MÉTADONNÉES ===
   - nom: genere_le
     type: datetime
+    groupe: Dates
     description: "Date/heure de génération"
 
   - nom: genere_par
     type: relation
+    groupe: Informations
     relation: utilisateurs
     description: "Utilisateur ayant généré le digest"
 
   - nom: envoye
     type: boolean
+    groupe: Informations
     defaut: false
     description: "Digest envoyé par email"
 
   - nom: envoye_le
     type: datetime
+    groupe: Dates
     description: "Date d'envoi par email"
 
   - nom: destinataires
     type: json
+    groupe: Metadata
     description: "Liste des destinataires [{email, nom}]"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     description: "Notes/commentaires sur le mois"
 
 # === ACTIONS DISPONIBLES ===
@@ -303,6 +355,8 @@ liste:
 filtres:
   - nom: annee
     type: select
+    groupe: Informations
     options: [2024, 2025, 2026]
   - nom: envoye
     type: boolean
+    groupe: Informations

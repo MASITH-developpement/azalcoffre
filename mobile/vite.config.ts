@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
 export default defineConfig({
+  base: '/mobile/',
   plugins: [
     react(),
     VitePWA({
@@ -93,6 +94,7 @@ export default defineConfig({
     port: 5174,
     host: true,
     strictPort: true,
+    allowedHosts: ['azalplus.com', 'www.azalplus.com', 'localhost', '127.0.0.1'],
     proxy: {
       '/api': {
         target: 'http://localhost:8000',

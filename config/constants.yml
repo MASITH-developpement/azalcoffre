@@ -91,6 +91,26 @@ statuts:
     valeurs: [BROUILLON, VALIDE, ANNULE]
     defaut: BROUILLON
 
+  # Business Intelligence
+  bi:
+    valeurs: [BROUILLON, ACTIF, ARCHIVE]
+    defaut: BROUILLON
+
+  # Comptabilité
+  comptabilite:
+    valeurs: [BROUILLON, VALIDE, LETTRE, CLOTURE, ANNULE]
+    defaut: BROUILLON
+
+  # Alias pour écritures comptables
+  ecritures:
+    valeurs: [BROUILLON, VALIDE, LETTRE, CLOTURE, ANNULE]
+    defaut: BROUILLON
+
+  # GED (Gestion Électronique de Documents)
+  ged:
+    valeurs: [BROUILLON, EN_VALIDATION, ACTIF, ARCHIVE, SUPPRIME]
+    defaut: BROUILLON
+
   stock:
     valeurs: [EN_STOCK, STOCK_BAS, RUPTURE, NON_GERE]
     defaut: EN_STOCK
@@ -174,6 +194,10 @@ couleurs_statuts:
   RAPPROCHE: success
   EXCLU: gray
   ERREUR: error
+
+  # Comptabilité
+  LETTRE: info
+  CLOTURE: gray
 
   # RH / Congés
   DEMANDE: info

@@ -9,11 +9,13 @@ description: Repondeur automatique intelligent
 champs:
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du repondeur
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: ACTIF
     options: [ACTIF, PAUSE, ARCHIVE]
@@ -21,12 +23,14 @@ champs:
 
   - nom: canal
     type: select
+    groupe: Informations
     obligatoire: true
     options: [EMAIL, SMS, WHATSAPP, CHAT_WEB, TELEPHONE]
     description: Canal
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: SUPPORT
     options: [SUPPORT, COMMERCIAL, RDV, GENERAL, CUSTOM]
@@ -34,48 +38,57 @@ champs:
 
   - nom: prompt_systeme
     type: textarea
+    groupe: Notes
     obligatoire: true
     description: Instructions IA (prompt systeme)
 
   - nom: contexte_entreprise
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Contexte entreprise
 
   - nom: faq
     type: json
+    groupe: Metadata
     obligatoire: false
     description: FAQ integree
 
   - nom: horaires_actifs
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Horaires activation
 
   - nom: escalade_apres
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 3
     description: Escalade apres N messages
 
   - nom: escalade_vers
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
     description: Escalade vers
 
   - nom: actions_autorisees
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Actions IA autorisees
 
   - nom: limites
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Limites (pas de remises, etc.)
 
   - nom: modele_ia
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: CLAUDE_HAIKU
     options: [CLAUDE_HAIKU, CLAUDE_SONNET, GPT_4O_MINI, GPT_4O]
@@ -83,12 +96,14 @@ champs:
 
   - nom: temperature
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0.3
     description: Temperature IA
 
   - nom: nb_conversations
     type: number
+    groupe: Quantites
     obligatoire: false
     readonly: true
     defaut: 0
@@ -96,29 +111,34 @@ champs:
 
   - nom: taux_resolution
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Taux resolution (%)
 
   - nom: satisfaction_moyenne
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Satisfaction moyenne
 
   - nom: cout_mensuel
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Cout mensuel IA
 
   - nom: derniere_activite
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Derniere activite
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

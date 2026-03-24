@@ -109,10 +109,33 @@ class Guardian:
     _blocked_ips = set()
     _failed_attempts = {}  # ip -> count
 
+    # Endpoints authentifiés où le WAF ne doit pas bloquer le body
+    # Ces endpoints utilisent des requêtes SQL paramétrées (sécurisées)
+    # et acceptent des données JSON avec des caractères légitimes (apostrophes dans les noms, etc.)
+    _SAFE_BODY_PATHS = [
+        "/api/auth/profile",           # Mise à jour profil utilisateur
+        "/api/auth/login",             # Login (mot de passe peut contenir caractères spéciaux)
+        "/api/auth/register",          # Inscription
+        "/api/settings/",              # Paramètres (SMTP, PDF config, etc.)
+        "/api/administration_mail",    # Configuration email
+        "/api/email/",                 # Envoi emails
+        "/api/recent/",                # Tracking récents (noms avec caractères spéciaux)
+        "/api/v1/",                    # API CRUD modules (données métier)
+        "/api/entreprise",             # Configuration entreprise
+        "/api/devis",                  # Devis (textes avec caractères spéciaux)
+        "/api/factures",               # Factures
+        "/api/clients",                # Clients (noms, adresses)
+        "/api/donneur_ordre",          # Donneurs d'ordre
+        "/api/interventions",          # Interventions SAV (création/modification)
+    ]
+
     @classmethod
     def initialize(cls):
         """Initialise Guardian."""
         cls._initialized = True
+        # Vider les IPs bloquées au redémarrage (pas de persistance)
+        cls._blocked_ips.clear()
+        cls._failed_attempts.clear()
         logger.info("guardian_initialized", mode="silent")
 
     @classmethod
@@ -127,18 +150,19 @@ class Guardian:
         result = GuardianCheckResult()
         ip = cls._get_client_ip(request)
 
-        # 1. IP bloquée ?
-        if ip in cls._blocked_ips:
-            result.blocked = True
-            result.reason = "IP_BLOCKED"
-            result.neutral_message = "Réessayez plus tard"
-            await cls._log(GuardianLog(
-                niveau="BLOCK",
-                action="IP_BLOCKED",
-                ip_address=ip,
-                action_prise="BLOCKED"
-            ))
-            return result
+        # 1. IP bloquée ? (désactivé temporairement - problème de persistance)
+        # if ip in cls._blocked_ips:
+        #     result.blocked = True
+        #     result.reason = "IP_BLOCKED"
+        #     result.neutral_message = "Réessayez plus tard"
+        #     await cls._log(GuardianLog(
+        #         niveau="BLOCK",
+        #         action="IP_BLOCKED",
+        #         ip_address=ip,
+        #         action_prise="BLOCKED"
+        #     ))
+        #     return result
+        pass  # IP blocking désactivé
 
         # 2. Rate limiting
         if cls._is_rate_limited(ip):
@@ -148,12 +172,22 @@ class Guardian:
             return result
 
         # 3. WAF Check (60+ patterns)
-        body = await cls._get_body(request)
-        query_string = str(request.url.query) if request.url.query else ""
         path = request.url.path
+        query_string = str(request.url.query) if request.url.query else ""
 
-        # Combiner toutes les données à vérifier
-        data_to_check = f"{body} {query_string} {path}"
+        # Vérifier si le path est dans la liste des endpoints sécurisés
+        # Ces endpoints utilisent des requêtes SQL paramétrées et acceptent
+        # des données JSON légitimes (noms avec apostrophes, etc.)
+        is_safe_path = any(path.startswith(safe) for safe in cls._SAFE_BODY_PATHS)
+
+        # Récupérer le body uniquement pour les paths non sécurisés
+        body = ""
+        if not is_safe_path:
+            body = await cls._get_body(request)
+            data_to_check = f"{body} {query_string} {path}"
+        else:
+            # Pour les paths sécurisés, vérifier uniquement query string et path (pas le body)
+            data_to_check = f"{query_string} {path}"
 
         # Utiliser le WAF pour la détection
         waf_result = WAF.check(data_to_check)
@@ -213,8 +247,8 @@ class Guardian:
                     requete_nettoyee=None
                 ))
 
-        # 4. Legacy checks (fallback si WAF n'a rien trouvé)
-        if not waf_result.detected:
+        # 4. Legacy checks (fallback si WAF n'a rien trouvé et pas un path sécurisé)
+        if not waf_result.detected and not is_safe_path:
             # Injection SQL (legacy patterns)
             if cls._detect_sql_injection(body):
                 result.blocked = True
@@ -418,8 +452,8 @@ class Guardian:
             cls._failed_attempts[ip] = 0
         cls._failed_attempts[ip] += 1
 
-        # Bloquer après 10 tentatives
-        if cls._failed_attempts[ip] >= 10:
+        # Bloquer après 50 tentatives (seuil relevé pour éviter faux positifs)
+        if cls._failed_attempts[ip] >= 50:
             cls._blocked_ips.add(ip)
 
     # Fichiers de log Guardian

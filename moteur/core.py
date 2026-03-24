@@ -17,6 +17,13 @@ import structlog
 import time
 from typing import Callable, Optional
 
+import os
+
+# =============================================================================
+# App Name (configurable via environment variable)
+# =============================================================================
+APP_NAME = os.environ.get("APP_NAME", "AZALPLUS")
+
 from .config import settings
 from .db import Database
 from .parser import ModuleParser
@@ -54,6 +61,21 @@ async def lifespan(app: FastAPI):
 
     # Startup
     await Database.connect()
+
+    # Run pending schema migrations (safe to run multiple times)
+    try:
+        with Database.get_session() as session:
+            from sqlalchemy import text
+            # Add fonction column if missing (migration 005)
+            session.execute(text("""
+                ALTER TABLE azalplus.utilisateurs
+                ADD COLUMN IF NOT EXISTS fonction VARCHAR(100) DEFAULT NULL
+            """))
+            session.commit()
+            logger.debug("schema_migrations_applied")
+    except Exception as e:
+        logger.warning("schema_migration_error", error=str(e))
+
     # Recharger les modules pour créer les tables DB (modules déjà chargés pour les routes)
     ModuleParser.load_all_modules()
     Guardian.initialize()
@@ -114,11 +136,11 @@ async def lifespan(app: FastAPI):
 # Application FastAPI
 # =============================================================================
 app = FastAPI(
-    title="AZALPLUS API",
-    description="""
-## AZALPLUS - ERP No-Code Multi-Tenant
+    title=f"{APP_NAME} API",
+    description=f"""
+## {APP_NAME} - ERP No-Code Multi-Tenant
 
-AZALPLUS est un ERP moderne, flexible et extensible construit sur une architecture No-Code.
+{APP_NAME} est un ERP moderne, flexible et extensible construit sur une architecture No-Code.
 
 ### Fonctionnalites principales
 
@@ -152,7 +174,7 @@ L'API utilise JWT (JSON Web Tokens). Obtenez un token via `/api/auth/login`.
         "url": "https://azalplus.com/license"
     },
     contact={
-        "name": "AZALPLUS Support",
+        "name": f"{APP_NAME} Support",
         "email": "support@azalplus.com",
         "url": "https://azalplus.com"
     },
@@ -195,8 +217,8 @@ async def security_headers_middleware(request: Request, call_next: Callable):
     """Ajoute les headers de sécurité sur toutes les réponses."""
     response = await call_next(request)
 
-    # Protection contre le clickjacking
-    response.headers["X-Frame-Options"] = "DENY"
+    # Protection contre le clickjacking (SAMEORIGIN pour permettre l'app mobile)
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
 
     # Protection contre le MIME sniffing
     response.headers["X-Content-Type-Options"] = "nosniff"
@@ -218,8 +240,8 @@ async def security_headers_middleware(request: Request, call_next: Callable):
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
             "img-src 'self' data: https:; "
-            "connect-src 'self' https://api.anthropic.com https://api.openai.com; "
-            "frame-ancestors 'none';"
+            "connect-src 'self' https://api.anthropic.com https://api.openai.com https://cdn.jsdelivr.net;"
+            "frame-ancestors 'self';"
         )
 
     return response
@@ -319,14 +341,299 @@ async def health_check():
         "cache": await Database.cache_healthy()
     }
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    """Page d'accueil."""
-    return {
-        "name": "AZALPLUS",
-        "version": "1.0.0",
-        "status": "running"
-    }
+    """Page d'accueil - Landing page (avec branding dynamique)."""
+    landing_path = Path(__file__).parent.parent / "docs" / "LANDING_PAGE_AZALPLUS.html"
+    if landing_path.exists():
+        # Appliquer le branding dynamique (APP_NAME)
+        content = landing_path.read_text()
+        content = content.replace("AZALPLUS", APP_NAME)
+        return HTMLResponse(content=content)
+    # Fallback si le fichier n'existe pas - utilise .replace() car CSS contient des accolades
+    html = '''<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>__APP_NAME__ - Moteur ERP No-Code</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bleu-roi: #3454D1;
+            --bleu-accent: #6B9FFF;
+            --bleu-marine: #1E3A8A;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 20px;
+        }
+
+        .bg-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+        }
+
+        .shape-1 { width: 400px; height: 400px; background: var(--bleu-roi); top: -100px; right: -100px; }
+        .shape-2 { width: 300px; height: 300px; background: var(--bleu-accent); bottom: -50px; left: -50px; }
+        .shape-3 { width: 200px; height: 200px; background: var(--bleu-marine); top: 50%; left: 10%; }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 25px 80px -12px rgba(52, 84, 209, 0.15);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--bleu-roi) 0%, var(--bleu-marine) 100%);
+            padding: 50px 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: shimmer 4s infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(20%, 20%); }
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.2));
+        }
+
+        .brand-name {
+            font-size: 36px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .brand-tagline {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .body {
+            padding: 40px 30px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ecfdf5;
+            color: #059669;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .version {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-bottom: 30px;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--bleu-roi) 0%, var(--bleu-marine) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(52, 84, 209, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(52, 84, 209, 0.5);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            transform: translateY(-2px);
+        }
+
+        .footer {
+            padding: 20px;
+            border-top: 1px solid #f3f4f6;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: var(--bleu-roi);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .brand-name { font-size: 28px; }
+            .header { padding: 40px 20px; }
+            .body { padding: 30px 20px; }
+            .logo { width: 100px; height: 100px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="256" cy="256" r="256" fill="white"/>
+                    <circle cx="380" cy="120" r="24" fill="#6B9FFF"/>
+                    <text x="256" y="340" font-family="Arial Black, sans-serif" font-size="280" font-weight="900" fill="#3454D1" text-anchor="middle">A</text>
+                    <text x="380" y="280" font-family="Arial Black, sans-serif" font-size="140" font-weight="900" fill="#3454D1" text-anchor="middle">+</text>
+                </svg>
+            </div>
+            <div class="brand-name">__APP_NAME__</div>
+            <div class="brand-tagline">Moteur ERP No-Code Multi-Tenant</div>
+        </div>
+
+        <div class="body">
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                Systeme operationnel
+            </div>
+
+            <div class="version">Version 1.0.0</div>
+
+            <div class="actions">
+                <a href="/ui/login" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                        <polyline points="10,17 15,12 10,7"/>
+                        <line x1="15" y1="12" x2="3" y2="12"/>
+                    </svg>
+                    Connexion
+                </a>
+                <a href="/docs" class="btn btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10,9 9,9 8,9"/>
+                    </svg>
+                    Documentation API
+                </a>
+                <a href="/health" class="btn btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                    Health Check
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            __APP_NAME__ &copy; 2024 &mdash; <a href="/docs">API</a> &bull; <a href="/health">Status</a>
+        </div>
+    </div>
+</body>
+</html>'''.replace('__APP_NAME__', APP_NAME)
+    return HTMLResponse(content=html)
 
 # =============================================================================
 # Import des routers dynamiques
@@ -336,6 +643,7 @@ from .auth import router as auth_router
 from .storage import storage_router
 from .backup import backup_router, BackupService
 from .email_router import email_router
+from .pdf_router import pdf_router
 from .docs import docs_router, custom_openapi
 from .api_v1 import router_v1, register_v1_modules, legacy_router
 from .icons import router as icons_router
@@ -407,6 +715,12 @@ app.include_router(docs_router, prefix="/api", tags=["Documentation"])
 app.include_router(storage_router, prefix="/api", tags=["Documents"])
 app.include_router(backup_router, prefix="/api/admin/backup", tags=["Backup"])
 app.include_router(email_router, tags=["Email"])
+app.include_router(pdf_router, tags=["PDF"])
+
+# Email to Intervention (création auto depuis emails)
+from .email_to_intervention import router as email_to_intervention_router
+app.include_router(email_to_intervention_router, prefix="/api", tags=["Email to Intervention"])
+
 app.include_router(stock_router, prefix="/api", tags=["Stock"])
 app.include_router(workflows_router, prefix="/api", tags=["Workflows"])
 
@@ -456,6 +770,14 @@ try:
     logger.info("import_bancaire_routes_loaded")
 except ImportError as e:
     logger.warning("import_bancaire_routes_not_available", error=str(e))
+
+# Import/Export Odoo Routes (API XML-RPC + CSV)
+try:
+    from app.modules.import_odoo import router as import_odoo_router
+    app.include_router(import_odoo_router, tags=["Import/Export Odoo"])
+    logger.info("import_odoo_routes_loaded")
+except ImportError as e:
+    logger.warning("import_odoo_routes_not_available", error=str(e))
 
 # Generated Endpoints (Auto-created by Guardian)
 try:
@@ -600,36 +922,154 @@ ThemeManager.load()
 # =============================================================================
 # Static files (images, fonts - pas le CSS qui est généré)
 # =============================================================================
-static_path = Path(__file__).parent.parent / "assets"
+# Support pour chemins dynamiques selon APP_NAME
+_app_assets_path = os.environ.get("AZALPLUS_ASSETS_PATH")
+_app_static_path = os.environ.get("AZALPLUS_STATIC_PATH")
+
+# Priorité : variable d'environnement > dossier app spécifique > azalplus par défaut
+if _app_assets_path:
+    static_path = Path(_app_assets_path)
+else:
+    static_path = Path(__file__).parent.parent / "assets"
+
 if static_path.exists():
-    app.mount("/assets", StaticFiles(directory=str(static_path)), name="assets")
+    app.mount("/assets", StaticFiles(directory=str(static_path), follow_symlink=True), name="assets")
 
 # Static files (manifest.json, icons, etc.)
-static_public_path = Path(__file__).parent.parent / "static"
-if static_public_path.exists():
-    app.mount("/static", StaticFiles(directory=str(static_public_path)), name="static")
+if _app_static_path:
+    static_public_path = Path(_app_static_path)
+else:
+    static_public_path = Path(__file__).parent.parent / "static"
+
+# =============================================================================
+# Routes dynamiques pour fichiers statiques critiques (priorité sur StaticFiles)
+# Ces routes sont définies AVANT le mount pour avoir la priorité dans FastAPI
+# =============================================================================
+
+def _get_static_file_path(filename: str, subdirs: list = None) -> Path | None:
+    """Cherche un fichier statique avec fallback selon APP_NAME."""
+    app_name_lower = APP_NAME.lower()
+    subdirs = subdirs or ["static", "assets"]
+
+    possible_paths = []
+    for subdir in subdirs:
+        possible_paths.append(Path(f"/home/ubuntu/{app_name_lower}/{subdir}/{filename}"))
+    possible_paths.extend([
+        static_public_path / filename,
+        static_path / filename,
+    ])
+
+    # Debug logging
+    import structlog
+    logger = structlog.get_logger()
+    logger.debug("static_file_search", filename=filename, app_name=APP_NAME, paths=[str(p) for p in possible_paths])
+
+    for path in possible_paths:
+        if path.exists():
+            logger.debug("static_file_found", path=str(path))
+            return path
+    return None
+
+@app.get("/static/logo.png", response_class=FileResponse)
+async def serve_logo_png():
+    """Sert le logo PNG avec fallback selon APP_NAME."""
+    path = _get_static_file_path("logo.png")
+    if path:
+        return FileResponse(str(path))
+    # Fallback : retourner le favicon comme logo
+    favicon_path = _get_static_file_path("favicon.ico")
+    if favicon_path:
+        return FileResponse(str(favicon_path))
+    raise HTTPException(status_code=404, detail="Logo not found")
+
+@app.get("/static/logo.svg", response_class=FileResponse)
+async def serve_logo_svg():
+    """Sert le logo SVG avec fallback selon APP_NAME."""
+    app_name_lower = APP_NAME.lower()
+    # Essayer d'abord logo-{appname}.svg, puis logo.svg
+    path = _get_static_file_path(f"logo-{app_name_lower}.svg")
+    if not path:
+        path = _get_static_file_path("logo.svg")
+    if path:
+        return FileResponse(str(path), media_type="image/svg+xml")
+    raise HTTPException(status_code=404, detail="Logo SVG not found")
+
+@app.get("/static/__debug__")
+async def debug_static_config():
+    """Debug: affiche la configuration des fichiers statiques (route publique sous /static)."""
+    return {
+        "APP_NAME": APP_NAME,
+        "static_public_path": str(static_public_path),
+        "static_path": str(static_path),
+        "_app_static_path": _app_static_path,
+        "_app_assets_path": _app_assets_path,
+        "manifest_search": str(_get_static_file_path("manifest.json")),
+    }
+
+@app.get("/static/manifest.json", response_class=FileResponse)
+async def serve_manifest():
+    """Sert le manifest.json avec fallback selon APP_NAME."""
+    path = _get_static_file_path("manifest.json")
+    if path:
+        return FileResponse(str(path), media_type="application/json")
+    raise HTTPException(status_code=404, detail="Manifest not found")
+
+@app.get("/static/favicon.ico", response_class=FileResponse)
+async def serve_favicon_ico():
+    """Sert le favicon.ico avec fallback selon APP_NAME."""
+    path = _get_static_file_path("favicon.ico")
+    if path:
+        return FileResponse(str(path), media_type="image/x-icon")
+    raise HTTPException(status_code=404, detail="Favicon not found")
+
+@app.get("/static/favicon.svg", response_class=FileResponse)
+async def serve_favicon_svg():
+    """Sert le favicon.svg avec fallback selon APP_NAME."""
+    path = _get_static_file_path("favicon.svg")
+    if path:
+        return FileResponse(str(path), media_type="image/svg+xml")
+    raise HTTPException(status_code=404, detail="Favicon SVG not found")
+
+# Route générique pour servir les autres fichiers statiques avec fallback APP_NAME
+@app.get("/static/{filepath:path}", response_class=FileResponse)
+async def serve_static_file(filepath: str):
+    """Sert un fichier statique avec fallback selon APP_NAME."""
+    # Déterminer le type MIME
+    import mimetypes
+    mime_type, _ = mimetypes.guess_type(filepath)
+    if not mime_type:
+        mime_type = "application/octet-stream"
+
+    path = _get_static_file_path(filepath)
+    if path:
+        return FileResponse(str(path), media_type=mime_type)
+    raise HTTPException(status_code=404, detail=f"Static file not found: {filepath}")
 
 # =============================================================================
 # Login page (public)
 # =============================================================================
 @app.get("/login", response_class=HTMLResponse)
 async def login_page():
-    """Page de connexion."""
+    """Page de connexion (avec branding dynamique)."""
     template_path = Path(__file__).parent.parent / "templates" / "ui" / "login.html"
     if template_path.exists():
-        return HTMLResponse(content=template_path.read_text())
-    return HTMLResponse(content="<h1>Login</h1>")
+        content = template_path.read_text()
+        content = content.replace("AZALPLUS", APP_NAME)
+        return HTMLResponse(content=content)
+    return HTMLResponse(content=f"<h1>{APP_NAME} Login</h1>")
 
 # =============================================================================
 # Waitlist page (public)
 # =============================================================================
 @app.get("/waitlist", response_class=HTMLResponse)
 async def waitlist_page():
-    """Page d'inscription à la liste d'attente."""
+    """Page d'inscription à la liste d'attente (avec branding dynamique)."""
     template_path = Path(__file__).parent.parent / "templates" / "waitlist.html"
     if template_path.exists():
-        return HTMLResponse(content=template_path.read_text())
-    return HTMLResponse(content="<h1>Waitlist</h1>")
+        content = template_path.read_text()
+        content = content.replace("AZALPLUS", APP_NAME)
+        return HTMLResponse(content=content)
+    return HTMLResponse(content=f"<h1>{APP_NAME} Waitlist</h1>")
 
 @app.get("/inscription", response_class=HTMLResponse)
 async def inscription_page():
@@ -650,13 +1090,13 @@ async def partenaires_page():
 @app.get("/test-erreurs", response_class=HTMLResponse)
 async def test_erreurs_index():
     """Page index pour tester les pages d'erreur."""
-    return HTMLResponse(content="""
+    return HTMLResponse(content=f"""
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Pages d'Erreur | AZALPLUS</title>
+    <title>Test Pages d'Erreur | {APP_NAME}</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f5f5f5; padding: 40px; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
@@ -707,11 +1147,11 @@ async def test_erreur_page(request: Request, code: int):
 # =============================================================================
 @app.get("/LANDING_PAGE_AZALPLUS.html", response_class=HTMLResponse)
 async def landing_page():
-    """Page d'accueil AZALPLUS."""
+    """Page d'accueil."""
     landing_path = Path(__file__).parent.parent / "docs" / "LANDING_PAGE_AZALPLUS.html"
     if landing_path.exists():
         return HTMLResponse(content=landing_path.read_text())
-    return HTMLResponse(content="<h1>AZALPLUS</h1>", status_code=404)
+    return HTMLResponse(content=f"<h1>{APP_NAME}</h1>", status_code=404)
 
 # =============================================================================
 # Style API (change interface theme)

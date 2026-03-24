@@ -9,17 +9,20 @@ description: Import de donnees depuis fichiers ou autres logiciels
 champs:
   - nom: name
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom de l'import
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [CSV, EXCEL, JSON, API_ODOO, API_PENNYLANE, API_AXONAUT, SAGE_EXPORT, CIEL_EXPORT]
     description: Type source
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: EN_ATTENTE
     options: [EN_ATTENTE, EN_COURS, TERMINE, ERREUR, ANNULE]
@@ -27,83 +30,98 @@ champs:
 
   - nom: module_cible
     type: select
+    groupe: Informations
     obligatoire: true
     options: [clients, fournisseurs, produits, factures, paiements, employes, ecritures]
     description: Module cible
 
   - nom: fichier_source
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: Fichier source
 
   - nom: mapping
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Mapping colonnes source -> destination
 
   - nom: options
     type: json
+    groupe: Configuration
     obligatoire: false
     description: Options import
 
   - nom: nb_lignes_total
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Lignes totales
 
   - nom: nb_lignes_importees
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     description: Lignes importees
 
   - nom: nb_lignes_erreur
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     description: Lignes en erreur
 
   - nom: nb_doublons
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     description: Doublons ignores
 
   - nom: erreurs
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Detail des erreurs
 
   - nom: date_debut
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date debut
 
   - nom: date_fin
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date fin
 
   - nom: duree_secondes
     type: number
+    groupe: Informations
     obligatoire: false
     description: Duree (secondes)
 
   - nom: utilisateur_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Utilisateurs
     description: Lance par
 
   - nom: rollback_possible
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Rollback possible
 
   - nom: fichier_archive
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: Fichier source archive
 

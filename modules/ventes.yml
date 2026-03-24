@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro"
     obligatoire: true
     unique: true
@@ -23,6 +24,7 @@ champs:
 
   - nom: type_document
     type: select
+    groupe: Informations
     libelle: "Type"
     obligatoire: true
     options:
@@ -35,6 +37,7 @@ champs:
 
   - nom: reference_client
     type: text
+    groupe: Informations
     libelle: "Réf. client"
 
   # ==========================================================================
@@ -42,32 +45,39 @@ champs:
   # ==========================================================================
   - nom: client_id
     type: relation
+    groupe: Relations
     libelle: "Client"
     relation: clients
     obligatoire: true
 
   - nom: client_nom
     type: text
+    groupe: Identification
     libelle: "Nom client"
 
   - nom: client_adresse
     type: textarea
+    groupe: Contact
     libelle: "Adresse"
 
   - nom: client_siret
     type: text
+    groupe: Relations
     libelle: "SIRET"
 
   - nom: client_tva_intra
     type: text
+    groupe: Relations
     libelle: "TVA Intra"
 
   - nom: contact_nom
     type: text
+    groupe: Identification
     libelle: "Contact"
 
   - nom: contact_email
     type: email
+    groupe: Contact
     libelle: "Email"
 
   # ==========================================================================
@@ -75,14 +85,17 @@ champs:
   # ==========================================================================
   - nom: adresse_facturation
     type: textarea
+    groupe: Contact
     libelle: "Adresse facturation"
 
   - nom: adresse_livraison
     type: textarea
+    groupe: Contact
     libelle: "Adresse livraison"
 
   - nom: meme_adresse
     type: boolean
+    groupe: Contact
     libelle: "Même adresse"
     defaut: true
 
@@ -91,21 +104,25 @@ champs:
   # ==========================================================================
   - nom: date_document
     type: date
+    groupe: Dates
     libelle: "Date"
     obligatoire: true
     defaut: "today"
 
   - nom: date_validite
     type: date
+    groupe: Dates
     libelle: "Validité"
     description: "Pour devis"
 
   - nom: date_livraison
     type: date
+    groupe: Dates
     libelle: "Date livraison"
 
   - nom: date_echeance
     type: date
+    groupe: Dates
     libelle: "Échéance"
 
   # ==========================================================================
@@ -113,11 +130,13 @@ champs:
   # ==========================================================================
   - nom: lignes
     type: json
+    groupe: Metadata
     libelle: "Lignes"
     description: "Détail des lignes du document"
 
   - nom: nombre_lignes
     type: number
+    groupe: Informations
     libelle: "Nb lignes"
 
   # ==========================================================================
@@ -125,23 +144,29 @@ champs:
   # ==========================================================================
   - nom: total_ht
     type: money
+    groupe: Montants
     libelle: "Total HT"
     obligatoire: true
+    defaut: 0
 
   - nom: remise_globale_pourcent
     type: number
+    groupe: Informations
     libelle: "Remise (%)"
 
   - nom: remise_globale_montant
     type: money
+    groupe: Montants
     libelle: "Remise (€)"
 
   - nom: total_ht_remise
     type: money
+    groupe: Montants
     libelle: "Total HT remisé"
 
   - nom: frais_port
     type: money
+    groupe: Montants
     libelle: "Frais de port"
 
   # ==========================================================================
@@ -149,36 +174,44 @@ champs:
   # ==========================================================================
   - nom: tva_applicable
     type: boolean
+    groupe: Montants
     libelle: "TVA applicable"
     defaut: true
 
   - nom: tva_detail
     type: json
+    groupe: Montants
     libelle: "Détail TVA"
     description: "Ventilation par taux"
 
   - nom: tva_20
     type: money
+    groupe: Montants
     libelle: "TVA 20%"
 
   - nom: tva_10
     type: money
+    groupe: Montants
     libelle: "TVA 10%"
 
   - nom: tva_5_5
     type: money
+    groupe: Montants
     libelle: "TVA 5.5%"
 
   - nom: tva_2_1
     type: money
+    groupe: Montants
     libelle: "TVA 2.1%"
 
   - nom: total_tva
     type: money
+    groupe: Montants
     libelle: "Total TVA"
 
   - nom: exoneration_tva
     type: select
+    groupe: Montants
     libelle: "Exonération"
     options:
       - AUCUNE
@@ -189,6 +222,7 @@ champs:
 
   - nom: mention_tva
     type: text
+    groupe: Montants
     libelle: "Mention TVA"
 
   # ==========================================================================
@@ -196,15 +230,19 @@ champs:
   # ==========================================================================
   - nom: total_ttc
     type: money
+    groupe: Montants
     libelle: "Total TTC"
     obligatoire: true
+    defaut: 0
 
   - nom: acompte
     type: money
+    groupe: Montants
     libelle: "Acompte"
 
   - nom: reste_a_payer
     type: money
+    groupe: Montants
     libelle: "Reste à payer"
 
   # ==========================================================================
@@ -212,6 +250,7 @@ champs:
   # ==========================================================================
   - nom: conditions_paiement
     type: select
+    groupe: Informations
     libelle: "Conditions"
     options:
       - COMPTANT
@@ -223,6 +262,7 @@ champs:
 
   - nom: mode_paiement
     type: select
+    groupe: Configuration
     libelle: "Mode paiement"
     options:
       - VIREMENT
@@ -233,15 +273,18 @@ champs:
 
   - nom: iban
     type: text
+    groupe: Informations
     libelle: "IBAN"
 
   - nom: penalites_retard
     type: number
+    groupe: Informations
     libelle: "Pénalités retard (%)"
     defaut: 10
 
   - nom: escompte
     type: number
+    groupe: Informations
     libelle: "Escompte (%)"
 
   # ==========================================================================
@@ -249,15 +292,18 @@ champs:
   # ==========================================================================
   - nom: commercial_id
     type: relation
+    groupe: Relations
     libelle: "Commercial"
     relation: employes
 
   - nom: commission_pourcent
     type: number
+    groupe: Informations
     libelle: "Commission (%)"
 
   - nom: commission_montant
     type: money
+    groupe: Montants
     libelle: "Commission (€)"
 
   # ==========================================================================
@@ -265,23 +311,28 @@ champs:
   # ==========================================================================
   - nom: devis_accepte
     type: boolean
+    groupe: Informations
     libelle: "Devis accepté"
     defaut: false
 
   - nom: date_acceptation
     type: datetime
+    groupe: Dates
     libelle: "Date acceptation"
 
   - nom: signature_client
     type: text
+    groupe: Informations
     libelle: "Signature"
 
   - nom: motif_refus
     type: text
+    groupe: Informations
     libelle: "Motif refus"
 
   - nom: relances_devis
     type: number
+    groupe: Informations
     libelle: "Relances"
     defaut: 0
 
@@ -290,23 +341,28 @@ champs:
   # ==========================================================================
   - nom: facture_origine_id
     type: text
+    groupe: Relations
     libelle: "Facture origine"
     description: "Pour avoirs"
 
   - nom: devis_origine_id
     type: text
+    groupe: Relations
     libelle: "Devis origine"
 
   - nom: commande_origine_id
     type: text
+    groupe: Relations
     libelle: "Commande origine"
 
   - nom: bl_origine_id
     type: text
+    groupe: Relations
     libelle: "BL origine"
 
   - nom: type_facture
     type: select
+    groupe: Informations
     libelle: "Type facture"
     options:
       - STANDARD
@@ -317,6 +373,7 @@ champs:
 
   - nom: numero_situation
     type: number
+    groupe: Informations
     libelle: "N° situation"
 
   # ==========================================================================
@@ -324,20 +381,24 @@ champs:
   # ==========================================================================
   - nom: paiements
     type: json
+    groupe: Metadata
     libelle: "Paiements"
     description: "Liste des paiements reçus"
 
   - nom: montant_paye
     type: money
+    groupe: Montants
     libelle: "Montant payé"
     defaut: 0
 
   - nom: date_paiement_complet
     type: date
+    groupe: Dates
     libelle: "Paiement complet"
 
   - nom: retard_paiement
     type: number
+    groupe: Informations
     libelle: "Retard (jours)"
 
   # ==========================================================================
@@ -345,6 +406,7 @@ champs:
   # ==========================================================================
   - nom: livraison_statut
     type: select
+    groupe: Informations
     libelle: "Statut livraison"
     options:
       - A_LIVRER
@@ -354,14 +416,17 @@ champs:
 
   - nom: date_livraison_reelle
     type: date
+    groupe: Dates
     libelle: "Livraison réelle"
 
   - nom: transporteur
     type: text
+    groupe: Informations
     libelle: "Transporteur"
 
   - nom: numero_suivi
     type: text
+    groupe: Informations
     libelle: "N° suivi"
 
   # ==========================================================================
@@ -369,25 +434,30 @@ champs:
   # ==========================================================================
   - nom: compte_client
     type: text
+    groupe: Informations
     libelle: "Compte client"
     defaut: "411000"
 
   - nom: compte_produit
     type: text
+    groupe: Informations
     libelle: "Compte produit"
     defaut: "706000"
 
   - nom: journal
     type: text
+    groupe: Informations
     libelle: "Journal"
     defaut: "VE"
 
   - nom: ecriture_comptable_id
     type: text
+    groupe: Relations
     libelle: "Écriture"
 
   - nom: integre_compta
     type: boolean
+    groupe: Informations
     libelle: "Intégré compta"
     defaut: false
 
@@ -396,11 +466,13 @@ champs:
   # ==========================================================================
   - nom: facturx
     type: boolean
+    groupe: Informations
     libelle: "Factur-X"
     defaut: false
 
   - nom: facturx_profil
     type: select
+    groupe: Informations
     libelle: "Profil Factur-X"
     options:
       - MINIMUM
@@ -409,15 +481,18 @@ champs:
 
   - nom: chorus_pro
     type: boolean
+    groupe: Informations
     libelle: "Chorus Pro"
     defaut: false
 
   - nom: chorus_statut
     type: text
+    groupe: Informations
     libelle: "Statut Chorus"
 
   - nom: pdp_transmis
     type: boolean
+    groupe: Informations
     libelle: "Transmis PDP"
     defaut: false
 
@@ -426,19 +501,23 @@ champs:
   # ==========================================================================
   - nom: pdf_document
     type: text
+    groupe: Informations
     libelle: "PDF"
 
   - nom: envoye_client
     type: boolean
+    groupe: Informations
     libelle: "Envoyé client"
     defaut: false
 
   - nom: date_envoi
     type: datetime
+    groupe: Dates
     libelle: "Date envoi"
 
   - nom: pieces_jointes
     type: json
+    groupe: Metadata
     libelle: "Pièces jointes"
 
   # ==========================================================================
@@ -446,10 +525,12 @@ champs:
   # ==========================================================================
   - nom: conditions_generales
     type: textarea
+    groupe: Notes
     libelle: "CGV"
 
   - nom: mentions_particulieres
     type: textarea
+    groupe: Notes
     libelle: "Mentions particulières"
 
   # ==========================================================================
@@ -457,6 +538,7 @@ champs:
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - BROUILLON
@@ -472,14 +554,17 @@ champs:
 
   - nom: date_validation
     type: datetime
+    groupe: Dates
     libelle: "Date validation"
 
   - nom: valide_par
     type: text
+    groupe: Informations
     libelle: "Validé par"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes internes"
 
 # Index

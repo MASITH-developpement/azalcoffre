@@ -12,6 +12,7 @@ champs:
   # Identification
   - nom: number
     type: text
+    groupe: Informations
     obligatoire: true
     unique: true
     description: Numero de location (LOC-YYYY-NNNNN)
@@ -19,6 +20,7 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: RESERVATION
     options: [RESERVATION, CONFIRMEE, EN_COURS, TERMINEE, ANNULEE, LITIGE]
@@ -27,6 +29,7 @@ champs:
   # Client
   - nom: customer_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Client
@@ -34,6 +37,7 @@ champs:
 
   - nom: contact_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Contacts
     description: Contact
@@ -42,6 +46,7 @@ champs:
   # Materiel
   - nom: equipement_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Equipements
     description: Materiel loue
@@ -49,6 +54,7 @@ champs:
 
   - nom: quantite
     type: number
+    groupe: Quantites
     obligatoire: true
     defaut: 1
     description: Quantite
@@ -56,21 +62,25 @@ champs:
   # Periode
   - nom: date_debut
     type: datetime
+    groupe: Dates
     obligatoire: true
     description: Date/heure debut
 
   - nom: date_fin_prevue
     type: datetime
+    groupe: Dates
     obligatoire: true
     description: Date/heure fin prevue
 
   - nom: date_fin_effective
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date/heure fin effective
 
   - nom: duree_jours
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Duree en jours
@@ -78,6 +88,7 @@ champs:
   # Tarification
   - nom: tarif_type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: JOURNALIER
     options: [HORAIRE, DEMI_JOURNEE, JOURNALIER, HEBDOMADAIRE, MENSUEL, FORFAIT]
@@ -85,53 +96,62 @@ champs:
 
   - nom: tarif_unitaire
     type: number
+    groupe: Montants
     obligatoire: true
     description: Tarif unitaire
 
   - nom: montant_location
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Montant location HT
 
   - nom: remise_pourcent
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Remise (%)
 
   - nom: montant_remise
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Montant remise
 
   - nom: frais_livraison
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Frais de livraison
 
   - nom: assurance
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Assurance
 
   - nom: total_ht
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Total HT
 
   - nom: tva
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: TVA
 
   - nom: total_ttc
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Total TTC
@@ -139,52 +159,61 @@ champs:
   # Caution
   - nom: caution_requise
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Caution requise
 
   - nom: montant_caution
     type: number
+    groupe: Montants
     obligatoire: false
     description: Montant caution
 
   - nom: caution_encaissee
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Caution encaissee
 
   - nom: mode_caution
     type: select
+    groupe: Configuration
     obligatoire: false
     options: [CHEQUE, CB, VIREMENT, ESPECES]
     description: Mode de caution
 
   - nom: caution_restituee
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Caution restituee
 
   - nom: date_restitution_caution
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date restitution caution
 
   - nom: retenue_caution
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Montant retenu sur caution
 
   - nom: motif_retenue
     type: text
+    groupe: Informations
     obligatoire: false
     description: Motif retenue
 
   # Livraison
   - nom: mode_remise
     type: select
+    groupe: Configuration
     obligatoire: false
     defaut: ENLEVEMENT
     options: [ENLEVEMENT, LIVRAISON, SUR_SITE]
@@ -192,12 +221,14 @@ champs:
 
   - nom: adresse_livraison
     type: textarea
+    groupe: Contact
     obligatoire: false
     description: Adresse de livraison
 
   # Etat du materiel
   - nom: etat_depart
     type: select
+    groupe: Statut
     obligatoire: false
     defaut: BON
     options: [NEUF, BON, USAGE, DEFAUTS_MINEURS]
@@ -205,44 +236,52 @@ champs:
 
   - nom: etat_retour
     type: select
+    groupe: Statut
     obligatoire: false
     options: [NEUF, BON, USAGE, DEFAUTS_MINEURS, ENDOMMAGE]
     description: Etat au retour
 
   - nom: photos_depart
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Photos etat depart
 
   - nom: photos_retour
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Photos etat retour
 
   - nom: observations_depart
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Observations depart
 
   - nom: observations_retour
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Observations retour
 
   # Contrat
   - nom: contrat_signe
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Contrat signe
 
   - nom: signature_client
     type: text
+    groupe: Informations
     obligatoire: false
     description: Signature client
 
   - nom: conditions_generales
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: CGV acceptees
@@ -250,6 +289,7 @@ champs:
   # Facturation
   - nom: facture_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Factures
     description: Facture
@@ -257,6 +297,7 @@ champs:
 
   - nom: facture_caution_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Factures
     description: Facture caution
@@ -264,12 +305,14 @@ champs:
   # Penalites retard
   - nom: retard_jours
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Jours de retard
 
   - nom: penalite_retard
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Penalite retard
@@ -277,6 +320,7 @@ champs:
   # Notes
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

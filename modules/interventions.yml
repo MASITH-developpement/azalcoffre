@@ -10,12 +10,24 @@ menu: SAV
 description: "SAV: interventions, maintenances, équipements, garanties"
 ordre_menu: 1
 
+# Colonnes affichées dans la liste
+liste_colonnes:
+  - numero
+  - numero_os
+  - contact_nom
+  - contact_telephone
+  - adresse_intervention
+  - ville
+  - date_demande
+  - statut
+
 champs:
   # ==========================================================================
   # IDENTIFICATION
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro"
     obligatoire: true
     unique: true
@@ -24,6 +36,7 @@ champs:
 
   - nom: type_fiche
     type: select
+    groupe: Informations
     libelle: "Type"
     options:
       - INTERVENTION
@@ -34,6 +47,7 @@ champs:
 
   - nom: type_intervention
     type: select
+    groupe: Informations
     libelle: "Type intervention"
     options:
       - DEPANNAGE
@@ -47,11 +61,13 @@ champs:
 
   - nom: objet
     type: text
+    groupe: Informations
     libelle: "Objet"
     obligatoire: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     libelle: "Description"
 
   # ==========================================================================
@@ -59,35 +75,42 @@ champs:
   # ==========================================================================
   - nom: client_id
     type: relation
+    groupe: Relations
     libelle: "Client"
     relation: clients
     obligatoire: true
 
   - nom: donneur_ordre_id
     type: relation
+    groupe: Relations
     libelle: "Donneur d'ordre"
     relation: donneur_ordre
 
   - nom: numero_os
     type: text
+    groupe: Informations
     libelle: "N° OS"
     description: "Numéro d'ordre de service"
 
   - nom: facture_a_id
     type: relation
+    groupe: Relations
     libelle: "Facturé à"
     relation: clients
 
   - nom: contact_nom
     type: text
+    groupe: Identification
     libelle: "Contact"
 
   - nom: contact_telephone
     type: tel
+    groupe: Relations
     libelle: "Téléphone"
 
   - nom: contact_email
     type: email
+    groupe: Contact
     libelle: "Email"
 
   # ==========================================================================
@@ -95,18 +118,22 @@ champs:
   # ==========================================================================
   - nom: adresse_intervention
     type: textarea
+    groupe: Contact
     libelle: "Adresse"
 
   - nom: code_postal
     type: text
+    groupe: Identification
     libelle: "Code postal"
 
   - nom: ville
     type: text
+    groupe: Contact
     libelle: "Ville"
 
   - nom: acces_site
     type: textarea
+    groupe: Notes
     libelle: "Accès site"
     description: "Codes, badges, contacts"
 
@@ -115,30 +142,37 @@ champs:
   # ==========================================================================
   - nom: equipement_id
     type: text
+    groupe: Relations
     libelle: "Équipement"
 
   - nom: equipement_designation
     type: text
+    groupe: Informations
     libelle: "Désignation équipement"
 
   - nom: equipement_numero_serie
     type: text
+    groupe: Informations
     libelle: "N° série"
 
   - nom: equipement_marque
     type: text
+    groupe: Informations
     libelle: "Marque"
 
   - nom: equipement_modele
     type: text
+    groupe: Informations
     libelle: "Modèle"
 
   - nom: date_installation
     type: date
+    groupe: Dates
     libelle: "Date installation"
 
   - nom: date_mise_service
     type: date
+    groupe: Dates
     libelle: "Mise en service"
 
   # ==========================================================================
@@ -146,19 +180,23 @@ champs:
   # ==========================================================================
   - nom: sous_garantie
     type: boolean
+    groupe: Informations
     libelle: "Sous garantie"
     defaut: false
 
   - nom: garantie_debut
     type: date
+    groupe: Dates
     libelle: "Début garantie"
 
   - nom: garantie_fin
     type: date
+    groupe: Dates
     libelle: "Fin garantie"
 
   - nom: type_garantie
     type: select
+    groupe: Informations
     libelle: "Type garantie"
     options:
       - CONSTRUCTEUR
@@ -168,6 +206,7 @@ champs:
 
   - nom: contrat_maintenance_id
     type: text
+    groupe: Relations
     libelle: "Contrat maintenance"
 
   # ==========================================================================
@@ -175,30 +214,38 @@ champs:
   # ==========================================================================
   - nom: date_demande
     type: datetime
+    groupe: Dates
     libelle: "Date demande"
+    defaut: now
 
   - nom: date_prevue
     type: datetime
+    groupe: Dates
     libelle: "Date prévue"
 
   - nom: date_debut
     type: datetime
+    groupe: Dates
     libelle: "Début réel"
 
   - nom: date_fin
     type: datetime
+    groupe: Dates
     libelle: "Fin réelle"
 
   - nom: duree_prevue
     type: number
+    groupe: Informations
     libelle: "Durée prévue (h)"
 
   - nom: duree_reelle
     type: number
+    groupe: Informations
     libelle: "Durée réelle (h)"
 
   - nom: temps_trajet
     type: number
+    groupe: Informations
     libelle: "Temps trajet (h)"
 
   # ==========================================================================
@@ -206,6 +253,7 @@ champs:
   # ==========================================================================
   - nom: priorite
     type: select
+    groupe: Informations
     libelle: "Priorité"
     options:
       - CRITIQUE
@@ -216,15 +264,18 @@ champs:
 
   - nom: urgence
     type: boolean
+    groupe: Informations
     libelle: "Urgence"
     defaut: false
 
   - nom: sla_delai
     type: number
+    groupe: Informations
     libelle: "SLA délai (h)"
 
   - nom: sla_respecte
     type: boolean
+    groupe: Informations
     libelle: "SLA respecté"
     defaut: true
 
@@ -233,15 +284,19 @@ champs:
   # ==========================================================================
   - nom: technicien_id
     type: relation
+    groupe: Relations
     libelle: "Technicien"
     relation: employes
 
   - nom: equipe
     type: json
+    groupe: Metadata
     libelle: "Équipe"
+    defaut: {}
 
   - nom: competences_requises
     type: tags
+    groupe: Metadata
     libelle: "Compétences requises"
 
   # ==========================================================================
@@ -249,18 +304,22 @@ champs:
   # ==========================================================================
   - nom: symptome
     type: textarea
+    groupe: Notes
     libelle: "Symptôme"
 
   - nom: diagnostic
     type: textarea
+    groupe: Notes
     libelle: "Diagnostic"
 
   - nom: cause
     type: text
+    groupe: Informations
     libelle: "Cause"
 
   - nom: code_panne
     type: text
+    groupe: Identification
     libelle: "Code panne"
 
   # ==========================================================================
@@ -268,18 +327,23 @@ champs:
   # ==========================================================================
   - nom: travaux_realises
     type: textarea
+    groupe: Notes
     libelle: "Travaux réalisés"
 
   - nom: pieces_changees
     type: json
+    groupe: Metadata
     libelle: "Pièces changées"
+    defaut: []
 
   - nom: recommandations
     type: textarea
+    groupe: Notes
     libelle: "Recommandations"
 
   - nom: intervention_suivante
     type: text
+    groupe: Informations
     libelle: "Intervention suivante"
 
   # ==========================================================================
@@ -287,18 +351,24 @@ champs:
   # ==========================================================================
   - nom: pieces
     type: json
+    groupe: Metadata
     libelle: "Pièces"
+    defaut: []
 
   - nom: montant_pieces
     type: money
+    groupe: Montants
     libelle: "Montant pièces"
 
   - nom: fournitures
     type: json
+    groupe: Metadata
     libelle: "Fournitures"
+    defaut: []
 
   - nom: montant_fournitures
     type: money
+    groupe: Montants
     libelle: "Montant fournitures"
 
   # ==========================================================================
@@ -306,18 +376,22 @@ champs:
   # ==========================================================================
   - nom: heures_mo
     type: number
+    groupe: Informations
     libelle: "Heures MO"
 
   - nom: taux_horaire
     type: money
+    groupe: Montants
     libelle: "Taux horaire"
 
   - nom: montant_mo
     type: money
+    groupe: Montants
     libelle: "Montant MO"
 
   - nom: majoration
     type: number
+    groupe: Informations
     libelle: "Majoration (%)"
     description: "Nuit, weekend, férié"
 
@@ -326,18 +400,22 @@ champs:
   # ==========================================================================
   - nom: km_parcourus
     type: number
+    groupe: Informations
     libelle: "Km parcourus"
 
   - nom: indemnite_km
     type: money
+    groupe: Montants
     libelle: "Indemnité km"
 
   - nom: frais_deplacement
     type: money
+    groupe: Montants
     libelle: "Frais déplacement"
 
   - nom: frais_hebergement
     type: money
+    groupe: Montants
     libelle: "Hébergement"
 
   # ==========================================================================
@@ -345,27 +423,33 @@ champs:
   # ==========================================================================
   - nom: facturable
     type: boolean
+    groupe: Informations
     libelle: "Facturable"
     defaut: true
 
   - nom: montant_ht
     type: money
+    groupe: Montants
     libelle: "Montant HT"
 
   - nom: tva
     type: money
+    groupe: Montants
     libelle: "TVA"
 
   - nom: montant_ttc
     type: money
+    groupe: Montants
     libelle: "Montant TTC"
 
   - nom: facture_id
     type: text
+    groupe: Relations
     libelle: "Facture"
 
   - nom: facture
     type: boolean
+    groupe: Informations
     libelle: "Facturé"
     defaut: false
 
@@ -374,30 +458,38 @@ champs:
   # ==========================================================================
   - nom: rapport_intervention
     type: textarea
+    groupe: Notes
     libelle: "Rapport"
 
   - nom: photos
     type: json
+    groupe: Metadata
     libelle: "Photos"
+    defaut: []
 
   - nom: signature_client
     type: text
+    groupe: Informations
     libelle: "Signature client"
 
   - nom: date_signature
     type: datetime
+    groupe: Dates
     libelle: "Date signature"
 
   - nom: nom_signataire
     type: text
+    groupe: Identification
     libelle: "Nom signataire"
 
   - nom: pdf_rapport
     type: text
+    groupe: Informations
     libelle: "PDF rapport"
 
   - nom: envoye_client
     type: boolean
+    groupe: Informations
     libelle: "Envoyé client"
     defaut: false
 
@@ -406,10 +498,12 @@ champs:
   # ==========================================================================
   - nom: satisfaction_score
     type: number
+    groupe: Informations
     libelle: "Satisfaction"
 
   - nom: satisfaction_commentaire
     type: textarea
+    groupe: Notes
     libelle: "Commentaire"
 
   # ==========================================================================
@@ -417,11 +511,13 @@ champs:
   # ==========================================================================
   - nom: est_preventive
     type: boolean
+    groupe: Statut
     libelle: "Préventive"
     defaut: false
 
   - nom: frequence_maintenance
     type: select
+    groupe: Informations
     libelle: "Fréquence"
     options:
       - MENSUELLE
@@ -431,17 +527,21 @@ champs:
 
   - nom: prochaine_maintenance
     type: date
+    groupe: Dates
     libelle: "Prochaine maintenance"
 
   - nom: checklist
     type: json
+    groupe: Metadata
     libelle: "Checklist"
+    defaut: []
 
   # ==========================================================================
   # STATUT
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - DEMANDE
@@ -455,6 +555,7 @@ champs:
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

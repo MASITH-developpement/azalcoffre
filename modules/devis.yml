@@ -1,0 +1,541 @@
+# AZALPLUS - Module Devis
+# Gestion des devis commerciaux avec conversion en facture
+
+nom: Devis
+icone: file-text
+menu: Commercial
+description: Gestion des devis et propositions commerciales
+
+liste_colonnes:
+  - number
+  - customer_id
+  - date
+  - validity_date
+  - total
+  - status
+
+champs:
+  # Identification
+  - nom: number
+    type: text
+    label: Numéro
+    groupe: Identification
+    obligatoire: true
+    description: Numéro de devis (auto-généré)
+
+  - nom: reference
+    type: text
+    label: Référence client
+    groupe: Identification
+    obligatoire: false
+    description: Référence ou numéro de demande client
+
+  - nom: title
+    type: text
+    label: Objet
+    groupe: Identification
+    obligatoire: false
+    description: Objet du devis
+
+  - nom: status
+    type: select
+    label: Statut
+    groupe: Statut
+    obligatoire: true
+    defaut: BROUILLON
+    options: [BROUILLON, EN_ATTENTE, ENVOYE, ACCEPTE, REFUSE, EXPIRE, CONVERTI]
+    description: Statut du devis
+
+  # Relations
+  - nom: customer_id
+    type: relation
+    label: Client
+    groupe: Relations
+    obligatoire: true
+    relation: Clients
+    description: Client destinataire
+
+  - nom: contact_id
+    type: relation
+    label: Contact
+    groupe: Relations
+    obligatoire: false
+    relation: Contacts
+    description: Contact chez le client
+
+  - nom: opportunity_id
+    type: relation
+    label: Opportunité
+    groupe: Relations
+    obligatoire: false
+    relation: Opportunites
+    description: Opportunité commerciale liée
+
+  - nom: project_id
+    type: relation
+    label: Projet
+    groupe: Relations
+    obligatoire: false
+    relation: Projets
+    description: Projet lié
+
+  # Dates
+  - nom: date
+    type: date
+    label: Date du devis
+    groupe: Dates
+    obligatoire: true
+    defaut: aujourd'hui
+    description: Date d'émission du devis
+
+  - nom: validity_date
+    type: date
+    label: Valide jusqu'au
+    groupe: Dates
+    obligatoire: false
+    description: Date de fin de validité
+
+  - nom: validity_days
+    type: number
+    label: Validité (jours)
+    groupe: Dates
+    obligatoire: false
+    defaut: 30
+    description: Durée de validité en jours
+
+  - nom: sent_date
+    type: date
+    label: Date d'envoi
+    groupe: Dates
+    obligatoire: false
+    description: Date d'envoi au client
+
+  - nom: accepted_date
+    type: date
+    label: Date d'acceptation
+    groupe: Dates
+    obligatoire: false
+    description: Date d'acceptation par le client
+
+  - nom: refused_date
+    type: date
+    label: Date de refus
+    groupe: Dates
+    obligatoire: false
+    description: Date de refus par le client
+
+  # Adresses
+  - nom: billing_address
+    type: textarea
+    label: Adresse de facturation
+    groupe: Adresses
+    obligatoire: false
+    description: Adresse de facturation
+
+  - nom: delivery_address
+    type: textarea
+    label: Adresse de livraison
+    groupe: Adresses
+    obligatoire: false
+    description: Adresse de livraison (si différente)
+
+  # Montants
+  - nom: subtotal
+    type: number
+    label: Total HT
+    groupe: Montants
+    obligatoire: false
+    defaut: 0
+    description: Total hors taxes
+
+  - nom: discount_percent
+    type: number
+    label: Remise (%)
+    groupe: Montants
+    obligatoire: false
+    defaut: 0
+    description: Remise globale en pourcentage
+
+  - nom: discount_amount
+    type: number
+    label: Remise (montant)
+    groupe: Montants
+    obligatoire: false
+    defaut: 0
+    description: Montant de la remise
+
+  - nom: tax_amount
+    type: number
+    label: TVA
+    groupe: Montants
+    obligatoire: false
+    defaut: 0
+    description: Montant total de la TVA
+
+  - nom: total
+    type: number
+    label: Total TTC
+    groupe: Montants
+    obligatoire: false
+    defaut: 0
+    description: Total toutes taxes comprises
+
+  - nom: currency
+    type: text
+    label: Devise
+    groupe: Montants
+    obligatoire: false
+    defaut: EUR
+    description: Devise du devis
+
+  # Conditions
+  - nom: payment_terms
+    type: select
+    label: Conditions de paiement
+    groupe: Conditions
+    obligatoire: false
+    options: [COMPTANT, NET_15, NET_30, NET_45, NET_60, NET_90, FIN_DE_MOIS, PERSONNALISE]
+    description: Conditions de paiement proposées
+
+  - nom: payment_terms_text
+    type: text
+    label: Détail conditions
+    groupe: Conditions
+    obligatoire: false
+    description: Conditions de paiement détaillées
+
+  - nom: delivery_terms
+    type: text
+    label: Délai de livraison
+    groupe: Conditions
+    obligatoire: false
+    description: Délai ou conditions de livraison
+
+  - nom: warranty_terms
+    type: text
+    label: Garantie
+    groupe: Conditions
+    obligatoire: false
+    description: Conditions de garantie
+
+  # Notes et documents
+  - nom: introduction
+    type: textarea
+    label: Introduction
+    groupe: Contenu
+    obligatoire: false
+    description: Texte d'introduction du devis
+
+  - nom: notes
+    type: textarea
+    label: Notes
+    groupe: Contenu
+    obligatoire: false
+    description: Notes visibles par le client
+
+  - nom: internal_notes
+    type: textarea
+    label: Notes internes
+    groupe: Contenu
+    obligatoire: false
+    description: Notes internes (non visibles)
+
+  - nom: terms
+    type: textarea
+    label: Conditions générales
+    groupe: Contenu
+    obligatoire: false
+    description: Conditions générales de vente
+
+  - nom: conclusion
+    type: textarea
+    label: Conclusion
+    groupe: Contenu
+    obligatoire: false
+    description: Texte de conclusion
+
+  # PDF et signature
+  - nom: pdf_url
+    type: text
+    label: URL du PDF
+    groupe: Documents
+    obligatoire: false
+    description: URL du PDF généré
+
+  - nom: signature_client
+    type: text
+    label: Signature client
+    groupe: Signature
+    obligatoire: false
+    description: Signature du client (base64)
+
+  - nom: signature_date
+    type: datetime
+    label: Date de signature
+    groupe: Signature
+    obligatoire: false
+    description: Date et heure de signature
+
+  - nom: signature_ip
+    type: text
+    label: IP de signature
+    groupe: Signature
+    obligatoire: false
+    description: Adresse IP lors de la signature
+
+  - nom: signature_name
+    type: text
+    label: Signataire
+    groupe: Signature
+    obligatoire: false
+    description: Nom du signataire
+
+  # Conversion en facture
+  - nom: converted_to_invoice
+    type: boolean
+    label: Converti en facture
+    groupe: Conversion
+    obligatoire: false
+    defaut: false
+    description: Indique si le devis a été converti
+
+  - nom: invoice_id
+    type: relation
+    label: Facture générée
+    groupe: Conversion
+    obligatoire: false
+    relation: Factures
+    description: Facture créée depuis ce devis
+
+  - nom: converted_at
+    type: datetime
+    label: Date de conversion
+    groupe: Conversion
+    obligatoire: false
+    description: Date de conversion en facture
+
+  # Refus
+  - nom: refusal_reason
+    type: textarea
+    label: Motif de refus
+    groupe: Refus
+    obligatoire: false
+    description: Raison du refus par le client
+
+  # Portail client
+  - nom: access_token
+    type: text
+    label: Token d'accès
+    groupe: Portail
+    obligatoire: false
+    description: Token pour accès portail client
+
+  - nom: viewed_at
+    type: datetime
+    label: Consulté le
+    groupe: Portail
+    obligatoire: false
+    description: Dernière consultation par le client
+
+  - nom: view_count
+    type: number
+    label: Nombre de vues
+    groupe: Portail
+    obligatoire: false
+    defaut: 0
+    description: Nombre de consultations
+
+  # Attribution
+  - nom: assigned_to
+    type: relation
+    label: Commercial
+    groupe: Attribution
+    obligatoire: false
+    relation: Utilisateurs
+    description: Commercial responsable
+
+  - nom: validated_by
+    type: relation
+    label: Validé par
+    groupe: Attribution
+    obligatoire: false
+    relation: Utilisateurs
+    description: Personne ayant validé le devis
+
+  - nom: validated_at
+    type: datetime
+    label: Date validation
+    groupe: Attribution
+    obligatoire: false
+    description: Date de validation interne
+
+  # Métadonnées
+  - nom: created_by
+    type: relation
+    label: Créé par
+    groupe: Métadonnées
+    obligatoire: false
+    relation: Utilisateurs
+
+  - nom: created_at
+    type: datetime
+    label: Créé le
+    groupe: Métadonnées
+    obligatoire: false
+
+  - nom: updated_at
+    type: datetime
+    label: Modifié le
+    groupe: Métadonnées
+    obligatoire: false
+
+# Lignes de devis
+lignes:
+  champs:
+    - nom: line_number
+      type: number
+      label: N° ligne
+      groupe: Identification
+      obligatoire: true
+      description: Numéro de ligne
+
+    - nom: product_id
+      type: relation
+      label: Produit
+      groupe: Produit
+      obligatoire: false
+      relation: Produits
+      description: Produit du catalogue
+
+    - nom: product_code
+      type: text
+      label: Référence
+      groupe: Produit
+      obligatoire: false
+      description: Code produit
+
+    - nom: description
+      type: textarea
+      label: Description
+      groupe: Produit
+      obligatoire: true
+      description: Description de la ligne
+
+    - nom: quantity
+      type: number
+      label: Quantité
+      groupe: Quantités
+      obligatoire: true
+      defaut: 1
+      description: Quantité
+
+    - nom: unit
+      type: text
+      label: Unité
+      groupe: Quantités
+      obligatoire: false
+      defaut: pce
+      description: "Unité (pce, kg, h, m², etc.)"
+
+    - nom: unit_price
+      type: number
+      label: Prix unitaire HT
+      groupe: Prix
+      obligatoire: true
+      defaut: 0
+      description: Prix unitaire hors taxes
+
+    - nom: discount_percent
+      type: number
+      label: Remise (%)
+      groupe: Prix
+      obligatoire: false
+      defaut: 0
+      description: Remise en pourcentage
+
+    - nom: discount_amount
+      type: number
+      label: Remise (montant)
+      groupe: Prix
+      obligatoire: false
+      defaut: 0
+      description: Montant de la remise
+
+    - nom: subtotal
+      type: number
+      label: Total HT
+      groupe: Totaux
+      obligatoire: false
+      defaut: 0
+      description: Total ligne hors taxes
+
+    - nom: tax_rate
+      type: number
+      label: Taux TVA (%)
+      groupe: Totaux
+      obligatoire: false
+      defaut: 20.0
+      description: Taux de TVA applicable
+
+    - nom: tax_amount
+      type: number
+      label: Montant TVA
+      groupe: Totaux
+      obligatoire: false
+      defaut: 0
+      description: Montant de la TVA
+
+    - nom: total
+      type: number
+      label: Total TTC
+      groupe: Totaux
+      obligatoire: false
+      defaut: 0
+      description: Total ligne TTC
+
+    - nom: notes
+      type: textarea
+      label: Notes
+      groupe: Divers
+      obligatoire: false
+      description: Notes sur la ligne
+
+    - nom: optional
+      type: boolean
+      label: Option
+      groupe: Divers
+      obligatoire: false
+      defaut: false
+      description: Ligne optionnelle (non comptée dans le total)
+
+# Workflow
+workflow:
+  BROUILLON -> EN_ATTENTE: si customer_id et lignes.count > 0
+  EN_ATTENTE -> ENVOYE: action envoyer
+  ENVOYE -> ACCEPTE: action accepter
+  ENVOYE -> REFUSE: action refuser
+  ENVOYE -> EXPIRE: si date > validity_date
+  ACCEPTE -> CONVERTI: action convertir_facture
+  BROUILLON -> ENVOYE: action envoyer_direct
+
+# Actions disponibles
+actions:
+  - valider
+  - envoyer
+  - envoyer_direct
+  - accepter
+  - refuser
+  - convertir_facture
+  - generer_pdf
+  - dupliquer
+  - relancer
+  - prolonger_validite
+  - annuler
+
+# Alertes Marceau
+marceau:
+  alertes:
+    - si status=ENVOYE et date > validity_date: "Devis expiré"
+    - si status=ENVOYE et date > validity_date - 7j: "Devis bientôt expiré"
+    - si status=EN_ATTENTE et created_at < aujourd'hui - 3j: "Devis en attente depuis 3 jours"
+    - si status=ACCEPTE et converted_to_invoice=false: "Devis accepté à convertir en facture"

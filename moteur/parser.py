@@ -624,6 +624,7 @@ class ModuleParser:
             field_def.label = config.get("label") or config.get("description")
             field_def.aide = config.get("aide")
             field_def.autocompletion = config.get("autocompletion", False)
+            field_def.groupe = config.get("groupe")
 
             if "enum" in config:
                 field_def.enum_values = config["enum"]

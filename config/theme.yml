@@ -520,7 +520,7 @@ documents:
   couleur: "#3454D1"
   couleur_accent: "#6B9FFF"
   structure: "moderne"
-  tableaux: "simple"
+  tableaux: "zebra"
   angles: "arrondis"
   lignes: "fines"
   images_produits: "petites"
@@ -531,6 +531,8 @@ documents:
   fond_impression: "#FFFFFF"
   texte_impression: "#1E293B"
   accent_impression: "#3454D1"
+  afficher_iban: true
+  afficher_conditions: true
 
 # =============================================================================
 # ANIMATIONS & TRANSITIONS

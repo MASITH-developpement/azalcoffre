@@ -13,6 +13,7 @@ champs:
   # Identification
   - nom: number
     type: text
+    groupe: Informations
     obligatoire: true
     unique: true
     description: Numero de commande (auto-genere CMD-YYYY-NNNNN)
@@ -20,12 +21,14 @@ champs:
 
   - nom: reference_client
     type: text
+    groupe: Informations
     obligatoire: false
     description: Reference commande client
     autocompletion: true
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: BROUILLON
     options: [BROUILLON, CONFIRMEE, EN_PREPARATION, PARTIELLEMENT_LIVREE, LIVREE, FACTUREE, ANNULEE]
@@ -34,6 +37,7 @@ champs:
   # Relations
   - nom: customer_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Client
@@ -41,6 +45,7 @@ champs:
 
   - nom: devis_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Devis
     description: Devis d'origine
@@ -48,6 +53,7 @@ champs:
 
   - nom: commercial_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Commercial responsable
@@ -56,45 +62,53 @@ champs:
   # Dates
   - nom: date_commande
     type: date
+    groupe: Dates
     obligatoire: true
     defaut: aujourd'hui
     description: Date de commande
 
   - nom: date_livraison_souhaitee
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de livraison souhaitee
 
   - nom: date_livraison_prevue
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de livraison prevue
 
   - nom: date_livraison_effective
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de livraison effective
 
   # Adresses
   - nom: adresse_livraison
     type: textarea
+    groupe: Contact
     obligatoire: false
     description: Adresse de livraison (si differente facturation)
 
   - nom: contact_livraison
     type: text
+    groupe: Relations
     obligatoire: false
     description: Contact pour la livraison
     autocompletion: true
 
   - nom: instructions_livraison
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Instructions speciales de livraison
 
   # Conditions
   - nom: payment_terms
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: NET_30
     options: [IMMEDIATE, NET_15, NET_30, NET_45, NET_60, NET_90, END_OF_MONTH]
@@ -102,6 +116,7 @@ champs:
 
   - nom: mode_expedition
     type: select
+    groupe: Configuration
     obligatoire: false
     options: [STANDARD, EXPRESS, ENLEVEMENT, TRANSPORTEUR_CLIENT]
     description: Mode d'expedition
@@ -109,6 +124,7 @@ champs:
   # Totaux
   - nom: subtotal
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     readonly: true
@@ -116,12 +132,14 @@ champs:
 
   - nom: discount_amount
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Montant remise globale
 
   - nom: tax_amount
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     readonly: true
@@ -129,6 +147,7 @@ champs:
 
   - nom: total
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -136,6 +155,7 @@ champs:
 
   - nom: currency
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Devises
     defaut: EUR
@@ -145,24 +165,28 @@ champs:
   # Acompte
   - nom: acompte_requis
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Acompte requis
 
   - nom: acompte_pourcentage
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 30
     description: Pourcentage acompte
 
   - nom: acompte_montant
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Montant acompte
 
   - nom: acompte_paye
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Acompte paye
@@ -170,12 +194,14 @@ champs:
   # Stock
   - nom: stock_reserve
     type: boolean
+    groupe: Quantites
     obligatoire: false
     defaut: false
     description: Stock reserve pour cette commande
 
   - nom: stock_suffisant
     type: boolean
+    groupe: Quantites
     obligatoire: false
     defaut: true
     readonly: true
@@ -184,17 +210,20 @@ champs:
   # Notes
   - nom: notes_internes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes internes (non visibles client)
 
   - nom: notes_client
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes visibles sur documents client
 
   # Priorite
   - nom: priorite
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: NORMALE
     options: [BASSE, NORMALE, HAUTE, URGENTE]
@@ -203,6 +232,7 @@ champs:
   # Tracking
   - nom: source
     type: select
+    groupe: Informations
     obligatoire: false
     options: [SITE_WEB, TELEPHONE, EMAIL, COMMERCIAL, SALON, AUTRE]
     description: Source de la commande
@@ -212,6 +242,7 @@ lignes:
   champs:
     - nom: product_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Produits
       description: Produit
@@ -219,6 +250,7 @@ lignes:
 
     - nom: variante_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Variantes_produit
       description: Variante produit
@@ -226,41 +258,48 @@ lignes:
 
     - nom: description
       type: text
+      groupe: Informations
       obligatoire: false
       description: Description personnalisee
       autocompletion: true
 
     - nom: quantity
       type: number
+      groupe: Quantites
       obligatoire: true
       defaut: 1
       description: Quantite commandee
 
     - nom: quantity_livree
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 0
       description: Quantite deja livree
 
     - nom: quantity_restante
       type: number
+      groupe: Informations
       obligatoire: false
       readonly: true
       description: Quantite restant a livrer
 
     - nom: unit_price
       type: number
+      groupe: Informations
       obligatoire: true
       description: Prix unitaire HT
 
     - nom: discount_percent
       type: number
+      groupe: Informations
       obligatoire: false
       defaut: 0
       description: Remise ligne (%)
 
     - nom: tax_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Taxes
       description: Taux de TVA
@@ -268,12 +307,14 @@ lignes:
 
     - nom: subtotal
       type: number
+      groupe: Informations
       obligatoire: false
       readonly: true
       description: Sous-total ligne HT
 
     - nom: statut_ligne
       type: select
+      groupe: Statut
       obligatoire: false
       defaut: A_LIVRER
       options: [A_LIVRER, PARTIELLEMENT_LIVREE, LIVREE, ANNULEE]
@@ -281,11 +322,13 @@ lignes:
 
     - nom: date_livraison_prevue
       type: date
+      groupe: Dates
       obligatoire: false
       description: Date livraison prevue (si differente)
 
     - nom: notes
       type: text
+      groupe: Notes
       obligatoire: false
       description: Notes sur la ligne
 

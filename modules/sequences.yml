@@ -7,36 +7,42 @@ description: Configuration des sequences de numerotation automatique
 champs:
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom de la sequence
     autocompletion: true
 
   - nom: code
     type: text
+    groupe: Identification
     obligatoire: true
     description: Code unique de la sequence
     autocompletion: true
 
   - nom: type_document
     type: select
+    groupe: Informations
     obligatoire: true
     options: [devis, facture, avoir, commande, bon_livraison, intervention, client, fournisseur, produit, paiement]
     description: Type de document concerne
 
   - nom: prefixe
     type: text
+    groupe: Informations
     obligatoire: true
     description: Prefixe de la sequence
     autocompletion: true
 
   - nom: suffixe
     type: text
+    groupe: Informations
     obligatoire: false
     description: Suffixe optionnel
     autocompletion: true
 
   - nom: separateur
     type: text
+    groupe: Informations
     obligatoire: false
     defaut: "-"
     description: Separateur entre les elements
@@ -44,24 +50,28 @@ champs:
 
   - nom: format
     type: text
+    groupe: Informations
     obligatoire: true
     description: Format de la sequence
     autocompletion: true
 
   - nom: padding
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 4
     description: Nombre de chiffres pour le compteur
 
   - nom: format_date
     type: select
+    groupe: Dates
     obligatoire: false
     options: [YYYY, YYMM, YYMMDD, null]
     description: Format de date inclus
 
   - nom: reset
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: annuel
     options: [jamais, annuel, mensuel]
@@ -69,12 +79,14 @@ champs:
 
   - nom: compteur_actuel
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Valeur actuelle du compteur
 
   - nom: actif
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true
     description: Sequence active

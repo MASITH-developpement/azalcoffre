@@ -1,0 +1,272 @@
+# =============================================================================
+# AZALPLUS - Administration Mail
+# =============================================================================
+# Configuration des paramètres email par tenant
+# Accessible via /ui/administration_mail
+
+nom: Administration Mail
+nom_pluriel: Configuration Mail
+icone: mail
+menu: Administration
+description: "Paramètres de connexion email (IMAP/SMTP)"
+ordre_menu: 90
+
+# Plusieurs configurations possibles par tenant
+singleton: false
+
+# =============================================================================
+# Sections pour affichage en colonnes
+# =============================================================================
+sections:
+  - nom: imap
+    label: "Réception (IMAP)"
+    icone: inbox
+    colonnes: 1
+
+  - nom: smtp
+    label: "Envoi (SMTP)"
+    icone: send
+    colonnes: 1
+
+  - nom: options
+    label: "Options Intervention"
+    icone: settings
+    colonnes: 1
+
+  - nom: statut
+    label: "Statut"
+    icone: activity
+    colonnes: 1
+
+# =============================================================================
+# Champs
+# =============================================================================
+champs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # IMAP (réception) - Colonne 1
+  # ─────────────────────────────────────────────────────────────────────────
+  - nom: imap_actif
+    label: "Activer réception"
+    type: boolean
+    defaut: false
+    section: imap
+    description: "Activer la réception automatique des emails"
+
+  - nom: imap_host
+    label: "Serveur IMAP"
+    type: text
+    section: imap
+    placeholder: "imap.ovh.net"
+    autocompletion:
+      suggestions:
+        - "ssl0.ovh.net"
+        - "pro1.mail.ovh.net"
+        - "pro2.mail.ovh.net"
+        - "pro3.mail.ovh.net"
+        - "imap.gmail.com"
+        - "imap.ionos.fr"
+        - "mail.gandi.net"
+
+  - nom: imap_port
+    label: "Port"
+    type: number
+    section: imap
+    defaut: 993
+    autocompletion:
+      suggestions:
+        - "993"
+        - "143"
+
+  - nom: imap_user
+    label: "Email"
+    type: email
+    section: imap
+    placeholder: "contact@votredomaine.com"
+
+  - nom: imap_password
+    label: "Mot de passe"
+    type: password
+    section: imap
+    chiffre: true
+
+  - nom: imap_dossier
+    label: "Dossier source"
+    type: text
+    section: imap
+    defaut: "INBOX"
+    autocompletion:
+      suggestions:
+        - "INBOX"
+        - "INBOX/Interventions"
+        - "INBOX/SAV"
+
+  - nom: imap_dossier_traite
+    label: "Dossier traités"
+    type: text
+    section: imap
+    placeholder: "INBOX/Traites"
+    autocompletion:
+      suggestions:
+        - "INBOX/Traites"
+        - "INBOX/Archives"
+        - "Processed"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # SMTP (envoi) - Colonne 2
+  # ─────────────────────────────────────────────────────────────────────────
+  - nom: smtp_actif
+    label: "Activer envoi"
+    type: boolean
+    section: smtp
+    defaut: false
+    description: "Activer l'envoi d'emails"
+
+  - nom: smtp_host
+    label: "Serveur SMTP"
+    type: text
+    section: smtp
+    placeholder: "smtp.ovh.net"
+    autocompletion:
+      suggestions:
+        - "ssl0.ovh.net"
+        - "pro1.mail.ovh.net"
+        - "pro2.mail.ovh.net"
+        - "pro3.mail.ovh.net"
+        - "smtp.gmail.com"
+        - "smtp.ionos.fr"
+        - "mail.gandi.net"
+
+  - nom: smtp_port
+    label: "Port"
+    type: number
+    section: smtp
+    defaut: 587
+    autocompletion:
+      suggestions:
+        - "587"
+        - "465"
+        - "25"
+
+  - nom: smtp_user
+    label: "Identifiant"
+    type: email
+    section: smtp
+    placeholder: "contact@votredomaine.com"
+    description: "Souvent identique à l'email IMAP"
+
+  - nom: smtp_password
+    label: "Mot de passe"
+    type: password
+    section: smtp
+    chiffre: true
+    description: "Souvent identique au mot de passe IMAP"
+
+  - nom: smtp_from_name
+    label: "Nom expéditeur"
+    type: text
+    section: smtp
+    placeholder: "Service SAV"
+
+  - nom: smtp_from_email
+    label: "Email expéditeur"
+    type: email
+    section: smtp
+    placeholder: "sav@votredomaine.com"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Options Email to Intervention
+  # ─────────────────────────────────────────────────────────────────────────
+  - nom: intervention_auto
+    label: "Création auto intervention"
+    type: boolean
+    section: options
+    defaut: true
+    description: "Créer automatiquement des interventions depuis les emails"
+
+  - nom: intervalle_polling
+    label: "Intervalle vérification"
+    type: number
+    section: options
+    defaut: 300
+    description: "Fréquence en secondes (300 = 5 min)"
+    autocompletion:
+      suggestions:
+        - "60"
+        - "120"
+        - "300"
+        - "600"
+
+  - nom: reponse_auto
+    label: "Réponse automatique"
+    type: boolean
+    section: options
+    defaut: true
+    description: "Confirmer la création d'intervention par email"
+
+  - nom: mots_cles
+    label: "Mots-clés / Donneurs d'ordre"
+    type: tags
+    section: options
+    defaut: "INTERPARTNER ASSISTANCE France"
+    description: "Déclenchent la création d'intervention"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Test et statut
+  # ─────────────────────────────────────────────────────────────────────────
+  - nom: derniere_verification
+    label: "Dernière vérification"
+    type: datetime
+    section: statut
+    lecture_seule: true
+
+  - nom: dernier_statut
+    label: "Statut connexion"
+    type: text
+    section: statut
+    lecture_seule: true
+
+  - nom: emails_non_lus
+    label: "Emails non lus"
+    type: number
+    section: statut
+    lecture_seule: true
+    defaut: 0
+
+# =============================================================================
+# Actions
+# =============================================================================
+actions:
+  - nom: tester_connexion
+    label: "Tester IMAP/SMTP"
+    icone: refresh-cw
+    couleur: primary
+    description: "Vérifier la connexion aux serveurs mail"
+    endpoint: "/api/email-to-intervention/test-connexion"
+
+  - nom: verifier_emails
+    label: "Vérifier emails maintenant"
+    icone: mail
+    couleur: secondary
+    description: "Lancer une vérification immédiate"
+    endpoint: "/api/email-to-intervention/process"
+
+# =============================================================================
+# Layout colonnes
+# =============================================================================
+layout:
+  type: columns
+  columns:
+    - sections: [imap]
+      width: 50%
+    - sections: [smtp]
+      width: 50%
+  footer:
+    - sections: [options, statut]
+
+# =============================================================================
+# Permissions
+# =============================================================================
+permissions:
+  lecture: [ADMIN, SUPERVISEUR]
+  ecriture: [ADMIN]
+  suppression: [ADMIN]

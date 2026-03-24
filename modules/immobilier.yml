@@ -9,18 +9,21 @@ description: Gestion locative
 champs:
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference bien
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [APPARTEMENT, MAISON, LOCAL_COMMERCIAL, BUREAU, PARKING, CAVE, TERRAIN]
     description: Type de bien
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: DISPONIBLE
     options: [DISPONIBLE, LOUE, EN_TRAVAUX, VENDU]
@@ -28,128 +31,152 @@ champs:
 
   - nom: adresse
     type: textarea
+    groupe: Contact
     obligatoire: true
     description: Adresse complete
 
   - nom: code_postal
     type: text
+    groupe: Identification
     obligatoire: true
     description: Code postal
 
   - nom: ville
     type: text
+    groupe: Contact
     obligatoire: true
     description: Ville
 
   - nom: surface
     type: number
+    groupe: Informations
     obligatoire: false
     description: Surface (m2)
 
   - nom: nb_pieces
     type: number
+    groupe: Quantites
     obligatoire: false
     description: Nombre de pieces
 
   - nom: etage
     type: text
+    groupe: Informations
     obligatoire: false
     description: Etage
 
   - nom: dpe
     type: select
+    groupe: Informations
     obligatoire: false
     options: [A, B, C, D, E, F, G]
     description: DPE
 
   - nom: loyer_hc
     type: number
+    groupe: Informations
     obligatoire: false
     description: Loyer HC
 
   - nom: charges
     type: number
+    groupe: Informations
     obligatoire: false
     description: Charges mensuelles
 
   - nom: loyer_cc
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Loyer CC
 
   - nom: depot_garantie
     type: number
+    groupe: Informations
     obligatoire: false
     description: Depot de garantie
 
   - nom: date_acquisition
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date acquisition
 
   - nom: prix_acquisition
     type: number
+    groupe: Montants
     obligatoire: false
     description: Prix acquisition
 
   - nom: valeur_actuelle
     type: number
+    groupe: Informations
     obligatoire: false
     description: Valeur estimee actuelle
 
   - nom: locataire_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Clients
     description: Locataire actuel
 
   - nom: date_debut_bail
     type: date
+    groupe: Dates
     obligatoire: false
     description: Debut bail
 
   - nom: date_fin_bail
     type: date
+    groupe: Dates
     obligatoire: false
     description: Fin bail
 
   - nom: type_bail
     type: select
+    groupe: Informations
     obligatoire: false
     options: [VIDE, MEUBLE, COMMERCIAL, PROFESSIONNEL]
     description: Type de bail
 
   - nom: revenus_annuels
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Revenus annuels
 
   - nom: charges_annuelles
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Charges annuelles
 
   - nom: rendement
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Rendement (%)
 
   - nom: photos
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Photos
 
   - nom: documents
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Documents (bail, diagnostics)
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

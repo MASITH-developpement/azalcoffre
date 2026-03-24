@@ -1,12 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Corps batiment (secondaire) -->
-  <path d="M2 10V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V10L12 4L2 10Z" fill="#93C5FD"/>
-  <!-- Toit (principale) -->
-  <path d="M1 10L12 3L23 10L22 11.5L12 5L2 11.5L1 10Z" fill="#2563EB"/>
-  <!-- Etageres (principale) -->
-  <rect x="5" y="12" width="14" height="2" rx="0.5" fill="#2563EB"/>
-  <rect x="5" y="16" width="14" height="2" rx="0.5" fill="#2563EB"/>
-  <!-- Piliers (principale) -->
-  <rect x="6" y="10" width="2" height="12" fill="#2563EB"/>
-  <rect x="16" y="10" width="2" height="12" fill="#2563EB"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Corps batiment (secondaire) --><path d="M2 10V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V10L12 4L2 10Z" fill="#93C5FD"/><!-- Toit (principale) --><path d="M1 10L12 3L23 10L22 11.5L12 5L2 11.5L1 10Z" fill="#2563EB"/><!-- Etageres (principale) --><rect x="5" y="12" width="14" height="2" rx="0.5" fill="#2563EB"/><rect x="5" y="16" width="14" height="2" rx="0.5" fill="#2563EB"/><!-- Piliers (principale) --><rect x="6" y="10" width="2" height="12" fill="#2563EB"/><rect x="16" y="10" width="2" height="12" fill="#2563EB"/></svg> 

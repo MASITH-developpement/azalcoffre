@@ -18,6 +18,7 @@ import structlog
 
 from .config import settings
 from .db import Database
+from .pdf import PDFGenerator
 
 logger = structlog.get_logger()
 
@@ -51,43 +52,213 @@ TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 # Email Service
 # =============================================================================
 class EmailService:
-    """Service d'envoi d'emails."""
+    """Service d'envoi d'emails (tenant-aware)."""
+
+    _tenant_config_cache: Dict[str, Dict] = {}
 
     @classmethod
-    def is_configured(cls) -> bool:
+    def get_tenant_config(cls, tenant_id: UUID) -> Dict:
+        """Récupère la configuration SMTP du tenant depuis la base de données."""
+        cache_key = str(tenant_id)
+
+        # Essayer de charger depuis la base de données
+        try:
+            configs = Database.query("administration_mail", tenant_id, limit=1)
+            if configs and len(configs) > 0:
+                config = configs[0]
+                return {
+                    "smtp_host": config.get("smtp_host", ""),
+                    "smtp_port": int(config.get("smtp_port", 587)),
+                    "smtp_user": config.get("smtp_user", ""),
+                    "smtp_password": config.get("smtp_password", ""),
+                    "smtp_from": config.get("smtp_from", "") or config.get("smtp_user", ""),
+                    "smtp_ssl": config.get("smtp_ssl", False),
+                }
+        except Exception as e:
+            logger.debug("tenant_smtp_config_not_found", tenant_id=str(tenant_id), error=str(e))
+
+        # Fallback sur les variables d'environnement
+        return {
+            "smtp_host": settings.SMTP_HOST or "",
+            "smtp_port": settings.SMTP_PORT or 587,
+            "smtp_user": settings.SMTP_USER or "",
+            "smtp_password": settings.SMTP_PASSWORD or "",
+            "smtp_from": settings.SMTP_FROM or settings.SMTP_USER or "",
+            "smtp_ssl": settings.SMTP_PORT == 465,
+        }
+
+    @classmethod
+    def is_configured(cls, tenant_id: UUID = None) -> bool:
         """Vérifie si le service SMTP est configuré."""
+        if tenant_id:
+            config = cls.get_tenant_config(tenant_id)
+            return bool(config.get("smtp_host") and config.get("smtp_user"))
         return bool(settings.SMTP_HOST and settings.SMTP_USER)
 
     @classmethod
-    def _validate_config(cls) -> None:
+    def _validate_config(cls, config: Dict) -> None:
         """Valide la configuration SMTP."""
-        if not settings.SMTP_HOST:
+        if not config.get("smtp_host"):
             raise EmailConfigurationError("SMTP_HOST non configuré")
-        if not settings.SMTP_USER:
+        if not config.get("smtp_user"):
             raise EmailConfigurationError("SMTP_USER non configuré")
-        if not settings.SMTP_PASSWORD:
+        if not config.get("smtp_password"):
             raise EmailConfigurationError("SMTP_PASSWORD non configuré")
 
     @classmethod
-    def _create_connection(cls):
-        """Crée une connexion SMTP."""
-        cls._validate_config()
+    def _prepare_devis_for_pdf(cls, devis: Dict) -> Dict:
+        """Mappe les champs du devis (base) vers le format attendu par le PDF."""
+        import json
+
+        # Debug: log les champs disponibles dans le devis
+        logger.debug("prepare_devis_for_pdf",
+                     keys=list(devis.keys()) if devis else [],
+                     has_lignes="lignes" in devis if devis else False,
+                     has_lines="lines" in devis if devis else False,
+                     lignes_type=type(devis.get("lignes")).__name__ if devis else None,
+                     lignes_count=len(devis.get("lignes", [])) if devis and devis.get("lignes") else 0)
+
+        prepared = {
+            "numero": devis.get("number") or devis.get("numero") or "NOUVEAU",
+            "date": devis.get("date"),
+            "validite": devis.get("validity_date") or devis.get("validite"),
+            "validity_date": devis.get("validity_date") or devis.get("validite"),
+            "client": devis.get("customer_id") or devis.get("client_id") or devis.get("client"),
+            "customer_id": devis.get("customer_id") or devis.get("client_id"),
+            "objet": devis.get("title") or devis.get("objet") or "",
+            "total_ht": devis.get("subtotal") or devis.get("total_ht") or 0,
+            "total_tva": devis.get("tax_amount") or devis.get("total_tva") or 0,
+            "total_ttc": devis.get("total") or devis.get("total_ttc") or 0,
+            "notes": devis.get("notes") or "",
+            "conditions": devis.get("terms") or devis.get("conditions") or "",
+            "billing_address": devis.get("billing_address") or "",
+            # Pour le vendeur
+            "assigned_to": devis.get("assigned_to"),
+            "created_by": devis.get("created_by"),
+            # Conditions de paiement
+            "payment_terms": devis.get("payment_terms") or devis.get("conditions_paiement") or "",
+            "payment_terms_text": devis.get("payment_terms_text") or "",
+        }
+
+        # Préparer les lignes
+        lignes_raw = devis.get("lignes") or devis.get("lines") or []
+        if isinstance(lignes_raw, str):
+            try:
+                lignes_raw = json.loads(lignes_raw)
+            except json.JSONDecodeError:
+                lignes_raw = []
+
+        lignes = []
+        for ligne in lignes_raw:
+            if isinstance(ligne, str):
+                try:
+                    ligne = json.loads(ligne)
+                except json.JSONDecodeError:
+                    continue
+
+            lignes.append({
+                "line_type": ligne.get("line_type", "product"),  # section, note, ou product
+                "description": ligne.get("description") or ligne.get("product_name") or "",
+                "product_code": ligne.get("product_code") or ligne.get("code") or "",
+                "quantite": ligne.get("quantity") or ligne.get("quantite") or 1,
+                "unite": ligne.get("unit") or ligne.get("unite") or "Unité(s)",
+                "prix_unitaire": ligne.get("unit_price") or ligne.get("prix_unitaire") or 0,
+                "remise_percent": ligne.get("discount_percent") or ligne.get("remise_percent") or ligne.get("remise") or 0,
+                "taux_tva": ligne.get("tax_rate") or ligne.get("taux_tva") or 20,
+                "total_ht_ligne": ligne.get("subtotal") or ligne.get("total_ht_ligne") or 0,
+                "section": ligne.get("section") or ligne.get("groupe") or "",
+            })
+
+        prepared["lignes"] = lignes
+
+        # Debug: log le résultat
+        logger.debug("devis_pdf_data_prepared",
+                     numero=prepared.get("numero"),
+                     client=prepared.get("client"),
+                     lignes_count=len(lignes),
+                     total_ttc=prepared.get("total_ttc"))
+
+        return prepared
+
+    @classmethod
+    def _prepare_facture_for_pdf(cls, facture: Dict) -> Dict:
+        """Mappe les champs de la facture (base) vers le format attendu par le PDF."""
+        import json
+
+        prepared = {
+            "numero": facture.get("number") or facture.get("numero") or "NOUVEAU",
+            "date": facture.get("date") or facture.get("invoice_date"),
+            "echeance": facture.get("due_date") or facture.get("echeance"),
+            "due_date": facture.get("due_date") or facture.get("echeance"),
+            "client": facture.get("customer_id") or facture.get("client_id") or facture.get("client"),
+            "customer_id": facture.get("customer_id") or facture.get("client_id"),
+            "objet": facture.get("title") or facture.get("objet") or "",
+            "total_ht": facture.get("subtotal") or facture.get("total_ht") or 0,
+            "total_tva": facture.get("tax_amount") or facture.get("total_tva") or 0,
+            "total_ttc": facture.get("total") or facture.get("total_ttc") or 0,
+            "notes": facture.get("notes") or "",
+            "conditions": facture.get("terms") or facture.get("conditions") or "",
+            "billing_address": facture.get("billing_address") or "",
+            # Pour le vendeur
+            "assigned_to": facture.get("assigned_to"),
+            "created_by": facture.get("created_by"),
+            # Conditions de paiement
+            "payment_terms": facture.get("payment_terms") or facture.get("conditions_paiement") or "",
+            "payment_terms_text": facture.get("payment_terms_text") or "",
+        }
+
+        # Préparer les lignes
+        lignes_raw = facture.get("lignes") or facture.get("lines") or []
+        if isinstance(lignes_raw, str):
+            try:
+                lignes_raw = json.loads(lignes_raw)
+            except json.JSONDecodeError:
+                lignes_raw = []
+
+        lignes = []
+        for ligne in lignes_raw:
+            if isinstance(ligne, str):
+                try:
+                    ligne = json.loads(ligne)
+                except json.JSONDecodeError:
+                    continue
+
+            lignes.append({
+                "line_type": ligne.get("line_type", "product"),  # section, note, ou product
+                "description": ligne.get("description") or ligne.get("product_name") or "",
+                "product_code": ligne.get("product_code") or ligne.get("code") or "",
+                "quantite": ligne.get("quantity") or ligne.get("quantite") or 1,
+                "unite": ligne.get("unit") or ligne.get("unite") or "Unité(s)",
+                "prix_unitaire": ligne.get("unit_price") or ligne.get("prix_unitaire") or 0,
+                "remise_percent": ligne.get("discount_percent") or ligne.get("remise_percent") or ligne.get("remise") or 0,
+                "taux_tva": ligne.get("tax_rate") or ligne.get("taux_tva") or 20,
+                "total_ht_ligne": ligne.get("subtotal") or ligne.get("total_ht_ligne") or 0,
+                "section": ligne.get("section") or ligne.get("groupe") or "",
+            })
+
+        prepared["lignes"] = lignes
+        return prepared
+
+    @classmethod
+    def _create_connection(cls, config: Dict):
+        """Crée une connexion SMTP avec la configuration fournie."""
+        cls._validate_config(config)
 
         context = ssl.create_default_context()
+        smtp_host = config["smtp_host"]
+        smtp_port = config["smtp_port"]
+        smtp_user = config["smtp_user"]
+        smtp_password = config["smtp_password"]
 
-        if settings.SMTP_PORT == 465:
+        if smtp_port == 465 or config.get("smtp_ssl"):
             # SSL direct
-            server = smtplib.SMTP_SSL(
-                settings.SMTP_HOST,
-                settings.SMTP_PORT,
-                context=context
-            )
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, context=context)
         else:
             # STARTTLS
-            server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
+            server = smtplib.SMTP(smtp_host, smtp_port)
             server.starttls(context=context)
 
-        server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+        server.login(smtp_user, smtp_password)
         return server
 
     @classmethod
@@ -99,7 +270,8 @@ class EmailService:
         text_body: Optional[str] = None,
         cc: Optional[List[str]] = None,
         bcc: Optional[List[str]] = None,
-        attachments: Optional[List[Dict[str, Any]]] = None
+        attachments: Optional[List[Dict[str, Any]]] = None,
+        tenant_id: UUID = None
     ) -> bool:
         """
         Envoie un email.
@@ -112,40 +284,93 @@ class EmailService:
             cc: Liste des adresses en copie
             bcc: Liste des adresses en copie cachée
             attachments: Liste des pièces jointes [{"filename": str, "content": bytes, "mime_type": str}]
+            tenant_id: UUID du tenant pour récupérer la config SMTP
 
         Returns:
             True si envoyé avec succès
         """
         try:
-            cls._validate_config()
+            # Récupérer la configuration SMTP (tenant-specific ou fallback)
+            if tenant_id:
+                config = cls.get_tenant_config(tenant_id)
+            else:
+                config = {
+                    "smtp_host": settings.SMTP_HOST,
+                    "smtp_port": settings.SMTP_PORT or 587,
+                    "smtp_user": settings.SMTP_USER,
+                    "smtp_password": settings.SMTP_PASSWORD,
+                    "smtp_from": settings.SMTP_FROM or settings.SMTP_USER,
+                    "smtp_ssl": settings.SMTP_PORT == 465,
+                }
 
-            # Créer le message
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = settings.SMTP_FROM
-            msg["To"] = to
+            cls._validate_config(config)
 
-            if cc:
-                msg["Cc"] = ", ".join(cc)
+            smtp_from = config.get("smtp_from") or config.get("smtp_user")
 
-            # Corps texte
-            if text_body:
-                part1 = MIMEText(text_body, "plain", "utf-8")
-                msg.attach(part1)
-
-            # Corps HTML
-            part2 = MIMEText(html_body, "html", "utf-8")
-            msg.attach(part2)
-
-            # Pièces jointes
+            # Créer le message avec la bonne structure MIME
+            # Avec pièces jointes: multipart/mixed contenant multipart/alternative + attachments
+            # Sans pièces jointes: multipart/alternative
             if attachments:
+                msg = MIMEMultipart("mixed")
+                msg["Subject"] = subject
+                msg["From"] = smtp_from
+                msg["To"] = to
+
+                if cc:
+                    msg["Cc"] = ", ".join(cc)
+
+                # Sous-partie alternative pour le corps (texte + HTML)
+                body_part = MIMEMultipart("alternative")
+
+                if text_body:
+                    body_part.attach(MIMEText(text_body, "plain", "utf-8"))
+                body_part.attach(MIMEText(html_body, "html", "utf-8"))
+
+                msg.attach(body_part)
+
+                # Ajouter les pièces jointes au niveau racine (mixed)
                 for attachment in attachments:
-                    part = MIMEApplication(
-                        attachment["content"],
-                        Name=attachment["filename"]
-                    )
+                    mime_type = attachment.get("mime_type", "application/octet-stream")
+                    # Extraire le sous-type (ex: "pdf" de "application/pdf")
+                    if "/" in mime_type:
+                        main_type, sub_type = mime_type.split("/", 1)
+                    else:
+                        main_type, sub_type = "application", "octet-stream"
+
+                    # Créer l'attachement avec le bon type MIME
+                    if main_type == "application":
+                        part = MIMEApplication(
+                            attachment["content"],
+                            _subtype=sub_type,
+                            Name=attachment["filename"]
+                        )
+                    else:
+                        # Fallback pour les autres types
+                        from email.mime.base import MIMEBase
+                        from email import encoders
+                        part = MIMEBase(main_type, sub_type)
+                        part.set_payload(attachment["content"])
+                        encoders.encode_base64(part)
+
                     part["Content-Disposition"] = f'attachment; filename="{attachment["filename"]}"'
                     msg.attach(part)
+                    logger.debug("attachment_added",
+                                filename=attachment["filename"],
+                                mime_type=mime_type,
+                                size=len(attachment["content"]))
+            else:
+                # Sans pièces jointes: structure simple alternative
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = subject
+                msg["From"] = smtp_from
+                msg["To"] = to
+
+                if cc:
+                    msg["Cc"] = ", ".join(cc)
+
+                if text_body:
+                    msg.attach(MIMEText(text_body, "plain", "utf-8"))
+                msg.attach(MIMEText(html_body, "html", "utf-8"))
 
             # Destinataires
             all_recipients = [to]
@@ -155,10 +380,10 @@ class EmailService:
                 all_recipients.extend(bcc)
 
             # Envoyer
-            with cls._create_connection() as server:
-                server.sendmail(settings.SMTP_FROM, all_recipients, msg.as_string())
+            with cls._create_connection(config) as server:
+                server.sendmail(smtp_from, all_recipients, msg.as_string())
 
-            logger.info("email_sent", to=to, subject=subject)
+            logger.info("email_sent", to=to, subject=subject, tenant_id=str(tenant_id) if tenant_id else None)
             return True
 
         except EmailConfigurationError:
@@ -259,6 +484,16 @@ class EmailService:
         if not devis:
             raise DocumentNotFoundError(f"Devis {devis_id} non trouvé")
 
+        # Debug: log les données du devis
+        logger.info("send_devis_email_data",
+                    devis_id=str(devis_id),
+                    has_lignes="lignes" in devis,
+                    lignes_count=len(devis.get("lignes", [])) if devis.get("lignes") else 0,
+                    numero=devis.get("numero"),
+                    number=devis.get("number"),
+                    total=devis.get("total"),
+                    keys=list(devis.keys())[:15])
+
         # Récupérer les infos du tenant pour l'email
         with Database.get_session() as session:
             from sqlalchemy import text
@@ -297,12 +532,42 @@ Cordialement,
 {tenant_info.get('nom', "L'équipe")}
         """
 
-        # Envoyer l'email
+        # Générer le PDF
+        try:
+            generator = PDFGenerator(tenant_id)
+            # Mapper les champs de la base vers le format PDF
+            pdf_data = cls._prepare_devis_for_pdf(devis)
+            pdf_bytes = generator.generate_devis_pdf(pdf_data)
+            pdf_filename = f"devis_{numero}.pdf"
+            attachments = [{
+                "filename": pdf_filename,
+                "content": pdf_bytes,
+                "mime_type": "application/pdf"
+            }]
+            logger.info("devis_pdf_generated",
+                        numero=numero,
+                        size=len(pdf_bytes),
+                        pdf_data_lignes=len(pdf_data.get("lignes", [])),
+                        pdf_data_numero=pdf_data.get("numero"))
+        except Exception as e:
+            logger.error("devis_pdf_generation_failed", error=str(e), devis_id=str(devis_id))
+            import traceback
+            logger.error("devis_pdf_traceback", traceback=traceback.format_exc())
+            attachments = None  # Envoyer sans PDF si échec
+
+        # Envoyer l'email avec le PDF
+        logger.info("send_devis_email_calling_send",
+                    recipient=recipient,
+                    has_attachments=attachments is not None,
+                    attachment_count=len(attachments) if attachments else 0,
+                    attachment_size=len(attachments[0]["content"]) if attachments else 0)
         await cls.send_email(
             to=recipient,
             subject=subject,
             html_body=html_body,
-            text_body=text_body
+            text_body=text_body,
+            attachments=attachments,
+            tenant_id=tenant_id
         )
 
         # Mettre à jour le statut du devis
@@ -348,7 +613,7 @@ Cordialement,
             Dict avec le statut de l'envoi
         """
         # Récupérer la facture avec isolation tenant
-        facture = Database.get_by_id("facture", tenant_id, facture_id)
+        facture = Database.get_by_id("factures", tenant_id, facture_id)
 
         if not facture:
             raise DocumentNotFoundError(f"Facture {facture_id} non trouvée")
@@ -390,17 +655,36 @@ Cordialement,
 {tenant_info.get('nom', "L'équipe")}
         """
 
+        # Générer le PDF
+        try:
+            generator = PDFGenerator(tenant_id)
+            # Mapper les champs de la base vers le format PDF
+            pdf_data = cls._prepare_facture_for_pdf(facture)
+            pdf_bytes = generator.generate_facture_pdf(pdf_data)
+            pdf_filename = f"facture_{numero}.pdf"
+            attachments = [{
+                "filename": pdf_filename,
+                "content": pdf_bytes,
+                "mime_type": "application/pdf"
+            }]
+            logger.debug("facture_pdf_generated", numero=numero, size=len(pdf_bytes))
+        except Exception as e:
+            logger.error("facture_pdf_generation_failed", error=str(e), facture_id=str(facture_id))
+            attachments = None  # Envoyer sans PDF si échec
+
         # Envoyer l'email
         await cls.send_email(
             to=recipient,
             subject=subject,
             html_body=html_body,
-            text_body=text_body
+            text_body=text_body,
+            attachments=attachments,
+            tenant_id=tenant_id
         )
 
         # Mettre à jour le statut de la facture
         Database.update(
-            "facture",
+            "factures",
             tenant_id,
             facture_id,
             {

@@ -242,7 +242,9 @@ class ModuleLoader:
                         if attr_name == "router":
                             prefix = meta.prefix
                         elif attr_name == "public_router":
-                            prefix = meta.prefix
+                            # Utiliser public_router_prefix si défini dans MODULE_META
+                            module_meta = getattr(module, "MODULE_META", {})
+                            prefix = module_meta.get("public_router_prefix", meta.prefix.replace("/api", ""))
                         elif "_router" in attr_name:
                             # phone_router -> /api/phone
                             route_name = attr_name.replace("_router", "")

@@ -1,0 +1,323 @@
+# =============================================================================
+# AZALMED - Module Consentements (CONSENT)
+# =============================================================================
+# Consentements médicaux dématérialisés avec signature électronique eIDAS
+# Valeur juridique, archivage HDS 20 ans, dossier de preuves
+
+nom: Consentements
+icone: file-signature
+menu: AZALMED
+description: "Consentements signés électroniquement (eIDAS)"
+
+champs:
+  # ---------------------------------------------------------------------------
+  # Identification
+  # ---------------------------------------------------------------------------
+  - nom: reference
+    type: text
+    groupe: Identification
+    obligatoire: false
+    readonly: true
+    description: "Référence unique (auto-générée)"
+
+  - nom: titre
+    type: text
+    groupe: Identification
+    obligatoire: true
+    description: Titre du consentement
+
+  - nom: formulaire_id
+    type: relation
+    groupe: Identification
+    obligatoire: true
+    relation: FormulairesConsent
+    description: Modèle de formulaire utilisé
+
+  # ---------------------------------------------------------------------------
+  # Relations
+  # ---------------------------------------------------------------------------
+  - nom: patient_id
+    type: relation
+    groupe: Relations
+    obligatoire: true
+    relation: Patients
+    description: Patient signataire
+
+  - nom: praticien_id
+    type: relation
+    groupe: Relations
+    obligatoire: true
+    relation: Praticiens
+    description: Praticien demandeur
+
+  - nom: consultation_id
+    type: relation
+    groupe: Relations
+    obligatoire: false
+    relation: Consultations
+    description: Consultation associée
+
+  # ---------------------------------------------------------------------------
+  # Acte médical
+  # ---------------------------------------------------------------------------
+  - nom: type_acte
+    type: select
+    groupe: Acte
+    obligatoire: true
+    options:
+      - CONSULTATION
+      - INTERVENTION_CHIRURGICALE
+      - ANESTHESIE
+      - EXAMEN_IMAGERIE
+      - ACTE_ESTHETIQUE
+      - SOIN_DENTAIRE
+      - VACCINATION
+      - TRAITEMENT
+      - PARTICIPATION_ETUDE
+      - AUTRE
+    description: Type d'acte concerné
+
+  - nom: description_acte
+    type: textarea
+    groupe: Acte
+    obligatoire: false
+    description: Description détaillée de l'acte
+
+  - nom: date_acte_prevu
+    type: date
+    groupe: Acte
+    obligatoire: false
+    description: Date prévue de l'acte
+
+  - nom: risques_informes
+    type: textarea
+    groupe: Acte
+    obligatoire: false
+    description: Risques communiqués au patient
+
+  - nom: alternatives_informees
+    type: textarea
+    groupe: Acte
+    obligatoire: false
+    description: Alternatives proposées
+
+  # ---------------------------------------------------------------------------
+  # Signature patient
+  # ---------------------------------------------------------------------------
+  - nom: statut_signature
+    type: select
+    groupe: Signature
+    obligatoire: true
+    defaut: EN_ATTENTE
+    options: [EN_ATTENTE, ENVOYE, CONSULTE, SIGNE, REFUSE, EXPIRE]
+    description: Statut de la signature
+
+  - nom: date_envoi
+    type: datetime
+    groupe: Signature
+    obligatoire: false
+    description: Date d'envoi au patient
+
+  - nom: date_consultation
+    type: datetime
+    groupe: Signature
+    obligatoire: false
+    description: Date de première consultation par le patient
+
+  - nom: date_signature
+    type: datetime
+    groupe: Signature
+    obligatoire: false
+    description: Date de signature
+
+  - nom: mode_signature
+    type: select
+    groupe: Signature
+    obligatoire: false
+    options: [TABLETTE, LIEN_EMAIL, LIEN_SMS]
+    description: Mode de signature utilisé
+
+  - nom: ip_signature
+    type: text
+    groupe: Signature
+    obligatoire: false
+    readonly: true
+    description: Adresse IP lors de la signature
+
+  - nom: user_agent_signature
+    type: text
+    groupe: Signature
+    obligatoire: false
+    readonly: true
+    description: User-Agent lors de la signature
+
+  # ---------------------------------------------------------------------------
+  # Signature représentant légal
+  # ---------------------------------------------------------------------------
+  - nom: necessite_representant
+    type: boolean
+    groupe: Représentant
+    obligatoire: false
+    defaut: false
+    description: "Nécessite signature représentant légal (mineur, majeur protégé)"
+
+  - nom: representant_nom
+    type: text
+    groupe: Représentant
+    obligatoire: false
+    description: Nom du représentant légal
+
+  - nom: representant_lien
+    type: text
+    groupe: Représentant
+    obligatoire: false
+    description: "Lien avec le patient (parent, tuteur...)"
+
+  - nom: representant_email
+    type: email
+    groupe: Représentant
+    obligatoire: false
+    description: Email du représentant
+
+  - nom: date_signature_representant
+    type: datetime
+    groupe: Représentant
+    obligatoire: false
+    description: Date de signature du représentant
+
+  # ---------------------------------------------------------------------------
+  # Refus
+  # ---------------------------------------------------------------------------
+  - nom: date_refus
+    type: datetime
+    groupe: Refus
+    obligatoire: false
+    description: Date du refus
+
+  - nom: motif_refus
+    type: textarea
+    groupe: Refus
+    obligatoire: false
+    description: Motif du refus
+
+  # ---------------------------------------------------------------------------
+  # eIDAS et preuves
+  # ---------------------------------------------------------------------------
+  - nom: niveau_signature
+    type: select
+    groupe: eIDAS
+    obligatoire: false
+    defaut: AVANCEE
+    options: [SIMPLE, AVANCEE, QUALIFIEE]
+    description: "Niveau de signature eIDAS"
+
+  - nom: certificat_signature
+    type: text
+    groupe: eIDAS
+    obligatoire: false
+    readonly: true
+    description: Identifiant du certificat de signature
+
+  - nom: hash_document
+    type: text
+    groupe: eIDAS
+    obligatoire: false
+    readonly: true
+    description: "Hash SHA-256 du document signé"
+
+  - nom: tsa_timestamp
+    type: datetime
+    groupe: eIDAS
+    obligatoire: false
+    readonly: true
+    description: "Horodatage TSA RFC 3161"
+
+  - nom: tsa_token
+    type: text
+    groupe: eIDAS
+    obligatoire: false
+    readonly: true
+    description: "Token TSA"
+
+  - nom: dossier_preuves_id
+    type: text
+    groupe: eIDAS
+    obligatoire: false
+    readonly: true
+    description: "ID du dossier de preuves"
+
+  # ---------------------------------------------------------------------------
+  # Document généré
+  # ---------------------------------------------------------------------------
+  - nom: document_id
+    type: relation
+    groupe: Document
+    obligatoire: false
+    relation: Documents
+    description: Document archivé dans le coffre
+
+  - nom: pdf_signe
+    type: file
+    groupe: Document
+    obligatoire: false
+    description: PDF signé
+
+  # ---------------------------------------------------------------------------
+  # Expiration
+  # ---------------------------------------------------------------------------
+  - nom: date_expiration
+    type: datetime
+    groupe: Expiration
+    obligatoire: false
+    description: "Date d'expiration de la demande (72h par défaut)"
+
+  - nom: relances_envoyees
+    type: number
+    groupe: Expiration
+    obligatoire: false
+    defaut: 0
+    description: Nombre de relances envoyées
+
+  - nom: derniere_relance
+    type: datetime
+    groupe: Expiration
+    obligatoire: false
+    description: Date de dernière relance
+
+# ---------------------------------------------------------------------------
+# Workflow
+# ---------------------------------------------------------------------------
+workflow:
+  EN_ATTENTE -> ENVOYE: "Envoyer au patient"
+  ENVOYE -> CONSULTE: "Patient a consulté"
+  CONSULTE -> SIGNE: "Patient a signé"
+  CONSULTE -> REFUSE: "Patient a refusé"
+  ENVOYE -> EXPIRE: "Expiration délai"
+  EN_ATTENTE -> SIGNE: "Signature en cabinet"
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+actions:
+  - envoyer_email
+  - envoyer_sms
+  - relancer
+  - generer_lien
+  - telecharger_pdf
+  - telecharger_preuves
+  - annuler
+
+# ---------------------------------------------------------------------------
+# Recherche
+# ---------------------------------------------------------------------------
+recherche:
+  champs: [reference, titre, patient_id]
+  tri_defaut: date_envoi
+  ordre_defaut: desc
+
+# ---------------------------------------------------------------------------
+# Liste
+# ---------------------------------------------------------------------------
+liste:
+  colonnes: [reference, titre, patient_id, type_acte, statut_signature, date_signature]
+  filtres: [type_acte, statut_signature, praticien_id, niveau_signature]

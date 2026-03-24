@@ -16,26 +16,31 @@ champs:
   # ==========================================================================
   - nom: reference
     type: text
+    groupe: Identification
     libelle: "Référence"
     obligatoire: true
     unique: true
 
   - nom: code_barre
     type: text
+    groupe: Identification
     libelle: "Code-barres"
     unique: true
 
   - nom: designation
     type: text
+    groupe: Informations
     libelle: "Désignation"
     obligatoire: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     libelle: "Description"
 
   - nom: type_article
     type: select
+    groupe: Informations
     libelle: "Type"
     options:
       - PRODUIT
@@ -50,26 +55,32 @@ champs:
   # ==========================================================================
   - nom: categorie
     type: text
+    groupe: Informations
     libelle: "Catégorie"
 
   - nom: sous_categorie
     type: text
+    groupe: Informations
     libelle: "Sous-catégorie"
 
   - nom: famille
     type: text
+    groupe: Informations
     libelle: "Famille"
 
   - nom: marque
     type: text
+    groupe: Informations
     libelle: "Marque"
 
   - nom: fournisseur_principal
     type: text
+    groupe: Relations
     libelle: "Fournisseur principal"
 
   - nom: tags
     type: tags
+    groupe: Metadata
     libelle: "Tags"
 
   # ==========================================================================
@@ -77,35 +88,43 @@ champs:
   # ==========================================================================
   - nom: prix_achat_ht
     type: money
+    groupe: Montants
     libelle: "Prix achat HT"
 
   - nom: prix_achat_moyen
     type: money
+    groupe: Montants
     libelle: "PMP"
 
   - nom: prix_vente_ht
     type: money
+    groupe: Montants
     libelle: "Prix vente HT"
 
   - nom: prix_vente_ttc
     type: money
+    groupe: Montants
     libelle: "Prix vente TTC"
 
   - nom: taux_tva
     type: number
+    groupe: Montants
     libelle: "Taux TVA (%)"
     defaut: 20
 
   - nom: marge_pourcent
     type: number
+    groupe: Informations
     libelle: "Marge (%)"
 
   - nom: marge_montant
     type: money
+    groupe: Montants
     libelle: "Marge (€)"
 
   - nom: coefficient
     type: number
+    groupe: Informations
     libelle: "Coefficient"
 
   # ==========================================================================
@@ -113,23 +132,28 @@ champs:
   # ==========================================================================
   - nom: tarifs
     type: json
+    groupe: Metadata
     libelle: "Tarifs"
     description: "Grille tarifaire par quantité/client"
 
   - nom: remise_max
     type: number
+    groupe: Informations
     libelle: "Remise max (%)"
 
   - nom: prix_promo
     type: money
+    groupe: Montants
     libelle: "Prix promo"
 
   - nom: promo_debut
     type: date
+    groupe: Dates
     libelle: "Début promo"
 
   - nom: promo_fin
     type: date
+    groupe: Dates
     libelle: "Fin promo"
 
   # ==========================================================================
@@ -137,46 +161,56 @@ champs:
   # ==========================================================================
   - nom: gestion_stock
     type: boolean
+    groupe: Quantites
     libelle: "Gérer stock"
     defaut: true
 
   - nom: stock_actuel
     type: number
+    groupe: Quantites
     libelle: "Stock actuel"
     defaut: 0
 
   - nom: stock_reserve
     type: number
+    groupe: Quantites
     libelle: "Stock réservé"
     defaut: 0
 
   - nom: stock_disponible
     type: number
+    groupe: Quantites
     libelle: "Stock disponible"
 
   - nom: stock_minimum
     type: number
+    groupe: Quantites
     libelle: "Stock minimum"
     defaut: 0
 
   - nom: stock_maximum
     type: number
+    groupe: Quantites
     libelle: "Stock maximum"
 
   - nom: stock_securite
     type: number
+    groupe: Quantites
     libelle: "Stock sécurité"
 
   - nom: point_commande
     type: number
+    groupe: Informations
     libelle: "Point de commande"
 
   - nom: quantite_commande
     type: number
+    groupe: Quantites
     libelle: "Qté à commander"
 
   - nom: alerte_stock
     type: boolean
+    groupe: Quantites
     libelle: "Alerte stock"
     defaut: false
 
@@ -185,14 +219,17 @@ champs:
   # ==========================================================================
   - nom: stocks_entrepots
     type: json
+    groupe: Metadata
     libelle: "Stocks par entrepôt"
 
   - nom: entrepot_principal
     type: text
+    groupe: Informations
     libelle: "Entrepôt principal"
 
   - nom: emplacement
     type: text
+    groupe: Informations
     libelle: "Emplacement"
 
   # ==========================================================================
@@ -200,26 +237,32 @@ champs:
   # ==========================================================================
   - nom: dernier_mouvement
     type: datetime
+    groupe: Dates
     libelle: "Dernier mouvement"
 
   - nom: derniere_entree
     type: date
+    groupe: Dates
     libelle: "Dernière entrée"
 
   - nom: derniere_sortie
     type: date
+    groupe: Dates
     libelle: "Dernière sortie"
 
   - nom: rotation_stock
     type: number
+    groupe: Quantites
     libelle: "Rotation"
 
   - nom: cmup
     type: money
+    groupe: Montants
     libelle: "CMUP"
 
   - nom: valeur_stock
     type: money
+    groupe: Quantites
     libelle: "Valeur stock"
 
   # ==========================================================================
@@ -227,62 +270,70 @@ champs:
   # ==========================================================================
   - nom: derniere_inventaire
     type: date
+    groupe: Dates
     libelle: "Dernier inventaire"
 
   - nom: ecart_inventaire
     type: number
+    groupe: Informations
     libelle: "Écart inventaire"
 
   - nom: inventaire_regulier
     type: boolean
+    groupe: Informations
     libelle: "Inventaire régulier"
     defaut: false
 
   - nom: frequence_inventaire
     type: select
+    groupe: Informations
     libelle: "Fréquence"
-    options:
-      - MENSUEL
-      - TRIMESTRIEL
-      - SEMESTRIEL
-      - ANNUEL
+    options: $frequences.valeurs
 
   # ==========================================================================
   # UNITÉS
   # ==========================================================================
   - nom: unite_stock
     type: text
+    groupe: Quantites
     libelle: "Unité stock"
     defaut: "Unité"
 
   - nom: unite_achat
     type: text
+    groupe: Informations
     libelle: "Unité achat"
 
   - nom: unite_vente
     type: text
+    groupe: Informations
     libelle: "Unité vente"
 
   - nom: coefficient_achat
     type: number
+    groupe: Informations
     libelle: "Coef. achat"
     defaut: 1
 
   - nom: coefficient_vente
     type: number
+    groupe: Informations
     libelle: "Coef. vente"
     defaut: 1
 
   - nom: poids
     type: number
+    groupe: Informations
     libelle: "Poids (kg)"
 
   - nom: volume
     type: number
+    groupe: Informations
     libelle: "Volume (m³)"
 
   - nom: dimensions
     type: text
+    groupe: Informations
     libelle: "Dimensions"
 
   # ==========================================================================
@@ -290,18 +341,22 @@ champs:
   # ==========================================================================
   - nom: delai_approvisionnement
     type: number
+    groupe: Informations
     libelle: "Délai appro. (j)"
 
   - nom: reference_fournisseur
     type: text
+    groupe: Informations
     libelle: "Réf. fournisseur"
 
   - nom: min_commande
     type: number
+    groupe: Informations
     libelle: "Qté min commande"
 
   - nom: conditionnement
     type: number
+    groupe: Informations
     libelle: "Conditionnement"
 
   # ==========================================================================
@@ -309,21 +364,25 @@ champs:
   # ==========================================================================
   - nom: suivi_lot
     type: boolean
+    groupe: Informations
     libelle: "Suivi par lot"
     defaut: false
 
   - nom: suivi_serie
     type: boolean
+    groupe: Informations
     libelle: "Suivi N° série"
     defaut: false
 
   - nom: dlc
     type: boolean
+    groupe: Informations
     libelle: "Gestion DLC"
     defaut: false
 
   - nom: dluo
     type: boolean
+    groupe: Informations
     libelle: "Gestion DLUO"
     defaut: false
 
@@ -332,15 +391,18 @@ champs:
   # ==========================================================================
   - nom: produit_parent
     type: boolean
+    groupe: Informations
     libelle: "Produit parent"
     defaut: false
 
   - nom: variantes
     type: json
+    groupe: Metadata
     libelle: "Variantes"
 
   - nom: attributs
     type: json
+    groupe: Metadata
     libelle: "Attributs"
     description: "Couleur, taille, etc."
 
@@ -349,15 +411,18 @@ champs:
   # ==========================================================================
   - nom: est_kit
     type: boolean
+    groupe: Statut
     libelle: "Est un kit"
     defaut: false
 
   - nom: composants
     type: json
+    groupe: Metadata
     libelle: "Composants"
 
   - nom: cout_kit
     type: money
+    groupe: Montants
     libelle: "Coût kit"
 
   # ==========================================================================
@@ -365,16 +430,19 @@ champs:
   # ==========================================================================
   - nom: compte_achat
     type: text
+    groupe: Informations
     libelle: "Compte achat"
     defaut: "607000"
 
   - nom: compte_vente
     type: text
+    groupe: Informations
     libelle: "Compte vente"
     defaut: "707000"
 
   - nom: compte_stock
     type: text
+    groupe: Quantites
     libelle: "Compte stock"
     defaut: "371000"
 
@@ -383,28 +451,34 @@ champs:
   # ==========================================================================
   - nom: vente_en_ligne
     type: boolean
+    groupe: Informations
     libelle: "Vente en ligne"
     defaut: false
 
   - nom: visible_catalogue
     type: boolean
+    groupe: Informations
     libelle: "Visible catalogue"
     defaut: true
 
   - nom: url_image
     type: text
+    groupe: Informations
     libelle: "Image"
 
   - nom: images
     type: json
+    groupe: Metadata
     libelle: "Images"
 
   - nom: description_web
     type: textarea
+    groupe: Notes
     libelle: "Description web"
 
   - nom: mots_cles
     type: tags
+    groupe: Metadata
     libelle: "Mots-clés SEO"
 
   # ==========================================================================
@@ -412,24 +486,29 @@ champs:
   # ==========================================================================
   - nom: actif
     type: boolean
+    groupe: Statut
     libelle: "Actif"
     defaut: true
 
   - nom: en_sommeil
     type: boolean
+    groupe: Informations
     libelle: "En sommeil"
     defaut: false
 
   - nom: date_creation
     type: datetime
+    groupe: Dates
     libelle: "Date création"
 
   - nom: date_modification
     type: datetime
+    groupe: Dates
     libelle: "Dernière modif."
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

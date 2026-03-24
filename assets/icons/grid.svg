@@ -1,12 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Cases arrière (secondaire) -->
-  <rect x="3" y="3" width="7" height="7" rx="1" fill="#93C5FD"/>
-  <rect x="14" y="3" width="7" height="7" rx="1" fill="#93C5FD"/>
-  <rect x="3" y="14" width="7" height="7" rx="1" fill="#93C5FD"/>
-  <!-- Case principale (primaire) -->
-  <rect x="14" y="14" width="7" height="7" rx="1" fill="#2563EB"/>
-  <!-- Bordures (primaire) -->
-  <rect x="3" y="3" width="7" height="7" rx="1" stroke="#2563EB" stroke-width="1.5" fill="none"/>
-  <rect x="14" y="3" width="7" height="7" rx="1" stroke="#2563EB" stroke-width="1.5" fill="none"/>
-  <rect x="3" y="14" width="7" height="7" rx="1" stroke="#2563EB" stroke-width="1.5" fill="none"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Cases arrière (secondaire) --><rect x="3" y="3" width="7" height="7" rx="1" fill="#93C5FD"/><rect x="14" y="3" width="7" height="7" rx="1" fill="#93C5FD"/><rect x="3" y="14" width="7" height="7" rx="1" fill="#93C5FD"/><!-- Case principale (primaire) --><rect x="14" y="14" width="7" height="7" rx="1" fill="#2563EB"/><!-- Bordures (primaire) --><rect x="3" y="3" width="7" height="7" rx="1" stroke="#2563EB" stroke-width="1.5" fill="none"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="#2563EB" stroke-width="1.5" fill="none"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="#2563EB" stroke-width="1.5" fill="none"/></svg> 

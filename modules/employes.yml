@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: matricule
     type: text
+    groupe: Informations
     libelle: "Matricule"
     unique: true
     auto_genere: true
@@ -23,6 +24,7 @@ champs:
 
   - nom: civilite
     type: select
+    groupe: Informations
     libelle: "Civilité"
     options:
       - M.
@@ -31,24 +33,29 @@ champs:
 
   - nom: nom
     type: text
+    groupe: Identification
     libelle: "Nom"
     obligatoire: true
 
   - nom: prenom
     type: text
+    groupe: Informations
     libelle: "Prénom"
     obligatoire: true
 
   - nom: email
     type: email
+    groupe: Contact
     libelle: "Email"
 
   - nom: telephone
     type: tel
+    groupe: Contact
     libelle: "Téléphone"
 
   - nom: mobile
     type: tel
+    groupe: Contact
     libelle: "Mobile"
 
   # ==========================================================================
@@ -56,14 +63,17 @@ champs:
   # ==========================================================================
   - nom: poste
     type: text
+    groupe: Informations
     libelle: "Poste"
 
   - nom: departement
     type: text
+    groupe: Informations
     libelle: "Département"
 
   - nom: type_employe
     type: select
+    groupe: Informations
     libelle: "Type"
     options:
       - TECHNICIEN
@@ -75,6 +85,7 @@ champs:
 
   - nom: responsable_id
     type: relation
+    groupe: Relations
     libelle: "Responsable"
     relation: employes
 
@@ -83,14 +94,17 @@ champs:
   # ==========================================================================
   - nom: competences
     type: tags
+    groupe: Metadata
     libelle: "Compétences"
 
   - nom: certifications
     type: tags
+    groupe: Metadata
     libelle: "Certifications"
 
   - nom: zone_intervention
     type: text
+    groupe: Informations
     libelle: "Zone intervention"
 
   # ==========================================================================
@@ -98,14 +112,17 @@ champs:
   # ==========================================================================
   - nom: adresse
     type: text
+    groupe: Contact
     libelle: "Adresse"
 
   - nom: code_postal
     type: text
+    groupe: Identification
     libelle: "Code postal"
 
   - nom: ville
     type: text
+    groupe: Contact
     libelle: "Ville"
 
   # ==========================================================================
@@ -113,14 +130,17 @@ champs:
   # ==========================================================================
   - nom: date_entree
     type: date
+    groupe: Dates
     libelle: "Date entrée"
 
   - nom: date_sortie
     type: date
+    groupe: Dates
     libelle: "Date sortie"
 
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - ACTIF
@@ -130,6 +150,7 @@ champs:
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

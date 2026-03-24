@@ -9,6 +9,7 @@ champs:
   # Identification
   - nom: numero
     type: text
+    groupe: Identification
     obligatoire: true
     auto: true
     description: Numéro du mouvement (auto-généré)
@@ -16,6 +17,7 @@ champs:
   # Relation client
   - nom: client_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Client concerné
@@ -24,6 +26,7 @@ champs:
   # Type de mouvement
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [CREDIT, DEBIT]
     description: Type de mouvement (CREDIT = avoir, DEBIT = dû)
@@ -31,12 +34,14 @@ champs:
   # Montant
   - nom: montant
     type: number
+    groupe: Montants
     obligatoire: true
     description: Montant du mouvement (toujours positif)
 
   # Devise
   - nom: devise
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Devises
     defaut: EUR
@@ -46,12 +51,14 @@ champs:
   # Références
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: false
     description: Référence du document lié (facture, avoir, paiement)
     autocompletion: true
 
   - nom: facture_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Factures
     description: Facture liée (si débit)
@@ -59,6 +66,7 @@ champs:
 
   - nom: paiement_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Paiements
     description: Paiement lié (si crédit)
@@ -67,6 +75,7 @@ champs:
   # Motif du mouvement
   - nom: motif
     type: select
+    groupe: Informations
     obligatoire: true
     options: [FACTURE, PAIEMENT, AVOIR, REMBOURSEMENT, AJUSTEMENT, OUVERTURE, CLOTURE]
     description: Motif du mouvement
@@ -74,30 +83,35 @@ champs:
   # Date
   - nom: date
     type: date
+    groupe: Dates
     obligatoire: true
     defaut: aujourd'hui
     description: Date du mouvement
 
   - nom: date_valeur
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de valeur (si différente)
 
   # Solde après mouvement
   - nom: solde_apres
     type: number
+    groupe: Informations
     obligatoire: false
     description: Solde du compte après ce mouvement (calculé)
 
   # Notes
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes ou commentaires
 
   # Métadonnées
   - nom: created_by
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
     description: Créé par
@@ -105,6 +119,7 @@ champs:
 
   - nom: created_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de création
 

@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro"
     obligatoire: true
     unique: true
@@ -24,6 +25,7 @@ champs:
 
   - nom: type_demande
     type: select
+    groupe: Informations
     libelle: "Type"
     obligatoire: true
     options:
@@ -36,11 +38,13 @@ champs:
 
   - nom: sujet
     type: text
+    groupe: Informations
     libelle: "Sujet"
     obligatoire: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     libelle: "Description"
     obligatoire: true
 
@@ -49,23 +53,28 @@ champs:
   # ==========================================================================
   - nom: client_id
     type: relation
+    groupe: Relations
     libelle: "Client"
     relation: clients
 
   - nom: contact_nom
     type: text
+    groupe: Identification
     libelle: "Nom contact"
 
   - nom: contact_email
     type: email
+    groupe: Contact
     libelle: "Email"
 
   - nom: contact_telephone
     type: tel
+    groupe: Relations
     libelle: "Téléphone"
 
   - nom: canal_origine
     type: select
+    groupe: Informations
     libelle: "Canal"
     options:
       - EMAIL
@@ -81,18 +90,22 @@ champs:
   # ==========================================================================
   - nom: categorie
     type: text
+    groupe: Informations
     libelle: "Catégorie"
 
   - nom: sous_categorie
     type: text
+    groupe: Informations
     libelle: "Sous-catégorie"
 
   - nom: produit
     type: text
+    groupe: Informations
     libelle: "Produit concerné"
 
   - nom: tags
     type: tags
+    groupe: Metadata
     libelle: "Tags"
 
   # ==========================================================================
@@ -100,6 +113,7 @@ champs:
   # ==========================================================================
   - nom: priorite
     type: select
+    groupe: Informations
     libelle: "Priorité"
     options:
       - CRITIQUE
@@ -110,6 +124,7 @@ champs:
 
   - nom: impact
     type: select
+    groupe: Informations
     libelle: "Impact"
     options:
       - BLOQUANT
@@ -119,6 +134,7 @@ champs:
 
   - nom: urgence
     type: select
+    groupe: Informations
     libelle: "Urgence"
     options:
       - IMMEDIATE
@@ -128,18 +144,22 @@ champs:
 
   - nom: sla_id
     type: text
+    groupe: Relations
     libelle: "SLA"
 
   - nom: sla_temps_reponse
     type: number
+    groupe: Informations
     libelle: "SLA réponse (h)"
 
   - nom: sla_temps_resolution
     type: number
+    groupe: Informations
     libelle: "SLA résolution (h)"
 
   - nom: sla_respecte
     type: boolean
+    groupe: Informations
     libelle: "SLA respecté"
     defaut: true
 
@@ -148,31 +168,38 @@ champs:
   # ==========================================================================
   - nom: date_creation
     type: datetime
+    groupe: Dates
     libelle: "Date création"
     obligatoire: true
 
   - nom: date_echeance
     type: datetime
+    groupe: Dates
     libelle: "Échéance"
 
   - nom: date_premiere_reponse
     type: datetime
+    groupe: Dates
     libelle: "1ère réponse"
 
   - nom: date_resolution
     type: datetime
+    groupe: Dates
     libelle: "Résolution"
 
   - nom: date_cloture
     type: datetime
+    groupe: Dates
     libelle: "Clôture"
 
   - nom: temps_reponse
     type: number
+    groupe: Informations
     libelle: "Temps réponse (min)"
 
   - nom: temps_resolution
     type: number
+    groupe: Informations
     libelle: "Temps résolution (min)"
 
   # ==========================================================================
@@ -180,30 +207,36 @@ champs:
   # ==========================================================================
   - nom: assigne_a
     type: relation
+    groupe: Informations
     libelle: "Assigné à"
     relation: employes
 
   - nom: equipe
     type: text
+    groupe: Informations
     libelle: "Équipe"
 
   - nom: escalade
     type: boolean
+    groupe: Informations
     libelle: "Escaladé"
     defaut: false
 
   - nom: niveau_escalade
     type: number
+    groupe: Informations
     libelle: "Niveau escalade"
     defaut: 0
 
   - nom: escalade_a
     type: relation
+    groupe: Informations
     libelle: "Escaladé à"
     relation: employes
 
   - nom: date_escalade
     type: datetime
+    groupe: Dates
     libelle: "Date escalade"
 
   # ==========================================================================
@@ -211,24 +244,29 @@ champs:
   # ==========================================================================
   - nom: messages
     type: json
+    groupe: Metadata
     libelle: "Messages"
     description: "Historique des échanges"
 
   - nom: nombre_messages
     type: number
+    groupe: Informations
     libelle: "Nb messages"
     defaut: 0
 
   - nom: dernier_message_client
     type: datetime
+    groupe: Dates
     libelle: "Dernier msg client"
 
   - nom: dernier_message_agent
     type: datetime
+    groupe: Dates
     libelle: "Dernier msg agent"
 
   - nom: en_attente_client
     type: boolean
+    groupe: Informations
     libelle: "Attente client"
     defaut: false
 
@@ -237,10 +275,12 @@ champs:
   # ==========================================================================
   - nom: pieces_jointes
     type: json
+    groupe: Metadata
     libelle: "Pièces jointes"
 
   - nom: nombre_pj
     type: number
+    groupe: Informations
     libelle: "Nb PJ"
     defaut: 0
 
@@ -249,18 +289,22 @@ champs:
   # ==========================================================================
   - nom: cause_racine
     type: text
+    groupe: Informations
     libelle: "Cause racine"
 
   - nom: solution
     type: textarea
+    groupe: Notes
     libelle: "Solution"
 
   - nom: actions_correctives
     type: textarea
+    groupe: Notes
     libelle: "Actions correctives"
 
   - nom: article_kb
     type: text
+    groupe: Informations
     libelle: "Article KB"
     description: "Base de connaissances liée"
 
@@ -269,15 +313,18 @@ champs:
   # ==========================================================================
   - nom: enquete_envoyee
     type: boolean
+    groupe: Informations
     libelle: "Enquête envoyée"
     defaut: false
 
   - nom: satisfaction_score
     type: number
+    groupe: Informations
     libelle: "Score satisfaction"
 
   - nom: satisfaction_commentaire
     type: textarea
+    groupe: Notes
     libelle: "Commentaire satisfaction"
 
   # ==========================================================================
@@ -285,11 +332,13 @@ champs:
   # ==========================================================================
   - nom: reclamation
     type: boolean
+    groupe: Informations
     libelle: "Réclamation"
     defaut: false
 
   - nom: compensation
     type: select
+    groupe: Informations
     libelle: "Compensation"
     options:
       - AUCUNE
@@ -300,10 +349,12 @@ champs:
 
   - nom: montant_compensation
     type: money
+    groupe: Montants
     libelle: "Montant compensation"
 
   - nom: responsable_interne
     type: boolean
+    groupe: Informations
     libelle: "Responsabilité interne"
     defaut: false
 
@@ -312,18 +363,22 @@ champs:
   # ==========================================================================
   - nom: ticket_parent_id
     type: text
+    groupe: Relations
     libelle: "Ticket parent"
 
   - nom: tickets_lies
     type: json
+    groupe: Metadata
     libelle: "Tickets liés"
 
   - nom: facture_id
     type: text
+    groupe: Relations
     libelle: "Facture liée"
 
   - nom: commande_id
     type: text
+    groupe: Relations
     libelle: "Commande liée"
 
   # ==========================================================================
@@ -331,28 +386,34 @@ champs:
   # ==========================================================================
   - nom: kb_titre
     type: text
+    groupe: Informations
     libelle: "Titre KB"
 
   - nom: kb_contenu
     type: textarea
+    groupe: Notes
     libelle: "Contenu KB"
 
   - nom: kb_categorie
     type: text
+    groupe: Informations
     libelle: "Catégorie KB"
 
   - nom: kb_vues
     type: number
+    groupe: Informations
     libelle: "Vues"
     defaut: 0
 
   - nom: kb_utile
     type: number
+    groupe: Informations
     libelle: "Votes utile"
     defaut: 0
 
   - nom: kb_public
     type: boolean
+    groupe: Informations
     libelle: "Public"
     defaut: false
 
@@ -361,6 +422,7 @@ champs:
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - NOUVEAU
@@ -374,10 +436,12 @@ champs:
 
   - nom: cloture_par
     type: text
+    groupe: Informations
     libelle: "Clôturé par"
 
   - nom: notes_internes
     type: textarea
+    groupe: Notes
     libelle: "Notes internes"
 
 # Index

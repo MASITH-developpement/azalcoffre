@@ -10,24 +10,28 @@ champs:
   # Identification
   - nom: numero
     type: text
+    groupe: Identification
     obligatoire: true
     description: Numero de contrat (auto-genere CTR-YYYY-XXXX)
     autocompletion: true
 
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du contrat
     autocompletion: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: false
     description: Description du contrat
 
   # Client
   - nom: client_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Client titulaire du contrat
@@ -35,6 +39,7 @@ champs:
 
   - nom: client_nom
     type: text
+    groupe: Identification
     obligatoire: false
     readonly: true
     description: Nom du client (cache pour affichage)
@@ -42,12 +47,14 @@ champs:
 
   - nom: contact_civilite
     type: select
+    groupe: Relations
     obligatoire: false
     options: [Mr, Mme, Melle]
     description: Civilite du contact principal
 
   - nom: contact_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Contacts
     description: Contact principal pour ce contrat
@@ -56,6 +63,7 @@ champs:
   # Type de contrat
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: maintenance
     options: [maintenance, service, location, autre]
@@ -63,6 +71,7 @@ champs:
 
   - nom: sous_type
     type: text
+    groupe: Informations
     obligatoire: false
     description: Sous-type ou categorie specifique
     autocompletion: true
@@ -70,70 +79,82 @@ champs:
   # Dates
   - nom: date_debut
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date de debut du contrat
 
   - nom: date_fin
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de fin du contrat (vide si indefini)
 
   - nom: duree_mois
     type: number
+    groupe: Informations
     obligatoire: false
     description: Duree du contrat en mois (calculee ou saisie)
 
   # Renouvellement
   - nom: renouvellement_auto
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Renouvellement automatique a echeance
 
   - nom: preavis_jours
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 30
     description: Delai de preavis en jours avant renouvellement
 
   - nom: date_preavis
     type: date
+    groupe: Dates
     obligatoire: false
     readonly: true
     description: Date limite de preavis (calculee)
 
   - nom: nb_renouvellements
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     description: Nombre de renouvellements effectues
 
   - nom: date_dernier_renouvellement
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date du dernier renouvellement
 
   # Montants
   - nom: montant_mensuel
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Montant mensuel HT
 
   - nom: montant_annuel
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Montant annuel HT (calcule ou saisi)
 
   - nom: taux_tva
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 20.0
     description: Taux de TVA (%)
 
   - nom: montant_tva
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -141,6 +162,7 @@ champs:
 
   - nom: montant_ttc
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -148,6 +170,7 @@ champs:
 
   - nom: currency
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Devises
     defaut: EUR
@@ -157,29 +180,34 @@ champs:
   # Facturation recurrente
   - nom: frequence_facturation
     type: select
+    groupe: Informations
     obligatoire: false
-    defaut: mensuel
-    options: [mensuel, trimestriel, semestriel, annuel]
+    defaut: MENSUEL
+    options: $frequences.valeurs
     description: Frequence de facturation
 
   - nom: jour_facturation
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 1
     description: Jour du mois pour la facturation (1-28)
 
   - nom: prochaine_facture
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de la prochaine facture a generer
 
   - nom: derniere_facture
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de la derniere facture generee
 
   - nom: abonnement_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Abonnements
     description: Abonnement lie pour facturation automatique
@@ -188,18 +216,21 @@ champs:
   # Statistiques facturation
   - nom: nb_factures_generees
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     description: Nombre de factures generees
 
   - nom: total_facture
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Montant total facture depuis le debut
 
   - nom: total_encaisse
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Montant total encaisse
@@ -207,6 +238,7 @@ champs:
   # Statut
   - nom: statut
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: brouillon
     options: [brouillon, actif, suspendu, termine, resilie]
@@ -214,38 +246,45 @@ champs:
 
   - nom: motif_resiliation
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Motif de resiliation ou suspension
 
   - nom: date_resiliation
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de resiliation
 
   # Conditions contractuelles
   - nom: conditions
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Conditions generales du contrat
 
   - nom: clauses_particulieres
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Clauses particulieres
 
   - nom: penalites
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Clauses de penalites
 
   - nom: garanties
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Garanties incluses
 
   # Document attache
   - nom: document_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Documents
     description: Document PDF du contrat signe
@@ -253,47 +292,55 @@ champs:
 
   - nom: document_url
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: URL du document contrat
     autocompletion: true
 
   - nom: documents_annexes
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Liste des documents annexes [{document_id, nom, type}]
 
   # Signature
   - nom: signe
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Contrat signe
 
   - nom: date_signature
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de signature
 
   - nom: signataire_client_civilite
     type: select
+    groupe: Informations
     obligatoire: false
     options: [Mr, Mme, Melle]
     description: Civilite du signataire client
 
   - nom: signataire_client
     type: text
+    groupe: Informations
     obligatoire: false
     description: Nom du signataire cote client
     autocompletion: true
 
   - nom: signataire_interne_civilite
     type: select
+    groupe: Informations
     obligatoire: false
     options: [Mr, Mme, Melle]
     description: Civilite du signataire interne
 
   - nom: signataire_interne
     type: text
+    groupe: Informations
     obligatoire: false
     description: Nom du signataire interne
     autocompletion: true
@@ -301,6 +348,7 @@ champs:
   # Services inclus
   - nom: services_inclus
     type: json
+    groupe: Metadata
     obligatoire: false
     description: |
       Services inclus dans le contrat.
@@ -308,6 +356,7 @@ champs:
 
   - nom: sla
     type: json
+    groupe: Metadata
     obligatoire: false
     description: |
       SLA (Service Level Agreement).
@@ -316,39 +365,46 @@ champs:
   # Limites et quotas
   - nom: heures_incluses
     type: number
+    groupe: Informations
     obligatoire: false
     description: Heures d'intervention incluses par periode
 
   - nom: heures_utilisees
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Heures utilisees sur la periode en cours
 
   - nom: interventions_incluses
     type: number
+    groupe: Informations
     obligatoire: false
     description: Nombre d'interventions incluses par periode
 
   - nom: interventions_utilisees
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Interventions utilisees sur la periode en cours
 
   - nom: periode_quota_debut
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de debut de la periode de quota courante
 
   - nom: periode_quota_fin
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de fin de la periode de quota courante
 
   # Liens interventions
   - nom: nb_interventions
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     readonly: true
@@ -356,6 +412,7 @@ champs:
 
   - nom: derniere_intervention
     type: date
+    groupe: Dates
     obligatoire: false
     readonly: true
     description: Date de la derniere intervention
@@ -363,6 +420,7 @@ champs:
   # Responsables
   - nom: responsable_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Commercial responsable du contrat
@@ -370,6 +428,7 @@ champs:
 
   - nom: gestionnaire_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Gestionnaire technique du contrat
@@ -378,11 +437,13 @@ champs:
   # Tags et classification
   - nom: tags
     type: tags
+    groupe: Metadata
     obligatoire: false
     description: Tags pour organiser les contrats
 
   - nom: tags_display
     type: text
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Affichage des noms de tags
@@ -391,31 +452,37 @@ champs:
   # Notes
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes visibles
 
   - nom: notes_internes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes internes
 
   # Metadonnees
   - nom: created_by
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
     autocompletion: true
 
   - nom: created_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
   - nom: updated_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
   - nom: deleted_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Soft delete
 
@@ -424,40 +491,47 @@ lignes:
   champs:
     - nom: line_number
       type: number
+      groupe: Informations
       obligatoire: true
       description: Numero de ligne
 
     - nom: produit_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Produits
       description: Service/Produit reference
 
     - nom: description
       type: textarea
+      groupe: Informations
       obligatoire: true
       description: Description du service
 
     - nom: quantite
       type: number
+      groupe: Quantites
       obligatoire: true
       defaut: 1
       description: Quantite
 
     - nom: unite
       type: text
+      groupe: Quantites
       obligatoire: false
       defaut: unite
       description: Unite (unite, heure, mois, etc.)
 
     - nom: prix_unitaire
       type: number
+      groupe: Montants
       obligatoire: true
       defaut: 0
       description: Prix unitaire HT
 
     - nom: frequence
       type: select
+      groupe: Informations
       obligatoire: false
       defaut: mensuel
       options: [ponctuel, mensuel, trimestriel, annuel]
@@ -465,18 +539,21 @@ lignes:
 
     - nom: montant_ht
       type: number
+      groupe: Montants
       obligatoire: false
       defaut: 0
       description: Montant HT (calcule)
 
     - nom: taux_tva
       type: number
+      groupe: Montants
       obligatoire: false
       defaut: 20.0
       description: Taux TVA (%)
 
     - nom: notes
       type: textarea
+      groupe: Notes
       obligatoire: false
       description: Notes ligne
 
@@ -485,40 +562,48 @@ historique_renouvellements:
   champs:
     - nom: date_renouvellement
       type: date
+      groupe: Dates
       obligatoire: true
       description: Date du renouvellement
 
     - nom: date_debut_periode
       type: date
+      groupe: Dates
       obligatoire: true
       description: Debut nouvelle periode
 
     - nom: date_fin_periode
       type: date
+      groupe: Dates
       obligatoire: true
       description: Fin nouvelle periode
 
     - nom: montant_precedent
       type: number
+      groupe: Montants
       obligatoire: false
       description: Montant avant renouvellement
 
     - nom: montant_nouveau
       type: number
+      groupe: Montants
       obligatoire: false
       description: Montant apres renouvellement
 
     - nom: variation_pct
       type: number
+      groupe: Informations
       obligatoire: false
       description: Variation en pourcentage
 
     - nom: notes
       type: textarea
+      groupe: Notes
       obligatoire: false
 
     - nom: effectue_par
       type: relation
+      groupe: Informations
       obligatoire: false
       relation: Utilisateurs
 

@@ -1,12 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Ondes wifi (secondaire) -->
-  <path d="M1 9C4.5 5.5 8 4 12 4C13.5 4 15 4.2 16.4 4.7" stroke="#93C5FD" stroke-width="2" stroke-linecap="round"/>
-  <path d="M5 13C6.5 11.5 8.5 10.5 12 10.5C12.8 10.5 13.5 10.6 14.2 10.7" stroke="#93C5FD" stroke-width="2" stroke-linecap="round"/>
-  <!-- Point wifi (primaire) -->
-  <circle cx="12" cy="18" r="2" fill="#2563EB"/>
-  <!-- Ligne de coupure (primaire) -->
-  <line x1="3" y1="3" x2="21" y2="21" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
-  <!-- Ondes coupées (primaire) -->
-  <path d="M17.5 7C19.5 8 21.2 9.5 23 11" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
-  <path d="M16.5 12C17.8 12.8 19 14 19 14" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Ondes wifi (secondaire) --><path d="M1 9C4.5 5.5 8 4 12 4C13.5 4 15 4.2 16.4 4.7" stroke="#93C5FD" stroke-width="2" stroke-linecap="round"/><path d="M5 13C6.5 11.5 8.5 10.5 12 10.5C12.8 10.5 13.5 10.6 14.2 10.7" stroke="#93C5FD" stroke-width="2" stroke-linecap="round"/><!-- Point wifi (primaire) --><circle cx="12" cy="18" r="2" fill="#2563EB"/><!-- Ligne de coupure (primaire) --><line x1="3" y1="3" x2="21" y2="21" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/><!-- Ondes coupées (primaire) --><path d="M17.5 7C19.5 8 21.2 9.5 23 11" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/><path d="M16.5 12C17.8 12.8 19 14 19 14" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/></svg> 

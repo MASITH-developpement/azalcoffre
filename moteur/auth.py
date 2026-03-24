@@ -694,6 +694,47 @@ async def get_me(user: dict = Depends(require_auth)):
     }
 
 
+@router.put("/profile")
+async def update_profile(
+    request: Request,
+    user: dict = Depends(require_auth)
+):
+    """Met à jour le profil de l'utilisateur courant."""
+    from .db import Database
+    from sqlalchemy import text
+
+    data = await request.json()
+    user_id = user["id"]
+    tenant_id = user["tenant_id"]
+
+    # Champs autorisés à modifier
+    allowed_fields = ["nom", "prenom", "telephone", "fonction"]
+    updates = {k: v for k, v in data.items() if k in allowed_fields and v is not None}
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="Aucun champ à modifier")
+
+    try:
+        with Database.get_session() as session:
+            # Construire la requête UPDATE
+            set_clauses = ", ".join([f"{k} = :{k}" for k in updates.keys()])
+            query = text(f"""
+                UPDATE azalplus.utilisateurs
+                SET {set_clauses}, updated_at = NOW()
+                WHERE id = :user_id AND tenant_id = :tenant_id
+            """)
+
+            params = {**updates, "user_id": user_id, "tenant_id": tenant_id}
+            session.execute(query, params)
+            session.commit()
+
+        logger.info("profile_updated", user_id=str(user_id), fields=list(updates.keys()))
+        return {"success": True, "message": "Profil mis à jour"}
+    except Exception as e:
+        logger.error("profile_update_error", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
+
 @router.get("/utilisateurs")
 async def list_utilisateurs(
     request: Request,
@@ -772,6 +813,7 @@ async def create_mobile_token(request: Request, user: dict = Depends(require_aut
     # Stocker dans Redis avec expiration 5 minutes
     from .db import Database
     redis = Database.get_redis()
+    logger.info("mobile_token_redis_check", redis_available=redis is not None)
     if redis:
         token_data = {
             "user_id": str(user_id),
@@ -781,11 +823,17 @@ async def create_mobile_token(request: Request, user: dict = Depends(require_aut
             "created_at": datetime.utcnow().isoformat()
         }
         import json
-        redis.setex(
-            f"mobile_token:{mobile_token}",
-            300,  # 5 minutes
-            json.dumps(token_data)
-        )
+        try:
+            await redis.setex(
+                f"mobile_token:{mobile_token}",
+                300,  # 5 minutes
+                json.dumps(token_data)
+            )
+            logger.info("mobile_token_stored", token=mobile_token[:20])
+        except Exception as e:
+            logger.error("mobile_token_store_failed", error=str(e))
+    else:
+        logger.warning("mobile_token_redis_unavailable")
 
     logger.info("mobile_token_created", email=user.get("email"))
 
@@ -820,15 +868,13 @@ async def verify_mobile_token(request: Request):
         raise HTTPException(status_code=500, detail="Service indisponible")
 
     import json
-    token_data = redis.get(f"mobile_token:{mobile_token}")
+    # Utiliser GETDEL pour opération atomique (évite double appel React StrictMode)
+    token_data = await redis.getdel(f"mobile_token:{mobile_token}")
 
     if not token_data:
         raise HTTPException(status_code=401, detail="Token invalide ou expiré")
 
     token_info = json.loads(token_data)
-
-    # Supprimer le token (usage unique)
-    redis.delete(f"mobile_token:{mobile_token}")
 
     # Générer un vrai JWT pour le mobile
     from uuid import UUID

@@ -1,0 +1,22 @@
+[Unit]
+Description=AZALPLUS Chrome MCP (Browser Automation)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/azalplus
+Environment="PATH=/usr/bin:/usr/local/bin:/home/ubuntu/.npm-global/bin"
+Environment="HOME=/home/ubuntu"
+Environment="DISPLAY=:99"
+ExecStart=/home/ubuntu/azalplus/scripts/start-chrome-mcp.sh
+ExecStop=/bin/bash -c 'pkill -f "chrome.*remote-debugging" || true; pkill -f "Xvfb :99" || true'
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/home/ubuntu/azalplus/logs/chrome-mcp.log
+StandardError=append:/home/ubuntu/azalplus/logs/chrome-mcp.log
+
+[Install]
+WantedBy=multi-user.target

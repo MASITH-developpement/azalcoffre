@@ -16,6 +16,7 @@ description: Configuration de l'autocompletion intelligente par IA
 # -----------------------------------------------------------------------------
 fournisseurs:
   - nom: openai
+    groupe: Informations
     nom_affichage: OpenAI (ChatGPT)
     description: Modeles GPT d'OpenAI
     modeles:
@@ -38,6 +39,7 @@ fournisseurs:
     auth_prefix: "Bearer "
 
   - nom: anthropic
+    groupe: Informations
     nom_affichage: Anthropic (Claude)
     description: Modeles Claude d'Anthropic
     modeles:
@@ -67,6 +69,7 @@ champs:
   # Activation globale
   - nom: actif
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true
     description: Activer l'autocompletion IA
@@ -74,6 +77,7 @@ champs:
   # Fournisseur par defaut
   - nom: fournisseur_defaut
     type: select
+    groupe: Relations
     obligatoire: true
     defaut: anthropic
     options: [openai, anthropic]
@@ -82,6 +86,7 @@ champs:
   # Modele par defaut
   - nom: modele_defaut
     type: text
+    groupe: Informations
     obligatoire: true
     defaut: claude-sonnet-4-20250514
     description: Modele IA par defaut
@@ -90,6 +95,7 @@ champs:
   # Cle API OpenAI (chiffree)
   - nom: openai_api_key
     type: text
+    groupe: Securite
     obligatoire: false
     chiffre: true
     description: Cle API OpenAI (sk-...)
@@ -98,6 +104,7 @@ champs:
   # Cle API Anthropic (chiffree)
   - nom: anthropic_api_key
     type: text
+    groupe: Securite
     obligatoire: false
     chiffre: true
     description: Cle API Anthropic (sk-ant-...)
@@ -106,6 +113,7 @@ champs:
   # Mode de fonctionnement
   - nom: mode
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: suggestions
     options: [suggestions, completion, hybrid]
@@ -118,6 +126,7 @@ champs:
   # Nombre de suggestions
   - nom: nombre_suggestions
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 5
     min: 1
@@ -127,6 +136,7 @@ champs:
   # Delai avant declenchement (ms)
   - nom: delai_declenchement
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 300
     min: 100
@@ -136,6 +146,7 @@ champs:
   # Longueur minimale pour declencher
   - nom: longueur_min
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 2
     min: 1
@@ -145,6 +156,7 @@ champs:
   # Temperature (creativite)
   - nom: temperature
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0.3
     min: 0
@@ -154,6 +166,7 @@ champs:
   # Utiliser le contexte du module
   - nom: utiliser_contexte_module
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Enrichir les suggestions avec le contexte du module
@@ -161,6 +174,7 @@ champs:
   # Utiliser l'historique
   - nom: utiliser_historique
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Utiliser l'historique des saisies precedentes
@@ -168,12 +182,14 @@ champs:
   # Cache des suggestions
   - nom: cache_actif
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Mettre en cache les suggestions
 
   - nom: cache_duree_minutes
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 60
     description: Duree du cache en minutes
@@ -181,12 +197,14 @@ champs:
   # Limites d'utilisation
   - nom: limite_requetes_jour
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 1000
     description: Limite de requetes par jour par tenant
 
   - nom: limite_tokens_jour
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 100000
     description: Limite de tokens par jour par tenant
@@ -194,6 +212,7 @@ champs:
   # Fallback
   - nom: fallback_fournisseur
     type: select
+    groupe: Informations
     obligatoire: false
     options: [openai, anthropic, local, none]
     description: Fournisseur de secours si le principal echoue
@@ -201,6 +220,7 @@ champs:
   # Mode local (sans IA)
   - nom: mode_local_actif
     type: boolean
+    groupe: Configuration
     obligatoire: false
     defaut: true
     description: Activer le mode local (suggestions basees sur historique)
@@ -363,22 +383,31 @@ statistiques:
   champs:
     - nom: date
       type: date
+      groupe: Dates
     - nom: fournisseur
       type: text
+      groupe: Informations
     - nom: modele
       type: text
+      groupe: Informations
     - nom: requetes
       type: number
+      groupe: Informations
     - nom: tokens_input
       type: number
+      groupe: Informations
     - nom: tokens_output
       type: number
+      groupe: Informations
     - nom: cout_estime
       type: number
+      groupe: Montants
     - nom: temps_reponse_moyen_ms
       type: number
+      groupe: Informations
     - nom: erreurs
       type: number
+      groupe: Informations
 
 # -----------------------------------------------------------------------------
 # Marceau (alertes et suggestions)

@@ -34,8 +34,8 @@ class RateLimitConfig:
 
     # Limites par defaut (requetes par minute)
     # Ces valeurs sont surchargees par settings si disponibles
-    DEFAULT_AUTHENTICATED: int = 100
-    DEFAULT_UNAUTHENTICATED: int = 20
+    DEFAULT_AUTHENTICATED: int = 200
+    DEFAULT_UNAUTHENTICATED: int = 60
     DEFAULT_INTERNAL: int = 1000
 
     # Limites premium (multiplicateur)
@@ -281,6 +281,12 @@ EXEMPT_ROUTES = [
     "/static",
     "/assets",
     "/favicon.ico",
+    "/ui/",
+    "/auth/",
+    "/guardian/",
+    "/api/notifications",
+    "/api/favoris",
+    "/api/admin/users/me",
 ]
 
 

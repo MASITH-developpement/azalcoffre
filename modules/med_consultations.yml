@@ -1,0 +1,310 @@
+# =============================================================================
+# AZALMED - Module Consultations
+# =============================================================================
+# Historique des consultations avec transcription SCRIBE
+# Lien avec consentements et documents
+
+nom: Consultations
+icone: stethoscope
+menu: AZALMED
+description: "Historique des consultations médicales"
+
+champs:
+  # ---------------------------------------------------------------------------
+  # Identification
+  # ---------------------------------------------------------------------------
+  - nom: reference
+    type: text
+    groupe: Identification
+    obligatoire: false
+    readonly: true
+    description: "Référence unique (auto-générée)"
+
+  - nom: date_consultation
+    type: datetime
+    groupe: Identification
+    obligatoire: true
+    description: Date et heure de la consultation
+
+  - nom: type_consultation
+    type: select
+    groupe: Identification
+    obligatoire: true
+    options:
+      - CONSULTATION
+      - TELECONSULTATION
+      - URGENCE
+      - SUIVI
+      - PREMIERE_CONSULTATION
+      - VISITE_DOMICILE
+      - ACTE_TECHNIQUE
+    defaut: CONSULTATION
+    description: Type de consultation
+
+  - nom: duree_minutes
+    type: number
+    groupe: Identification
+    obligatoire: false
+    description: "Durée en minutes"
+
+  # ---------------------------------------------------------------------------
+  # Relations
+  # ---------------------------------------------------------------------------
+  - nom: patient_id
+    type: relation
+    groupe: Relations
+    obligatoire: true
+    relation: Patients
+    description: Patient
+
+  - nom: praticien_id
+    type: relation
+    groupe: Relations
+    obligatoire: true
+    relation: Praticiens
+    description: Praticien
+
+  # ---------------------------------------------------------------------------
+  # Contenu médical
+  # ---------------------------------------------------------------------------
+  - nom: motif
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: Motif de consultation
+
+  - nom: anamnese
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: "Anamnèse (histoire de la maladie)"
+
+  - nom: examen_clinique
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: Examen clinique
+
+  - nom: diagnostic
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: Diagnostic
+
+  - nom: codes_cim10
+    type: tags
+    groupe: Contenu
+    obligatoire: false
+    description: "Codes CIM-10"
+
+  - nom: traitement
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: Traitement prescrit
+
+  - nom: conclusion
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: Conclusion et recommandations
+
+  - nom: notes_privees
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: "Notes privées (non partagées)"
+
+  # ---------------------------------------------------------------------------
+  # Constantes
+  # ---------------------------------------------------------------------------
+  - nom: poids_kg
+    type: number
+    groupe: Constantes
+    obligatoire: false
+    description: "Poids (kg)"
+
+  - nom: taille_cm
+    type: number
+    groupe: Constantes
+    obligatoire: false
+    description: "Taille (cm)"
+
+  - nom: temperature
+    type: number
+    groupe: Constantes
+    obligatoire: false
+    description: "Température (°C)"
+
+  - nom: tension_systolique
+    type: number
+    groupe: Constantes
+    obligatoire: false
+    description: "Tension systolique (mmHg)"
+
+  - nom: tension_diastolique
+    type: number
+    groupe: Constantes
+    obligatoire: false
+    description: "Tension diastolique (mmHg)"
+
+  - nom: frequence_cardiaque
+    type: number
+    groupe: Constantes
+    obligatoire: false
+    description: "Fréquence cardiaque (bpm)"
+
+  - nom: saturation_o2
+    type: number
+    groupe: Constantes
+    obligatoire: false
+    description: "Saturation O2 (%)"
+
+  # ---------------------------------------------------------------------------
+  # SCRIBE - Transcription IA
+  # ---------------------------------------------------------------------------
+  - nom: transcription_active
+    type: boolean
+    groupe: SCRIBE
+    obligatoire: false
+    defaut: false
+    description: Transcription activée
+
+  - nom: transcription_brute
+    type: textarea
+    groupe: SCRIBE
+    obligatoire: false
+    description: Transcription brute audio
+
+  - nom: transcription_structuree
+    type: json
+    groupe: SCRIBE
+    obligatoire: false
+    description: "Transcription structurée par l'IA"
+
+  - nom: audio_id
+    type: text
+    groupe: SCRIBE
+    obligatoire: false
+    description: "ID du fichier audio (si conservé)"
+
+  - nom: duree_audio_secondes
+    type: number
+    groupe: SCRIBE
+    obligatoire: false
+    description: "Durée de l'enregistrement (secondes)"
+
+  - nom: langue_transcription
+    type: select
+    groupe: SCRIBE
+    obligatoire: false
+    defaut: fr
+    options: [fr, en]
+    description: Langue de la transcription
+
+  # ---------------------------------------------------------------------------
+  # Documents liés
+  # ---------------------------------------------------------------------------
+  - nom: compte_rendu_id
+    type: relation
+    groupe: Documents
+    obligatoire: false
+    relation: Documents
+    description: Compte-rendu archivé
+
+  - nom: ordonnance_id
+    type: relation
+    groupe: Documents
+    obligatoire: false
+    relation: Documents
+    description: Ordonnance archivée
+
+  - nom: documents_ids
+    type: tags
+    groupe: Documents
+    obligatoire: false
+    description: "IDs des documents associés"
+
+  # ---------------------------------------------------------------------------
+  # Statut
+  # ---------------------------------------------------------------------------
+  - nom: statut
+    type: select
+    groupe: Statut
+    obligatoire: true
+    defaut: EN_COURS
+    options: [PLANIFIE, EN_COURS, TERMINE, ANNULE, ABSENT]
+    description: Statut de la consultation
+
+  - nom: est_facture
+    type: boolean
+    groupe: Statut
+    obligatoire: false
+    defaut: false
+    description: Consultation facturée
+
+  - nom: montant_honoraires
+    type: money
+    groupe: Statut
+    obligatoire: false
+    description: "Montant des honoraires"
+
+  # ---------------------------------------------------------------------------
+  # Suivi
+  # ---------------------------------------------------------------------------
+  - nom: suivi_necessaire
+    type: boolean
+    groupe: Suivi
+    obligatoire: false
+    defaut: false
+    description: Suivi nécessaire
+
+  - nom: date_suivi_prevu
+    type: date
+    groupe: Suivi
+    obligatoire: false
+    description: Date de suivi prévu
+
+  - nom: rappel_envoye
+    type: boolean
+    groupe: Suivi
+    obligatoire: false
+    defaut: false
+    description: Rappel envoyé au patient
+
+# ---------------------------------------------------------------------------
+# Workflow
+# ---------------------------------------------------------------------------
+workflow:
+  PLANIFIE -> EN_COURS: "Démarrer la consultation"
+  PLANIFIE -> ANNULE: "Annuler"
+  PLANIFIE -> ABSENT: "Patient absent"
+  EN_COURS -> TERMINE: "Terminer la consultation"
+  EN_COURS -> ANNULE: "Annuler"
+  TERMINE -> EN_COURS: "Reprendre (correction)"
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+actions:
+  - demarrer_transcription
+  - arreter_transcription
+  - generer_compte_rendu
+  - generer_ordonnance
+  - envoyer_compte_rendu
+  - planifier_suivi
+
+# ---------------------------------------------------------------------------
+# Recherche
+# ---------------------------------------------------------------------------
+recherche:
+  champs: [reference, motif, diagnostic]
+  tri_defaut: date_consultation
+  ordre_defaut: desc
+
+# ---------------------------------------------------------------------------
+# Liste
+# ---------------------------------------------------------------------------
+liste:
+  colonnes: [reference, date_consultation, patient_id, type_consultation, statut]
+  filtres: [type_consultation, statut, praticien_id, suivi_necessaire]

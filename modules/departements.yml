@@ -12,6 +12,7 @@ champs:
   # Identification
   - nom: code
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Code departement
@@ -19,12 +20,14 @@ champs:
 
   - nom: name
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du departement
     autocompletion: true
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: ACTIF
     options: [ACTIF, INACTIF]
@@ -33,6 +36,7 @@ champs:
   # Hierarchie
   - nom: parent_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Departements
     description: Departement parent
@@ -40,6 +44,7 @@ champs:
 
   - nom: niveau
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     readonly: true
@@ -48,6 +53,7 @@ champs:
   # Responsable
   - nom: responsable_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Employes
     description: Responsable
@@ -55,6 +61,7 @@ champs:
 
   - nom: responsable_adjoint_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Employes
     description: Responsable adjoint
@@ -63,16 +70,19 @@ champs:
   # Contact
   - nom: email
     type: email
+    groupe: Contact
     obligatoire: false
     description: Email departement
 
   - nom: telephone
     type: tel
+    groupe: Contact
     obligatoire: false
     description: Telephone
 
   - nom: localisation
     type: text
+    groupe: Informations
     obligatoire: false
     description: Localisation/bureau
     autocompletion: true
@@ -80,11 +90,13 @@ champs:
   # Budget
   - nom: budget_annuel
     type: number
+    groupe: Informations
     obligatoire: false
     description: Budget annuel
 
   - nom: centre_cout
     type: text
+    groupe: Montants
     obligatoire: false
     description: Centre de cout
     autocompletion: true
@@ -92,6 +104,7 @@ champs:
   # Statistiques
   - nom: nb_employes
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     readonly: true
@@ -99,6 +112,7 @@ champs:
 
   - nom: nb_sous_departements
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     readonly: true
@@ -107,11 +121,13 @@ champs:
   # Description
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: false
     description: Description/missions
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

@@ -1,8 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Fond facture -->
-  <path d="M4 4c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v18l-3-2-3 2-3-2-3 2-3-2-3 2V4z" fill="#93C5FD"/>
-  <!-- Lignes de texte -->
-  <rect x="7" y="7" width="10" height="2" rx="1" fill="#2563EB"/>
-  <rect x="7" y="11" width="7" height="2" rx="1" fill="#2563EB"/>
-  <rect x="7" y="15" width="5" height="2" rx="1" fill="#2563EB"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Fond facture --><path d="M4 4c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v18l-3-2-3 2-3-2-3 2-3-2-3 2V4z" fill="#93C5FD"/><!-- Lignes de texte --><rect x="7" y="7" width="10" height="2" rx="1" fill="#2563EB"/><rect x="7" y="11" width="7" height="2" rx="1" fill="#2563EB"/><rect x="7" y="15" width="5" height="2" rx="1" fill="#2563EB"/></svg> 

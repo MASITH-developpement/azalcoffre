@@ -17,12 +17,14 @@ champs:
   # Identification
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: "Nom du tag (ex: VIP, Urgent, A relancer)"
     autocompletion: true
 
   - nom: slug
     type: text
+    groupe: Identification
     obligatoire: false
     unique: true
     description: Identifiant URL-friendly (auto-genere depuis nom)
@@ -31,6 +33,7 @@ champs:
   # Apparence
   - nom: couleur
     type: text
+    groupe: Informations
     obligatoire: false
     defaut: "#6366F1"
     description: "Couleur hexadecimale pour l'affichage (ex: #FF5733)"
@@ -38,6 +41,7 @@ champs:
 
   - nom: couleur_texte
     type: text
+    groupe: Informations
     obligatoire: false
     defaut: "#FFFFFF"
     description: "Couleur du texte sur le badge (ex: #FFFFFF)"
@@ -45,6 +49,7 @@ champs:
 
   - nom: icone
     type: text
+    groupe: Informations
     obligatoire: false
     description: Icone optionnelle (emoji ou code lucide)
     autocompletion: true
@@ -52,6 +57,7 @@ champs:
   # Scope du tag
   - nom: module
     type: select
+    groupe: Informations
     obligatoire: false
     options: [null, Clients, Produits, Devis, Factures, Interventions, Fournisseurs, Employes]
     description: |
@@ -60,6 +66,7 @@ champs:
 
   - nom: global
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Si true, le tag est utilisable sur tous les modules
@@ -67,12 +74,14 @@ champs:
   # Organisation
   - nom: groupe
     type: text
+    groupe: Informations
     obligatoire: false
     description: "Groupe de tags (ex: Priorite, Statut, Region)"
     autocompletion: true
 
   - nom: ordre
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Ordre d'affichage dans le groupe
@@ -80,6 +89,7 @@ champs:
   # Statistiques (lecture seule)
   - nom: usage_count
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     readonly: true
@@ -87,6 +97,7 @@ champs:
 
   - nom: last_used_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     readonly: true
     description: Derniere utilisation du tag
@@ -94,6 +105,7 @@ champs:
   # Auto-suggestion IA
   - nom: keywords
     type: json
+    groupe: Metadata
     obligatoire: false
     description: |
       Mots-cles pour auto-suggestion IA.
@@ -101,6 +113,7 @@ champs:
 
   - nom: auto_apply_rules
     type: json
+    groupe: Metadata
     obligatoire: false
     description: |
       Regles d'application automatique.
@@ -113,6 +126,7 @@ champs:
   # Metadata
   - nom: created_by
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
     description: Utilisateur ayant cree le tag
@@ -120,22 +134,26 @@ champs:
 
   - nom: is_system
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: false
     description: Tag systeme (non supprimable)
 
   - nom: is_active
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true
     description: Tag actif (visible)
 
   - nom: created_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
   - nom: updated_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
 # Table de liaison tags <-> entites
@@ -147,33 +165,39 @@ entity_tags:
   champs:
     - nom: tag_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Tags
       description: Reference au tag
 
     - nom: entity_type
       type: text
+      groupe: Informations
       obligatoire: true
       description: "Type d'entite (ex: Client, Produit, Devis)"
 
     - nom: entity_id
       type: uuid
+      groupe: Relations
       obligatoire: true
       description: ID de l'entite
 
     - nom: applied_by
       type: relation
+      groupe: Informations
       obligatoire: false
       relation: Utilisateurs
       description: Utilisateur ayant applique le tag
 
     - nom: applied_at
       type: datetime
+      groupe: Dates
       obligatoire: false
       description: Date d'application
 
     - nom: source
       type: select
+      groupe: Informations
       obligatoire: false
       options: [MANUAL, AUTO, IMPORT, API]
       defaut: MANUAL
@@ -222,33 +246,43 @@ marceau:
 # Couleurs predefinies suggeres
 couleurs_predefinies:
   - nom: "Bleu"
+    groupe: Informations
     couleur: "#3B82F6"
     couleur_texte: "#FFFFFF"
   - nom: "Vert"
+    groupe: Informations
     couleur: "#22C55E"
     couleur_texte: "#FFFFFF"
   - nom: "Jaune"
+    groupe: Informations
     couleur: "#F59E0B"
     couleur_texte: "#000000"
   - nom: "Rouge"
+    groupe: Informations
     couleur: "#EF4444"
     couleur_texte: "#FFFFFF"
   - nom: "Violet"
+    groupe: Informations
     couleur: "#8B5CF6"
     couleur_texte: "#FFFFFF"
   - nom: "Rose"
+    groupe: Informations
     couleur: "#EC4899"
     couleur_texte: "#FFFFFF"
   - nom: "Cyan"
+    groupe: Informations
     couleur: "#06B6D4"
     couleur_texte: "#FFFFFF"
   - nom: "Orange"
+    groupe: Informations
     couleur: "#F97316"
     couleur_texte: "#FFFFFF"
   - nom: "Gris"
+    groupe: Informations
     couleur: "#6B7280"
     couleur_texte: "#FFFFFF"
   - nom: "Noir"
+    groupe: Informations
     couleur: "#1F2937"
     couleur_texte: "#FFFFFF"
 
@@ -257,7 +291,7 @@ tags_defaut:
   - nom: "VIP"
     couleur: "#F59E0B"
     couleur_texte: "#000000"
-    groupe: "Client"
+    groupe: Relations
     global: false
     module: Clients
     is_system: true
@@ -265,34 +299,34 @@ tags_defaut:
   - nom: "Urgent"
     couleur: "#EF4444"
     couleur_texte: "#FFFFFF"
-    groupe: "Priorite"
+    groupe: Informations
     global: true
     is_system: true
 
   - nom: "A relancer"
     couleur: "#F97316"
     couleur_texte: "#FFFFFF"
-    groupe: "Suivi"
+    groupe: Informations
     global: true
     is_system: true
 
   - nom: "Nouveau"
     couleur: "#22C55E"
     couleur_texte: "#FFFFFF"
-    groupe: "Statut"
+    groupe: Statut
     global: true
     is_system: true
 
   - nom: "En attente"
     couleur: "#6B7280"
     couleur_texte: "#FFFFFF"
-    groupe: "Statut"
+    groupe: Statut
     global: true
     is_system: true
 
   - nom: "Important"
     couleur: "#8B5CF6"
     couleur_texte: "#FFFFFF"
-    groupe: "Priorite"
+    groupe: Informations
     global: true
     is_system: true

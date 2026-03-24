@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro"
     obligatoire: true
     unique: true
@@ -24,6 +25,7 @@ champs:
 
   - nom: type_ecriture
     type: select
+    groupe: Informations
     libelle: "Type"
     options:
       - ECRITURE
@@ -38,25 +40,30 @@ champs:
   # ==========================================================================
   - nom: piece
     type: text
+    groupe: Fichiers
     libelle: "N° pièce"
     obligatoire: true
 
   - nom: reference
     type: text
+    groupe: Identification
     libelle: "Référence"
 
   - nom: libelle
     type: text
+    groupe: Identification
     libelle: "Libellé"
     obligatoire: true
 
   - nom: date_piece
     type: date
+    groupe: Dates
     libelle: "Date pièce"
     obligatoire: true
 
   - nom: date_echeance
     type: date
+    groupe: Dates
     libelle: "Échéance"
 
   # ==========================================================================
@@ -64,6 +71,7 @@ champs:
   # ==========================================================================
   - nom: journal
     type: select
+    groupe: Informations
     libelle: "Journal"
     obligatoire: true
     options:
@@ -78,6 +86,7 @@ champs:
 
   - nom: journal_libelle
     type: text
+    groupe: Informations
     libelle: "Libellé journal"
 
   # ==========================================================================
@@ -85,19 +94,23 @@ champs:
   # ==========================================================================
   - nom: compte
     type: text
+    groupe: Informations
     libelle: "Compte"
     obligatoire: true
 
   - nom: compte_libelle
     type: text
+    groupe: Informations
     libelle: "Libellé compte"
 
   - nom: compte_auxiliaire
     type: text
+    groupe: Informations
     libelle: "Compte auxiliaire"
 
   - nom: tiers
     type: text
+    groupe: Informations
     libelle: "Tiers"
 
   # ==========================================================================
@@ -105,25 +118,30 @@ champs:
   # ==========================================================================
   - nom: debit
     type: money
+    groupe: Montants
     libelle: "Débit"
     defaut: 0
 
   - nom: credit
     type: money
+    groupe: Montants
     libelle: "Crédit"
     defaut: 0
 
   - nom: devise
     type: text
+    groupe: Informations
     libelle: "Devise"
     defaut: "EUR"
 
   - nom: montant_devise
     type: money
+    groupe: Montants
     libelle: "Montant devise"
 
   - nom: taux_change
     type: number
+    groupe: Montants
     libelle: "Taux change"
     defaut: 1
 
@@ -132,19 +150,23 @@ champs:
   # ==========================================================================
   - nom: tva_applicable
     type: boolean
+    groupe: Montants
     libelle: "TVA applicable"
     defaut: false
 
   - nom: taux_tva
     type: number
+    groupe: Montants
     libelle: "Taux TVA (%)"
 
   - nom: montant_tva
     type: money
+    groupe: Montants
     libelle: "Montant TVA"
 
   - nom: regime_tva
     type: select
+    groupe: Montants
     libelle: "Régime TVA"
     options:
       - DEBIT
@@ -155,19 +177,23 @@ champs:
   # ==========================================================================
   - nom: lettre
     type: text
+    groupe: Informations
     libelle: "Lettre"
 
   - nom: date_lettrage
     type: date
+    groupe: Dates
     libelle: "Date lettrage"
 
   - nom: lettrage_partiel
     type: boolean
+    groupe: Informations
     libelle: "Lettrage partiel"
     defaut: false
 
   - nom: solde_lettre
     type: money
+    groupe: Montants
     libelle: "Solde lettré"
 
   # ==========================================================================
@@ -175,19 +201,23 @@ champs:
   # ==========================================================================
   - nom: rapproche
     type: boolean
+    groupe: Informations
     libelle: "Rapproché"
     defaut: false
 
   - nom: date_rapprochement
     type: date
+    groupe: Dates
     libelle: "Date rapprochement"
 
   - nom: releve_bancaire
     type: text
+    groupe: Informations
     libelle: "N° relevé"
 
   - nom: rapprochement_id
     type: text
+    groupe: Relations
     libelle: "Rapprochement"
 
   # ==========================================================================
@@ -195,18 +225,22 @@ champs:
   # ==========================================================================
   - nom: axe_1
     type: text
+    groupe: Informations
     libelle: "Axe 1"
 
   - nom: axe_2
     type: text
+    groupe: Informations
     libelle: "Axe 2"
 
   - nom: axe_3
     type: text
+    groupe: Informations
     libelle: "Axe 3"
 
   - nom: ventilation_analytique
     type: json
+    groupe: Metadata
     libelle: "Ventilation"
 
   # ==========================================================================
@@ -214,10 +248,12 @@ champs:
   # ==========================================================================
   - nom: budget_id
     type: text
+    groupe: Relations
     libelle: "Budget"
 
   - nom: ecart_budget
     type: money
+    groupe: Montants
     libelle: "Écart budget"
 
   # ==========================================================================
@@ -225,15 +261,18 @@ champs:
   # ==========================================================================
   - nom: exercice
     type: text
+    groupe: Informations
     libelle: "Exercice"
 
   - nom: periode
     type: text
+    groupe: Informations
     libelle: "Période"
     placeholder: "AAAA-MM"
 
   - nom: cloture
     type: boolean
+    groupe: Informations
     libelle: "Clôturé"
     defaut: false
 
@@ -242,6 +281,7 @@ champs:
   # ==========================================================================
   - nom: origine
     type: select
+    groupe: Informations
     libelle: "Origine"
     options:
       - SAISIE
@@ -254,10 +294,12 @@ champs:
 
   - nom: document_origine
     type: text
+    groupe: Informations
     libelle: "Document origine"
 
   - nom: document_id
     type: text
+    groupe: Relations
     libelle: "ID document"
 
   # ==========================================================================
@@ -265,20 +307,24 @@ champs:
   # ==========================================================================
   - nom: brouillard
     type: boolean
+    groupe: Informations
     libelle: "Brouillard"
     defaut: true
 
   - nom: valide
     type: boolean
+    groupe: Statut
     libelle: "Validé"
     defaut: false
 
   - nom: date_validation
     type: datetime
+    groupe: Dates
     libelle: "Date validation"
 
   - nom: valide_par
     type: text
+    groupe: Informations
     libelle: "Validé par"
 
   # ==========================================================================
@@ -286,14 +332,17 @@ champs:
   # ==========================================================================
   - nom: fec_ecriture
     type: text
+    groupe: Informations
     libelle: "EcritureNum FEC"
 
   - nom: fec_date
     type: date
+    groupe: Dates
     libelle: "EcritureDate FEC"
 
   - nom: fec_exporte
     type: boolean
+    groupe: Informations
     libelle: "Exporté FEC"
     defaut: false
 
@@ -302,10 +351,12 @@ champs:
   # ==========================================================================
   - nom: justificatif
     type: text
+    groupe: Informations
     libelle: "Justificatif"
 
   - nom: pieces_jointes
     type: json
+    groupe: Metadata
     libelle: "Pièces jointes"
 
   # ==========================================================================
@@ -313,17 +364,14 @@ champs:
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
-    options:
-      - BROUILLON
-      - VALIDE
-      - LETTRE
-      - CLOTURE
-      - ANNULE
+    options: $statuts.comptabilite.valeurs
     defaut: BROUILLON
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

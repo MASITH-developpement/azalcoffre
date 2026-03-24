@@ -8,31 +8,36 @@ champs:
   # Identification
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: false
     description: Reference unique de l'abonnement
     autocompletion: true
 
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom de l'abonnement
     autocompletion: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: false
     description: Description de l'abonnement
 
   - nom: statut
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: BROUILLON
-    options: [BROUILLON, ACTIF, SUSPENDU, TERMINE, ANNULE]
+    options: $statuts.abonnements.valeurs
     description: Statut de l'abonnement
 
   # Client
   - nom: client_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Client abonne
@@ -40,24 +45,28 @@ champs:
 
   - nom: client_nom
     type: text
+    groupe: Identification
     obligatoire: false
     description: Nom du client
     autocompletion: true
 
   - nom: client_civilite
     type: select
+    groupe: Relations
     obligatoire: false
     options: [Mr, Mme, Melle]
     description: Civilite du contact client
 
   - nom: client_contact
     type: text
+    groupe: Relations
     obligatoire: false
     description: Nom du contact client
     autocompletion: true
 
   - nom: client_email
     type: email
+    groupe: Contact
     obligatoire: false
     description: Email du client
     autocompletion: true
@@ -65,13 +74,15 @@ champs:
   # Frequence de facturation
   - nom: frequence
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: mensuel
-    options: [hebdomadaire, mensuel, trimestriel, semestriel, annuel]
+    options: $frequences.valeurs
     description: Frequence de facturation
 
   - nom: jour_facturation
     type: number
+    groupe: Informations
     obligatoire: true
     defaut: 1
     description: Jour du mois/semaine pour la facturation
@@ -79,30 +90,35 @@ champs:
   # Montants
   - nom: montant_ht
     type: number
+    groupe: Montants
     obligatoire: true
     defaut: 0
     description: Montant HT recurrent
 
   - nom: taux_tva
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 20.0
     description: Taux de TVA (%)
 
   - nom: montant_tva
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Montant TVA
 
   - nom: montant_ttc
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Montant TTC
 
   - nom: currency
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Devises
     defaut: EUR
@@ -112,39 +128,46 @@ champs:
   # Produits/services inclus
   - nom: produits
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Liste des produits/services inclus
 
   # Dates
   - nom: date_debut
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date de debut de l'abonnement
 
   - nom: date_fin
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de fin de l'abonnement
 
   - nom: prochaine_facture
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de la prochaine facture a generer
 
   - nom: derniere_facture
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de la derniere facture generee
 
   # Compteurs
   - nom: nb_factures_generees
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     description: Nombre de factures generees
 
   - nom: total_facture
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Total facture depuis le debut
@@ -152,18 +175,21 @@ champs:
   # Options
   - nom: actif
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true
     description: Abonnement actif
 
   - nom: envoyer_email
     type: boolean
+    groupe: Contact
     obligatoire: false
     defaut: true
     description: Envoyer la facture par email automatiquement
 
   - nom: generer_pdf
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Generer le PDF automatiquement
@@ -171,31 +197,36 @@ champs:
   # Conditions de paiement
   - nom: conditions_paiement
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: NET_30
-    options: [COMPTANT, NET_15, NET_30, NET_45, NET_60, FIN_DE_MOIS]
+    options: $conditions_paiement.valeurs
     description: Conditions de paiement
 
   - nom: mode_paiement
     type: select
+    groupe: Configuration
     obligatoire: false
-    options: [VIREMENT, PRELEVEMENT, CARTE, CHEQUE]
+    options: $modes_paiement.valeurs
     description: Mode de paiement prefere
 
   # Notes
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes visibles sur les factures
 
   - nom: notes_internes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes internes
 
   # Responsable
   - nom: responsable_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Commercial responsable
@@ -223,6 +254,7 @@ actions:
 marceau:
   alertes:
     - si statut = ACTIF et prochaine_facture <= aujourd'hui: "Facture a generer"
-    - si statut = ACTIF et date_fin et date_fin < aujourd'hui + 30 jours: "Abonnement arrive a echeance"
+    - si statut = ACTIF et date_fin et date_fin < aujourd'hui + 30 jours: "Abonnement
+        arrive a echeance"
     - si statut = SUSPENDU: "Abonnement suspendu"
     - si nb_factures_generees = 0 et statut = ACTIF: "Aucune facture encore generee"

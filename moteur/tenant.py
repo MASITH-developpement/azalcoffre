@@ -99,6 +99,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/api/auth/register",
         "/api/auth/refresh",
         "/api/auth/forgot-password",
+        "/api/auth/mobile-verify",
         # === APIs publiques - données gov.fr et externes ===
         # Entreprise (SIRET/SIREN)
         "/api/autocompletion-ia/entreprise",
@@ -148,6 +149,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/humans.txt",
         "/.well-known/security.txt",
         "/ai-plugin.json",
+        # === AZALMED Landing Page (public) ===
+        "/azalmed",
+        "/azalmed/login",
+        "/azalmed/dashboard",
     ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -199,7 +204,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             # Guardian vérifie l'accès
             check = await Guardian.check_tenant_access(
                 request_tenant_id=request_tenant_id,
-                user_tenant_id=UUID(user_tenant_id) if user_tenant_id else None,
+                user_tenant_id=user_tenant_id if isinstance(user_tenant_id, UUID) else (UUID(user_tenant_id) if user_tenant_id else None),
                 user_email=user_email
             )
 

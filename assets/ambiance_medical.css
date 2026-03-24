@@ -1,0 +1,330 @@
+/* =============================================================================
+   AZALMED - Thème Médical
+   =============================================================================
+   Inspiration: Doctolib, Alan, Qare
+   Palette: Bleu santé + Blanc clinique + Vert confiance
+   ============================================================================= */
+
+:root {
+  /* ---------------------------------------------------------------------------
+     Couleurs de marque AZALMED
+     --------------------------------------------------------------------------- */
+  --color-brand-primary: #0891B2;      /* Cyan santé */
+  --color-brand-secondary: #10B981;    /* Vert confiance */
+  --color-brand-accent: #0E7490;       /* Cyan foncé */
+
+  /* ---------------------------------------------------------------------------
+     Couleurs principales
+     --------------------------------------------------------------------------- */
+  --color-primary: #0891B2;
+  --color-primary-hover: #0E7490;
+  --color-primary-light: #ECFEFF;
+  --color-primary-dark: #155E75;
+
+  --color-secondary: #10B981;
+  --color-secondary-hover: #059669;
+  --color-secondary-light: #D1FAE5;
+
+  /* ---------------------------------------------------------------------------
+     Fonds
+     --------------------------------------------------------------------------- */
+  --color-bg-page: #F8FAFC;
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F1F5F9;
+  --color-bg-tertiary: #E2E8F0;
+
+  /* ---------------------------------------------------------------------------
+     Textes
+     --------------------------------------------------------------------------- */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+
+  /* ---------------------------------------------------------------------------
+     Sidebar - Cyan foncé
+     --------------------------------------------------------------------------- */
+  --color-sidebar-bg: #0E7490;
+  --color-sidebar-bg-hover: #0891B2;
+  --color-sidebar-bg-active: rgba(255, 255, 255, 0.15);
+  --color-sidebar-text: rgba(255, 255, 255, 0.8);
+  --color-sidebar-text-active: #FFFFFF;
+  --color-sidebar-text-muted: rgba(255, 255, 255, 0.5);
+  --color-sidebar-border: rgba(255, 255, 255, 0.1);
+  --color-sidebar-accent: #10B981;
+
+  /* ---------------------------------------------------------------------------
+     Statuts
+     --------------------------------------------------------------------------- */
+  --color-success: #10B981;
+  --color-success-light: #D1FAE5;
+  --color-success-text: #047857;
+
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  --color-warning-text: #92400E;
+
+  --color-error: #EF4444;
+  --color-error-light: #FEE2E2;
+  --color-error-text: #B91C1C;
+
+  --color-info: #0891B2;
+  --color-info-light: #ECFEFF;
+  --color-info-text: #0E7490;
+
+  /* ---------------------------------------------------------------------------
+     Bordures
+     --------------------------------------------------------------------------- */
+  --color-border: #E2E8F0;
+  --color-border-hover: #CBD5E1;
+  --color-border-focus: #0891B2;
+
+  /* ---------------------------------------------------------------------------
+     Ombres
+     --------------------------------------------------------------------------- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --shadow-primary: 0 4px 14px rgba(8, 145, 178, 0.3);
+  --shadow-success: 0 4px 14px rgba(16, 185, 129, 0.3);
+
+  /* ---------------------------------------------------------------------------
+     Dégradés
+     --------------------------------------------------------------------------- */
+  --gradient-primary: linear-gradient(135deg, #0891B2 0%, #10B981 100%);
+  --gradient-sidebar: linear-gradient(180deg, #0E7490 0%, #155E75 100%);
+  --gradient-hero: linear-gradient(135deg, #0891B2 0%, #0E7490 50%, #10B981 100%);
+
+  /* ---------------------------------------------------------------------------
+     Typographie
+     --------------------------------------------------------------------------- */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+
+  /* ---------------------------------------------------------------------------
+     Espacement
+     --------------------------------------------------------------------------- */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* ---------------------------------------------------------------------------
+     Rayons
+     --------------------------------------------------------------------------- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* ---------------------------------------------------------------------------
+     Transitions
+     --------------------------------------------------------------------------- */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}
+
+/* =============================================================================
+   Composants spécifiques AZALMED
+   ============================================================================= */
+
+/* Badge patient */
+.badge-patient {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+/* Badge alerte médicale */
+.badge-alerte {
+  background: var(--color-error);
+  color: var(--color-text-inverse);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Card consultation */
+.card-consultation {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border-left: 4px solid var(--color-primary);
+  transition: var(--transition-normal);
+}
+
+.card-consultation:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+/* Statuts consentement */
+.status-en-attente {
+  background: var(--color-warning-light);
+  color: var(--color-warning-text);
+}
+
+.status-signe {
+  background: var(--color-success-light);
+  color: var(--color-success-text);
+}
+
+.status-refuse {
+  background: var(--color-error-light);
+  color: var(--color-error-text);
+}
+
+.status-expire {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+}
+
+/* Indicateur SCRIBE (transcription active) */
+.scribe-active {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: var(--color-error);
+  color: var(--color-text-inverse);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.scribe-active::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--color-text-inverse);
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* KPI santé */
+.kpi-patients {
+  --kpi-icon-bg: var(--color-primary-light);
+  --kpi-icon-color: var(--color-primary);
+}
+
+.kpi-consultations {
+  --kpi-icon-bg: var(--color-success-light);
+  --kpi-icon-color: var(--color-success);
+}
+
+.kpi-consentements {
+  --kpi-icon-bg: var(--color-info-light);
+  --kpi-icon-color: var(--color-info);
+}
+
+.kpi-veille {
+  --kpi-icon-bg: var(--color-warning-light);
+  --kpi-icon-color: var(--color-warning);
+}
+
+/* Timeline consultation */
+.timeline-medical {
+  position: relative;
+  padding-left: var(--spacing-xl);
+}
+
+.timeline-medical::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: var(--spacing-lg);
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -26px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  background: var(--color-primary);
+  border: 2px solid var(--color-bg-primary);
+  border-radius: 50%;
+}
+
+/* Document archivé (coffre-fort) */
+.document-archive {
+  position: relative;
+  overflow: hidden;
+}
+
+.document-archive::after {
+  content: 'HDS';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--color-success);
+  color: var(--color-text-inverse);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Veille article */
+.veille-article {
+  border-left: 3px solid var(--color-border);
+  padding-left: var(--spacing-md);
+  transition: var(--transition-normal);
+}
+
+.veille-article:hover {
+  border-left-color: var(--color-primary);
+}
+
+.veille-article.alerte {
+  border-left-color: var(--color-error);
+  background: var(--color-error-light);
+}
+
+.veille-article.non-lu {
+  border-left-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* Source badge */
+.source-pubmed { background: #326599; color: white; }
+.source-has { background: #003366; color: white; }
+.source-ansm { background: #E30613; color: white; }
+.source-dgs { background: #000091; color: white; }

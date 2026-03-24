@@ -254,8 +254,8 @@ function saveHiddenModules(modules: string[]): void {
 // Default nav shortcuts
 const DEFAULT_NAV_SHORTCUTS: NavShortcut[] = [
   { moduleId: 'home', label: 'Accueil', icon: 'home', path: '/' },
+  { moduleId: 'technicien', label: 'Technicien', icon: 'cog', path: '/technicien' },
   { moduleId: 'interventions', label: 'Interventions', icon: 'wrench', path: '/module/interventions' },
-  { moduleId: 'clients', label: 'Clients', icon: 'users', path: '/module/clients' },
   { moduleId: 'settings', label: 'Parametres', icon: 'settings', path: '/settings' },
 ];
 

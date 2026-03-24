@@ -16,12 +16,14 @@ champs:
   # -----------------------------------------------------
   - nom: nom_projet
     type: text
+    groupe: Identification
     obligatoire: true
     label: Nom du projet
     description: Nom de votre future entreprise ou projet
 
   - nom: statut
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: BROUILLON
     options:
@@ -34,12 +36,14 @@ champs:
 
   - nom: date_creation
     type: date
+    groupe: Dates
     obligatoire: true
     defaut: aujourd'hui
     label: Date de création
 
   - nom: date_lancement_prevu
     type: date
+    groupe: Dates
     obligatoire: false
     label: Date de lancement prévue
 
@@ -48,34 +52,40 @@ champs:
   # -----------------------------------------------------
   - nom: porteur_nom
     type: text
+    groupe: Identification
     obligatoire: true
     label: Nom du porteur
     autocompletion: true
 
   - nom: porteur_prenom
     type: text
+    groupe: Informations
     obligatoire: true
     label: Prénom du porteur
     autocompletion: true
 
   - nom: porteur_email
     type: email
+    groupe: Contact
     obligatoire: true
     label: Email
 
   - nom: porteur_telephone
     type: tel
+    groupe: Contact
     obligatoire: false
     label: Téléphone
 
   - nom: porteur_experience
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Expérience et compétences
     description: Parcours, formations, compétences clés pour ce projet
 
   - nom: porteur_motivation
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Motivation
     description: Pourquoi ce projet ? Qu'est-ce qui vous motive ?
@@ -85,30 +95,35 @@ champs:
   # -----------------------------------------------------
   - nom: pitch
     type: textarea
+    groupe: Notes
     obligatoire: true
     label: Pitch (résumé en 3 lignes)
     description: Décrivez votre projet en 3 phrases maximum
 
   - nom: probleme
     type: textarea
+    groupe: Notes
     obligatoire: true
     label: Problème identifié
     description: Quel problème résolvez-vous ?
 
   - nom: solution
     type: textarea
+    groupe: Notes
     obligatoire: true
     label: Votre solution
     description: Comment résolvez-vous ce problème ?
 
   - nom: proposition_valeur
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Proposition de valeur unique
     description: Qu'est-ce qui vous différencie de la concurrence ?
 
   - nom: secteur_activite
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - Artisanat
@@ -129,6 +144,7 @@ champs:
 
   - nom: code_naf_prevu
     type: text
+    groupe: Identification
     obligatoire: false
     label: Code NAF/APE prévu
     autocompletion: true
@@ -138,12 +154,14 @@ champs:
   # -----------------------------------------------------
   - nom: marche_cible
     type: textarea
+    groupe: Notes
     obligatoire: true
     label: Marché cible
     description: Qui sont vos clients potentiels ?
 
   - nom: zone_geographique
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - Local (ville)
@@ -155,12 +173,14 @@ champs:
 
   - nom: zone_details
     type: text
+    groupe: Informations
     obligatoire: false
     label: Précision zone
     description: Ville, département, région concernée
 
   - nom: taille_marche
     type: select
+    groupe: Informations
     obligatoire: false
     options:
       - "< 100 K€"
@@ -173,12 +193,14 @@ champs:
 
   - nom: concurrents
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Concurrents identifiés
     description: Listez vos principaux concurrents et leurs forces/faiblesses
 
   - nom: avantages_concurrentiels
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Vos avantages concurrentiels
     description: Pourquoi les clients vous choisiront ?
@@ -188,24 +210,28 @@ champs:
   # -----------------------------------------------------
   - nom: offre_produits
     type: textarea
+    groupe: Notes
     obligatoire: true
     label: Produits / Services proposés
     description: Décrivez votre offre
 
   - nom: politique_prix
     type: textarea
+    groupe: Montants
     obligatoire: false
     label: Politique de prix
     description: Comment fixez-vous vos prix ?
 
   - nom: canaux_distribution
     type: tags
+    groupe: Metadata
     obligatoire: false
     label: Canaux de distribution
     description: "Boutique, e-commerce, marketplace, réseaux..."
 
   - nom: strategie_communication
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Stratégie de communication
     description: Comment allez-vous vous faire connaître ?
@@ -215,6 +241,7 @@ champs:
   # -----------------------------------------------------
   - nom: forme_juridique
     type: select
+    groupe: Informations
     obligatoire: false
     options:
       - A définir
@@ -233,17 +260,20 @@ champs:
 
   - nom: capital_prevu
     type: number
+    groupe: Informations
     obligatoire: false
     label: Capital social prévu (€)
 
   - nom: associes
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Associés
     description: Noms et parts de chaque associé
 
   - nom: siege_social
     type: text
+    groupe: Informations
     obligatoire: false
     label: Siège social prévu
     autocompletion: true
@@ -253,55 +283,65 @@ champs:
   # -----------------------------------------------------
   - nom: investissement_initial
     type: number
+    groupe: Informations
     obligatoire: false
     label: Investissement initial (€)
     description: Montant total pour démarrer
 
   - nom: apport_personnel
     type: number
+    groupe: Informations
     obligatoire: false
     label: Apport personnel (€)
 
   - nom: financement_recherche
     type: number
+    groupe: Informations
     obligatoire: false
     label: Financement recherché (€)
 
   - nom: sources_financement
     type: tags
+    groupe: Metadata
     obligatoire: false
     label: Sources de financement envisagées
     description: "Prêt bancaire, love money, crowdfunding, subventions..."
 
   - nom: ca_annee_1
     type: number
+    groupe: Informations
     obligatoire: false
     label: CA prévisionnel Année 1 (€)
 
   - nom: ca_annee_2
     type: number
+    groupe: Informations
     obligatoire: false
     label: CA prévisionnel Année 2 (€)
 
   - nom: ca_annee_3
     type: number
+    groupe: Informations
     obligatoire: false
     label: CA prévisionnel Année 3 (€)
 
   - nom: charges_fixes_mensuelles
     type: number
+    groupe: Informations
     obligatoire: false
     label: Charges fixes mensuelles (€)
     description: Loyer, assurances, abonnements, salaires...
 
   - nom: charges_variables_pct
     type: number
+    groupe: Informations
     obligatoire: false
     label: Charges variables (% du CA)
     description: Achats, matières premières...
 
   - nom: seuil_rentabilite
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     label: Seuil de rentabilité (€)
@@ -309,26 +349,31 @@ champs:
 
   - nom: resultat_annee_1
     type: number
+    groupe: Informations
     obligatoire: false
     label: Résultat net Année 1 (€)
 
   - nom: resultat_annee_2
     type: number
+    groupe: Informations
     obligatoire: false
     label: Résultat net Année 2 (€)
 
   - nom: resultat_annee_3
     type: number
+    groupe: Informations
     obligatoire: false
     label: Résultat net Année 3 (€)
 
   - nom: tresorerie_depart
     type: number
+    groupe: Informations
     obligatoire: false
     label: Trésorerie de départ (€)
 
   - nom: bfr
     type: number
+    groupe: Informations
     obligatoire: false
     label: BFR estimé (€)
     description: Besoin en Fonds de Roulement
@@ -338,17 +383,20 @@ champs:
   # -----------------------------------------------------
   - nom: effectif_depart
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 1
     label: Effectif au démarrage
 
   - nom: effectif_annee_3
     type: number
+    groupe: Informations
     obligatoire: false
     label: Effectif prévu Année 3
 
   - nom: postes_a_creer
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Postes à créer
     description: Quels profils allez-vous recruter ?
@@ -358,6 +406,7 @@ champs:
   # -----------------------------------------------------
   - nom: etapes_cles
     type: json
+    groupe: Metadata
     obligatoire: false
     label: Étapes clés du projet
     description: |
@@ -369,6 +418,7 @@ champs:
 
   - nom: risques_identifies
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Risques identifiés
     description: Quels sont les principaux risques et comment les atténuer ?
@@ -378,18 +428,21 @@ champs:
   # -----------------------------------------------------
   - nom: accompagnement
     type: tags
+    groupe: Metadata
     obligatoire: false
     label: Accompagnement sollicité
     description: "CMA, CCI, BGE, Initiative France, Pôle Emploi..."
 
   - nom: contact_accompagnement
     type: text
+    groupe: Relations
     obligatoire: false
     label: Contact accompagnateur
     autocompletion: true
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     label: Notes et remarques
 
@@ -398,21 +451,25 @@ champs:
   # -----------------------------------------------------
   - nom: cv_porteur
     type: text
+    groupe: Informations
     obligatoire: false
     label: CV du porteur (URL)
 
   - nom: etude_marche
     type: text
+    groupe: Informations
     obligatoire: false
     label: Étude de marché (URL)
 
   - nom: previsionnel_detaille
     type: text
+    groupe: Informations
     obligatoire: false
     label: Prévisionnel détaillé (URL)
 
   - nom: pdf_genere
     type: text
+    groupe: Informations
     obligatoire: false
     label: Business Plan PDF (URL)
 
@@ -421,12 +478,14 @@ champs:
   # -----------------------------------------------------
   - nom: ia_suggestions
     type: json
+    groupe: Metadata
     obligatoire: false
     label: Suggestions IA
     description: Recommandations générées par l'IA
 
   - nom: ia_score_completude
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     label: Score de complétude (%)
@@ -434,6 +493,7 @@ champs:
 
   - nom: ia_points_vigilance
     type: textarea
+    groupe: Notes
     obligatoire: false
     readonly: true
     label: Points de vigilance IA
@@ -443,14 +503,17 @@ champs:
   # -----------------------------------------------------
   - nom: created_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
   - nom: updated_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
   - nom: created_by
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
 

@@ -22,6 +22,7 @@ champs:
   # Identification
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference unique du paiement (auto-generee)
@@ -29,6 +30,7 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: CREATED
     options: [CREATED, PENDING, PROCESSING, COMPLETED, FAILED, EXPIRED, REFUNDED, CANCELLED]
@@ -37,6 +39,7 @@ champs:
   # Relations
   - nom: facture_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Factures
     description: Facture a payer
@@ -44,6 +47,7 @@ champs:
 
   - nom: customer_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Client payeur
@@ -52,35 +56,41 @@ champs:
   # Montants
   - nom: amount
     type: number
+    groupe: Montants
     obligatoire: true
     description: Montant du paiement
 
   - nom: currency
     type: text
+    groupe: Informations
     obligatoire: true
     defaut: EUR
     description: Devise
 
   - nom: commission_fintecture
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Commission Fintecture (0.99%)
 
   - nom: commission_azalplus
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Commission AZALPLUS (0.30%)
 
   - nom: commission_total
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Commission totale
 
   - nom: net_amount
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Montant net apres commissions
@@ -88,6 +98,7 @@ champs:
   # Provider (Fintecture)
   - nom: provider
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: FINTECTURE
     options: [FINTECTURE, BRIDGE, POWENS]
@@ -95,30 +106,35 @@ champs:
 
   - nom: provider_session_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: ID de session provider
     autocompletion: true
 
   - nom: provider_payment_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: ID de paiement provider
     autocompletion: true
 
   - nom: provider_status
     type: text
+    groupe: Informations
     obligatoire: false
     description: Statut brut du provider
 
   # Banque client
   - nom: bank_name
     type: text
+    groupe: Informations
     obligatoire: false
     description: Nom de la banque du client
     autocompletion: true
 
   - nom: bank_bic
     type: text
+    groupe: Informations
     obligatoire: false
     description: BIC de la banque
     autocompletion: true
@@ -126,74 +142,87 @@ champs:
   # Dates
   - nom: created_at
     type: datetime
+    groupe: Dates
     obligatoire: true
     auto: now
     description: Date de creation
 
   - nom: initiated_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date d'initiation du paiement
 
   - nom: completed_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de completion
 
   - nom: expires_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date d'expiration du lien
 
   # Lien de paiement
   - nom: payment_url
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: URL de paiement pour le client
 
   - nom: qr_code_url
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: URL du QR code de paiement
 
   - nom: short_url
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: URL courte pour SMS/WhatsApp
 
   # Notifications
   - nom: email_sent
     type: boolean
+    groupe: Contact
     obligatoire: false
     defaut: false
     description: Email avec lien envoye
 
   - nom: sms_sent
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: SMS avec lien envoye
 
   - nom: reminder_count
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Nombre de relances envoyees
 
   - nom: last_reminder_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date derniere relance
 
   # Rapprochement
   - nom: rapproche
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Paiement rapproche avec mouvement bancaire
 
   - nom: mouvement_bancaire_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Mouvements_bancaires
     description: Mouvement bancaire associe
@@ -202,27 +231,32 @@ champs:
   # Erreurs
   - nom: error_code
     type: text
+    groupe: Identification
     obligatoire: false
     description: Code erreur si echec
 
   - nom: error_message
     type: text
+    groupe: Informations
     obligatoire: false
     description: Message d'erreur
 
   # Metadata
   - nom: metadata
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Donnees supplementaires du provider
 
   - nom: ip_address
     type: text
+    groupe: Contact
     obligatoire: false
     description: IP du client lors du paiement
 
   - nom: user_agent
     type: text
+    groupe: Relations
     obligatoire: false
     description: User agent du client
 

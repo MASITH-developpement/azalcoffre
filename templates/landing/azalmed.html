@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AZALMED - Plateforme numérique pour professionnels de santé. Transcription IA, signature électronique, veille médicale et coffre-fort HDS.">
+    <meta name="keywords" content="médecin, transcription IA, signature électronique, eIDAS, coffre-fort HDS, veille médicale, PubMed, consentement patient">
+    <title>AZALMED - La plateforme digitale des professionnels de santé</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Palette médicale - Inspirée Doctolib/Alan */
+            --primary: #0596DE;
+            --primary-dark: #0077B6;
+            --primary-light: #48CAE4;
+            --secondary: #00B894;
+            --secondary-dark: #00A17D;
+            --accent: #6C5CE7;
+
+            /* Neutres */
+            --white: #FFFFFF;
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --gray-900: #0F172A;
+
+            /* Sémantique */
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+
+            /* Spacing */
+            --section-padding: 100px 0;
+            --container-max: 1200px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--gray-800);
+            line-height: 1.6;
+            background: var(--white);
+        }
+
+        /* Container */
+        .container {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            max-width: var(--container-max);
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-cta {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(5, 150, 222, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-large {
+            padding: 16px 32px;
+            font-size: 17px;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 160px 0 100px;
+            background: linear-gradient(180deg, var(--gray-50) 0%, var(--white) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230596DE' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--primary-light);
+            background: linear-gradient(135deg, rgba(5, 150, 222, 0.1), rgba(0, 184, 148, 0.1));
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--gray-900);
+            margin-bottom: 24px;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: 20px;
+            color: var(--gray-600);
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 48px;
+        }
+
+        .stat {
+            text-align: left;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray-500);
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .hero-image {
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 120px;
+        }
+
+        .floating-card {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .floating-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .floating-card-1 {
+            top: 20px;
+            right: -20px;
+        }
+
+        .floating-card-1 .floating-card-icon {
+            background: rgba(5, 150, 222, 0.1);
+        }
+
+        .floating-card-2 {
+            bottom: 40px;
+            left: -30px;
+        }
+
+        .floating-card-2 .floating-card-icon {
+            background: rgba(0, 184, 148, 0.1);
+        }
+
+        .floating-card-text {
+            font-size: 14px;
+        }
+
+        .floating-card-text strong {
+            display: block;
+            color: var(--gray-800);
+        }
+
+        .floating-card-text span {
+            color: var(--gray-500);
+            font-size: 12px;
+        }
+
+        /* Trusted By */
+        .trusted {
+            padding: 60px 0;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .trusted-text {
+            text-align: center;
+            color: var(--gray-400);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 32px;
+        }
+
+        .trusted-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+            flex-wrap: wrap;
+        }
+
+        .trusted-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-300);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: var(--section-padding);
+            background: var(--white);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+
+        .section-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            background: rgba(5, 150, 222, 0.1);
+            color: var(--primary);
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 16px;
+        }
+
+        .section-description {
+            font-size: 18px;
+            color: var(--gray-500);
+            line-height: 1.7;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: var(--gray-50);
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .feature-card:hover {
+            background: var(--white);
+            border-color: var(--gray-200);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 24px;
+        }
+
+        .feature-scribe .feature-icon {
+            background: linear-gradient(135deg, rgba(5, 150, 222, 0.1), rgba(5, 150, 222, 0.2));
+        }
+
+        .feature-consent .feature-icon {
+            background: linear-gradient(135deg, rgba(0, 184, 148, 0.1), rgba(0, 184, 148, 0.2));
+        }
+
+        .feature-veille .feature-icon {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(108, 92, 231, 0.2));
+        }
+
+        .feature-archive .feature-icon {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2));
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--gray-600);
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            color: var(--gray-700);
+            font-size: 15px;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            width: 20px;
+            height: 20px;
+            background: var(--success);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: var(--section-padding);
+            background: var(--gray-50);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            margin-top: 60px;
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 40px;
+            right: -16px;
+            width: 32px;
+            height: 2px;
+            background: var(--gray-300);
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            background: var(--white);
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0 auto 24px;
+        }
+
+        .step h4 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .step p {
+            font-size: 14px;
+            color: var(--gray-500);
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: var(--section-padding);
+            background: var(--white);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-top: 60px;
+        }
+
+        .pricing-card {
+            background: var(--white);
+            border: 2px solid var(--gray-200);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(5, 150, 222, 0.15);
+            transform: translateY(-8px);
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            background: linear-gradient(180deg, rgba(5, 150, 222, 0.02) 0%, var(--white) 100%);
+        }
+
+        .pricing-card.popular::before {
+            content: 'Populaire';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .pricing-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .pricing-description {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin-bottom: 24px;
+        }
+
+        .pricing-price {
+            margin-bottom: 24px;
+        }
+
+        .pricing-price .amount {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--gray-900);
+        }
+
+        .pricing-price .currency {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        .pricing-price .period {
+            font-size: 16px;
+            color: var(--gray-500);
+        }
+
+        .pricing-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 14px;
+            color: var(--gray-600);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-features .check {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .pricing-features .cross {
+            color: var(--gray-300);
+        }
+
+        .pricing-card .btn {
+            width: 100%;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: var(--section-padding);
+            background: var(--gray-900);
+            color: white;
+        }
+
+        .testimonials .section-title {
+            color: white;
+        }
+
+        .testimonials .section-description {
+            color: var(--gray-400);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin-top: 60px;
+        }
+
+        .testimonial-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .testimonial-stars {
+            color: #FCD34D;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+        .testimonial-text {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--gray-300);
+            margin-bottom: 24px;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .testimonial-info h5 {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .testimonial-info span {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        /* Security Section */
+        .security {
+            padding: var(--section-padding);
+            background: var(--white);
+        }
+
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            margin-top: 60px;
+        }
+
+        .security-item {
+            text-align: center;
+            padding: 32px;
+        }
+
+        .security-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gray-50);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 20px;
+        }
+
+        .security-item h4 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .security-item p {
+            font-size: 14px;
+            color: var(--gray-500);
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: var(--section-padding);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .cta p {
+            font-size: 20px;
+            opacity: 0.9;
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        .cta .btn-primary:hover {
+            background: var(--gray-100);
+            transform: translateY(-2px);
+        }
+
+        .cta-features {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .cta-feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--gray-900);
+            color: var(--gray-400);
+            padding: 80px 0 40px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand .logo {
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .footer-brand p {
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 12px;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .footer-social a:hover {
+            background: var(--primary);
+        }
+
+        .footer-column h5 {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column li {
+            margin-bottom: 12px;
+        }
+
+        .footer-column a {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-bottom p {
+            font-size: 14px;
+        }
+
+        .footer-certifications {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .certification {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .certification-badge {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            padding: var(--section-padding);
+            background: var(--gray-50);
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 60px;
+            align-items: start;
+        }
+
+        .contact-info .section-title {
+            text-align: left;
+        }
+
+        .contact-info .section-description {
+            text-align: left;
+            margin-bottom: 40px;
+        }
+
+        .contact-details {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .contact-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--white);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .contact-item strong {
+            display: block;
+            color: var(--gray-800);
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+
+        .contact-item a,
+        .contact-item span {
+            color: var(--gray-500);
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            color: var(--primary);
+        }
+
+        .contact-form-wrapper {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .contact-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .contact-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .contact-form label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .contact-form input,
+        .contact-form select,
+        .contact-form textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: var(--white);
+        }
+
+        .contact-form input:focus,
+        .contact-form select:focus,
+        .contact-form textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(5, 150, 222, 0.1);
+        }
+
+        .contact-form textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-weight: 400;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+        }
+
+        .checkbox-group a {
+            color: var(--primary);
+        }
+
+        .form-message {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .form-message.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .form-message.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero h1 {
+                font-size: 42px;
+            }
+
+            .hero-cta {
+                justify-content: center;
+            }
+
+            .hero-stats {
+                justify-content: center;
+            }
+
+            .hero-visual {
+                max-width: 500px;
+                margin: 0 auto;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .steps {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .step:not(:last-child)::after {
+                display: none;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .security-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+
+            .security-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 24px;
+                text-align: center;
+            }
+
+            .cta-features {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="#" class="logo">
+                <span class="logo-icon">+</span>
+                AZALMED
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Fonctionnalites</a></li>
+                <li><a href="#pricing">Tarifs</a></li>
+                <li><a href="#security">Securite</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <div class="nav-cta">
+                <a href="/azalmed/login" class="btn btn-secondary">Connexion</a>
+                <a href="#demo" class="btn btn-primary">Essai gratuit</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <div class="hero-badge">
+                        <span>🏥</span> Plateforme certifiee HDS
+                    </div>
+                    <h1>La plateforme digitale des <span>professionnels de sante</span></h1>
+                    <p class="hero-description">
+                        Transcription IA, signature electronique, veille medicale et archivage securise.
+                        Tout ce dont vous avez besoin pour digitaliser votre pratique.
+                    </p>
+                    <div class="hero-cta">
+                        <a href="#demo" class="btn btn-primary btn-large">Demarrer l'essai gratuit</a>
+                        <a href="#demo" class="btn btn-outline btn-large">Voir la demo</a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <div class="stat-value">15min</div>
+                            <div class="stat-label">gagnes par consultation</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">100%</div>
+                            <div class="stat-label">conforme RGPD</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">eIDAS</div>
+                            <div class="stat-label">signature certifiee</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="hero-image">🩺</div>
+                    <div class="floating-card floating-card-1">
+                        <div class="floating-card-icon">🎤</div>
+                        <div class="floating-card-text">
+                            <strong>Transcription terminee</strong>
+                            <span>Compte-rendu structure</span>
+                        </div>
+                    </div>
+                    <div class="floating-card floating-card-2">
+                        <div class="floating-card-icon">✅</div>
+                        <div class="floating-card-text">
+                            <strong>Consentement signe</strong>
+                            <span>Archive dans le coffre</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trusted By -->
+    <section class="trusted">
+        <div class="container">
+            <p class="trusted-text">Ils nous font confiance</p>
+            <div class="trusted-logos">
+                <div class="trusted-logo">🏥 CHU Bordeaux</div>
+                <div class="trusted-logo">🏥 Clinique du Parc</div>
+                <div class="trusted-logo">🏥 Cabinet Medical Lyon</div>
+                <div class="trusted-logo">🏥 Groupe Vivalto</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Fonctionnalites</span>
+                <h2 class="section-title">4 modules pour digitaliser votre pratique</h2>
+                <p class="section-description">
+                    Une suite complete d'outils concus pour les professionnels de sante,
+                    integres et securises.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <!-- SCRIBE -->
+                <div class="feature-card feature-scribe">
+                    <div class="feature-icon">🎤</div>
+                    <h3>SCRIBE - Transcription IA</h3>
+                    <p>
+                        Transformez vos consultations audio en comptes-rendus structures
+                        automatiquement. Gagnez 15 minutes par consultation.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Transcription Whisper (OpenAI)</li>
+                        <li>Structuration IA intelligente</li>
+                        <li>Motif, examen, diagnostic, traitement</li>
+                        <li>Export vers DMP compatible</li>
+                    </ul>
+                </div>
+
+                <!-- CONSENT -->
+                <div class="feature-card feature-consent">
+                    <div class="feature-icon">✍️</div>
+                    <h3>CONSENT - Signature eIDAS</h3>
+                    <p>
+                        Faites signer vos consentements a distance avec valeur legale.
+                        Conforme eIDAS et code de la sante publique.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Signature electronique certifiee</li>
+                        <li>Envoi par email ou SMS</li>
+                        <li>Horodatage TSA RFC 3161</li>
+                        <li>Dossier de preuves complet</li>
+                    </ul>
+                </div>
+
+                <!-- VEILLE -->
+                <div class="feature-card feature-veille">
+                    <div class="feature-icon">📚</div>
+                    <h3>VEILLE - Actualites medicales</h3>
+                    <p>
+                        Restez informe des dernieres publications et alertes sanitaires
+                        personnalisees selon votre specialite.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Agregation PubMed, HAS, ANSM</li>
+                        <li>Resumes IA en francais</li>
+                        <li>Alertes DGS-Urgent</li>
+                        <li>Digest quotidien personnalise</li>
+                    </ul>
+                </div>
+
+                <!-- ARCHIVE -->
+                <div class="feature-card feature-archive">
+                    <div class="feature-icon">🔒</div>
+                    <h3>ARCHIVE - Coffre-fort HDS</h3>
+                    <p>
+                        Archivez vos documents medicaux dans un coffre-fort numerique
+                        certifie HDS avec preuve d'integrite.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Chiffrement AES-256</li>
+                        <li>Hash SHA-256/512</li>
+                        <li>Horodatage legal</li>
+                        <li>Retention 20 ans automatique</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Comment ca marche</span>
+                <h2 class="section-title">Operationnel en 4 etapes</h2>
+                <p class="section-description">
+                    Une mise en place simple et rapide, sans installation complexe.
+                </p>
+            </div>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h4>Inscription</h4>
+                    <p>Creez votre compte en 2 minutes avec votre numero RPPS</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h4>Configuration</h4>
+                    <p>Personnalisez vos modeles de consentement et preferences</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h4>Integration</h4>
+                    <p>Connectez votre logiciel metier si necessaire (API REST)</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h4>Utilisation</h4>
+                    <p>Commencez a utiliser les 4 modules immediatement</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Tarifs</span>
+                <h2 class="section-title">Des tarifs simples et transparents</h2>
+                <p class="section-description">
+                    Choisissez l'offre adaptee a votre pratique. Sans engagement.
+                </p>
+            </div>
+
+            <div class="pricing-grid">
+                <!-- Solo -->
+                <div class="pricing-card">
+                    <div class="pricing-name">Solo</div>
+                    <div class="pricing-description">Pour les praticiens individuels</div>
+                    <div class="pricing-price">
+                        <span class="currency">€</span>
+                        <span class="amount">29</span>
+                        <span class="period">/mois</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> 1 utilisateur</li>
+                        <li><span class="check">✓</span> SCRIBE - 10h/mois</li>
+                        <li><span class="check">✓</span> CONSENT - 20 signatures</li>
+                        <li><span class="check">✓</span> VEILLE - Basic</li>
+                        <li><span class="check">✓</span> ARCHIVE - 5 Go</li>
+                        <li><span class="cross">✗</span> Support prioritaire</li>
+                    </ul>
+                    <a href="#" class="btn btn-outline">Commencer</a>
+                </div>
+
+                <!-- Pro -->
+                <div class="pricing-card popular">
+                    <div class="pricing-name">Pro</div>
+                    <div class="pricing-description">Pour les cabinets</div>
+                    <div class="pricing-price">
+                        <span class="currency">€</span>
+                        <span class="amount">59</span>
+                        <span class="period">/mois</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> 3 utilisateurs</li>
+                        <li><span class="check">✓</span> SCRIBE - 30h/mois</li>
+                        <li><span class="check">✓</span> CONSENT - 100 signatures</li>
+                        <li><span class="check">✓</span> VEILLE - Complet</li>
+                        <li><span class="check">✓</span> ARCHIVE - 20 Go</li>
+                        <li><span class="check">✓</span> Support prioritaire</li>
+                    </ul>
+                    <a href="#" class="btn btn-primary">Commencer</a>
+                </div>
+
+                <!-- Team -->
+                <div class="pricing-card">
+                    <div class="pricing-name">Team</div>
+                    <div class="pricing-description">Pour les centres de sante</div>
+                    <div class="pricing-price">
+                        <span class="currency">€</span>
+                        <span class="amount">99</span>
+                        <span class="period">/mois</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> 10 utilisateurs</li>
+                        <li><span class="check">✓</span> SCRIBE - Illimite</li>
+                        <li><span class="check">✓</span> CONSENT - Illimite</li>
+                        <li><span class="check">✓</span> VEILLE - Complet</li>
+                        <li><span class="check">✓</span> ARCHIVE - 100 Go</li>
+                        <li><span class="check">✓</span> Support dedie</li>
+                    </ul>
+                    <a href="#" class="btn btn-outline">Commencer</a>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="pricing-card">
+                    <div class="pricing-name">Etablissement</div>
+                    <div class="pricing-description">Pour les cliniques et hopitaux</div>
+                    <div class="pricing-price">
+                        <span class="currency">€</span>
+                        <span class="amount">249</span>
+                        <span class="period">/mois</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> Utilisateurs illimites</li>
+                        <li><span class="check">✓</span> Tous modules illimites</li>
+                        <li><span class="check">✓</span> API & Integrations</li>
+                        <li><span class="check">✓</span> SSO / LDAP</li>
+                        <li><span class="check">✓</span> ARCHIVE - 1 To</li>
+                        <li><span class="check">✓</span> Account Manager</li>
+                    </ul>
+                    <a href="#" class="btn btn-outline">Nous contacter</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge" style="background: rgba(255,255,255,0.1); color: white;">Temoignages</span>
+                <h2 class="section-title">Ce qu'en disent nos utilisateurs</h2>
+                <p class="section-description">
+                    Des professionnels de sante qui ont transforme leur pratique.
+                </p>
+            </div>
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">
+                        "SCRIBE m'a fait gagner un temps precieux. Je dicte mes comptes-rendus
+                        et ils sont structures automatiquement. Impressionnant !"
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">MD</div>
+                        <div class="testimonial-info">
+                            <h5>Dr. Marie Dupont</h5>
+                            <span>Medecin generaliste, Lyon</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">
+                        "Les consentements signes a distance ont simplifie notre organisation.
+                        Plus de papier perdu, tout est archive et tracable."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">PL</div>
+                        <div class="testimonial-info">
+                            <h5>Dr. Pierre Leroy</h5>
+                            <span>Chirurgien, Bordeaux</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">
+                        "La veille medicale personnalisee me permet de rester a jour
+                        sans y passer des heures. Les resumes IA sont tres pertinents."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">SB</div>
+                        <div class="testimonial-info">
+                            <h5>Dr. Sophie Bernard</h5>
+                            <span>Cardiologue, Paris</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section class="security" id="security">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Securite</span>
+                <h2 class="section-title">Vos donnees sont en securite</h2>
+                <p class="section-description">
+                    Une infrastructure concue pour la protection des donnees de sante.
+                </p>
+            </div>
+
+            <div class="security-grid">
+                <div class="security-item">
+                    <div class="security-icon">🏥</div>
+                    <h4>Certifie HDS</h4>
+                    <p>Hebergement sur infrastructure OVH Healthcare certifiee</p>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">🔐</div>
+                    <h4>Chiffrement AES-256</h4>
+                    <p>Donnees chiffrees au repos et en transit</p>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">🇪🇺</div>
+                    <h4>RGPD Conforme</h4>
+                    <p>Donnees hebergees en France, conforme RGPD</p>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">✍️</div>
+                    <h4>eIDAS</h4>
+                    <p>Signature electronique a valeur legale europeenne</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta" id="demo">
+        <div class="container">
+            <h2>Pret a digitaliser votre pratique ?</h2>
+            <p>Essayez AZALMED gratuitement pendant 14 jours. Sans engagement, sans carte bancaire.</p>
+            <a href="#" class="btn btn-primary btn-large">Demarrer l'essai gratuit</a>
+            <div class="cta-features">
+                <div class="cta-feature">
+                    <span>✓</span> 14 jours d'essai gratuit
+                </div>
+                <div class="cta-feature">
+                    <span>✓</span> Sans carte bancaire
+                </div>
+                <div class="cta-feature">
+                    <span>✓</span> Support inclus
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section" id="contact-form">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <span class="section-badge">Contact</span>
+                    <h2 class="section-title">Parlons de votre projet</h2>
+                    <p class="section-description">
+                        Une question ? Un besoin specifique ? Notre equipe vous repond sous 24h.
+                    </p>
+
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <span class="contact-icon">📧</span>
+                            <div>
+                                <strong>Email</strong>
+                                <a href="mailto:contact@stephane-moreau.fr">contact@stephane-moreau.fr</a>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <span class="contact-icon">📍</span>
+                            <div>
+                                <strong>Adresse</strong>
+                                <span>France</span>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <span class="contact-icon">🕐</span>
+                            <div>
+                                <strong>Horaires</strong>
+                                <span>Lun-Ven : 9h-18h</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="contact-form-wrapper">
+                    <form class="contact-form" id="contactForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nom">Nom *</label>
+                                <input type="text" id="nom" name="nom" required placeholder="Votre nom">
+                            </div>
+                            <div class="form-group">
+                                <label for="prenom">Prenom *</label>
+                                <input type="text" id="prenom" name="prenom" required placeholder="Votre prenom">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email professionnel *</label>
+                            <input type="email" id="email" name="email" required placeholder="vous@cabinet.fr">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="telephone">Telephone</label>
+                            <input type="tel" id="telephone" name="telephone" placeholder="06 12 34 56 78">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="specialite">Specialite</label>
+                            <select id="specialite" name="specialite">
+                                <option value="">Selectionnez...</option>
+                                <option value="generaliste">Medecine generale</option>
+                                <option value="cardio">Cardiologie</option>
+                                <option value="dermato">Dermatologie</option>
+                                <option value="gyneco">Gynecologie</option>
+                                <option value="pediatrie">Pediatrie</option>
+                                <option value="chirurgie">Chirurgie</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">Message *</label>
+                            <textarea id="message" name="message" rows="4" required placeholder="Decrivez votre besoin..."></textarea>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" name="rgpd" required>
+                                J'accepte que mes donnees soient traitees conformement a la <a href="#">politique de confidentialite</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-large">
+                            Envoyer le message
+                        </button>
+
+                        <div id="formMessage" class="form-message"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <span class="logo-icon">+</span>
+                        AZALMED
+                    </a>
+                    <p>
+                        La plateforme digitale des professionnels de sante.
+                        Transcription IA, signature electronique, veille medicale
+                        et archivage securise.
+                    </p>
+                    <div class="footer-social">
+                        <a href="#">in</a>
+                        <a href="#">tw</a>
+                        <a href="#">yt</a>
+                    </div>
+                </div>
+
+                <div class="footer-column">
+                    <h5>Produit</h5>
+                    <ul>
+                        <li><a href="#">SCRIBE</a></li>
+                        <li><a href="#">CONSENT</a></li>
+                        <li><a href="#">VEILLE</a></li>
+                        <li><a href="#">ARCHIVE</a></li>
+                        <li><a href="#">Tarifs</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h5>Ressources</h5>
+                    <ul>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Webinaires</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h5>Contact</h5>
+                    <ul>
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Ventes</a></li>
+                        <li><a href="#">Partenaires</a></li>
+                        <li><a href="#">Presse</a></li>
+                        <li><a href="#">Carrieres</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 AZALMED. Tous droits reserves.</p>
+                <div class="footer-certifications">
+                    <div class="certification">
+                        <span class="certification-badge">🏥</span>
+                        HDS
+                    </div>
+                    <div class="certification">
+                        <span class="certification-badge">🇪🇺</span>
+                        RGPD
+                    </div>
+                    <div class="certification">
+                        <span class="certification-badge">✍️</span>
+                        eIDAS
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Smooth Scroll -->
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

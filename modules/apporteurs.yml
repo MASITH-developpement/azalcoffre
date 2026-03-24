@@ -12,6 +12,7 @@ champs:
   # Identification
   - nom: code
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Code apporteur
@@ -19,12 +20,14 @@ champs:
 
   - nom: name
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom / Raison sociale
     autocompletion: true
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: PARTENAIRE
     options: [AGENT_COMMERCIAL, PARTENAIRE, PRESCRIPTEUR, REVENDEUR, AFFILIE]
@@ -32,6 +35,7 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: ACTIF
     options: [PROSPECT, ACTIF, SUSPENDU, RESILIE]
@@ -40,34 +44,40 @@ champs:
   # Contact
   - nom: contact_nom
     type: text
+    groupe: Identification
     obligatoire: false
     description: Nom du contact
     autocompletion: true
 
   - nom: email
     type: email
+    groupe: Contact
     obligatoire: true
     description: Email
 
   - nom: telephone
     type: tel
+    groupe: Contact
     obligatoire: false
     description: Telephone
 
   - nom: adresse
     type: textarea
+    groupe: Contact
     obligatoire: false
     description: Adresse
 
   # Entreprise
   - nom: siret
     type: text
+    groupe: Informations
     obligatoire: false
     description: SIRET
     autocompletion: true
 
   - nom: tva_intra
     type: text
+    groupe: Montants
     obligatoire: false
     description: N° TVA intracommunautaire
     autocompletion: true
@@ -75,16 +85,19 @@ champs:
   # Contrat
   - nom: date_debut
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date debut partenariat
 
   - nom: date_fin
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date fin contrat
 
   - nom: contrat_document_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: GED
     description: Document contrat
@@ -92,24 +105,28 @@ champs:
   # Zone / Secteur
   - nom: zone_geographique
     type: text
+    groupe: Informations
     obligatoire: false
     description: Zone geographique
     autocompletion: true
 
   - nom: secteurs_activite
     type: tags
+    groupe: Metadata
     obligatoire: false
     description: Secteurs d'activite
 
   # Commission par defaut
   - nom: taux_commission
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 10
     description: Taux de commission par defaut (%)
 
   - nom: type_commission
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: POURCENTAGE
     options: [POURCENTAGE, MONTANT_FIXE, PALIERS]
@@ -117,6 +134,7 @@ champs:
 
   - nom: commission_sur
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: CA_HT
     options: [CA_HT, CA_TTC, MARGE, MONTANT_FACTURE]
@@ -124,30 +142,35 @@ champs:
 
   - nom: commission_recurrente
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Commission sur renouvellements
 
   - nom: duree_commissionnement
     type: number
+    groupe: Informations
     obligatoire: false
     description: Duree commissionnement (mois)
 
   # Paliers (si type = PALIERS)
   - nom: paliers_commission
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Paliers [{min, max, taux}]
 
   # Paiement
   - nom: iban
     type: text
+    groupe: Informations
     obligatoire: false
     description: IBAN pour versements
     autocompletion: true
 
   - nom: mode_paiement
     type: select
+    groupe: Configuration
     obligatoire: false
     defaut: VIREMENT
     options: [VIREMENT, CHEQUE, AVOIR]
@@ -155,6 +178,7 @@ champs:
 
   - nom: frequence_paiement
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: MENSUEL
     options: [MENSUEL, TRIMESTRIEL, ANNUEL, A_LA_DEMANDE]
@@ -162,6 +186,7 @@ champs:
 
   - nom: seuil_minimum
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 50
     description: Seuil minimum pour paiement
@@ -169,6 +194,7 @@ champs:
   # Statistiques
   - nom: nb_affaires_apportees
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     readonly: true
@@ -176,6 +202,7 @@ champs:
 
   - nom: ca_genere
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     readonly: true
@@ -183,6 +210,7 @@ champs:
 
   - nom: commissions_versees
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     readonly: true
@@ -190,6 +218,7 @@ champs:
 
   - nom: commissions_en_attente
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     readonly: true
@@ -198,12 +227,14 @@ champs:
   # Portail
   - nom: acces_portail
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Acces au portail partenaire
 
   - nom: portail_user_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Compte portail
@@ -211,6 +242,7 @@ champs:
   # Notes
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 
@@ -219,40 +251,47 @@ affaires:
   champs:
     - nom: date_apport
       type: date
+      groupe: Dates
       obligatoire: true
       description: Date d'apport
 
     - nom: client_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Clients
       description: Client apporte
 
     - nom: opportunite_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Opportunites
       description: Opportunite
 
     - nom: devis_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Devis
       description: Devis
 
     - nom: facture_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Factures
       description: Facture
 
     - nom: montant_affaire
       type: number
+      groupe: Montants
       obligatoire: false
       description: Montant de l'affaire
 
     - nom: statut
       type: select
+      groupe: Statut
       obligatoire: true
       defaut: EN_COURS
       options: [EN_COURS, GAGNEE, PERDUE, ANNULEE]
@@ -260,22 +299,26 @@ affaires:
 
     - nom: taux_commission
       type: number
+      groupe: Montants
       obligatoire: false
       description: Taux applique (%)
 
     - nom: montant_commission
       type: number
+      groupe: Montants
       obligatoire: false
       description: Montant commission
 
     - nom: commission_payee
       type: boolean
+      groupe: Informations
       obligatoire: false
       defaut: false
       description: Commission payee
 
     - nom: date_paiement
       type: date
+      groupe: Dates
       obligatoire: false
       description: Date paiement commission
 

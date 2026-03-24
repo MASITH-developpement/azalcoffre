@@ -12,12 +12,14 @@ champs:
   # Identification
   - nom: title
     type: text
+    groupe: Identification
     obligatoire: true
     description: Titre du sondage
     autocompletion: true
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: SATISFACTION
     options: [SATISFACTION, NPS, FEEDBACK_PRODUIT, ENQUETE_MARCHE, EVALUATION_SERVICE, AUTRE]
@@ -25,6 +27,7 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: BROUILLON
     options: [BROUILLON, PUBLIE, EN_COURS, TERMINE, ARCHIVE]
@@ -33,63 +36,74 @@ champs:
   # Description
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: false
     description: Description/introduction
 
   - nom: message_fin
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Message de fin
 
   # Periode
   - nom: date_debut
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de debut
 
   - nom: date_fin
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de fin
 
   # Distribution
   - nom: lien_public
     type: text
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Lien public
 
   - nom: qr_code
     type: text
+    groupe: Identification
     obligatoire: false
     description: QR code
 
   - nom: anonyme
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Reponses anonymes
 
   - nom: une_reponse_par_personne
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Une seule reponse par personne
 
   - nom: limite_reponses
     type: number
+    groupe: Informations
     obligatoire: false
     description: Nombre max de reponses
 
   # Declencheur
   - nom: declencheur
     type: select
+    groupe: Informations
     obligatoire: false
     options: [MANUEL, POST_ACHAT, POST_INTERVENTION, POST_TICKET, PERIODIQUE]
     description: Declencheur automatique
 
   - nom: delai_envoi
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 1
     description: Delai apres evenement (jours)
@@ -97,6 +111,7 @@ champs:
   # Ciblage
   - nom: segment_clients
     type: text
+    groupe: Informations
     obligatoire: false
     description: Segment clients cible
     autocompletion: true
@@ -104,18 +119,21 @@ champs:
   # Apparence
   - nom: couleur_principale
     type: text
+    groupe: Informations
     obligatoire: false
     defaut: "#3B82F6"
     description: Couleur principale
 
   - nom: logo
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: Logo personnalise
 
   # Statistiques
   - nom: nb_envois
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     readonly: true
@@ -123,6 +141,7 @@ champs:
 
   - nom: nb_reponses
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     readonly: true
@@ -130,18 +149,21 @@ champs:
 
   - nom: taux_reponse
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Taux de reponse (%)
 
   - nom: nps_score
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Score NPS (-100 a +100)
 
   - nom: note_moyenne
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Note moyenne
@@ -151,58 +173,69 @@ questions:
   champs:
     - nom: ordre
       type: number
+      groupe: Informations
       obligatoire: true
       description: Ordre d'affichage
 
     - nom: type
       type: select
+      groupe: Informations
       obligatoire: true
       options: [CHOIX_UNIQUE, CHOIX_MULTIPLE, TEXTE_COURT, TEXTE_LONG, ECHELLE, NPS, NOTE_ETOILES, DATE, EMAIL, TELEPHONE]
       description: Type de question
 
     - nom: question
       type: text
+      groupe: Informations
       obligatoire: true
       description: Texte de la question
 
     - nom: description
       type: text
+      groupe: Informations
       obligatoire: false
       description: Description/aide
 
     - nom: obligatoire
       type: boolean
+      groupe: Informations
       obligatoire: false
       defaut: false
       description: Reponse obligatoire
 
     - nom: options
       type: json
+      groupe: Configuration
       obligatoire: false
       description: Options de reponse (pour choix)
 
     - nom: echelle_min
       type: number
+      groupe: Informations
       obligatoire: false
       description: Valeur min echelle
 
     - nom: echelle_max
       type: number
+      groupe: Informations
       obligatoire: false
       description: Valeur max echelle
 
     - nom: label_min
       type: text
+      groupe: Informations
       obligatoire: false
       description: Label min (ex "Pas du tout satisfait")
 
     - nom: label_max
       type: text
+      groupe: Informations
       obligatoire: false
       description: Label max (ex "Tres satisfait")
 
     - nom: condition_affichage
       type: json
+      groupe: Metadata
       obligatoire: false
       description: Condition d'affichage (logique branchement)
 
@@ -211,59 +244,70 @@ reponses:
   champs:
     - nom: date_reponse
       type: datetime
+      groupe: Dates
       obligatoire: true
       auto: now
       description: Date/heure reponse
 
     - nom: client_id
       type: relation
+      groupe: Relations
       obligatoire: false
       relation: Clients
       description: Client (si identifie)
 
     - nom: email
       type: email
+      groupe: Contact
       obligatoire: false
       description: Email repondant
 
     - nom: reponses_json
       type: json
+      groupe: Metadata
       obligatoire: true
       description: Reponses aux questions
 
     - nom: nps_score
       type: number
+      groupe: Informations
       obligatoire: false
       description: Score NPS donne
 
     - nom: note_globale
       type: number
+      groupe: Informations
       obligatoire: false
       description: Note globale
 
     - nom: commentaire
       type: textarea
+      groupe: Notes
       obligatoire: false
       description: Commentaire libre
 
     - nom: source
       type: select
+      groupe: Informations
       obligatoire: false
       options: [EMAIL, SMS, LIEN, QR_CODE, WIDGET]
       description: Source
 
     - nom: ip_address
       type: text
+      groupe: Contact
       obligatoire: false
       description: Adresse IP
 
     - nom: user_agent
       type: text
+      groupe: Relations
       obligatoire: false
       description: User agent
 
     - nom: duree_secondes
       type: number
+      groupe: Informations
       obligatoire: false
       description: Duree de completion
 

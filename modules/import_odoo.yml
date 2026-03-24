@@ -1,0 +1,347 @@
+# =============================================================================
+# AZALPLUS - Module Import/Export Odoo
+# =============================================================================
+# Synchronisation bidirectionnelle avec Odoo (CSV, API XML-RPC)
+# Supporte: clients, fournisseurs, produits, factures, commandes, stock
+
+nom: Import Odoo
+nom_pluriel: Imports Odoo
+icone: refresh-cw
+menu: Systeme
+description: "Import/Export depuis Odoo: clients, produits, factures, commandes"
+ordre_menu: 2
+
+liste_colonnes:
+  - name
+  - direction
+  - odoo_model
+  - module_cible
+  - status
+  - nb_lignes_importees
+  - created_at
+
+champs:
+  # ==========================================================================
+  # IDENTIFICATION
+  # ==========================================================================
+  - nom: name
+    type: text
+    groupe: Identification
+    libelle: "Nom"
+    obligatoire: true
+    description: "Nom de l'import/export"
+
+  - nom: direction
+    type: select
+    groupe: Informations
+    libelle: "Direction"
+    options:
+      - IMPORT
+      - EXPORT
+    defaut: IMPORT
+    description: "Import depuis Odoo ou Export vers Odoo"
+
+  - nom: odoo_model
+    type: select
+    groupe: Informations
+    libelle: "Modèle Odoo"
+    options:
+      - res.partner
+      - product.product
+      - product.template
+      - sale.order
+      - sale.order.line
+      - purchase.order
+      - purchase.order.line
+      - account.move
+      - account.move.line
+      - stock.picking
+      - stock.move
+      - hr.employee
+      - project.project
+      - project.task
+      - crm.lead
+      - maintenance.request
+      - helpdesk.ticket
+      - field.service
+      - repair.order
+      - intervention.intervention
+    defaut: res.partner
+    description: "Modèle Odoo source/cible"
+
+  - nom: module_cible
+    type: select
+    groupe: Informations
+    libelle: "Module AZALPLUS"
+    options:
+      - clients
+      - fournisseurs
+      - produits
+      - factures
+      - commandes
+      - commandes_achat
+      - stock
+      - mouvements_stock
+      - employes
+      - projets
+      - taches
+      - leads
+      - contacts
+      - interventions
+    defaut: clients
+    description: "Module AZALPLUS correspondant"
+
+  # ==========================================================================
+  # SOURCE
+  # ==========================================================================
+  - nom: source_type
+    type: select
+    groupe: Configuration
+    libelle: "Type source"
+    options:
+      - CSV
+      - EXCEL
+      - API_XMLRPC
+    defaut: CSV
+    description: "Format des données source"
+
+  - nom: fichier_source
+    type: text
+    groupe: Fichiers
+    libelle: "Fichier"
+    description: "Chemin du fichier CSV/Excel exporté depuis Odoo"
+
+  - nom: odoo_url
+    type: text
+    groupe: Configuration
+    libelle: "URL Odoo"
+    description: "URL de l'instance Odoo (pour API)"
+
+  - nom: odoo_db
+    type: text
+    groupe: Configuration
+    libelle: "Base Odoo"
+    description: "Nom de la base de données Odoo"
+
+  - nom: odoo_login
+    type: text
+    groupe: Configuration
+    libelle: "Login Odoo"
+    description: "Identifiant de connexion Odoo"
+
+  - nom: odoo_api_key
+    type: text
+    groupe: Configuration
+    libelle: "Clé API"
+    description: "Clé API ou mot de passe Odoo"
+
+  # ==========================================================================
+  # MAPPING
+  # ==========================================================================
+  - nom: mapping_preset
+    type: select
+    groupe: Configuration
+    libelle: "Mapping prédéfini"
+    options:
+      - AUTO
+      - ODOO_V16
+      - ODOO_V15
+      - ODOO_V14
+      - ODOO_V12
+      - PERSONNALISE
+    defaut: AUTO
+    description: "Mapping des champs (AUTO = détection automatique)"
+
+  - nom: mapping_champs
+    type: json
+    groupe: Metadata
+    libelle: "Mapping personnalisé"
+    defaut: {}
+    description: "Correspondance champs Odoo -> AZALPLUS"
+
+  - nom: options_import
+    type: json
+    groupe: Metadata
+    libelle: "Options"
+    defaut: {}
+    description: "Options avancées (ignorer doublons, etc.)"
+
+  # ==========================================================================
+  # FILTRES
+  # ==========================================================================
+  - nom: filtre_date_debut
+    type: date
+    groupe: Filtres
+    libelle: "Date début"
+    description: "Filtrer les enregistrements après cette date"
+
+  - nom: filtre_date_fin
+    type: date
+    groupe: Filtres
+    libelle: "Date fin"
+    description: "Filtrer les enregistrements avant cette date"
+
+  - nom: filtre_ids
+    type: text
+    groupe: Filtres
+    libelle: "IDs Odoo"
+    description: "IDs spécifiques à importer (séparés par virgule)"
+
+  - nom: filtre_domaine
+    type: text
+    groupe: Filtres
+    libelle: "Domaine Odoo"
+    description: "Filtre domaine Odoo (ex: [('active','=',True)])"
+
+  # ==========================================================================
+  # STATUT ET PROGRESSION
+  # ==========================================================================
+  - nom: status
+    type: select
+    groupe: Statut
+    libelle: "Statut"
+    obligatoire: true
+    defaut: BROUILLON
+    options:
+      - BROUILLON
+      - EN_ATTENTE
+      - EN_COURS
+      - TERMINE
+      - ERREUR
+      - ANNULE
+    description: "Statut de l'import"
+
+  - nom: progression
+    type: number
+    groupe: Informations
+    libelle: "Progression %"
+    defaut: 0
+    description: "Pourcentage de progression"
+
+  - nom: nb_lignes_total
+    type: number
+    groupe: Quantites
+    libelle: "Total lignes"
+    defaut: 0
+
+  - nom: nb_lignes_importees
+    type: number
+    groupe: Quantites
+    libelle: "Importées"
+    defaut: 0
+
+  - nom: nb_lignes_mises_a_jour
+    type: number
+    groupe: Quantites
+    libelle: "Mises à jour"
+    defaut: 0
+
+  - nom: nb_lignes_ignorees
+    type: number
+    groupe: Quantites
+    libelle: "Ignorées"
+    defaut: 0
+
+  - nom: nb_lignes_erreur
+    type: number
+    groupe: Quantites
+    libelle: "Erreurs"
+    defaut: 0
+
+  # ==========================================================================
+  # LOGS ET ERREURS
+  # ==========================================================================
+  - nom: erreurs
+    type: json
+    groupe: Metadata
+    libelle: "Détail erreurs"
+    defaut: []
+    description: "Liste des erreurs rencontrées"
+
+  - nom: log_execution
+    type: textarea
+    groupe: Notes
+    libelle: "Log"
+    description: "Journal d'exécution détaillé"
+
+  - nom: fichier_rapport
+    type: text
+    groupe: Fichiers
+    libelle: "Rapport"
+    description: "Chemin du rapport d'import"
+
+  # ==========================================================================
+  # DATES
+  # ==========================================================================
+  - nom: date_debut
+    type: datetime
+    groupe: Dates
+    libelle: "Début"
+    description: "Date/heure de début d'exécution"
+
+  - nom: date_fin
+    type: datetime
+    groupe: Dates
+    libelle: "Fin"
+    description: "Date/heure de fin d'exécution"
+
+  - nom: duree_secondes
+    type: number
+    groupe: Informations
+    libelle: "Durée (s)"
+    description: "Durée d'exécution en secondes"
+
+  # ==========================================================================
+  # TRAÇABILITÉ
+  # ==========================================================================
+  - nom: utilisateur_id
+    type: relation
+    groupe: Relations
+    libelle: "Lancé par"
+    relation: utilisateurs
+
+  - nom: rollback_possible
+    type: boolean
+    groupe: Informations
+    libelle: "Rollback possible"
+    defaut: true
+
+  - nom: ids_importes
+    type: json
+    groupe: Metadata
+    libelle: "IDs importés"
+    defaut: []
+    description: "Liste des IDs créés (pour rollback)"
+
+# Index pour recherche rapide
+index:
+  - name
+  - status
+  - odoo_model
+  - module_cible
+  - created_at
+
+recherche:
+  - name
+  - odoo_model
+  - module_cible
+
+# Workflow
+workflow:
+  BROUILLON -> EN_ATTENTE: "Valider"
+  EN_ATTENTE -> EN_COURS: null
+  EN_COURS -> TERMINE: null
+  EN_COURS -> ERREUR: null
+  BROUILLON -> ANNULE: "Annuler"
+  EN_ATTENTE -> ANNULE: "Annuler"
+  TERMINE -> ANNULE: "Rollback"
+
+# Actions disponibles
+actions:
+  - preview
+  - valider
+  - executer
+  - annuler
+  - rollback
+  - telecharger_rapport
+  - telecharger_template

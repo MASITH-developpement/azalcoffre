@@ -1,0 +1,298 @@
+# =============================================================================
+# AZALMED - Configuration
+# =============================================================================
+# Plateforme digitale pour professionnels de santé
+# Transcription IA, Consentements eIDAS, Veille médicale, Archivage HDS
+
+nom: AZALMED
+version: "1.0.0"
+description: "Plateforme digitale pour professionnels de santé"
+
+# =============================================================================
+# Modules AZALMED
+# =============================================================================
+modules:
+  - med_patients
+  - med_praticiens
+  - med_documents
+  - med_consentements
+  - med_formulaires_consent
+  - med_consultations
+  - med_articles_veille
+
+# =============================================================================
+# Menu AZALMED
+# =============================================================================
+menu:
+  nom: AZALMED
+  icone: heartbeat
+  ordre: 1
+  items:
+    - nom: Dashboard
+      icone: chart-line
+      route: /azalmed/dashboard
+    - nom: Patients
+      icone: user-injured
+      route: /azalmed/patients
+    - nom: Consultations
+      icone: stethoscope
+      route: /azalmed/consultations
+    - nom: Consentements
+      icone: file-signature
+      route: /azalmed/consentements
+    - nom: Documents
+      icone: archive
+      route: /azalmed/documents
+    - nom: Veille médicale
+      icone: newspaper
+      route: /azalmed/veille
+    - separateur: true
+    - nom: Formulaires
+      icone: file-alt
+      route: /azalmed/formulaires
+    - nom: Praticiens
+      icone: user-md
+      route: /azalmed/praticiens
+
+# =============================================================================
+# Offres et Pricing
+# =============================================================================
+offres:
+  SOLO:
+    nom: Solo
+    prix_mensuel: 29
+    modules: [ARCHIVE, VEILLE]
+    description: "Archive + Veille médicale"
+    limite_patients: 100
+    limite_documents_go: 10
+    limite_articles_veille: 50
+
+  PRO:
+    nom: Pro
+    prix_mensuel: 59
+    modules: [ARCHIVE, VEILLE, CONSENT]
+    description: "Archive + Veille + Consentements"
+    limite_patients: 500
+    limite_documents_go: 50
+    limite_articles_veille: 200
+    limite_consentements_mois: 100
+
+  PREMIUM:
+    nom: Premium
+    prix_mensuel: 99
+    modules: [ARCHIVE, VEILLE, CONSENT, SCRIBE]
+    description: "Tous les modules"
+    limite_patients: -1  # illimité
+    limite_documents_go: 100
+    limite_articles_veille: -1
+    limite_consentements_mois: -1
+    limite_transcription_heures: 20
+
+  CABINET:
+    nom: Cabinet
+    prix_mensuel: 249
+    modules: [ARCHIVE, VEILLE, CONSENT, SCRIBE]
+    description: "Multi-praticiens (3-10)"
+    limite_praticiens: 10
+    limite_patients: -1
+    limite_documents_go: 500
+    limite_articles_veille: -1
+    limite_consentements_mois: -1
+    limite_transcription_heures: 100
+
+# =============================================================================
+# SCRIBE - Transcription IA
+# =============================================================================
+scribe:
+  actif: true
+  provider: openai  # openai | azure | local
+  model_stt: whisper-1
+  model_llm: gpt-4o-mini
+  langues: [fr, en]
+  langue_defaut: fr
+  max_duree_secondes: 3600  # 1 heure max
+  qualite_audio: high
+
+  structuration:
+    sections:
+      - motif
+      - anamnese
+      - examen_clinique
+      - diagnostic
+      - traitement
+      - conclusion
+
+  dictionnaire_medical:
+    actif: true
+    sources:
+      - cim10
+      - vidal
+      - has
+
+# =============================================================================
+# CONSENT - Signature électronique
+# =============================================================================
+consent:
+  actif: true
+  provider: yousign  # yousign | docusign | universign
+
+  niveaux_signature:
+    SIMPLE:
+      description: "Code OTP SMS"
+      cout_unitaire: 0.30
+    AVANCEE:
+      description: "Certificat + OTP"
+      cout_unitaire: 0.50
+    QUALIFIEE:
+      description: "Certificat qualifié eIDAS"
+      cout_unitaire: 2.00
+
+  niveau_defaut: AVANCEE
+
+  delai_expiration_heures: 72
+  max_relances: 3
+  delai_entre_relances_heures: 24
+
+  archivage_auto: true
+  tsa_actif: true
+  tsa_provider: universign
+
+# =============================================================================
+# VEILLE - Sources et agrégation
+# =============================================================================
+veille:
+  actif: true
+
+  sources:
+    pubmed:
+      actif: true
+      api_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+      max_articles_jour: 50
+
+    has:
+      actif: true
+      rss_url: "https://www.has-sante.fr/jcms/fc_2875171/fr/rss"
+      types: [recommandations, avis]
+
+    ansm:
+      actif: true
+      rss_url: "https://ansm.sante.fr/rss"
+      alertes_critiques: true
+
+    dgs_urgent:
+      actif: true
+      source: email  # abonnement DGS-Urgent
+
+  resume_ia:
+    actif: true
+    model: gpt-4o-mini
+    max_tokens: 500
+    langue: fr
+
+  digest:
+    frequences: [QUOTIDIEN, HEBDOMADAIRE, MENSUEL]
+    heure_envoi: "07:00"
+    jour_hebdo: 1  # Lundi
+    jour_mensuel: 1
+
+# =============================================================================
+# ARCHIVE - Coffre-fort HDS
+# =============================================================================
+archive:
+  actif: true
+
+  hebergement:
+    provider: ovh_healthcare
+    region: fr
+    certification: HDS
+
+  chiffrement:
+    algorithme: AES-256-GCM
+    gestion_cles: vault  # vault | aws_kms | azure_keyvault
+
+  integrite:
+    hash_algorithme: SHA-256
+    hash_critique: SHA-512  # pour documents sensibles
+
+  horodatage:
+    actif: true
+    provider: universign
+    norme: RFC3161
+
+  retention:
+    defaut_annees: 20
+    par_type:
+      COMPTE_RENDU: 20
+      CONSENTEMENT: 20
+      ORDONNANCE: 20
+      RESULTAT_EXAMEN: 20
+      IMAGERIE: 20
+      COURRIER: 10
+      CERTIFICAT: 10
+      FACTURE: 10
+
+# =============================================================================
+# Intégrations
+# =============================================================================
+integrations:
+  doctolib:
+    actif: false  # V2
+    api_version: v1
+    sync_rdv: true
+    sync_patients: true
+
+  mssante:
+    actif: false  # V3
+    operateur: null
+
+  dmp:
+    actif: false  # V3
+    alimentation_auto: false
+
+# =============================================================================
+# Notifications
+# =============================================================================
+notifications:
+  email:
+    actif: true
+    provider: smtp  # smtp | sendgrid | ses
+    templates:
+      - consentement_envoi
+      - consentement_relance
+      - consentement_signe
+      - veille_digest
+      - document_partage
+
+  sms:
+    actif: true
+    provider: twilio  # twilio | ovh | vonage
+    templates:
+      - consentement_envoi
+      - consentement_relance
+      - rappel_rdv
+
+# =============================================================================
+# RGPD
+# =============================================================================
+rgpd:
+  responsable_traitement: "AZALMED"
+  dpo_email: "dpo@azalmed.fr"
+
+  base_legale:
+    patients: "execution_contrat"
+    documents: "obligation_legale"
+    consentements: "consentement"
+
+  durees_conservation:
+    patients: 20  # ans après dernière activité
+    documents: 20
+    consentements: 20
+    logs_acces: 5
+    logs_connexion: 1
+
+  droits:
+    acces: true
+    rectification: true
+    effacement: false  # archives médicales protégées
+    portabilite: true
+    opposition: false  # obligation légale

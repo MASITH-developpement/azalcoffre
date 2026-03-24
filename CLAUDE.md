@@ -184,10 +184,19 @@ def get_items(tenant_id: UUID):
 │  3. YAML VALIDE                                                 │
 │     - Valeurs avec ":" doivent être entre guillemets            │
 │     - python -m moteur.validate_yaml avant commit               │
+│                                                                 │
+│  4. ZÉRO LISTE HARDCODÉE (AZAP-NC-001)                          │
+│     - JAMAIS de listes/options/choix en dur dans le code Python │
+│     - TOUJOURS externaliser dans: config/*.yml, modules/*.yml   │
+│       ou base de données (sys_listes)                           │
+│     - Le code doit LIRE dynamiquement les fichiers/tables       │
+│     - Ajouter une option = modifier UN fichier YAML, pas le code│
+│     - Exemples: thèmes, statuts, types, catégories, permissions │
+│     - Exception: constantes système immuables (ex: HTTP codes)  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Interdictions** : Code sans `tenant_id` (I-01), Requête sans filtre tenant (I-02), Secrets en dur (I-03), Exposer Guardian (I-05), Mentir sur un résultat (I-23)
+**Interdictions** : Code sans `tenant_id` (I-01), Requête sans filtre tenant (I-02), Secrets en dur (I-03), Exposer Guardian (I-05), Listes hardcodées dans le code (I-06), Mentir sur un résultat (I-23)
 
 ---
 
@@ -209,7 +218,10 @@ def get_items(tenant_id: UUID):
 | Fichier | Contenu |
 |---------|---------|
 | `memoire.md` | **Normes AZAP-\* complètes**, interdictions, processus obligatoire |
-| `config/theme.yml` | Personnalisation CSS/UI |
+| `config/theme.yml` | Thème actif et personnalisation CSS/UI |
+| `config/themes.yml` | **Catalogue des ambiances** (8 thèmes: premium, energique, calme, corporate, odoo, penny, axo, sage) |
 | `config/permissions.yml` | Définition rôles RBAC |
 | `config/workflows.yml` | Transitions d'état globales |
+| `assets/ambiance_*.css` | Fichiers CSS des ambiances (premium, energique, calme, corporate) |
+| `assets/style_*.css` | Fichiers CSS des styles ERP (odoo, axo, penny, sage) |
 | `assets/docs/MODELE_ECONOMIQUE.md` | Modèle économique (ERP gratuit + revenus flux) |

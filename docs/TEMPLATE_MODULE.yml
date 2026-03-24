@@ -1,0 +1,863 @@
+# =============================================================================
+# AZALPLUS - Template Module YAML
+# =============================================================================
+# Version: 1.0.0
+# Date: 2026-03-17
+# =============================================================================
+#
+#                    ╔═══════════════════════════════════════════╗
+#                    ║    PHILOSOPHIE NO-CODE AZALPLUS           ║
+#                    ╠═══════════════════════════════════════════╣
+#                    ║  1 fichier YAML = 1 module ERP complet    ║
+#                    ║                                           ║
+#                    ║  Ce fichier génère automatiquement :      ║
+#                    ║  - Table PostgreSQL (schéma azalplus)     ║
+#                    ║  - API REST CRUD (/api/v1/{module}/*)     ║
+#                    ║  - Interface HTML (/ui/{module}/*)        ║
+#                    ║  - Validations Pydantic                   ║
+#                    ║  - Workflows métier                       ║
+#                    ║  - Permissions RBAC                       ║
+#                    ╚═══════════════════════════════════════════╝
+#
+# RÈGLES D'OR :
+# -------------
+# - Variables centralisées via $chemin.vers.valeur (config/constants.yml)
+# - Calculs dynamiques via SQL (jamais stockés en base)
+# - Workflows via $workflows.nom (config/workflows.yml)
+# - Validations via $validations.type (config/validations.yml)
+# - tenant_id AUTOMATIQUE sur chaque enregistrement (multi-tenant natif)
+#
+# UTILISATION :
+# -------------
+# 1. Copier ce fichier vers modules/mon_module.yml
+# 2. Remplacer les placeholders {VALEUR} par vos données
+# 3. Valider avec: python -m moteur.validate_yaml
+# 4. Redémarrer le serveur pour génération automatique
+#
+# =============================================================================
+
+
+# =============================================================================
+# MÉTADONNÉES OBLIGATOIRES
+# =============================================================================
+# Ces champs définissent l'identité du module dans l'application
+
+nom: "{NomModule}"                        # Singulier, PascalCase (ex: Client, Facture)
+nom_pluriel: "{NomsModules}"              # Pluriel pour l'affichage liste
+icone: file                               # Icône Lucide (voir https://lucide.dev/icons)
+menu: "{Catégorie}"                       # Menu parent (Commercial, RH, Finance, SAV, etc.)
+description: "Description courte du module et de son usage"
+ordre_menu: 1                             # Position dans le menu (1 = premier)
+
+
+# =============================================================================
+# CHAMPS DU MODULE
+# =============================================================================
+# Définition de tous les champs avec leurs propriétés
+#
+# TYPES DISPONIBLES :
+# -------------------
+# text        → Texte court (VARCHAR 255)
+# textarea    → Texte long (TEXT)
+# number      → Nombre décimal (NUMERIC 15,2)
+# money       → Montant (NUMERIC 15,2 avec formatage devise)
+# date        → Date (DATE)
+# datetime    → Date et heure (TIMESTAMP)
+# boolean     → Oui/Non (BOOLEAN)
+# select      → Liste de choix (VARCHAR 50)
+# relation    → Lien vers autre module (UUID FK)
+# email       → Email avec validation
+# tel         → Téléphone avec validation
+# url         → URL avec validation
+# tags        → Liste de tags (JSONB)
+# json        → Objet JSON libre (JSONB)
+# file        → Fichier attaché (URL)
+# image       → Image (URL)
+#
+# PROPRIÉTÉS DISPONIBLES :
+# ------------------------
+# nom           → Nom technique (snake_case)
+# type          → Type de champ (voir ci-dessus)
+# libelle       → Label affiché à l'utilisateur
+# description   → Aide contextuelle (tooltip)
+# obligatoire   → true/false (défaut: false)
+# unique        → true/false - valeur unique
+# defaut        → Valeur par défaut (peut être $reference)
+# options       → Liste de choix ou $reference pour select
+# validation    → Règle de validation $validations.types.xxx
+# relation      → Nom du module lié pour type relation
+# auto_genere   → true pour génération automatique
+# sequence      → Nom de séquence pour numérotation auto
+# format        → Format de numérotation (ex: "FAC-{AAAA}{MM}-{####}")
+# groupe        → Groupe visuel dans le formulaire
+# calcule       → true pour champ calculé dynamiquement
+# sql           → Requête SQL pour champ calculé
+
+champs:
+
+  # ==========================================================================
+  # GROUPE: IDENTIFICATION
+  # ==========================================================================
+  # Champs d'identification unique de l'enregistrement
+
+  - nom: numero
+    type: text
+    libelle: "Numéro"
+    groupe: identification                # Groupe visuel dans le formulaire
+    unique: true
+    auto_genere: true                     # Génération automatique
+    sequence: "{module}"                  # Séquence PostgreSQL à utiliser
+    format: "{MODULE}-{AAAA}{MM}-{####}"  # Format de numérotation
+    description: "Numéro unique auto-généré"
+
+  - nom: reference_externe
+    type: text
+    libelle: "Référence externe"
+    groupe: identification
+    description: "Référence du client/partenaire"
+
+  # --------------------------------------------------------------------------
+  # EXEMPLE: Champ select avec options $référencées
+  # --------------------------------------------------------------------------
+  # Les options proviennent de config/constants.yml
+  # Syntaxe: $chemin.vers.la.liste
+
+  - nom: type
+    type: select
+    libelle: "Type"
+    groupe: identification
+    obligatoire: true
+    options: $clients.types.valeurs       # Référence vers constants.yml
+    defaut: $clients.types.defaut         # Valeur par défaut référencée
+    description: "Type de fiche"
+
+  - nom: statut
+    type: select
+    libelle: "Statut"
+    groupe: identification
+    obligatoire: true
+    options: $statuts.{module}.valeurs    # Remplacer {module} par nom réel
+    defaut: $statuts.{module}.defaut
+    description: "Statut courant"
+
+  # ==========================================================================
+  # GROUPE: INFORMATIONS PRINCIPALES
+  # ==========================================================================
+
+  - nom: nom
+    type: text
+    libelle: "Nom"
+    groupe: informations_principales
+    obligatoire: true
+
+  - nom: description
+    type: textarea
+    libelle: "Description"
+    groupe: informations_principales
+
+  # ==========================================================================
+  # GROUPE: RELATIONS
+  # ==========================================================================
+  # Liens vers d'autres modules
+
+  - nom: client_id
+    type: relation
+    libelle: "Client"
+    groupe: relations
+    relation: Clients                     # Nom du module lié (PascalCase)
+    obligatoire: true
+
+  - nom: responsable_id
+    type: relation
+    libelle: "Responsable"
+    groupe: relations
+    relation: Employes
+
+  - nom: projet_id
+    type: relation
+    libelle: "Projet"
+    groupe: relations
+    relation: Projets
+
+  # ==========================================================================
+  # GROUPE: DATES
+  # ==========================================================================
+
+  - nom: date_debut
+    type: date
+    libelle: "Date début"
+    groupe: dates
+    obligatoire: true
+    defaut: aujourd'hui                   # Valeur spéciale: date du jour
+
+  - nom: date_fin
+    type: date
+    libelle: "Date fin"
+    groupe: dates
+
+  - nom: date_echeance
+    type: date
+    libelle: "Échéance"
+    groupe: dates
+    description: "Date limite"
+
+  # ==========================================================================
+  # GROUPE: MONTANTS
+  # ==========================================================================
+  # Utiliser type 'money' pour les montants financiers
+
+  - nom: montant_ht
+    type: money
+    libelle: "Montant HT"
+    groupe: montants
+    defaut: 0
+    validation: $validations.regles.montant_positif
+
+  - nom: taux_tva
+    type: number
+    libelle: "Taux TVA (%)"
+    groupe: montants
+    defaut: $tva.france.defaut            # TVA par défaut depuis constants
+    options: [$tva.france.normal, $tva.france.intermediaire, $tva.france.reduit, $tva.france.exonere]
+
+  - nom: montant_tva
+    type: money
+    libelle: "Montant TVA"
+    groupe: montants
+    defaut: 0
+
+  - nom: montant_ttc
+    type: money
+    libelle: "Montant TTC"
+    groupe: montants
+    defaut: 0
+
+  - nom: devise
+    type: text
+    libelle: "Devise"
+    groupe: montants
+    defaut: $defauts.devise               # EUR par défaut
+
+  # ==========================================================================
+  # GROUPE: CONDITIONS COMMERCIALES
+  # ==========================================================================
+
+  - nom: conditions_paiement
+    type: select
+    libelle: "Conditions de paiement"
+    groupe: conditions_commerciales
+    options: $conditions_paiement.valeurs
+    defaut: $conditions_paiement.defaut
+
+  - nom: mode_paiement
+    type: select
+    libelle: "Mode de paiement"
+    groupe: conditions_commerciales
+    options: $modes_paiement.valeurs
+    defaut: $modes_paiement.defaut
+
+  - nom: remise_percent
+    type: number
+    libelle: "Remise (%)"
+    groupe: conditions_commerciales
+    defaut: 0
+    validation: $validations.regles.pourcentage
+
+  # ==========================================================================
+  # GROUPE: CONTACT
+  # ==========================================================================
+
+  - nom: email
+    type: email
+    libelle: "Email"
+    groupe: contact
+    validation: $validations.types.email
+
+  - nom: telephone
+    type: tel
+    libelle: "Téléphone"
+    groupe: contact
+    validation: $validations.types.telephone_fr
+
+  - nom: mobile
+    type: tel
+    libelle: "Mobile"
+    groupe: contact
+    validation: $validations.types.telephone_fr
+
+  # ==========================================================================
+  # GROUPE: ADRESSE
+  # ==========================================================================
+
+  - nom: adresse
+    type: text
+    libelle: "Adresse"
+    groupe: adresse
+
+  - nom: complement_adresse
+    type: text
+    libelle: "Complément"
+    groupe: adresse
+
+  - nom: code_postal
+    type: text
+    libelle: "Code postal"
+    groupe: adresse
+    validation: $validations.types.code_postal_fr
+
+  - nom: ville
+    type: text
+    libelle: "Ville"
+    groupe: adresse
+
+  - nom: pays
+    type: text
+    libelle: "Pays"
+    groupe: adresse
+    defaut: $defauts.pays                 # FR par défaut
+
+  # ==========================================================================
+  # GROUPE: INFORMATIONS FISCALES (si applicable)
+  # ==========================================================================
+
+  - nom: siret
+    type: text
+    libelle: "SIRET"
+    groupe: informations_fiscales
+    validation: $validations.types.siret
+
+  - nom: tva_intra
+    type: text
+    libelle: "TVA Intracommunautaire"
+    groupe: informations_fiscales
+    validation: $validations.types.tva_intra
+
+  # ==========================================================================
+  # GROUPE: COORDONNÉES BANCAIRES (si applicable)
+  # ==========================================================================
+
+  - nom: iban
+    type: text
+    libelle: "IBAN"
+    groupe: coordonnees_bancaires
+    validation: $validations.types.iban
+    description: "Pour virements/prélèvements"
+
+  - nom: bic
+    type: text
+    libelle: "BIC"
+    groupe: coordonnees_bancaires
+    validation: $validations.types.bic
+
+  # ==========================================================================
+  # GROUPE: TAGS ET CATÉGORISATION
+  # ==========================================================================
+
+  - nom: tags
+    type: tags
+    libelle: "Tags"
+    groupe: categorisation
+    description: "Tags pour filtrage rapide"
+
+  - nom: priorite
+    type: select
+    libelle: "Priorité"
+    groupe: categorisation
+    options: $clients.priorites.valeurs
+    defaut: $clients.priorites.defaut
+
+  # ==========================================================================
+  # GROUPE: DOCUMENTS ET PIÈCES JOINTES
+  # ==========================================================================
+
+  - nom: documents
+    type: json
+    libelle: "Documents"
+    groupe: documents
+    description: "Liste des pièces jointes"
+
+  - nom: pdf_url
+    type: text
+    libelle: "PDF généré"
+    groupe: documents
+    description: "URL du document PDF"
+
+  # ==========================================================================
+  # GROUPE: MÉTADONNÉES
+  # ==========================================================================
+  # Champs de suivi et notes internes
+
+  - nom: notes
+    type: textarea
+    libelle: "Notes internes"
+    groupe: metadonnees
+    description: "Notes visibles uniquement en interne"
+
+  - nom: is_active
+    type: boolean
+    libelle: "Actif"
+    groupe: metadonnees
+    defaut: true
+
+  # ==========================================================================
+  # GROUPE: CHAMPS CALCULÉS DYNAMIQUEMENT
+  # ==========================================================================
+  # Ces champs sont remplis par des requêtes SQL à la lecture
+  # Ils ne sont JAMAIS stockés en base - toujours calculés à la volée
+  # Variables disponibles: {id}, {tenant_id}
+  #
+  # IMPORTANT: Toujours filtrer par tenant_id ET deleted_at IS NULL
+
+  - nom: total_factures
+    type: money
+    libelle: "Total facturé"
+    groupe: statistiques
+    calcule: true                         # Marque comme calculé
+    sql: |
+      SELECT COALESCE(SUM(CAST(total AS NUMERIC)), 0)
+      FROM azalplus.factures
+      WHERE {champ_lien}_id = {id}
+      AND tenant_id = {tenant_id}
+      AND status IN ('PAID', 'VALIDATED', 'SENT')
+      AND deleted_at IS NULL
+
+  - nom: nombre_documents
+    type: number
+    libelle: "Nb documents"
+    groupe: statistiques
+    calcule: true
+    sql: |
+      SELECT COUNT(*)
+      FROM azalplus.documents
+      WHERE {champ_lien}_id = {id}
+      AND tenant_id = {tenant_id}
+      AND deleted_at IS NULL
+
+  - nom: derniere_activite
+    type: date
+    libelle: "Dernière activité"
+    groupe: statistiques
+    calcule: true
+    sql: |
+      SELECT MAX(updated_at)::date
+      FROM azalplus.activites
+      WHERE {champ_lien}_id = {id}
+      AND tenant_id = {tenant_id}
+      AND deleted_at IS NULL
+
+  # --------------------------------------------------------------------------
+  # EXEMPLE: Calcul avec condition et CASE
+  # --------------------------------------------------------------------------
+
+  - nom: taux_completion
+    type: number
+    libelle: "Taux complétion (%)"
+    groupe: statistiques
+    calcule: true
+    sql: |
+      SELECT CASE
+        WHEN (SELECT COUNT(*) FROM azalplus.taches WHERE {champ_lien}_id = {id} AND tenant_id = {tenant_id} AND deleted_at IS NULL) = 0
+        THEN 0
+        ELSE ROUND(
+          (SELECT COUNT(*) FROM azalplus.taches WHERE {champ_lien}_id = {id} AND tenant_id = {tenant_id} AND statut = 'TERMINE' AND deleted_at IS NULL)::NUMERIC * 100
+          / (SELECT COUNT(*) FROM azalplus.taches WHERE {champ_lien}_id = {id} AND tenant_id = {tenant_id} AND deleted_at IS NULL)::NUMERIC
+        , 1)
+      END
+
+
+# =============================================================================
+# INDEX
+# =============================================================================
+# Colonnes à indexer pour optimiser les recherches
+# Index automatiquement créés: id, tenant_id, created_at, deleted_at
+
+index:
+  - numero
+  - nom
+  - statut
+  - client_id
+  - date_debut
+
+
+# =============================================================================
+# RECHERCHE FULL-TEXT
+# =============================================================================
+# Champs inclus dans la recherche globale (barre de recherche)
+
+recherche:
+  - numero
+  - nom
+  - reference_externe
+  - description
+  - email
+
+
+# =============================================================================
+# AFFICHAGE LISTE
+# =============================================================================
+# Colonnes affichées dans la vue liste (tableau)
+# Ordre = ordre d'affichage de gauche à droite
+
+affichage_liste:
+  - numero
+  - nom
+  - client_id                             # Affichera le nom du client lié
+  - date_debut
+  - montant_ttc
+  - statut
+
+
+# =============================================================================
+# CHAMP D'AFFICHAGE
+# =============================================================================
+# Champ utilisé pour représenter l'enregistrement dans les selects et relations
+
+champ_affichage: nom
+
+
+# =============================================================================
+# LIGNES DÉTAIL (pour documents avec lignes)
+# =============================================================================
+# Définir les champs des lignes de détail (factures, devis, commandes, etc.)
+# Décommenter et adapter si le module a des lignes
+
+# lignes:
+#   champs:
+#     - nom: ligne_numero
+#       type: number
+#       libelle: "N° ligne"
+#       obligatoire: true
+#
+#     - nom: produit_id
+#       type: relation
+#       relation: Produits
+#       libelle: "Produit"
+#
+#     - nom: description
+#       type: textarea
+#       libelle: "Description"
+#       obligatoire: true
+#
+#     - nom: quantite
+#       type: number
+#       libelle: "Quantité"
+#       obligatoire: true
+#       defaut: 1
+#
+#     - nom: unite
+#       type: text
+#       libelle: "Unité"
+#       defaut: pce
+#
+#     - nom: prix_unitaire
+#       type: money
+#       libelle: "Prix unitaire HT"
+#       obligatoire: true
+#
+#     - nom: remise_percent
+#       type: number
+#       libelle: "Remise (%)"
+#       defaut: 0
+#
+#     - nom: taux_tva
+#       type: number
+#       libelle: "TVA (%)"
+#       defaut: 20.0
+#
+#     - nom: total_ht
+#       type: money
+#       libelle: "Total HT"
+#
+#     - nom: total_ttc
+#       type: money
+#       libelle: "Total TTC"
+
+
+# =============================================================================
+# WORKFLOW
+# =============================================================================
+# Définition des transitions d'état autorisées
+#
+# SYNTAXE:
+# --------
+# ÉTAT_SOURCE -> ÉTAT_CIBLE: "Libellé action"
+# ÉTAT_SOURCE -> ÉTAT_CIBLE: null                 (transition automatique)
+# ÉTAT_SOURCE -> ÉTAT_CIBLE: si condition         (transition conditionnelle)
+# ÉTAT_SOURCE -> ÉTAT_CIBLE: action nom_action    (exécute une action)
+#
+# ÉTATS RECOMMANDÉS (adapter selon module):
+# -----------------------------------------
+# Documents: BROUILLON → VALIDÉ → ENVOYÉ → ACCEPTÉ/REFUSÉ → ARCHIVÉ
+# Processus: À_FAIRE → EN_COURS → TERMINÉ → ARCHIVÉ
+# Ressources: ACTIF → INACTIF → ARCHIVÉ
+#
+# RÉFÉRENCER UN WORKFLOW GLOBAL:
+# workflow: $workflows.{nom_workflow}
+
+workflow:
+  BROUILLON -> EN_ATTENTE: "Soumettre"
+  EN_ATTENTE -> VALIDE: "Valider"
+  EN_ATTENTE -> REFUSE: "Refuser"
+  VALIDE -> EN_COURS: null                        # Transition automatique
+  EN_COURS -> TERMINE: "Terminer"
+  TERMINE -> ARCHIVE: null
+  BROUILLON -> ANNULE: "Annuler"
+  EN_ATTENTE -> ANNULE: "Annuler"
+
+
+# =============================================================================
+# ACTIONS
+# =============================================================================
+# Actions disponibles dans l'interface (boutons, menus contextuels)
+#
+# PROPRIÉTÉS DISPONIBLES:
+# -----------------------
+# nom             → Identifiant technique (snake_case)
+# libelle         → Texte du bouton
+# icone           → Icône Lucide
+# statut_requis   → Statut(s) requis pour afficher l'action
+# ouvre           → Module à ouvrir en création
+# prefill         → Champs à pré-remplir ({id} = ID courant)
+# confirmation    → true pour demander confirmation
+# export          → Format d'export (pdf, csv, xlsx)
+# template        → Nom du template pour export
+# condition       → Condition d'affichage (expression)
+
+actions:
+  # --------------------------------------------------------------------------
+  # Action: Créer un document lié
+  # --------------------------------------------------------------------------
+  - nom: creer_devis
+    libelle: "Créer un devis"
+    icone: file-text
+    ouvre: devis                          # Ouvre le module devis
+    prefill:
+      client_id: "{client_id}"            # Pré-remplit avec le client actuel
+      {champ}_id: "{id}"                  # Pré-remplit avec l'ID courant
+
+  - nom: creer_facture
+    libelle: "Créer une facture"
+    icone: receipt
+    statut_requis: [VALIDE, TERMINE]      # Disponible uniquement si validé/terminé
+    ouvre: factures
+    prefill:
+      client_id: "{client_id}"
+      {champ}_id: "{id}"
+
+  # --------------------------------------------------------------------------
+  # Action: Changement de statut avec confirmation
+  # --------------------------------------------------------------------------
+  - nom: valider
+    libelle: "Valider"
+    icone: check-circle
+    statut_requis: BROUILLON
+    confirmation: true                    # Demande confirmation
+
+  - nom: annuler
+    libelle: "Annuler"
+    icone: x-circle
+    statut_requis: [BROUILLON, EN_ATTENTE]
+    confirmation: true
+
+  # --------------------------------------------------------------------------
+  # Action: Communication
+  # --------------------------------------------------------------------------
+  - nom: envoyer_email
+    libelle: "Envoyer par email"
+    icone: mail
+
+  - nom: planifier_rdv
+    libelle: "Planifier un RDV"
+    icone: calendar
+    ouvre: planning
+    prefill:
+      client_id: "{client_id}"
+      {champ}_id: "{id}"
+
+  # --------------------------------------------------------------------------
+  # Action: Export
+  # --------------------------------------------------------------------------
+  - nom: exporter_pdf
+    libelle: "Exporter en PDF"
+    icone: download
+    export: pdf
+    template: fiche_{module}              # Template Jinja2 à utiliser
+
+  - nom: exporter_excel
+    libelle: "Exporter en Excel"
+    icone: file-spreadsheet
+    export: xlsx
+
+  # --------------------------------------------------------------------------
+  # Action: Duplication
+  # --------------------------------------------------------------------------
+  - nom: dupliquer
+    libelle: "Dupliquer"
+    icone: copy
+
+  # --------------------------------------------------------------------------
+  # Action: Archivage
+  # --------------------------------------------------------------------------
+  - nom: archiver
+    libelle: "Archiver"
+    icone: archive
+    statut_requis: [TERMINE, ANNULE]
+    confirmation: true
+
+
+# =============================================================================
+# ALERTES IA (Marceau)
+# =============================================================================
+# Règles d'alertes intelligentes analysées par l'IA
+#
+# SYNTAXE:
+# --------
+# condition      → Expression SQL/logique évaluée
+# condition_sup  → Condition supplémentaire (AND)
+# message        → Message affiché (peut être $référence)
+# severite       → info | warning | error
+#
+# VARIABLES DISPONIBLES:
+# ----------------------
+# Tous les champs du module
+# $seuils.xxx (valeurs de constants.yml)
+# NOW() pour date courante
+# INTERVAL 'X days/months' pour calculs de date
+
+marceau:
+  alertes:
+    # --------------------------------------------------------------------------
+    # Alerte: Échéance proche
+    # --------------------------------------------------------------------------
+    - condition: date_echeance <= NOW() + INTERVAL '7 days'
+      condition_sup: statut NOT IN ('TERMINE', 'ANNULE', 'ARCHIVE')
+      message: "Échéance dans moins de 7 jours"
+      severite: warning
+
+    # --------------------------------------------------------------------------
+    # Alerte: Échéance dépassée
+    # --------------------------------------------------------------------------
+    - condition: date_echeance < NOW()
+      condition_sup: statut NOT IN ('TERMINE', 'ANNULE', 'ARCHIVE')
+      message: "Échéance dépassée"
+      severite: error
+
+    # --------------------------------------------------------------------------
+    # Alerte: Inactivité
+    # --------------------------------------------------------------------------
+    - condition: derniere_activite < NOW() - INTERVAL '$seuils.inactivite_jours days'
+      condition_sup: statut = 'EN_COURS'
+      message: $alertes.client_inactif
+      severite: info
+
+    # --------------------------------------------------------------------------
+    # Alerte: Montant élevé sans validation
+    # --------------------------------------------------------------------------
+    - condition: montant_ttc > 10000
+      condition_sup: statut = 'BROUILLON'
+      message: "Document > 10K EUR en attente de validation"
+      severite: warning
+
+    # --------------------------------------------------------------------------
+    # Alerte: Champ obligatoire manquant
+    # --------------------------------------------------------------------------
+    - condition: email IS NULL OR email = ''
+      message: "Email non renseigné"
+      severite: info
+
+
+# =============================================================================
+# PERMISSIONS (optionnel - sinon hérite des permissions globales)
+# =============================================================================
+# Surcharge des permissions par défaut pour ce module
+# Référence: config/permissions.yml
+
+# permissions:
+#   admin: [lire, creer, modifier, supprimer, exporter, importer, valider]
+#   manager: [lire, creer, modifier, exporter, valider]
+#   commercial: [lire, creer, modifier, exporter]
+#   technicien: [lire]
+#   comptable: [lire, exporter]
+#   lecture_seule: [lire]
+
+
+# =============================================================================
+# HOOKS (optionnel)
+# =============================================================================
+# Actions automatiques sur événements
+#
+# ÉVÉNEMENTS:
+# -----------
+# avant_creation, apres_creation
+# avant_modification, apres_modification
+# avant_suppression, apres_suppression
+# avant_validation, apres_validation
+
+# hooks:
+#   apres_creation:
+#     - envoyer_notification
+#     - creer_activite
+#
+#   apres_validation:
+#     - generer_pdf
+#     - envoyer_email_client
+#
+#   avant_suppression:
+#     - verifier_liens
+
+
+# =============================================================================
+# EXPORTS (optionnel)
+# =============================================================================
+# Configuration des exports disponibles
+
+# exports:
+#   pdf:
+#     template: templates/fiche_{module}.html
+#     nom_fichier: "{numero}_{date}.pdf"
+#
+#   excel:
+#     colonnes: [numero, nom, client_id, montant_ttc, statut, date_debut]
+#     nom_fichier: "export_{module}_{date}.xlsx"
+
+
+# =============================================================================
+# IMPORTS (optionnel)
+# =============================================================================
+# Configuration de l'import de données
+
+# imports:
+#   csv:
+#     separateur: ";"
+#     encodage: utf-8
+#     colonnes_obligatoires: [nom, client_id]
+#     mapping:
+#       "Nom": nom
+#       "Client": client_id
+#       "Montant": montant_ttc
+
+
+# =============================================================================
+# FIN DU TEMPLATE
+# =============================================================================
+#
+# CHECKLIST AVANT UTILISATION:
+# ----------------------------
+# [ ] Remplacer tous les {PLACEHOLDERS}
+# [ ] Adapter les groupes de champs
+# [ ] Définir les champs obligatoires
+# [ ] Configurer les relations vers autres modules
+# [ ] Définir les transitions de workflow
+# [ ] Configurer les actions pertinentes
+# [ ] Valider avec: python -m moteur.validate_yaml
+# [ ] Tester la génération en redémarrant le serveur
+#
+# DOCUMENTATION COMPLÈTE:
+# -----------------------
+# - Architecture: /home/ubuntu/azalplus/CLAUDE.md
+# - Règles YAML: /home/ubuntu/azalplus/docs/REGLES_MODULES_YAML.md
+# - Constantes: /home/ubuntu/azalplus/config/constants.yml
+# - Validations: /home/ubuntu/azalplus/config/validations.yml
+# - Workflows: /home/ubuntu/azalplus/config/workflows.yml
+#
+# =============================================================================

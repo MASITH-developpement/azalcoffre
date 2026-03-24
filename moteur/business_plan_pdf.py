@@ -37,8 +37,26 @@ except ImportError:
 
 logger = structlog.get_logger()
 
-# Chemin du logo
-LOGO_PATH = Path(__file__).parent.parent / "assets" / "logo-azalplus-full.svg"
+# Chemin du logo (dynamique selon APP_NAME)
+def _get_logo_path():
+    """Retourne le chemin du logo selon APP_NAME."""
+    import os
+    app_name = os.environ.get("APP_NAME", "AZALPLUS")
+    app_name_lower = app_name.lower()
+    # Chercher dans plusieurs emplacements
+    possible_paths = [
+        Path(f"/home/ubuntu/{app_name_lower}/assets/logo-{app_name_lower}.svg"),
+        Path(f"/home/ubuntu/{app_name_lower}/assets/logo.svg"),
+        Path(f"/home/ubuntu/{app_name_lower}/static/logo.svg"),
+        Path(__file__).parent.parent / "assets" / f"logo-{app_name_lower}-full.svg",
+        Path(__file__).parent.parent / "assets" / "logo-azalplus-full.svg",
+    ]
+    for path in possible_paths:
+        if path.exists():
+            return path
+    return Path(__file__).parent.parent / "assets" / "logo-azalplus-full.svg"
+
+LOGO_PATH = _get_logo_path()
 
 
 # =============================================================================

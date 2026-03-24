@@ -42,6 +42,32 @@ admin_router = APIRouter(prefix="/api/admin")
 # Cache pour les endpoints dynamiques
 _dynamic_endpoints_cache = {}
 
+
+def _parse_json_strings(data: Dict[str, Any], json_fields: set) -> Dict[str, Any]:
+    """
+    Parse les chaînes JSON en objets Python pour les champs JSON/JSONB.
+
+    Les formulaires HTML envoient souvent les champs JSON comme des chaînes
+    (ex: '{}' au lieu de {}). Cette fonction les convertit.
+    """
+    if not data or not json_fields:
+        return data
+
+    result = dict(data)
+    for field_name in json_fields:
+        if field_name in result and isinstance(result[field_name], str):
+            value = result[field_name].strip()
+            # Parse JSON strings
+            if value in ('', 'null', 'None'):
+                result[field_name] = None
+            elif (value.startswith('{') and value.endswith('}')) or \
+                 (value.startswith('[') and value.endswith(']')):
+                try:
+                    result[field_name] = json.loads(value)
+                except (json.JSONDecodeError, ValueError):
+                    pass  # Keep as string if parsing fails
+    return result
+
 class RecentTrackData(BaseModel):
     """Schéma pour les données de tracking d'accès récent"""
     module: Optional[str] = None
@@ -1473,7 +1499,7 @@ async def get_interventions(
 AUTO_NUMBER_CONFIG = {
     # Format: module_name -> (prefix, field_name, include_year)
     "interventions": ("INT", "numero", True, True),  # include_year=True, include_month=True
-    "clients": ("CLI", "code", False),
+    "clients": ("CLI", "numero", False),
     "fournisseurs": ("FOU", "code", False),
     "donneur_ordre": ("DO", "code", False),
     "devis": ("DEV", "numero", True),
@@ -1481,6 +1507,7 @@ AUTO_NUMBER_CONFIG = {
     "avoirs": ("AVO", "numero", True),
     "bons_livraison": ("BL", "numero", True),
     "commandes": ("CMD", "numero", True),
+    "ventes": ("VTE", "numero", True),  # Ajouté pour module Ventes
     "projets": ("PRJ", "code", False),
     "contrats": ("CTR", "numero", True),
     "produits": ("PRD", "code", False),
@@ -1640,6 +1667,32 @@ class ErrorDetail(BaseModel):
 # Dynamic Schema Generation
 # =============================================================================
 
+def _create_json_parser_validator(field_name: str):
+    """Create a validator that parses JSON strings into Python objects.
+
+    This is needed because HTML forms send JSON fields as strings like '{}' or '[]'
+    instead of actual objects.
+    """
+    def validator_func(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            # Try to parse as JSON if it looks like JSON
+            v_stripped = v.strip()
+            if v_stripped in ('', 'null', 'None'):
+                return None
+            if (v_stripped.startswith('{') and v_stripped.endswith('}')) or \
+               (v_stripped.startswith('[') and v_stripped.endswith(']')):
+                try:
+                    import json
+                    return json.loads(v_stripped)
+                except (json.JSONDecodeError, ValueError):
+                    # Return as-is if parsing fails
+                    return v
+        return v
+    return validator_func
+
+
 def create_pydantic_model_v1(module: ModuleDefinition, mode: str = "create") -> type:
     """
     Create Pydantic model from module definition with enhanced validation.
@@ -1678,6 +1731,11 @@ def create_pydantic_model_v1(module: ModuleDefinition, mode: str = "create") -> 
         if field_def.enum_values:
             validators[f"validate_{nom}"] = _create_enum_validator(nom, field_def.enum_values)
 
+        # Add JSON parser validator for json/jsonb fields
+        # This parses JSON strings (like '{}' or '[]') into actual Python objects
+        if field_def.type.lower() in ('json', 'jsonb'):
+            validators[f"parse_json_{nom}"] = _create_json_parser_validator(nom)
+
     # Add system fields for response
     if mode == "response":
         fields["id"] = (UUID, Field(description="Identifiant unique"))
@@ -1694,7 +1752,14 @@ def create_pydantic_model_v1(module: ModuleDefinition, mode: str = "create") -> 
 
     # Add validators dynamically
     for validator_name, validator_func in validators.items():
-        setattr(model, validator_name, validator(validator_name.replace("validate_", ""), allow_reuse=True)(validator_func))
+        # Extract field name from validator name (validate_{field} or parse_json_{field})
+        if validator_name.startswith("validate_"):
+            field_name = validator_name.replace("validate_", "")
+        elif validator_name.startswith("parse_json_"):
+            field_name = validator_name.replace("parse_json_", "")
+        else:
+            field_name = validator_name
+        setattr(model, validator_name, validator(field_name, pre=True, allow_reuse=True)(validator_func))
 
     return model
 
@@ -1728,7 +1793,8 @@ def _get_enhanced_python_type(field_def: FieldDefinition):
         "select": str,
         "enum": str,
         "tags": List[str],
-        "json": Dict[str, Any],
+        "json": Any,  # Accept dict, list, or null for JSONB fields
+        "jsonb": Any,
         "fichier": str,
         "image": str,
     }
@@ -1796,8 +1862,16 @@ class GenericCRUDRouterV1:
 
     def __init__(self, module: ModuleDefinition):
         self.module = module
-        self.table_name = module.nom
+        # IMPORTANT: La table est créée avec module_name.lower() dans parser.py:564
+        # donc table_name doit aussi être en minuscules pour correspondre
+        self.table_name = module.nom.lower()
         self.display_name = module.nom_affichage
+
+        # Identify JSON/JSONB fields for pre-processing
+        self.json_fields = {
+            nom for nom, field_def in module.champs.items()
+            if field_def.type.lower() in ('json', 'jsonb')
+        }
 
         # Generate models
         self.CreateModel = create_pydantic_model_v1(module, "create")
@@ -2093,41 +2167,59 @@ Cree un(e) nouveau/nouvelle {self.display_name}.
             }
         )
         async def create_item(
+            request: Request,
             data: Dict[str, Any] = Body(..., description="Donnees de l'element"),
             tenant_id: UUID = Depends(get_current_tenant),
             user_id: UUID = Depends(get_current_user_id),
             user: dict = Depends(require_auth)
         ):
             """Cree un nouvel enregistrement."""
+            import structlog
+            logger = structlog.get_logger()
+            logger.info("create_item_called", module=self.table_name, data_keys=list(data.keys()) if data else None)
 
-            # Auto-generate reference/code/numero if configured
-            config = AUTO_NUMBER_CONFIG.get(self.table_name.lower())
-            if config:
-                prefix, field_name, include_year = config
-                # Ne générer que si le champ n'est pas fourni ou est vide
-                if not data.get(field_name):
-                    auto_number = generate_auto_number(self.table_name, tenant_id)
-                    if auto_number:
-                        data[field_name] = auto_number
+            try:
+                # Parse JSON strings for JSON/JSONB fields
+                data = _parse_json_strings(data, self.json_fields)
 
-            # Validate required fields (skip auto-generated fields)
-            for field_name, field_def in self.module.champs.items():
-                if field_def.requis and field_name not in data:
-                    # Skip if it's an auto-generated field
-                    if config and field_name == config[1]:
-                        continue
-                    raise HTTPException(
-                        status_code=422,
-                        detail=f"Champ requis manquant: {field_name}"
-                    )
+                # Auto-generate reference/code/numero if configured
+                config = AUTO_NUMBER_CONFIG.get(self.table_name.lower())
+                if config:
+                    # Config peut avoir 3 ou 4 valeurs: (prefix, field_name, include_year[, include_month])
+                    if len(config) == 4:
+                        prefix, field_name, include_year, include_month = config
+                    else:
+                        prefix, field_name, include_year = config
+                    # Ne générer que si le champ n'est pas fourni ou est vide
+                    if not data.get(field_name):
+                        auto_number = generate_auto_number(self.table_name, tenant_id)
+                        if auto_number:
+                            data[field_name] = auto_number
 
-            item = Database.insert(
-                self.table_name,
-                tenant_id,
-                data,
-                user_id
-            )
-            return item
+                # Validate required fields (skip auto-generated fields)
+                for field_name, field_def in self.module.champs.items():
+                    if field_def.requis and field_name not in data:
+                        # Skip if it's an auto-generated field
+                        if config and field_name == config[1]:
+                            continue
+                        raise HTTPException(
+                            status_code=422,
+                            detail=f"Champ requis manquant: {field_name}"
+                        )
+
+                item = Database.insert(
+                    self.table_name,
+                    tenant_id,
+                    data,
+                    user_id
+                )
+                logger.info("create_item_success", module=self.table_name, item_id=item.get('id'))
+                return item
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error("create_item_error", module=self.table_name, error=str(e), error_type=type(e).__name__)
+                raise HTTPException(status_code=500, detail=f"Erreur création: {str(e)}")
 
         # =================================================================
         # UPDATE - PUT /{module}/{id}
@@ -2153,6 +2245,9 @@ Cree un(e) nouveau/nouvelle {self.display_name}.
             user: dict = Depends(require_auth)
         ):
             """Met a jour un enregistrement existant."""
+
+            # Parse JSON strings for JSON/JSONB fields
+            data = _parse_json_strings(data, self.json_fields)
 
             # Check exists
             existing = Database.get_by_id(self.table_name, tenant_id, item_id)

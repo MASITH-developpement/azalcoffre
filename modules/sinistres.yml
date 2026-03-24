@@ -7,22 +7,26 @@ description: Declaration et suivi des sinistres
 champs:
   - nom: claim_number
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero de sinistre (attribue par l'assureur)
 
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference interne
 
   - nom: provider_claim_ref
     type: text
+    groupe: Identification
     obligatoire: false
     description: Reference chez l'assureur
 
   - nom: policy_type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [RC_PRO, DECENNALE, GLI, MRP, PJ, CYBER, FLOTTE, PNO]
     description: Type de police concernee
@@ -30,6 +34,7 @@ champs:
 
   - nom: policy_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: PolicesAssurance
     description: Police concernee
@@ -37,118 +42,140 @@ champs:
 
   - nom: policy_number
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero de police
     autocompletion: true
 
   - nom: claim_type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [WATER_DAMAGE, FIRE, THEFT, STORM, NATURAL_DISASTER, CIVIL_LIABILITY, GLASS_BREAKAGE, ELECTRICAL, UNPAID_RENT, RENTAL_DAMAGE, PROFESSIONAL_LIABILITY, CONSTRUCTION_DEFECT, CYBER, OTHER]
     description: Type de sinistre
 
   - nom: title
     type: text
+    groupe: Identification
     obligatoire: true
     description: Titre du sinistre
     autocompletion: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: true
     description: Description detaillee
 
   - nom: circumstances
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Circonstances du sinistre
 
   - nom: incident_date
     type: datetime
+    groupe: Dates
     obligatoire: true
     description: Date et heure du sinistre
 
   - nom: incident_location
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Lieu du sinistre
     autocompletion: true
 
   - nom: incident_city
     type: text
+    groupe: Informations
     obligatoire: false
     autocompletion: true
 
   - nom: incident_postal_code
     type: text
+    groupe: Identification
     obligatoire: false
     autocompletion: true
 
   - nom: declarant_civilite
     type: select
+    groupe: Informations
     obligatoire: false
     options: [Mr, Mme, Melle]
     description: Civilite du declarant
 
   - nom: declarant_name
     type: text
+    groupe: Informations
     obligatoire: true
     description: Nom du declarant
     autocompletion: true
 
   - nom: declarant_email
     type: email
+    groupe: Contact
     obligatoire: false
     autocompletion: true
 
   - nom: declarant_phone
     type: tel
+    groupe: Contact
     obligatoire: false
 
   - nom: declarant_role
     type: select
+    groupe: Informations
     obligatoire: false
     options: [owner, tenant, manager, insured, other]
     description: Role du declarant
 
   - nom: third_parties
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Tiers impliques
 
   - nom: witnesses
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Temoins
 
   - nom: damage_description
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Description des dommages
 
   - nom: damaged_items
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Elements endommages
 
   - nom: estimated_damage_amount
     type: number
+    groupe: Informations
     obligatoire: false
     description: Montant estime des dommages
 
   - nom: has_injuries
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: false
     description: Blessures corporelles
 
   - nom: injuries_description
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Description des blessures
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: DRAFT
     options: [DRAFT, SUBMITTED, ACKNOWLEDGED, UNDER_INVESTIGATION, EXPERTISE_REQUIRED, EXPERTISE_SCHEDULED, EXPERTISE_COMPLETED, APPROVED, PARTIALLY_APPROVED, REJECTED, PAYMENT_PENDING, PAID, CLOSED, REOPENED]
@@ -156,6 +183,7 @@ champs:
 
   - nom: priority
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: MEDIUM
     options: [LOW, MEDIUM, HIGH, URGENT]
@@ -163,62 +191,74 @@ champs:
 
   - nom: expertise_required
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Expertise necessaire
 
   - nom: expert_name
     type: text
+    groupe: Informations
     obligatoire: false
     description: Nom de l'expert
     autocompletion: true
 
   - nom: expert_phone
     type: tel
+    groupe: Contact
     obligatoire: false
 
   - nom: expertise_date
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date du rendez-vous d'expertise
 
   - nom: expertise_conclusion
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Conclusion de l'expertise
 
   - nom: decision
     type: select
+    groupe: Informations
     obligatoire: false
     options: [APPROVED, REJECTED, PARTIAL]
     description: Decision finale
 
   - nom: decision_date
     type: datetime
+    groupe: Dates
     obligatoire: false
 
   - nom: decision_reason
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Motif de la decision
 
   - nom: approved_amount
     type: number
+    groupe: Informations
     obligatoire: false
     description: Montant approuve
 
   - nom: submitted_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de soumission
 
   - nom: closed_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de cloture
 
   - nom: internal_notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes internes
 

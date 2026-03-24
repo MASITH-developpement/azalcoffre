@@ -11,18 +11,21 @@ description: Programme de parrainage
 champs:
   - nom: code_parrain
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Code parrain unique
 
   - nom: parrain_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Client parrain
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: ACTIF
     options: [ACTIF, SUSPENDU, EXPIRE]
@@ -30,17 +33,20 @@ champs:
 
   - nom: date_creation
     type: date
+    groupe: Dates
     obligatoire: true
     auto: now
     description: Date creation
 
   - nom: date_expiration
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date expiration
 
   - nom: recompense_parrain_type
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: CREDIT
     options: [CREDIT, REDUCTION, VIREMENT, CADEAU]
@@ -48,12 +54,14 @@ champs:
 
   - nom: recompense_parrain_montant
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 50
     description: Montant recompense parrain
 
   - nom: recompense_filleul_type
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: REDUCTION
     options: [CREDIT, REDUCTION, CADEAU]
@@ -61,12 +69,14 @@ champs:
 
   - nom: recompense_filleul_montant
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 20
     description: Montant recompense filleul
 
   - nom: nb_filleuls
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     readonly: true
@@ -74,6 +84,7 @@ champs:
 
   - nom: nb_filleuls_convertis
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 0
     readonly: true
@@ -81,6 +92,7 @@ champs:
 
   - nom: total_recompenses
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -88,12 +100,14 @@ champs:
 
   - nom: lien_parrainage
     type: text
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Lien de parrainage
 
   - nom: qr_code
     type: text
+    groupe: Identification
     obligatoire: false
     description: QR code
 
@@ -102,39 +116,46 @@ filleuls:
   champs:
     - nom: filleul_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Clients
       description: Client filleul
 
     - nom: date_inscription
       type: date
+      groupe: Dates
       obligatoire: true
       description: Date inscription
 
     - nom: converti
       type: boolean
+      groupe: Informations
       obligatoire: false
       defaut: false
       description: A effectue un achat
 
     - nom: date_conversion
       type: date
+      groupe: Dates
       obligatoire: false
       description: Date premiere commande
 
     - nom: montant_premiere_commande
       type: number
+      groupe: Montants
       obligatoire: false
       description: Montant premiere commande
 
     - nom: recompense_parrain_versee
       type: boolean
+      groupe: Informations
       obligatoire: false
       defaut: false
       description: Recompense parrain versee
 
     - nom: recompense_filleul_versee
       type: boolean
+      groupe: Informations
       obligatoire: false
       defaut: false
       description: Recompense filleul versee

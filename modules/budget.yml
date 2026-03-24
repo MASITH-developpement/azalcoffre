@@ -12,12 +12,14 @@ champs:
   # Identification
   - nom: name
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du budget
     autocompletion: true
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: FONCTIONNEMENT
     options: [FONCTIONNEMENT, INVESTISSEMENT, TRESORERIE, VENTES, PROJET]
@@ -25,6 +27,7 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: BROUILLON
     options: [BROUILLON, VALIDE, EN_COURS, CLOTURE, REVISE]
@@ -33,21 +36,25 @@ champs:
   # Periode
   - nom: annee
     type: number
+    groupe: Informations
     obligatoire: true
     description: Annee budgetaire
 
   - nom: date_debut
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date de debut
 
   - nom: date_fin
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date de fin
 
   - nom: periodicite
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: MENSUEL
     options: [MENSUEL, TRIMESTRIEL, ANNUEL]
@@ -56,6 +63,7 @@ champs:
   # Perimetre
   - nom: departement_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Departements
     description: Departement
@@ -63,6 +71,7 @@ champs:
 
   - nom: projet_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Projets
     description: Projet
@@ -70,6 +79,7 @@ champs:
 
   - nom: responsable_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Utilisateurs
     description: Responsable budget
@@ -78,11 +88,13 @@ champs:
   # Montants globaux
   - nom: montant_prevu
     type: number
+    groupe: Montants
     obligatoire: true
     description: Montant total prevu
 
   - nom: montant_realise
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -90,6 +102,7 @@ champs:
 
   - nom: montant_engage
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     readonly: true
@@ -97,18 +110,21 @@ champs:
 
   - nom: reste_disponible
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Reste disponible
 
   - nom: ecart
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Ecart prevu/realise
 
   - nom: ecart_pourcent
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Ecart en pourcentage
@@ -116,18 +132,21 @@ champs:
   # Alertes
   - nom: seuil_alerte
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 80
     description: Seuil d'alerte (% consomme)
 
   - nom: seuil_blocage
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 100
     description: Seuil de blocage (%)
 
   - nom: alerte_active
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: Alertes activees
@@ -135,29 +154,34 @@ champs:
   # Revision
   - nom: version
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 1
     description: Version du budget
 
   - nom: budget_initial_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Budget
     description: Budget initial (si revision)
 
   - nom: date_revision
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de revision
 
   - nom: motif_revision
     type: text
+    groupe: Informations
     obligatoire: false
     description: Motif de revision
 
   # Notes
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 
@@ -166,34 +190,40 @@ lignes:
   champs:
     - nom: poste
       type: text
+      groupe: Informations
       obligatoire: true
       description: Poste budgetaire
       autocompletion: true
 
     - nom: compte_comptable
       type: text
+      groupe: Informations
       obligatoire: false
       description: Compte comptable
       autocompletion: true
 
     - nom: categorie
       type: select
+      groupe: Informations
       obligatoire: true
       options: [RECETTES, DEPENSES_FIXES, DEPENSES_VARIABLES, INVESTISSEMENT]
       description: Categorie
 
     - nom: montant_prevu
       type: number
+      groupe: Montants
       obligatoire: true
       description: Montant prevu
 
     - nom: repartition_mensuelle
       type: json
+      groupe: Metadata
       obligatoire: false
       description: Repartition par mois [{mois, montant}]
 
     - nom: montant_realise
       type: number
+      groupe: Montants
       obligatoire: false
       defaut: 0
       readonly: true
@@ -201,6 +231,7 @@ lignes:
 
     - nom: montant_engage
       type: number
+      groupe: Montants
       obligatoire: false
       defaut: 0
       readonly: true
@@ -208,12 +239,14 @@ lignes:
 
     - nom: ecart
       type: number
+      groupe: Informations
       obligatoire: false
       readonly: true
       description: Ecart
 
     - nom: commentaire
       type: text
+      groupe: Notes
       obligatoire: false
       description: Commentaire
 

@@ -6,7 +6,7 @@
     <meta name="description" content="AZALPLUS - L'ERP 100% gratuit pour les TPE. Facturation, comptabilité, CRM, stock, projets. 90+ modules sans abonnement, sans limite, sans pub.">
     <meta name="keywords" content="ERP gratuit, logiciel gestion TPE, facturation gratuite, comptabilité TPE, CRM gratuit, artisan, commerce">
     <title>AZALPLUS — L'ERP 100% Gratuit pour les TPE</title>
-    <link rel="icon" type="image/svg+xml" href="logo-azalplus.svg">
+    <link rel="icon" type="image/svg+xml" href="/static/logo-azalplus.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -1894,7 +1894,7 @@
     <!-- Guardian Error Reporter (surveille les erreurs) -->
     <script>
     (function() {
-        const GUARDIAN_URL = 'http://57.128.7.20:8000/guardian/frontend-error';
+        const GUARDIAN_URL = '/guardian/frontend-error';
         window.onerror = function(msg, src, line, col, err) {
             fetch(GUARDIAN_URL, {
                 method: 'POST',
@@ -1937,7 +1937,7 @@
 <nav class="nav">
     <div class="nav-container">
         <a href="#" class="nav-logo">
-            <img src="logo-azalplus-full.png" alt="AZALPLUS">
+            <img src="/static/logo-azalplus-full.svg" alt="AZALPLUS">
         </a>
         <ul class="nav-links">
             <li><a href="#modules">Modules</a></li>
@@ -2575,7 +2575,7 @@
     <div class="section-container">
         <h2>Prêt à simplifier votre gestion ?</h2>
         <p>Créez votre compte en 2 minutes. Commencez à facturer dans l'heure.</p>
-        <form class="signup-form" action="http://57.128.7.20:8000/waitlist" method="GET" target="_blank">
+        <form class="signup-form" action="/waitlist" method="GET" target="_blank">
             <input type="email" name="email" placeholder="Votre email professionnel" required>
             <button type="submit">Créer mon compte</button>
         </form>
@@ -2591,7 +2591,7 @@
 <footer class="footer" id="contact">
     <div class="footer-container">
         <div class="footer-brand">
-            <img src="logo-azalplus-full.png" alt="AZALPLUS">
+            <img src="/static/logo-azalplus-full.svg" alt="AZALPLUS">
             <p>L'ERP gratuit pour les TPE</p>
         </div>
         <ul class="footer-links">

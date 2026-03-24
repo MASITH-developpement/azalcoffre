@@ -3,7 +3,7 @@
  * Gère la connexion via token depuis le QR code
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/auth';
 
@@ -14,6 +14,10 @@ export function ConnectPage() {
   const [status, setStatus] = useState<'connecting' | 'success' | 'error'>('connecting');
   const [error, setError] = useState<string | null>(null);
 
+  // Ref pour éviter double appel (React StrictMode)
+  const verificationAttempted = useRef(false);
+  const verificationSucceeded = useRef(false);
+
   useEffect(() => {
     const token = searchParams.get('token');
     const apiUrl = searchParams.get('api');
@@ -23,6 +27,13 @@ export function ConnectPage() {
       setError('Token manquant');
       return;
     }
+
+    // Éviter double appel (React StrictMode appelle useEffect 2 fois)
+    if (verificationAttempted.current) {
+      console.log('Verification already attempted, skipping...');
+      return;
+    }
+    verificationAttempted.current = true;
 
     // Stocker l'URL de l'API si fournie
     if (apiUrl) {
@@ -57,6 +68,9 @@ export function ConnectPage() {
         // Stocker les infos d'auth
         if (data.access_token) {
           localStorage.setItem('accessToken', data.access_token);
+          localStorage.setItem('azalplus_access_token', data.access_token);
+          verificationSucceeded.current = true;
+          console.log('Mobile login successful!');
         }
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
@@ -65,7 +79,11 @@ export function ConnectPage() {
         // Rediriger vers le dashboard après 1 seconde
         setTimeout(() => navigate('/'), 1000);
       } else {
-        // Token invalide mais on peut quand même accéder en mode démo
+        // Token invalide - vérifier si on a déjà réussi (race condition)
+        if (verificationSucceeded.current) {
+          console.log('Already verified successfully, ignoring 401');
+          return;
+        }
         console.warn('Token non vérifié, mode démo activé');
         setStatus('success');
         setTimeout(() => navigate('/'), 1000);

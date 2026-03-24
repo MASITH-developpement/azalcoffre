@@ -842,14 +842,28 @@ def send_email(to: str, subject: str, html_content: str) -> bool:
         html_part.attach(MIMEText(html_content, "html"))
         msg.attach(html_part)
 
-        # Attacher le logo PNG
-        logo_path = Path("/home/ubuntu/azalplus/docs/logo-azalplus-full.png")
-        if logo_path.exists():
+        # Attacher le logo PNG (dynamique selon APP_NAME)
+        app_name = os.environ.get("APP_NAME", "AZALPLUS")
+        app_name_lower = app_name.lower()
+        # Chercher le logo dans plusieurs emplacements possibles
+        logo_paths = [
+            Path(f"/home/ubuntu/{app_name_lower}/assets/logo.png"),
+            Path(f"/home/ubuntu/{app_name_lower}/static/logo.png"),
+            Path(f"/home/ubuntu/{app_name_lower}/docs/logo-{app_name_lower}-full.png"),
+            Path("/home/ubuntu/azalplus/static/logo.png"),
+            Path("/home/ubuntu/azalplus/docs/logo-azalplus-full.png"),
+        ]
+        logo_path = None
+        for path in logo_paths:
+            if path.exists():
+                logo_path = path
+                break
+        if logo_path and logo_path.exists():
             with open(logo_path, "rb") as f:
                 logo_data = f.read()
             logo_img = MIMEImage(logo_data, _subtype="png")
             logo_img.add_header("Content-ID", "<azalplus_logo>")
-            logo_img.add_header("Content-Disposition", "inline", filename="logo-azalplus.png")
+            logo_img.add_header("Content-Disposition", "inline", filename=f"logo-{app_name_lower}.png")
             msg.attach(logo_img)
 
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:

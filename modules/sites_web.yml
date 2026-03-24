@@ -9,17 +9,20 @@ description: Gestion sites web et landing pages
 champs:
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du site
 
   - nom: domaine
     type: text
+    groupe: Informations
     obligatoire: true
     unique: true
     description: Domaine (ex monsite.fr)
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: BROUILLON
     options: [BROUILLON, PUBLIE, MAINTENANCE, ARCHIVE]
@@ -27,6 +30,7 @@ champs:
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: VITRINE
     options: [VITRINE, ECOMMERCE, LANDING, BLOG, PORTFOLIO]
@@ -34,88 +38,105 @@ champs:
 
   - nom: template
     type: select
+    groupe: Informations
     obligatoire: false
     options: [STARTER, BUSINESS, BOUTIQUE, MINIMAL, CUSTOM]
     description: Template
 
   - nom: theme
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Configuration theme (couleurs, fonts)
 
   - nom: pages
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Liste des pages
 
   - nom: menu_principal
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Configuration menu
 
   - nom: footer
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Configuration footer
 
   - nom: seo_title
     type: text
+    groupe: Informations
     obligatoire: false
     description: Titre SEO
 
   - nom: seo_description
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Description SEO
 
   - nom: google_analytics_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: ID Google Analytics
 
   - nom: facebook_pixel_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: Facebook Pixel ID
 
   - nom: ssl_actif
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     description: SSL actif
 
   - nom: date_expiration_ssl
     type: date
+    groupe: Dates
     obligatoire: false
     description: Expiration SSL
 
   - nom: formulaires
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Formulaires de contact
 
   - nom: integrations
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Integrations (chat, CRM)
 
   - nom: statistiques
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Statistiques visiteurs
 
   - nom: dernier_deploiement
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Dernier deploiement
 
   - nom: version
     type: text
+    groupe: Informations
     obligatoire: false
     description: Version actuelle
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

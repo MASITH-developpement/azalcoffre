@@ -12,12 +12,14 @@ champs:
   # Identification
   - nom: name
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du document
     autocompletion: true
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: AUTRE
     options: [FACTURE, DEVIS, CONTRAT, BON_LIVRAISON, BON_COMMANDE, AVOIR, JUSTIFICATIF, PHOTO, RAPPORT, COURRIER, PIECE_IDENTITE, ATTESTATION, CERTIFICAT, PLAN, AUTRE]
@@ -25,45 +27,53 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: ACTIF
-    options: [BROUILLON, EN_VALIDATION, ACTIF, ARCHIVE, SUPPRIME]
+    options: $statuts.ged.valeurs
     description: Statut
 
   # Fichier
   - nom: file_name
     type: text
+    groupe: Fichiers
     obligatoire: true
     description: Nom du fichier original
 
   - nom: file_path
     type: text
+    groupe: Fichiers
     obligatoire: true
     description: Chemin stockage (S3/MinIO)
 
   - nom: file_size
     type: number
+    groupe: Fichiers
     obligatoire: false
     description: Taille (octets)
 
   - nom: mime_type
     type: text
+    groupe: Informations
     obligatoire: false
     description: Type MIME
 
   - nom: extension
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: Extension (.pdf, .jpg...)
 
   - nom: checksum
     type: text
+    groupe: Informations
     obligatoire: false
     description: Hash SHA256 (integrite)
 
   # Classification
   - nom: dossier_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: GED_Dossiers
     description: Dossier parent
@@ -71,11 +81,13 @@ champs:
 
   - nom: tags
     type: tags
+    groupe: Metadata
     obligatoire: false
     description: Tags
 
   - nom: categorie
     type: text
+    groupe: Informations
     obligatoire: false
     description: Categorie personnalisee
     autocompletion: true
@@ -83,35 +95,41 @@ champs:
   # Relations avec entites
   - nom: entity_type
     type: select
+    groupe: Informations
     obligatoire: false
     options: [clients, factures, devis, commandes, interventions, employes, contrats, projets, fournisseurs, equipements, vehicules]
     description: Type d'entite liee
 
   - nom: entity_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: ID de l'entite liee
 
   # OCR et indexation
   - nom: ocr_processed
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: OCR effectue
 
   - nom: ocr_text
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Texte extrait par OCR
 
   - nom: indexed
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Indexe pour recherche
 
   - nom: language
     type: text
+    groupe: Informations
     obligatoire: false
     defaut: fr
     description: Langue du document
@@ -119,40 +137,47 @@ champs:
   # Metadonnees
   - nom: date_document
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date du document
 
   - nom: auteur
     type: text
+    groupe: Informations
     obligatoire: false
     description: Auteur
     autocompletion: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: false
     description: Description
 
   - nom: metadata
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Metadonnees supplementaires
 
   # Versioning
   - nom: version
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 1
     description: Numero de version
 
   - nom: previous_version_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: GED
     description: Version precedente
 
   - nom: is_latest
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true
     description: Derniere version
@@ -160,66 +185,78 @@ champs:
   # Partage
   - nom: shared
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Document partage
 
   - nom: share_link
     type: text
+    groupe: Informations
     obligatoire: false
     description: Lien de partage public
 
   - nom: share_expires_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Expiration du lien
 
   - nom: share_password
     type: text
+    groupe: Securite
     obligatoire: false
     description: Mot de passe du partage
 
   # Archivage legal
   - nom: archivage_legal
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Archivage a valeur probante
 
   - nom: date_archivage
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date d'archivage
 
   - nom: duree_conservation
     type: number
+    groupe: Informations
     obligatoire: false
     description: Duree de conservation (annees)
 
   - nom: date_suppression_prevue
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de suppression prevue
 
   - nom: horodatage_certifie
     type: text
+    groupe: Informations
     obligatoire: false
     description: Jeton d'horodatage certifie
 
   # Acces
   - nom: uploaded_by
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
     description: Uploade par
 
   - nom: last_accessed_at
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Dernier acces
 
   - nom: download_count
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Nombre de telechargements

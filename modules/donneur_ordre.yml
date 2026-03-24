@@ -8,18 +8,21 @@ champs:
   # Identification
   - nom: code
     type: text
+    groupe: Identification
     obligatoire: true
     description: Code/Numero donneur d'ordre
     autocompletion: true
 
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom / Raison sociale
     autocompletion: true
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: CLIENT
     options: [CLIENT, FOURNISSEUR, ASSURANCE, BAILLEUR, SYNDIC, REGIE, AUTRE]
@@ -27,6 +30,7 @@ champs:
 
   - nom: statut
     type: select
+    groupe: Statut
     obligatoire: false
     defaut: ACTIF
     options: [ACTIF, INACTIF, SUSPENDU]
@@ -34,6 +38,7 @@ champs:
   # Liens optionnels
   - nom: client_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Clients
     description: Client associe (si existant)
@@ -41,6 +46,7 @@ champs:
 
   - nom: fournisseur_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Fournisseurs
     description: Fournisseur associe (si existant)
@@ -49,193 +55,229 @@ champs:
   # Informations legales
   - nom: siret
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero SIRET
     autocompletion: true
 
   - nom: tva_intracommunautaire
     type: text
+    groupe: Montants
     obligatoire: false
     description: Numero TVA intracommunautaire
 
   - nom: forme_juridique
     type: select
+    groupe: Informations
     obligatoire: false
     options: [SARL, SAS, SA, EURL, EI, SCI, ASSOCIATION, AUTRE]
 
   # Contact principal
   - nom: contact_nom
     type: text
+    groupe: Identification
     obligatoire: false
     description: Nom du contact principal
     autocompletion: true
 
   - nom: contact_civilite
     type: select
+    groupe: Relations
     obligatoire: false
     options: [Mr, Mme, Melle]
 
   - nom: contact_fonction
     type: text
+    groupe: Relations
     obligatoire: false
     description: Fonction du contact
 
   - nom: email
     type: email
+    groupe: Contact
     obligatoire: false
     description: Email principal
     autocompletion: true
 
   - nom: telephone
     type: tel
+    groupe: Contact
     obligatoire: false
     description: Telephone principal
 
   - nom: portable
     type: tel
+    groupe: Contact
     obligatoire: false
 
   # Adresse principale
   - nom: adresse_ligne1
     type: text
+    groupe: Contact
     obligatoire: false
     description: Adresse ligne 1
     autocompletion: true
 
   - nom: adresse_ligne2
     type: text
+    groupe: Contact
     obligatoire: false
     description: Adresse ligne 2
 
   - nom: code_postal
     type: text
+    groupe: Identification
     obligatoire: false
 
   - nom: ville
     type: text
+    groupe: Contact
     obligatoire: false
     autocompletion: true
 
   - nom: pays
     type: text
+    groupe: Contact
     obligatoire: false
     defaut: France
 
   # Adresse de facturation (si differente)
   - nom: facturation_adresse_ligne1
     type: text
+    groupe: Informations
     obligatoire: false
     description: Adresse facturation ligne 1
 
   - nom: facturation_adresse_ligne2
     type: text
+    groupe: Informations
     obligatoire: false
 
   - nom: facturation_code_postal
     type: text
+    groupe: Informations
     obligatoire: false
 
   - nom: facturation_ville
     type: text
+    groupe: Informations
     obligatoire: false
 
   - nom: facturation_pays
     type: text
+    groupe: Informations
     obligatoire: false
     defaut: France
 
   # Contact facturation
   - nom: facturation_email
     type: email
+    groupe: Contact
     obligatoire: false
     description: Email pour factures
     autocompletion: true
 
   - nom: facturation_contact_nom
     type: text
+    groupe: Identification
     obligatoire: false
     description: Nom contact facturation
 
   - nom: facturation_telephone
     type: tel
+    groupe: Contact
     obligatoire: false
 
   # Contact commercial
   - nom: commercial_nom
     type: text
+    groupe: Identification
     obligatoire: false
     description: Nom contact commercial
     autocompletion: true
 
   - nom: commercial_civilite
     type: select
+    groupe: Informations
     obligatoire: false
     options: [Mr, Mme, Melle]
 
   - nom: commercial_email
     type: email
+    groupe: Contact
     obligatoire: false
     autocompletion: true
 
   - nom: commercial_telephone
     type: tel
+    groupe: Contact
     obligatoire: false
 
   # Conditions commerciales
   - nom: delai_paiement
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 30
     description: Delai de paiement (jours)
 
   - nom: mode_paiement
     type: select
+    groupe: Configuration
     obligatoire: false
     options: [VIREMENT, CHEQUE, PRELEVEMENT, CB, ESPECES]
     defaut: VIREMENT
 
   - nom: conditions_paiement
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Conditions particulieres
 
   - nom: taux_remise
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Taux de remise par defaut (%)
 
   - nom: encours_max
     type: money
+    groupe: Montants
     obligatoire: false
     description: Encours maximum autorise
 
   # Rapports et notifications
   - nom: email_rapport
     type: email
+    groupe: Contact
     obligatoire: false
     description: Email pour envoi des rapports
     autocompletion: true
 
   - nom: envoi_rapport_auto
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Envoi automatique des rapports
 
   - nom: frequence_rapport
     type: select
+    groupe: Informations
     obligatoire: false
     options: [CHAQUE_INTERVENTION, HEBDOMADAIRE, MENSUEL]
 
   # Notes
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes internes
 
   - nom: notes_facturation
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes pour la facturation
 

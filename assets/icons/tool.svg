@@ -1,10 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Corps tournevis (secondaire) -->
-  <path d="M14 10L8 16L6 14L12 8L14 10Z" fill="#93C5FD"/>
-  <!-- Manche tournevis (secondaire) -->
-  <path d="M8 16L4 20C3.5 20.5 3.5 21.5 4 22C4.5 22.5 5.5 22.5 6 22L10 18L8 16Z" fill="#93C5FD"/>
-  <!-- Tete tournevis (principale) -->
-  <path d="M12 8L14 10L18.5 5.5C19.5 4.5 20 3 20 3C20 3 18.5 3.5 17.5 4.5L17 5L16 4L16.5 3.5C15.5 3 14 3.5 13 4.5L12 5.5L12 8Z" fill="#2563EB"/>
-  <!-- Cercle engrenage (principale) -->
-  <circle cx="17" cy="7" r="2" fill="#2563EB"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Corps tournevis (secondaire) --><path d="M14 10L8 16L6 14L12 8L14 10Z" fill="#93C5FD"/><!-- Manche tournevis (secondaire) --><path d="M8 16L4 20C3.5 20.5 3.5 21.5 4 22C4.5 22.5 5.5 22.5 6 22L10 18L8 16Z" fill="#93C5FD"/><!-- Tete tournevis (principale) --><path d="M12 8L14 10L18.5 5.5C19.5 4.5 20 3 20 3C20 3 18.5 3.5 17.5 4.5L17 5L16 4L16.5 3.5C15.5 3 14 3.5 13 4.5L12 5.5L12 8Z" fill="#2563EB"/><!-- Cercle engrenage (principale) --><circle cx="17" cy="7" r="2" fill="#2563EB"/></svg> 

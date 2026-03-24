@@ -12,12 +12,14 @@ champs:
   # Plan HACCP
   - nom: name
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du point de controle
     autocompletion: true
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: CCP
     options: [CCP, PRP, PRPO]
@@ -25,6 +27,7 @@ champs:
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: ACTIF
     options: [ACTIF, INACTIF, EN_REVISION]
@@ -33,17 +36,20 @@ champs:
   # Danger
   - nom: danger_type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [BIOLOGIQUE, CHIMIQUE, PHYSIQUE, ALLERGENE]
     description: Type de danger
 
   - nom: danger_description
     type: textarea
+    groupe: Notes
     obligatoire: true
     description: Description du danger
 
   - nom: etape_process
     type: text
+    groupe: Informations
     obligatoire: true
     description: Etape du processus concernee
     autocompletion: true
@@ -51,33 +57,39 @@ champs:
   # Limites
   - nom: limite_critique_min
     type: number
+    groupe: Informations
     obligatoire: false
     description: Limite critique minimale
 
   - nom: limite_critique_max
     type: number
+    groupe: Informations
     obligatoire: false
     description: Limite critique maximale
 
   - nom: unite
     type: select
+    groupe: Quantites
     obligatoire: false
     options: [CELSIUS, MINUTES, PH, AUTRE]
     description: Unite de mesure
 
   - nom: limite_cible
     type: number
+    groupe: Informations
     obligatoire: false
     description: Valeur cible
 
   # Surveillance
   - nom: methode_surveillance
     type: text
+    groupe: Informations
     obligatoire: true
     description: Methode de surveillance
 
   - nom: frequence
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: JOURNALIER
     options: [CONTINU, HORAIRE, JOURNALIER, HEBDOMADAIRE, MENSUEL, A_RECEPTION]
@@ -85,6 +97,7 @@ champs:
 
   - nom: responsable_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Responsable du controle
@@ -93,34 +106,40 @@ champs:
   # Actions correctives
   - nom: action_corrective
     type: textarea
+    groupe: Notes
     obligatoire: true
     description: Action corrective si depassement
 
   - nom: action_preventive
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Action preventive
 
   # Documentation
   - nom: document_reference
     type: text
+    groupe: Informations
     obligatoire: false
     description: Document de reference
 
   - nom: enregistrement_type
     type: text
+    groupe: Informations
     obligatoire: false
     description: Type d'enregistrement
 
   # Localisation
   - nom: zone
     type: text
+    groupe: Informations
     obligatoire: false
     description: Zone concernee
     autocompletion: true
 
   - nom: equipement_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Equipements
     description: Equipement concerne
@@ -131,56 +150,66 @@ releves_temperature:
   champs:
     - nom: date_releve
       type: datetime
+      groupe: Dates
       obligatoire: true
       auto: now
       description: Date/heure du releve
 
     - nom: haccp_point_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: HACCP
       description: Point de controle
 
     - nom: temperature
       type: number
+      groupe: Informations
       obligatoire: true
       description: Temperature relevee
 
     - nom: conforme
       type: boolean
+      groupe: Informations
       obligatoire: false
       readonly: true
       description: Conforme aux limites
 
     - nom: action_corrective_appliquee
       type: boolean
+      groupe: Informations
       obligatoire: false
       defaut: false
       description: Action corrective appliquee
 
     - nom: action_detail
       type: text
+      groupe: Informations
       obligatoire: false
       description: Detail action corrective
 
     - nom: releve_par
       type: relation
+      groupe: Informations
       obligatoire: true
       relation: Utilisateurs
       description: Releve par
 
     - nom: sonde_id
       type: text
+      groupe: Relations
       obligatoire: false
       description: ID sonde connectee (IoT)
 
     - nom: photo
       type: text
+      groupe: Fichiers
       obligatoire: false
       description: Photo du releve
 
     - nom: notes
       type: text
+      groupe: Notes
       obligatoire: false
       description: Observations
 
@@ -189,43 +218,51 @@ receptions_haccp:
   champs:
     - nom: date_reception
       type: datetime
+      groupe: Dates
       obligatoire: true
       auto: now
       description: Date/heure reception
 
     - nom: fournisseur_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Fournisseurs
       description: Fournisseur
 
     - nom: bon_livraison
       type: text
+      groupe: Informations
       obligatoire: false
       description: N° bon de livraison
 
     - nom: temperature_arrivee
       type: number
+      groupe: Informations
       obligatoire: false
       description: Temperature a l'arrivee
 
     - nom: emballage_conforme
       type: boolean
+      groupe: Informations
       obligatoire: true
       description: Emballage conforme
 
     - nom: dlc_respectee
       type: boolean
+      groupe: Informations
       obligatoire: true
       description: DLC respectee
 
     - nom: aspect_conforme
       type: boolean
+      groupe: Informations
       obligatoire: true
       description: Aspect conforme
 
     - nom: decision
       type: select
+      groupe: Informations
       obligatoire: true
       defaut: ACCEPTE
       options: [ACCEPTE, ACCEPTE_AVEC_RESERVE, REFUSE]
@@ -233,17 +270,20 @@ receptions_haccp:
 
     - nom: motif_refus
       type: text
+      groupe: Informations
       obligatoire: false
       description: Motif de refus
 
     - nom: controle_par
       type: relation
+      groupe: Informations
       obligatoire: true
       relation: Utilisateurs
       description: Controle par
 
     - nom: photo
       type: text
+      groupe: Fichiers
       obligatoire: false
       description: Photo reception
 
@@ -252,52 +292,62 @@ tracabilite:
   champs:
     - nom: lot_numero
       type: text
+      groupe: Identification
       obligatoire: true
       description: Numero de lot
 
     - nom: produit
       type: text
+      groupe: Informations
       obligatoire: true
       description: Produit
 
     - nom: fournisseur_id
       type: relation
+      groupe: Relations
       obligatoire: true
       relation: Fournisseurs
       description: Fournisseur
 
     - nom: date_reception
       type: date
+      groupe: Dates
       obligatoire: true
       description: Date de reception
 
     - nom: dlc
       type: date
+      groupe: Dates
       obligatoire: false
       description: Date limite de consommation
 
     - nom: ddm
       type: date
+      groupe: Dates
       obligatoire: false
       description: Date de durabilite minimale
 
     - nom: quantite_recue
       type: number
+      groupe: Quantites
       obligatoire: true
       description: Quantite recue
 
     - nom: quantite_restante
       type: number
+      groupe: Quantites
       obligatoire: false
       description: Quantite restante
 
     - nom: emplacement
       type: text
+      groupe: Informations
       obligatoire: false
       description: Emplacement stockage
 
     - nom: statut
       type: select
+      groupe: Statut
       obligatoire: true
       defaut: EN_STOCK
       options: [EN_STOCK, UTILISE, PERIME, RAPPEL]

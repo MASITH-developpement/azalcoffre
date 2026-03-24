@@ -1,0 +1,97 @@
+# =============================================================================
+# AZALPLUS - Email to Intervention
+# =============================================================================
+# Création automatique d'interventions depuis les emails reçus
+#
+# Configuration IMAP dans variables d'environnement:
+#   EMAIL_IMAP_HOST, EMAIL_IMAP_PORT, EMAIL_IMAP_USER, EMAIL_IMAP_PASSWORD
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Activation
+# ─────────────────────────────────────────────────────────────────────────────
+actif: true
+
+# Intervalle de vérification (en secondes)
+intervalle_polling: 300  # 5 minutes
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Donneurs d'ordre / Sources d'interventions
+# ─────────────────────────────────────────────────────────────────────────────
+# Détection par nom du donneur d'ordre dans l'objet du mail
+donneurs_ordre:
+  - nom: "INTERPARTNER ASSISTANCE France"
+    # Pattern regex pour extraire le numéro d'intervention
+    # Exemple: "INTERPARTNER ASSISTANCE France - 0825372568"
+    pattern_numero: '\b(\d{10})\b'
+    priorite: NORMALE
+    type_intervention: DEPANNAGE
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mots-clés déclencheurs (fallback si pas de donneur d'ordre détecté)
+# ─────────────────────────────────────────────────────────────────────────────
+mots_cles:
+  - URGENT
+  - DEPANNAGE
+  - PANNE
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mapping priorité selon mots-clés
+# ─────────────────────────────────────────────────────────────────────────────
+priorite_mots_cles:
+  URGENT: HAUTE
+  PANNE: HAUTE
+  DEPANNAGE: NORMALE
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Type d'intervention par défaut
+# ─────────────────────────────────────────────────────────────────────────────
+defauts:
+  type_fiche: INTERVENTION
+  type_intervention: DEPANNAGE
+  statut: DEMANDE
+  priorite: NORMALE
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Extraction des données
+# ─────────────────────────────────────────────────────────────────────────────
+extraction:
+  # Chercher le client par son email dans la base
+  client_par_email: true
+
+  # Utiliser l'objet du mail comme objet de l'intervention
+  objet_depuis_sujet: true
+
+  # Utiliser le corps du mail comme description
+  description_depuis_corps: true
+
+  # Extraire les pièces jointes
+  pieces_jointes: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Notifications
+# ─────────────────────────────────────────────────────────────────────────────
+notifications:
+  # Notifier quand une intervention est créée depuis un email
+  intervention_creee: true
+
+  # Répondre automatiquement à l'expéditeur
+  reponse_auto: true
+  reponse_sujet: "Re: {sujet_original} - Intervention #{numero} créée"
+  reponse_corps: |
+    Bonjour,
+
+    Votre demande a bien été enregistrée sous le numéro {numero}.
+    Notre équipe technique va prendre en charge votre demande dans les meilleurs délais.
+
+    Cordialement,
+    L'équipe SAV
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Dossier IMAP
+# ─────────────────────────────────────────────────────────────────────────────
+imap:
+  dossier_source: INBOX
+  # Déplacer les emails traités dans ce dossier (null = ne pas déplacer)
+  dossier_traite: INBOX/Traites
+  # Marquer comme lu après traitement
+  marquer_lu: true

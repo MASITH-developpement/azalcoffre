@@ -9,17 +9,20 @@ description: Gestion de coproprietes et syndic
 champs:
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference copropriete
 
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom residence
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: ACTIVE
     options: [ACTIVE, EN_CREATION, DISSOUTE]
@@ -27,113 +30,135 @@ champs:
 
   - nom: adresse
     type: textarea
+    groupe: Contact
     obligatoire: true
     description: Adresse
 
   - nom: code_postal
     type: text
+    groupe: Identification
     obligatoire: true
     description: Code postal
 
   - nom: ville
     type: text
+    groupe: Contact
     obligatoire: true
     description: Ville
 
   - nom: nb_lots
     type: number
+    groupe: Quantites
     obligatoire: false
     description: Nombre de lots
 
   - nom: nb_batiments
     type: number
+    groupe: Quantites
     obligatoire: false
     defaut: 1
     description: Nombre batiments
 
   - nom: annee_construction
     type: number
+    groupe: Informations
     obligatoire: false
     description: Annee construction
 
   - nom: surface_totale
     type: number
+    groupe: Informations
     obligatoire: false
     description: Surface totale (m2)
 
   - nom: coproprietaires
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Liste coproprietaires (lot, tantiemes, contact)
 
   - nom: conseil_syndical
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Membres conseil syndical
 
   - nom: president_cs
     type: text
+    groupe: Informations
     obligatoire: false
     description: President conseil syndical
 
   - nom: budget_previsionnel
     type: number
+    groupe: Informations
     obligatoire: false
     description: Budget previsionnel annuel
 
   - nom: charges_courantes
     type: number
+    groupe: Informations
     obligatoire: false
     description: Charges courantes mensuelles
 
   - nom: fonds_travaux
     type: number
+    groupe: Informations
     obligatoire: false
     description: Fonds travaux (art.14-2)
 
   - nom: compte_bancaire
     type: text
+    groupe: Informations
     obligatoire: false
     description: Compte bancaire copropriete
 
   - nom: assurance_immeuble
     type: text
+    groupe: Informations
     obligatoire: false
     description: Assurance immeuble
 
   - nom: date_ag_precedente
     type: date
+    groupe: Dates
     obligatoire: false
     description: Derniere AG
 
   - nom: date_ag_prochaine
     type: date
+    groupe: Dates
     obligatoire: false
     description: Prochaine AG
 
   - nom: contrats
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Contrats (gardien, ascenseur, chauffage)
 
   - nom: travaux_votes
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Travaux votes
 
   - nom: impayes
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Total impayes
 
   - nom: documents
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Documents (reglement, carnet entretien)
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

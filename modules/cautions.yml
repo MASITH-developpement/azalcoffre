@@ -9,18 +9,21 @@ description: Gestion des cautions et garanties bancaires
 champs:
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference caution
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [SOUMISSION, BONNE_EXECUTION, RETENUE_GARANTIE, RESTITUTION_ACOMPTE, PREMIERE_DEMANDE, DECENNALE]
     description: Type de caution
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: EN_COURS
     options: [DEMANDEE, EN_COURS, LIBEREE, EXECUTEE, EXPIREE, ANNULEE]
@@ -28,110 +31,131 @@ champs:
 
   - nom: affaire_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Affaires
     description: Affaire/Chantier
 
   - nom: client_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Beneficiaire
 
   - nom: banque
     type: text
+    groupe: Informations
     obligatoire: true
     description: Banque emettrice
 
   - nom: numero_caution
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero caution banque
 
   - nom: montant
     type: number
+    groupe: Montants
     obligatoire: true
     description: Montant caution
 
   - nom: pourcentage_marche
     type: number
+    groupe: Montants
     obligatoire: false
     description: Pourcentage du marche
 
   - nom: montant_marche
     type: number
+    groupe: Montants
     obligatoire: false
     description: Montant marche total
 
   - nom: date_emission
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date emission
 
   - nom: date_debut
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date debut validite
 
   - nom: date_fin
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date fin validite
 
   - nom: date_liberation
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date liberation effective
 
   - nom: frais_emission
     type: number
+    groupe: Informations
     obligatoire: false
     description: Frais emission
 
   - nom: frais_annuels
     type: number
+    groupe: Informations
     obligatoire: false
     description: Frais annuels
 
   - nom: taux_annuel
     type: number
+    groupe: Montants
     obligatoire: false
     description: Taux annuel (%)
 
   - nom: cout_total
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Cout total cumule
 
   - nom: renouvellement_auto
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Renouvellement automatique
 
   - nom: contact_banque
     type: text
+    groupe: Relations
     obligatoire: false
     description: Contact banque
 
   - nom: conditions_liberation
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Conditions de liberation
 
   - nom: documents
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Documents (original, copie)
 
   - nom: historique_renouvellements
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Historique renouvellements
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

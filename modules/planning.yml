@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro"
     unique: true
     auto_genere: true
@@ -23,6 +24,7 @@ champs:
 
   - nom: type_evenement
     type: select
+    groupe: Informations
     libelle: "Type"
     obligatoire: true
     options:
@@ -40,11 +42,13 @@ champs:
 
   - nom: titre
     type: text
+    groupe: Identification
     libelle: "Titre"
     obligatoire: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     libelle: "Description"
 
   # ==========================================================================
@@ -52,25 +56,30 @@ champs:
   # ==========================================================================
   - nom: date_debut
     type: datetime
+    groupe: Dates
     libelle: "Début"
     obligatoire: true
 
   - nom: date_fin
     type: datetime
+    groupe: Dates
     libelle: "Fin"
     obligatoire: true
 
   - nom: journee_entiere
     type: boolean
+    groupe: Informations
     libelle: "Journée entière"
     defaut: false
 
   - nom: duree_minutes
     type: number
+    groupe: Informations
     libelle: "Durée (min)"
 
   - nom: fuseau_horaire
     type: text
+    groupe: Informations
     libelle: "Fuseau horaire"
     defaut: "Europe/Paris"
 
@@ -79,38 +88,41 @@ champs:
   # ==========================================================================
   - nom: recurrent
     type: boolean
+    groupe: Informations
     libelle: "Récurrent"
     defaut: false
 
   - nom: recurrence_type
     type: select
+    groupe: Informations
     libelle: "Type récurrence"
-    options:
-      - QUOTIDIEN
-      - HEBDOMADAIRE
-      - MENSUEL
-      - ANNUEL
+    options: $frequences.valeurs
 
   - nom: recurrence_interval
     type: number
+    groupe: Informations
     libelle: "Intervalle"
     defaut: 1
 
   - nom: recurrence_jours
     type: json
+    groupe: Metadata
     libelle: "Jours"
     description: "Pour hebdomadaire"
 
   - nom: recurrence_fin
     type: date
+    groupe: Dates
     libelle: "Fin récurrence"
 
   - nom: recurrence_nombre
     type: number
+    groupe: Quantites
     libelle: "Nb occurrences"
 
   - nom: evenement_parent_id
     type: text
+    groupe: Relations
     libelle: "Événement parent"
 
   # ==========================================================================
@@ -118,16 +130,19 @@ champs:
   # ==========================================================================
   - nom: organisateur_id
     type: relation
+    groupe: Relations
     libelle: "Organisateur"
     relation: employes
     obligatoire: true
 
   - nom: organisateur_nom
     type: text
+    groupe: Identification
     libelle: "Nom organisateur"
 
   - nom: organisateur_email
     type: email
+    groupe: Contact
     libelle: "Email organisateur"
 
   # ==========================================================================
@@ -135,19 +150,23 @@ champs:
   # ==========================================================================
   - nom: participants
     type: json
+    groupe: Metadata
     libelle: "Participants"
     description: "Liste des participants internes"
 
   - nom: participants_externes
     type: json
+    groupe: Metadata
     libelle: "Participants externes"
 
   - nom: nombre_participants
     type: number
+    groupe: Informations
     libelle: "Nb participants"
 
   - nom: reponses
     type: json
+    groupe: Metadata
     libelle: "Réponses"
     description: "Accepté/Refusé/Peut-être"
 
@@ -156,27 +175,33 @@ champs:
   # ==========================================================================
   - nom: lieu
     type: text
+    groupe: Informations
     libelle: "Lieu"
 
   - nom: salle_id
     type: text
+    groupe: Relations
     libelle: "Salle"
 
   - nom: adresse
     type: textarea
+    groupe: Contact
     libelle: "Adresse"
 
   - nom: visioconference
     type: boolean
+    groupe: Informations
     libelle: "Visioconférence"
     defaut: false
 
   - nom: lien_visio
     type: text
+    groupe: Informations
     libelle: "Lien visio"
 
   - nom: plateforme_visio
     type: select
+    groupe: Informations
     libelle: "Plateforme"
     options:
       - TEAMS
@@ -190,11 +215,13 @@ champs:
   # ==========================================================================
   - nom: ressources
     type: json
+    groupe: Metadata
     libelle: "Ressources"
     description: "Salles, équipements réservés"
 
   - nom: equipements
     type: tags
+    groupe: Metadata
     libelle: "Équipements"
 
   # ==========================================================================
@@ -202,19 +229,23 @@ champs:
   # ==========================================================================
   - nom: client_id
     type: relation
+    groupe: Relations
     libelle: "Client"
     relation: clients
 
   - nom: contact_client
     type: text
+    groupe: Relations
     libelle: "Contact client"
 
   - nom: opportunite_id
     type: text
+    groupe: Relations
     libelle: "Opportunité"
 
   - nom: projet_id
     type: text
+    groupe: Relations
     libelle: "Projet"
 
   # ==========================================================================
@@ -222,14 +253,17 @@ champs:
   # ==========================================================================
   - nom: ordre_jour
     type: textarea
+    groupe: Notes
     libelle: "Ordre du jour"
 
   - nom: documents
     type: json
+    groupe: Metadata
     libelle: "Documents"
 
   - nom: preparation_notes
     type: textarea
+    groupe: Notes
     libelle: "Notes préparation"
 
   # ==========================================================================
@@ -237,18 +271,22 @@ champs:
   # ==========================================================================
   - nom: compte_rendu
     type: textarea
+    groupe: Notes
     libelle: "Compte rendu"
 
   - nom: decisions
     type: textarea
+    groupe: Notes
     libelle: "Décisions"
 
   - nom: actions_suivantes
     type: json
+    groupe: Metadata
     libelle: "Actions à suivre"
 
   - nom: compte_rendu_envoye
     type: boolean
+    groupe: Informations
     libelle: "CR envoyé"
     defaut: false
 
@@ -257,16 +295,19 @@ champs:
   # ==========================================================================
   - nom: rappel_actif
     type: boolean
+    groupe: Informations
     libelle: "Rappel"
     defaut: true
 
   - nom: rappel_delai
     type: number
+    groupe: Informations
     libelle: "Rappel avant (min)"
     defaut: 15
 
   - nom: rappels_envoyes
     type: json
+    groupe: Metadata
     libelle: "Rappels envoyés"
 
   # ==========================================================================
@@ -274,24 +315,29 @@ champs:
   # ==========================================================================
   - nom: sync_google
     type: boolean
+    groupe: Informations
     libelle: "Sync Google"
     defaut: false
 
   - nom: google_event_id
     type: text
+    groupe: Relations
     libelle: "Google Event ID"
 
   - nom: sync_outlook
     type: boolean
+    groupe: Informations
     libelle: "Sync Outlook"
     defaut: false
 
   - nom: outlook_event_id
     type: text
+    groupe: Relations
     libelle: "Outlook Event ID"
 
   - nom: ical_uid
     type: text
+    groupe: Informations
     libelle: "iCal UID"
 
   # ==========================================================================
@@ -299,11 +345,13 @@ champs:
   # ==========================================================================
   - nom: prive
     type: boolean
+    groupe: Informations
     libelle: "Privé"
     defaut: false
 
   - nom: visible_par
     type: json
+    groupe: Metadata
     libelle: "Visible par"
 
   # ==========================================================================
@@ -311,6 +359,7 @@ champs:
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - PLANIFIE
@@ -323,15 +372,18 @@ champs:
 
   - nom: annulation_motif
     type: text
+    groupe: Informations
     libelle: "Motif annulation"
 
   - nom: couleur
     type: text
+    groupe: Informations
     libelle: "Couleur"
     defaut: "#3B82F6"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

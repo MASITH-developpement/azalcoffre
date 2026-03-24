@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro"
     obligatoire: true
     unique: true
@@ -23,6 +24,7 @@ champs:
 
   - nom: type_document
     type: select
+    groupe: Informations
     libelle: "Type"
     obligatoire: true
     options:
@@ -35,6 +37,7 @@ champs:
 
   - nom: reference_fournisseur
     type: text
+    groupe: Informations
     libelle: "Réf. fournisseur"
 
   # ==========================================================================
@@ -42,36 +45,44 @@ champs:
   # ==========================================================================
   - nom: fournisseur_id
     type: relation
+    groupe: Relations
     libelle: "Fournisseur"
     relation: fournisseurs
     obligatoire: true
 
   - nom: fournisseur_nom
     type: text
+    groupe: Identification
     libelle: "Nom fournisseur"
 
   - nom: fournisseur_adresse
     type: textarea
+    groupe: Contact
     libelle: "Adresse"
 
   - nom: fournisseur_siret
     type: text
+    groupe: Relations
     libelle: "SIRET"
 
   - nom: fournisseur_tva_intra
     type: text
+    groupe: Relations
     libelle: "TVA Intra"
 
   - nom: contact_nom
     type: text
+    groupe: Identification
     libelle: "Contact"
 
   - nom: contact_email
     type: email
+    groupe: Contact
     libelle: "Email"
 
   - nom: contact_telephone
     type: tel
+    groupe: Relations
     libelle: "Téléphone"
 
   # ==========================================================================
@@ -79,20 +90,24 @@ champs:
   # ==========================================================================
   - nom: date_document
     type: date
+    groupe: Dates
     libelle: "Date"
     obligatoire: true
     defaut: "today"
 
   - nom: date_livraison_souhaitee
     type: date
+    groupe: Dates
     libelle: "Livraison souhaitée"
 
   - nom: date_livraison_confirmee
     type: date
+    groupe: Dates
     libelle: "Livraison confirmée"
 
   - nom: date_echeance
     type: date
+    groupe: Dates
     libelle: "Échéance paiement"
 
   # ==========================================================================
@@ -100,11 +115,13 @@ champs:
   # ==========================================================================
   - nom: lignes
     type: json
+    groupe: Metadata
     libelle: "Lignes"
     description: "Détail des lignes"
 
   - nom: nombre_lignes
     type: number
+    groupe: Informations
     libelle: "Nb lignes"
 
   # ==========================================================================
@@ -112,31 +129,38 @@ champs:
   # ==========================================================================
   - nom: total_ht
     type: money
+    groupe: Montants
     libelle: "Total HT"
 
   - nom: remise_globale
     type: money
+    groupe: Montants
     libelle: "Remise"
 
   - nom: frais_port
     type: money
+    groupe: Montants
     libelle: "Frais de port"
 
   - nom: tva_detail
     type: json
+    groupe: Montants
     libelle: "Détail TVA"
 
   - nom: total_tva
     type: money
+    groupe: Montants
     libelle: "Total TVA"
 
   - nom: total_ttc
     type: money
+    groupe: Montants
     libelle: "Total TTC"
     obligatoire: true
 
   - nom: autoliquidation
     type: boolean
+    groupe: Informations
     libelle: "Autoliquidation"
     defaut: false
 
@@ -145,6 +169,7 @@ champs:
   # ==========================================================================
   - nom: conditions_paiement
     type: select
+    groupe: Informations
     libelle: "Conditions"
     options:
       - COMPTANT
@@ -155,6 +180,7 @@ champs:
 
   - nom: mode_paiement
     type: select
+    groupe: Configuration
     libelle: "Mode paiement"
     options:
       - VIREMENT
@@ -164,6 +190,7 @@ champs:
 
   - nom: devise
     type: text
+    groupe: Informations
     libelle: "Devise"
     defaut: "EUR"
 
@@ -172,19 +199,23 @@ champs:
   # ==========================================================================
   - nom: demandeur_id
     type: relation
+    groupe: Relations
     libelle: "Demandeur"
     relation: employes
 
   - nom: service_demandeur
     type: text
+    groupe: Informations
     libelle: "Service"
 
   - nom: motif_achat
     type: textarea
+    groupe: Notes
     libelle: "Motif"
 
   - nom: urgence
     type: select
+    groupe: Informations
     libelle: "Urgence"
     options:
       - NORMALE
@@ -194,6 +225,7 @@ champs:
 
   - nom: budget_impute
     type: text
+    groupe: Informations
     libelle: "Budget imputé"
 
   # ==========================================================================
@@ -201,24 +233,29 @@ champs:
   # ==========================================================================
   - nom: validation_requise
     type: boolean
+    groupe: Informations
     libelle: "Validation requise"
     defaut: true
 
   - nom: montant_seuil_validation
     type: money
+    groupe: Montants
     libelle: "Seuil validation"
 
   - nom: validateur_id
     type: relation
+    groupe: Relations
     libelle: "Validateur"
     relation: employes
 
   - nom: date_validation
     type: datetime
+    groupe: Dates
     libelle: "Date validation"
 
   - nom: motif_rejet
     type: text
+    groupe: Informations
     libelle: "Motif rejet"
 
   # ==========================================================================
@@ -226,19 +263,23 @@ champs:
   # ==========================================================================
   - nom: demande_origine_id
     type: text
+    groupe: Relations
     libelle: "Demande origine"
 
   - nom: commande_confirmee
     type: boolean
+    groupe: Informations
     libelle: "Confirmée"
     defaut: false
 
   - nom: date_confirmation
     type: datetime
+    groupe: Dates
     libelle: "Date confirmation"
 
   - nom: numero_confirmation
     type: text
+    groupe: Informations
     libelle: "N° confirmation"
 
   # ==========================================================================
@@ -246,38 +287,46 @@ champs:
   # ==========================================================================
   - nom: commande_origine_id
     type: text
+    groupe: Relations
     libelle: "Commande origine"
 
   - nom: reception_complete
     type: boolean
+    groupe: Informations
     libelle: "Réception complète"
     defaut: false
 
   - nom: lignes_recues
     type: json
+    groupe: Metadata
     libelle: "Lignes reçues"
 
   - nom: ecarts_reception
     type: json
+    groupe: Metadata
     libelle: "Écarts"
     description: "Différences quantité/qualité"
 
   - nom: litige
     type: boolean
+    groupe: Informations
     libelle: "Litige"
     defaut: false
 
   - nom: motif_litige
     type: textarea
+    groupe: Notes
     libelle: "Motif litige"
 
   - nom: controle_qualite
     type: boolean
+    groupe: Informations
     libelle: "Contrôle qualité"
     defaut: false
 
   - nom: resultat_controle
     type: select
+    groupe: Informations
     libelle: "Résultat"
     options:
       - CONFORME
@@ -289,22 +338,27 @@ champs:
   # ==========================================================================
   - nom: reception_origine_id
     type: text
+    groupe: Relations
     libelle: "Réception origine"
 
   - nom: numero_facture_fournisseur
     type: text
+    groupe: Informations
     libelle: "N° facture fourn."
 
   - nom: date_facture_fournisseur
     type: date
+    groupe: Dates
     libelle: "Date facture fourn."
 
   - nom: ecart_prix
     type: money
+    groupe: Montants
     libelle: "Écart prix"
 
   - nom: document_facture
     type: text
+    groupe: Informations
     libelle: "Document"
 
   # ==========================================================================
@@ -312,23 +366,28 @@ champs:
   # ==========================================================================
   - nom: paiements
     type: json
+    groupe: Metadata
     libelle: "Paiements"
 
   - nom: montant_paye
     type: money
+    groupe: Montants
     libelle: "Montant payé"
     defaut: 0
 
   - nom: reste_a_payer
     type: money
+    groupe: Montants
     libelle: "Reste à payer"
 
   - nom: date_paiement
     type: date
+    groupe: Dates
     libelle: "Date paiement"
 
   - nom: reference_paiement
     type: text
+    groupe: Informations
     libelle: "Réf. paiement"
 
   # ==========================================================================
@@ -336,25 +395,30 @@ champs:
   # ==========================================================================
   - nom: compte_fournisseur
     type: text
+    groupe: Informations
     libelle: "Compte fournisseur"
     defaut: "401000"
 
   - nom: compte_charge
     type: text
+    groupe: Informations
     libelle: "Compte charge"
     defaut: "607000"
 
   - nom: journal
     type: text
+    groupe: Informations
     libelle: "Journal"
     defaut: "AC"
 
   - nom: ecriture_comptable_id
     type: text
+    groupe: Relations
     libelle: "Écriture"
 
   - nom: integre_compta
     type: boolean
+    groupe: Informations
     libelle: "Intégré compta"
     defaut: false
 
@@ -363,16 +427,19 @@ champs:
   # ==========================================================================
   - nom: maj_stock
     type: boolean
+    groupe: Quantites
     libelle: "MAJ stock"
     defaut: true
 
   - nom: entrepot_id
     type: relation
+    groupe: Relations
     libelle: "Entrepôt"
     relation: entrepots
 
   - nom: mouvement_stock_id
     type: text
+    groupe: Relations
     libelle: "Mouvement stock"
 
   # ==========================================================================
@@ -380,10 +447,12 @@ champs:
   # ==========================================================================
   - nom: pdf_document
     type: text
+    groupe: Informations
     libelle: "PDF"
 
   - nom: pieces_jointes
     type: json
+    groupe: Metadata
     libelle: "Pièces jointes"
 
   # ==========================================================================
@@ -391,6 +460,7 @@ champs:
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - BROUILLON
@@ -408,14 +478,17 @@ champs:
 
   - nom: cree_par
     type: text
+    groupe: Informations
     libelle: "Créé par"
 
   - nom: date_creation
     type: datetime
+    groupe: Dates
     libelle: "Date création"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

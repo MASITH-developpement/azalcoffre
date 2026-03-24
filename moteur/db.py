@@ -207,6 +207,11 @@ class Database:
                 if col is not None:
                     columns.append(col)
 
+        # Ajouter colonne 'lignes' si définie (pour devis, factures, etc.)
+        if "lignes" in definition:
+            columns.append(Column("lignes", JSONB, nullable=True, default=[]))
+            logger.debug("lignes_column_added", table=module_name)
+
         # Créer la table
         table = Table(
             module_name,

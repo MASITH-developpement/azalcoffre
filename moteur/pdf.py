@@ -1,14 +1,13 @@
 # =============================================================================
-# AZALPLUS - PDF Generator
+# AZALPLUS - PDF Generator (Style Professionnel)
 # =============================================================================
 """
 Generateur de PDF pour Devis et Factures.
-Utilise ReportLab pour generer des PDF.
-Le style est configure dans config/theme.yml (section 'documents').
+Style inspiré des documents professionnels (AXA, etc.)
 """
 
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Generator
 from uuid import UUID as PyUUID
 from datetime import datetime, date
 from decimal import Decimal
@@ -18,13 +17,14 @@ import structlog
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
+from reportlab.lib.units import mm, cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    HRFlowable, KeepTogether, Image
+    HRFlowable, KeepTogether, Image, PageBreak, Frame, PageTemplate
 )
+from reportlab.platypus.doctemplate import BaseDocTemplate
 import base64
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -75,920 +75,882 @@ def hex_to_color(hex_color: str) -> colors.Color:
 
 
 # =============================================================================
-# PDFGenerator Class
+# PDFGenerator Class - Style Professionnel
 # =============================================================================
 class PDFGenerator:
-    """Generateur de PDF pour documents commerciaux."""
+    """Generateur de PDF style professionnel."""
 
     def __init__(self, tenant_id: PyUUID):
-        """
-        Initialise le generateur.
-
-        Args:
-            tenant_id: UUID du tenant (isolation multi-tenant)
-        """
         self.tenant_id = tenant_id
         self.theme = DocumentTheme.load()
 
-        # Couleurs depuis le theme
-        self.primary_color = hex_to_color(self.theme.get("couleur", "#2563EB"))
+        # Couleurs
+        self.primary_color = hex_to_color(self.theme.get("couleur", "#3454D1"))
         self.text_color = hex_to_color("#1e293b")
         self.gray_color = hex_to_color("#64748b")
-        self.light_gray = hex_to_color("#f8fafc")
+        self.light_gray = hex_to_color("#f1f5f9")
         self.border_color = hex_to_color("#e2e8f0")
+        self.header_bg = hex_to_color("#f8fafc")
 
-        # Styles
+        # Données entreprise (chargées une fois)
+        self.tenant_data = None
+
         self._setup_styles()
 
     def _setup_styles(self):
         """Configure les styles de paragraphe."""
         self.styles = getSampleStyleSheet()
 
-        # Style titre entreprise
+        # Nom entreprise (header)
         self.styles.add(ParagraphStyle(
             name='CompanyName',
             fontName='Helvetica-Bold',
-            fontSize=16,
+            fontSize=14,
             textColor=self.primary_color,
-            spaceAfter=6
+            spaceAfter=2
         ))
 
-        # Style details entreprise
+        # Slogan/description entreprise
         self.styles.add(ParagraphStyle(
-            name='CompanyDetails',
-            fontName='Helvetica',
-            fontSize=9,
-            textColor=self.gray_color,
-            leading=13
-        ))
-
-        # Style type document (DEVIS / FACTURE)
-        self.styles.add(ParagraphStyle(
-            name='DocType',
-            fontName='Helvetica-Bold',
-            fontSize=20,
-            textColor=self.primary_color,
-            alignment=TA_RIGHT
-        ))
-
-        # Style numero document
-        self.styles.add(ParagraphStyle(
-            name='DocNumber',
-            fontName='Helvetica-Bold',
-            fontSize=11,
-            textColor=self.text_color,
-            alignment=TA_RIGHT
-        ))
-
-        # Style date
-        self.styles.add(ParagraphStyle(
-            name='DocDate',
-            fontName='Helvetica',
-            fontSize=10,
-            textColor=self.gray_color,
-            alignment=TA_RIGHT
-        ))
-
-        # Style titre section
-        self.styles.add(ParagraphStyle(
-            name='SectionTitle',
-            fontName='Helvetica-Bold',
-            fontSize=9,
-            textColor=self.gray_color,
-            spaceAfter=6,
-            spaceBefore=12
-        ))
-
-        # Style nom client
-        self.styles.add(ParagraphStyle(
-            name='ClientName',
-            fontName='Helvetica-Bold',
-            fontSize=11,
-            textColor=self.text_color,
-            spaceAfter=4
-        ))
-
-        # Style details client
-        self.styles.add(ParagraphStyle(
-            name='ClientDetails',
-            fontName='Helvetica',
-            fontSize=9,
-            textColor=self.gray_color,
-            leading=13
-        ))
-
-        # Style objet
-        self.styles.add(ParagraphStyle(
-            name='Object',
-            fontName='Helvetica',
-            fontSize=11,
-            textColor=self.text_color
-        ))
-
-        # Style notes
-        self.styles.add(ParagraphStyle(
-            name='Notes',
+            name='CompanySlogan',
             fontName='Helvetica',
             fontSize=9,
             textColor=self.gray_color,
             leading=12
         ))
 
-    def _format_date(self, d: Any) -> str:
-        """Formate une date pour l'affichage."""
-        if d is None:
+        # Titre document (DEVIS / FACTURE)
+        self.styles.add(ParagraphStyle(
+            name='DocTitle',
+            fontName='Helvetica-Bold',
+            fontSize=18,
+            textColor=self.text_color,
+            alignment=TA_LEFT
+        ))
+
+        # Labels (Référence, Date, etc.)
+        self.styles.add(ParagraphStyle(
+            name='Label',
+            fontName='Helvetica',
+            fontSize=9,
+            textColor=self.gray_color,
+        ))
+
+        # Valeurs
+        self.styles.add(ParagraphStyle(
+            name='Value',
+            fontName='Helvetica-Bold',
+            fontSize=9,
+            textColor=self.text_color,
+        ))
+
+        # Adresse client
+        self.styles.add(ParagraphStyle(
+            name='ClientAddress',
+            fontName='Helvetica',
+            fontSize=10,
+            textColor=self.text_color,
+            leading=14
+        ))
+
+        # Titre de section (1ere intervention, etc.)
+        self.styles.add(ParagraphStyle(
+            name='SectionTitle',
+            fontName='Helvetica-Bold',
+            fontSize=10,
+            textColor=self.primary_color,
+            spaceBefore=8,
+            spaceAfter=4
+        ))
+
+        # Notes
+        self.styles.add(ParagraphStyle(
+            name='Notes',
+            fontName='Helvetica',
+            fontSize=8,
+            textColor=self.gray_color,
+            leading=11
+        ))
+
+        # Footer
+        self.styles.add(ParagraphStyle(
+            name='Footer',
+            fontName='Helvetica',
+            fontSize=8,
+            textColor=self.gray_color,
+            alignment=TA_CENTER,
+            leading=11
+        ))
+
+    def _format_date(self, d) -> str:
+        """Formate une date."""
+        if not d:
             return ""
         if isinstance(d, str):
             try:
                 d = datetime.fromisoformat(d.replace('Z', '+00:00'))
             except ValueError:
                 return d
-        if isinstance(d, datetime):
-            return d.strftime("%d/%m/%Y")
-        if isinstance(d, date):
+        if isinstance(d, (datetime, date)):
             return d.strftime("%d/%m/%Y")
         return str(d)
 
-    def _format_money(self, amount: Any) -> str:
-        """Formate un montant monetaire."""
-        if amount is None:
-            return "0,00"
+    def _format_money(self, amount, with_symbol: bool = False) -> str:
+        """Formate un montant en euros."""
         try:
-            value = Decimal(str(amount))
-            # Format francais: espace pour milliers, virgule pour decimales
+            value = Decimal(str(amount or 0))
             formatted = f"{value:,.2f}".replace(",", " ").replace(".", ",")
+            if with_symbol:
+                return f"{formatted} €"
             return formatted
         except (ValueError, TypeError):
             return "0,00"
 
-    def _get_client_info(self, client_id: Optional[str]) -> Dict:
-        """Recupere les informations du client."""
-        if not client_id:
-            return {}
-
-        client = Database.get_by_id("clients", self.tenant_id, PyUUID(client_id))
-        return client or {}
-
     def _get_tenant_info(self) -> Dict:
-        """Recupere les informations de l'entreprise (tenant) depuis la base."""
-        # Recuperer les parametres entreprise du tenant
-        try:
-            entreprises = Database.query(
-                "entreprise",
-                self.tenant_id,
-                limit=1
-            )
+        """Recupere les informations de l'entreprise."""
+        if self.tenant_data:
+            return self.tenant_data
 
-            if entreprises and len(entreprises) > 0:
-                ent = entreprises[0]
-                return {
-                    "raison_sociale": ent.get("raison_sociale") or ent.get("nom", ""),
-                    "nom": ent.get("nom", ""),
-                    "adresse": ent.get("adresse", ""),
-                    "code_postal": ent.get("code_postal", ""),
-                    "ville": ent.get("ville", ""),
-                    "pays": ent.get("pays", ""),
-                    "telephone": ent.get("telephone", ""),
-                    "email": ent.get("email", ""),
-                    "siret": ent.get("siret", ""),
-                    "siren": ent.get("siren", ""),
-                    "tva_intra": ent.get("tva_intracommunautaire", ""),
-                    "rcs": ent.get("rcs", ""),
-                    "capital_social": ent.get("capital_social", ""),
-                    "forme_juridique": ent.get("forme_juridique", ""),
-                    "site_web": ent.get("site_web", ""),
-                    "logo_url": ent.get("logo_url", ""),
-                    "logo_filename": ent.get("logo_filename", ""),
-                    "iban": ent.get("iban", ""),
-                    "bic": ent.get("bic", ""),
-                    "banque": ent.get("banque", ""),
-                    "titulaire_compte": ent.get("titulaire_compte", ""),
-                    "mentions_legales": ent.get("mentions_legales", ""),
-                    "mention_facture": ent.get("mention_facture", ""),
-                    "mention_devis": ent.get("mention_devis", ""),
-                    "texte_pied_facture": ent.get("texte_pied_facture", ""),
-                    "conditions_generales_vente": ent.get("conditions_generales_vente", ""),
-                }
+        try:
+            from sqlalchemy import text
+            with Database.get_session() as session:
+                result = session.execute(
+                    text("SELECT * FROM azalplus.entreprise WHERE tenant_id = :tenant_id LIMIT 1"),
+                    {"tenant_id": str(self.tenant_id)}
+                )
+                row = result.fetchone()
+                if row:
+                    ent = dict(row._mapping)
+                    self.tenant_data = {
+                        "raison_sociale": ent.get("raison_sociale") or ent.get("nom", ""),
+                        "nom": ent.get("nom", ""),
+                        "slogan": ent.get("texte_pied_facture") or ent.get("slogan") or "",
+                        "adresse": ent.get("adresse", ""),
+                        "complement_adresse": ent.get("adresse_complement", ""),
+                        "code_postal": ent.get("code_postal", ""),
+                        "ville": ent.get("ville", ""),
+                        "pays": ent.get("pays", "France"),
+                        "telephone": ent.get("telephone", ""),
+                        "email": ent.get("email", ""),
+                        "site_web": ent.get("site_web", ""),
+                        "siret": ent.get("siret", ""),
+                        "tva_intra": ent.get("tva_intracommunautaire", ""),
+                        "iban": ent.get("iban", ""),
+                        "bic": ent.get("bic", ""),
+                        "logo_filename": ent.get("logo_filename", ""),
+                        "logo_url": ent.get("logo_url", ""),
+                        "regime_tva": ent.get("regime_tva", ""),
+                        "mentions_legales": ent.get("mentions_legales", ""),
+                    }
+                    return self.tenant_data
         except Exception as e:
             logger.warning("entreprise_not_found", error=str(e))
 
-        # Valeurs par defaut si aucune configuration
-        return {
+        # Valeurs par défaut
+        self.tenant_data = {
             "raison_sociale": "Mon Entreprise",
             "nom": "Mon Entreprise",
+            "slogan": "",
             "adresse": "",
             "code_postal": "",
             "ville": "",
             "pays": "France",
             "telephone": "",
             "email": "",
-            "siret": "",
-            "siren": "",
-            "tva_intra": "",
-            "rcs": "",
-            "capital_social": "",
-            "forme_juridique": "",
             "site_web": "",
-            "logo_url": "",
-            "logo_filename": "",
+            "siret": "",
+            "tva_intra": "",
             "iban": "",
             "bic": "",
-            "banque": "",
-            "titulaire_compte": "",
-            "mentions_legales": "",
-            "mention_facture": "",
-            "mention_devis": "",
-            "texte_pied_facture": "",
-            "conditions_generales_vente": "",
         }
+        return self.tenant_data
 
-    def _build_header(self, doc_type: str, doc_data: Dict, tenant_data: Dict) -> List:
-        """Construit l'en-tete du document."""
+    def _get_client_info(self, client_id) -> Dict:
+        """Recupere les informations du client et normalise les colonnes."""
+        if not client_id:
+            return {}
+
+        try:
+            from sqlalchemy import text
+            uuid_str = str(client_id)
+
+            with Database.get_session() as session:
+                # Essayer clients (schema moderne avec colonnes anglaises)
+                result = session.execute(
+                    text("SELECT * FROM azalplus.clients WHERE id = :id AND tenant_id = :tenant_id"),
+                    {"id": uuid_str, "tenant_id": str(self.tenant_id)}
+                )
+                row = result.fetchone()
+                if row:
+                    d = dict(row._mapping)
+                    # Normaliser vers le format attendu (FR)
+                    return {
+                        "raison_sociale": d.get("legal_name") or d.get("name") or "",
+                        "nom": d.get("name") or d.get("contact_name") or "",
+                        "prenom": "",
+                        "code_client": d.get("code") or "",  # Référence client
+                        "adresse": d.get("address_line1") or d.get("adresse1") or "",
+                        "adresse2": d.get("address_line2") or d.get("adresse2") or "",
+                        "code_postal": d.get("postal_code") or d.get("cp") or "",
+                        "ville": d.get("city") or d.get("ville") or "",
+                        "pays": d.get("country_code") or d.get("pays") or "France",
+                        "email": d.get("email") or "",
+                        "telephone": d.get("phone") or d.get("mobile") or "",
+                    }
+
+                # Essayer donneur_ordre (schema FR)
+                result = session.execute(
+                    text("SELECT * FROM azalplus.donneur_ordre WHERE id = :id AND tenant_id = :tenant_id"),
+                    {"id": uuid_str, "tenant_id": str(self.tenant_id)}
+                )
+                row = result.fetchone()
+                if row:
+                    d = dict(row._mapping)
+                    return {
+                        "raison_sociale": d.get("raison_sociale") or d.get("nom", ""),
+                        "nom": d.get("nom", ""),
+                        "prenom": d.get("prenom", ""),
+                        "adresse": d.get("adresse", ""),
+                        "code_postal": d.get("code_postal", ""),
+                        "ville": d.get("ville", ""),
+                        "pays": d.get("pays", "France"),
+                    }
+        except Exception as e:
+            logger.debug("client_lookup_failed", error=str(e), client_id=client_id)
+
+        return {}
+
+    def _get_user_name(self, user_id) -> str:
+        """Recupere le nom d'un utilisateur."""
+        if not user_id:
+            return ""
+        try:
+            from sqlalchemy import text
+            with Database.get_session() as session:
+                result = session.execute(
+                    text("SELECT prenom, nom FROM azalplus.utilisateurs WHERE id = :id"),
+                    {"id": str(user_id)}
+                )
+                row = result.fetchone()
+                if row:
+                    return f"{row[0] or ''} {row[1] or ''}".strip()
+        except:
+            pass
+        return ""
+
+    def _build_header(self, doc_type: str, doc_data: Dict, tenant_data: Dict, client_data: Dict) -> List:
+        """Construit l'en-tete style Odoo."""
         elements = []
 
-        # Informations entreprise (gauche)
-        company_name = tenant_data.get("raison_sociale", "")
-        company_address = tenant_data.get("adresse", "")
-        company_cp = tenant_data.get("code_postal", "")
-        company_ville = tenant_data.get("ville", "")
-        company_tel = tenant_data.get("telephone", "")
-        company_email = tenant_data.get("email", "")
-        company_siret = tenant_data.get("siret", "")
-        company_tva = tenant_data.get("tva_intra", "")
+        # === LIGNE 1: ENTREPRISE (gauche) + DOCUMENT TITLE (droite) ===
+        company_name = tenant_data.get("nom") or tenant_data.get("raison_sociale", "Mon Entreprise")
+        company_addr = []
+        if tenant_data.get("adresse"):
+            company_addr.append(tenant_data.get("adresse"))
+        cp_ville = f"{tenant_data.get('code_postal', '')} {tenant_data.get('ville', '')}".strip()
+        if cp_ville:
+            company_addr.append(cp_ville)
+        if tenant_data.get("telephone"):
+            company_addr.append(f"Tél: {tenant_data.get('telephone')}")
+        if tenant_data.get("email"):
+            company_addr.append(tenant_data.get("email"))
 
-        company_details = f"{company_address}<br/>{company_cp} {company_ville}<br/>Tel: {company_tel}<br/>Email: {company_email}<br/>SIRET: {company_siret}<br/>TVA: {company_tva}"
+        company_text = f"<b><font size='14' color='#{self.primary_color.hexval()[2:]}'>{company_name}</font></b>"
+        if company_addr:
+            company_text += "<br/>" + "<br/>".join(company_addr)
 
-        # Informations document (droite)
-        titles = {"devis": "DEVIS", "facture": "FACTURE"}
-        title = titles.get(doc_type, "DOCUMENT")
-        numero = doc_data.get("numero", "")
-        date_doc = self._format_date(doc_data.get("date"))
+        # Titre document
+        doc_titles = {"devis": "Devis", "facture": "Facture"}
+        doc_title = doc_titles.get(doc_type, "Document")
+        numero = doc_data.get("numero") or doc_data.get("number", "")
 
-        # Dates specifiques
-        date_info = f"Date: {date_doc}"
-        if doc_type == "devis":
-            validite = self._format_date(doc_data.get("validite"))
-            if validite:
-                date_info += f"<br/>Validite: {validite}"
-        elif doc_type == "facture":
-            echeance = self._format_date(doc_data.get("echeance"))
-            if echeance:
-                date_info += f"<br/>Echeance: {echeance}"
+        header_data = [[
+            Paragraph(company_text, self.styles['ClientAddress']),
+            Paragraph(f"<font size='22' color='#{self.primary_color.hexval()[2:]}'><b>{doc_title}</b></font>",
+                     ParagraphStyle('BigTitle', parent=self.styles['DocTitle'], alignment=TA_RIGHT, fontSize=22))
+        ]]
 
-        # Creer le tableau d'en-tete
-        left_content = [
-            Paragraph(company_name, self.styles['CompanyName']),
-            Paragraph(company_details, self.styles['CompanyDetails'])
-        ]
-
-        right_content = [
-            Paragraph(title, self.styles['DocType']),
-            Paragraph(f"N. {numero}", self.styles['DocNumber']),
-            Paragraph(date_info, self.styles['DocDate'])
-        ]
-
-        header_data = [[left_content, right_content]]
-        header_table = Table(header_data, colWidths=[90*mm, 90*mm])
+        header_table = Table(header_data, colWidths=[100*mm, 80*mm])
         header_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
         ]))
-
         elements.append(header_table)
         elements.append(Spacer(1, 8*mm))
-        elements.append(HRFlowable(width="100%", thickness=1, color=self.border_color))
-        elements.append(Spacer(1, 8*mm))
 
-        return elements
+        # === LIGNE 2: CLIENT (gauche, encadré) + INFOS DOC (droite, encadré) ===
+        # Client
+        client_name = client_data.get("raison_sociale") or \
+                     f"{client_data.get('prenom', '')} {client_data.get('nom', '')}".strip() or \
+                     "Client"
 
-    def _build_client_section(self, client_data: Dict) -> List:
-        """Construit la section client."""
-        elements = []
-
-        elements.append(Paragraph("CLIENT", self.styles['SectionTitle']))
-
-        client_name = client_data.get("raison_sociale") or f"{client_data.get('nom', '')} {client_data.get('prenom', '')}".strip()
-        client_address = client_data.get("adresse", "")
-        client_cp = client_data.get("code_postal", "")
-        client_ville = client_data.get("ville", "")
-        client_pays = client_data.get("pays", "")
-
-        # Box client avec bordure gauche coloree
-        client_details = f"{client_address}<br/>{client_cp} {client_ville}<br/>{client_pays}"
-
-        client_table_data = [[
-            Paragraph(client_name, self.styles['ClientName']),
-        ], [
-            Paragraph(client_details, self.styles['ClientDetails'])
-        ]]
-
-        client_table = Table(client_table_data, colWidths=[100*mm])
-        client_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), self.light_gray),
-            ('LEFTPADDING', (0, 0), (-1, -1), 10),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (0, 0), 10),
-            ('BOTTOMPADDING', (-1, -1), (-1, -1), 10),
-            ('LINEBEFORESTARTPADDING', (0, 0), (0, -1), 3),
-            ('LINEBEFORECOLOR', (0, 0), (0, -1), self.primary_color),
-        ]))
-
-        elements.append(client_table)
-        elements.append(Spacer(1, 6*mm))
-
-        return elements
-
-    def _build_object_section(self, doc_data: Dict) -> List:
-        """Construit la section objet."""
-        elements = []
-
-        objet = doc_data.get("objet", "")
-        if objet:
-            elements.append(Paragraph("OBJET", self.styles['SectionTitle']))
-            elements.append(Paragraph(objet, self.styles['Object']))
-            elements.append(Spacer(1, 6*mm))
-
-        return elements
-
-    def _build_lines_table(self, doc_data: Dict) -> List:
-        """Construit le tableau des lignes avec colonne TVA."""
-        elements = []
-
-        lignes = doc_data.get("lignes", [])
-        if isinstance(lignes, str):
-            import json
-            try:
-                lignes = json.loads(lignes)
-            except json.JSONDecodeError:
-                lignes = []
-
-        # En-tetes du tableau - avec colonne TVA
-        header = ['Description', 'Qte', 'P.U. HT', 'Remise', 'TVA', 'Total HT']
-
-        # Donnees
-        table_data = [header]
-
-        for ligne in lignes:
-            description = ligne.get("description", "")
-            quantite = ligne.get("quantite") or ligne.get("quantity", 1)
-            unite = ligne.get("unite") or ligne.get("unit", "")
-            qte_str = f"{quantite} {unite}".strip() if unite else str(quantite)
-
-            prix_unitaire = ligne.get("prix_unitaire") or ligne.get("unit_price", 0)
-            prix_unitaire_str = f"{self._format_money(prix_unitaire)} EUR"
-
-            remise = ligne.get("remise_percent") or ligne.get("remise") or ligne.get("discount_percent", 0)
-            remise_str = f"-{remise}%" if remise else ""
-
-            # Taux TVA de la ligne
-            taux_tva = ligne.get("taux_tva") or ligne.get("tax_rate", 20)
-            tva_str = f"{taux_tva}%"
-
-            # Total HT de la ligne
-            total_ht_ligne = ligne.get("total_ht_ligne") or ligne.get("subtotal", 0)
-            if not total_ht_ligne:
-                # Calculer si non fourni
-                prix = float(prix_unitaire)
-                qte = float(quantite)
-                rem = float(remise) / 100 if remise else 0
-                total_ht_ligne = prix * qte * (1 - rem)
-
-            total_ligne_str = f"{self._format_money(total_ht_ligne)} EUR"
-
-            table_data.append([description, qte_str, prix_unitaire_str, remise_str, tva_str, total_ligne_str])
-
-        # Si pas de lignes, ajouter une ligne vide
-        if len(table_data) == 1:
-            table_data.append(["Aucune ligne", "", "", "", "", ""])
-
-        # Creer le tableau avec colonnes ajustees
-        col_widths = [68*mm, 15*mm, 25*mm, 15*mm, 15*mm, 25*mm]
-        table = Table(table_data, colWidths=col_widths)
-
-        # Style du tableau
-        style_commands = [
-            # En-tete
-            ('BACKGROUND', (0, 0), (-1, 0), self.primary_color),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 8),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-
-            # Corps
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
-            ('ALIGN', (1, 1), (1, -1), 'CENTER'),  # Qte
-            ('ALIGN', (2, 1), (2, -1), 'RIGHT'),   # P.U.
-            ('ALIGN', (3, 1), (3, -1), 'CENTER'),  # Remise
-            ('ALIGN', (4, 1), (4, -1), 'CENTER'),  # TVA
-            ('ALIGN', (5, 1), (5, -1), 'RIGHT'),   # Total
-
-            # Padding
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-
-            # Lignes
-            ('LINEBELOW', (0, 0), (-1, -1), 0.5, self.border_color),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]
-
-        # Style zebra si configure
-        tableaux_style = self.theme.get("tableaux", "simple")
-        if tableaux_style == "zebra":
-            for i in range(2, len(table_data), 2):
-                style_commands.append(('BACKGROUND', (0, i), (-1, i), self.light_gray))
-
-        table.setStyle(TableStyle(style_commands))
-
-        elements.append(table)
-        elements.append(Spacer(1, 6*mm))
-
-        return elements
-
-    def _build_tax_summary(self, doc_data: Dict) -> List[Dict]:
-        """
-        Construit le resume de TVA par taux a partir des lignes.
-
-        Args:
-            doc_data: Donnees du document
-
-        Returns:
-            Liste de dicts avec code, nom, taux, base_ht, montant_tva
-        """
-        # Si ventilation_tva est deja fournie, l'utiliser
-        ventilation = doc_data.get("ventilation_tva")
-        if ventilation:
-            if isinstance(ventilation, str):
-                import json
-                try:
-                    ventilation = json.loads(ventilation)
-                except json.JSONDecodeError:
-                    ventilation = []
-            return ventilation
-
-        # Sinon, calculer depuis les lignes
-        lignes = doc_data.get("lignes", [])
-        if isinstance(lignes, str):
-            import json
-            try:
-                lignes = json.loads(lignes)
-            except json.JSONDecodeError:
-                lignes = []
-
-        # Grouper par taux de TVA
-        tva_groups: Dict[str, Dict] = {}
-        for ligne in lignes:
-            taux = ligne.get("taux_tva") or ligne.get("tax_rate") or 20
-            code_taxe = ligne.get("code_taxe") or ligne.get("tax_code") or f"TVA{int(taux)}"
-
-            key = str(taux)
-            if key not in tva_groups:
-                tva_groups[key] = {
-                    "taxe_code": code_taxe,
-                    "taxe_nom": f"TVA {taux}%",
-                    "taux": float(taux),
-                    "base_ht": Decimal("0"),
-                    "montant_tva": Decimal("0")
-                }
-
-            # Calculer la base HT de la ligne
-            prix = Decimal(str(ligne.get("prix_unitaire") or ligne.get("unit_price") or 0))
-            qte = Decimal(str(ligne.get("quantite") or ligne.get("quantity") or 1))
-            remise_pct = Decimal(str(ligne.get("remise_percent") or ligne.get("remise") or ligne.get("discount_percent") or 0))
-
-            base_ligne = prix * qte * (1 - remise_pct / 100)
-            tva_ligne = base_ligne * Decimal(str(taux)) / 100
-
-            tva_groups[key]["base_ht"] += base_ligne
-            tva_groups[key]["montant_tva"] += tva_ligne
-
-        # Convertir en liste triee par taux decroissant
-        result = []
-        for key in sorted(tva_groups.keys(), key=lambda x: float(x), reverse=True):
-            group = tva_groups[key]
-            result.append({
-                "taxe_code": group["taxe_code"],
-                "taxe_nom": group["taxe_nom"],
-                "taux": group["taux"],
-                "base_ht": float(group["base_ht"]),
-                "montant_tva": float(group["montant_tva"])
-            })
-
-        return result
-
-    def _build_totals_section(self, doc_type: str, doc_data: Dict) -> List:
-        """Construit la section des totaux avec ventilation TVA par taux."""
-        elements = []
-
-        # Construire le resume TVA par taux
-        tax_summary = self._build_tax_summary(doc_data)
-
-        # Calculer les totaux depuis le resume TVA
-        total_ht = Decimal("0")
-        total_tva = Decimal("0")
-        for tax_group in tax_summary:
-            total_ht += Decimal(str(tax_group["base_ht"]))
-            total_tva += Decimal(str(tax_group["montant_tva"]))
-
-        # Utiliser les valeurs du document si disponibles (priorite)
-        if doc_data.get("total_ht") or doc_data.get("subtotal"):
-            total_ht = Decimal(str(doc_data.get("total_ht") or doc_data.get("subtotal", 0) or 0))
-        if doc_data.get("total_tva") or doc_data.get("tax_amount"):
-            total_tva = Decimal(str(doc_data.get("total_tva") or doc_data.get("tax_amount", 0) or 0))
-
-        total_ttc = total_ht + total_tva
-        if doc_data.get("total_ttc") or doc_data.get("total"):
-            total_ttc = Decimal(str(doc_data.get("total_ttc") or doc_data.get("total", 0) or 0))
-
-        # Construction du tableau des totaux
-        totals_data = [
-            ['Total HT', f'{self._format_money(total_ht)} EUR'],
-        ]
-
-        # Ajouter la ventilation TVA si plusieurs taux
-        if len(tax_summary) > 1:
-            # Plusieurs taux: afficher le detail
-            for tax_group in tax_summary:
-                taux = tax_group["taux"]
-                base_ht = tax_group["base_ht"]
-                montant_tva = tax_group["montant_tva"]
-                # Format: "TVA 20% (sur 1000,00)" => "200,00"
-                totals_data.append([
-                    f'TVA {taux}% (base {self._format_money(base_ht)})',
-                    f'{self._format_money(montant_tva)} EUR'
-                ])
-        elif len(tax_summary) == 1:
-            # Un seul taux: format simple
-            tax_group = tax_summary[0]
-            taux = tax_group["taux"]
-            montant_tva = tax_group["montant_tva"]
-            totals_data.append([f'TVA ({taux}%)', f'{self._format_money(montant_tva)} EUR'])
+        billing_addr = doc_data.get("billing_address") or doc_data.get("adresse_facturation") or ""
+        if billing_addr and isinstance(billing_addr, str):
+            client_address = billing_addr.replace("\n", "<br/>")
         else:
-            # Pas de detail: utiliser le taux par defaut
-            tva_pct = doc_data.get("tva", 20) or 20
-            totals_data.append([f'TVA ({tva_pct}%)', f'{self._format_money(total_tva)} EUR'])
+            client_address_lines = []
+            if client_data.get("adresse"):
+                client_address_lines.append(client_data.get("adresse"))
+            cp_ville = f"{client_data.get('code_postal', '')} {client_data.get('ville', '')}".strip()
+            if cp_ville:
+                client_address_lines.append(cp_ville)
+            client_address = "<br/>".join(client_address_lines)
 
-        # Ajuster la largeur des colonnes selon le contenu
-        col_width_label = 45*mm
-        col_width_value = 30*mm
+        client_box_content = f"<b>{client_name}</b>"
+        if client_address:
+            client_box_content += f"<br/>{client_address}"
 
-        totals_table = Table(totals_data, colWidths=[col_width_label, col_width_value])
-        totals_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('TEXTCOLOR', (0, 0), (0, -1), self.gray_color),
-            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('LINEBELOW', (0, 0), (-1, -1), 0.5, self.border_color),
-        ]))
-
-        # Total TTC (avec fond couleur)
-        ttc_data = [['Total TTC', f'{self._format_money(total_ttc)} EUR']]
-        ttc_table = Table(ttc_data, colWidths=[col_width_label, col_width_value])
-        ttc_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), self.primary_color),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 11),
-            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
-            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        # Box client avec bordure
+        client_box = Table([[Paragraph(client_box_content, self.styles['ClientAddress'])]], colWidths=[85*mm])
+        client_box.setStyle(TableStyle([
+            ('BOX', (0, 0), (-1, -1), 1, self.border_color),
             ('TOPPADDING', (0, 0), (-1, -1), 8),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.white),
         ]))
 
-        # Conteneur aligne a droite
-        wrapper_data = [[totals_table], [Spacer(1, 2*mm)], [ttc_table]]
+        # Infos document dans un box coloré
+        date_doc = self._format_date(doc_data.get("date"))
+        if doc_type == "devis":
+            date_fin = self._format_date(doc_data.get("validite") or doc_data.get("validity_date"))
+            date_fin_label = "Date d'expiration"
+        else:
+            date_fin = self._format_date(doc_data.get("echeance") or doc_data.get("due_date"))
+            date_fin_label = "Date d'échéance"
 
-        # Montant paye pour factures
-        if doc_type == "facture":
-            montant_paye = doc_data.get("montant_paye") or doc_data.get("paid_amount", 0)
-            reste = doc_data.get("reste_a_payer") or doc_data.get("remaining_amount")
-            if reste is None:
-                reste = float(total_ttc) - float(montant_paye or 0)
+        vendeur = self._get_user_name(doc_data.get("assigned_to") or doc_data.get("created_by"))
+        # Référence client: priorité à la référence du document, sinon code client
+        ref_client = doc_data.get("reference_client") or doc_data.get("reference") or client_data.get("code_client") or ""
 
-            paiement_data = [
-                ['Deja paye', f'{self._format_money(montant_paye)} EUR'],
-                ['Reste a payer', f'{self._format_money(reste)} EUR'],
-            ]
-            paiement_table = Table(paiement_data, colWidths=[col_width_label, col_width_value])
-            paiement_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 9),
-                ('TEXTCOLOR', (0, 0), (0, -1), self.gray_color),
-                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-                ('TOPPADDING', (0, 0), (-1, -1), 5),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-                ('LINEBELOW', (0, 0), (-1, -1), 0.5, self.border_color),
-            ]))
-            wrapper_data.append([Spacer(1, 2*mm)])
-            wrapper_data.append([paiement_table])
+        info_data = [
+            [Paragraph(f"<b>N° {doc_title}</b>", self.styles['Label']),
+             Paragraph(f"<b>{numero}</b>", self.styles['Value'])],
+        ]
+        # Référence client (si présente)
+        if ref_client:
+            info_data.append([
+                Paragraph("<b>Réf. client</b>", self.styles['Label']),
+                Paragraph(ref_client, self.styles['Value'])
+            ])
+        info_data.append([
+            Paragraph(f"<b>Date</b>", self.styles['Label']),
+            Paragraph(date_doc, self.styles['Value'])
+        ])
+        if date_fin:
+            info_data.append([
+                Paragraph(f"<b>{date_fin_label}</b>", self.styles['Label']),
+                Paragraph(date_fin, self.styles['Value'])
+            ])
+        if vendeur:
+            info_data.append([
+                Paragraph("<b>Commercial</b>", self.styles['Label']),
+                Paragraph(vendeur, self.styles['Value'])
+            ])
 
-        wrapper_width = col_width_label + col_width_value
-        wrapper_table = Table(wrapper_data, colWidths=[wrapper_width])
-        wrapper_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        info_table = Table(info_data, colWidths=[40*mm, 45*mm])
+        info_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), self.header_bg),
+            ('BOX', (0, 0), (-1, -1), 1, self.border_color),
+            ('LINEBELOW', (0, 0), (-1, -2), 0.5, self.border_color),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
         ]))
 
-        # Aligner a droite avec un tableau externe
-        left_width = 180*mm - wrapper_width - 5*mm
-        outer_data = [['', wrapper_table]]
-        outer_table = Table(outer_data, colWidths=[left_width, wrapper_width])
-        outer_table.setStyle(TableStyle([
+        # Assemblage
+        row2_data = [[client_box, info_table]]
+        row2_table = Table(row2_data, colWidths=[95*mm, 85*mm])
+        row2_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
         ]))
+        elements.append(row2_table)
+        elements.append(Spacer(1, 10*mm))
 
-        elements.append(outer_table)
+        return elements
+
+    def _build_lines_table(self, doc_data: Dict) -> List:
+        """Construit le tableau des lignes avec groupes/sections."""
+        elements = []
+
+        lignes = doc_data.get("lignes") or doc_data.get("lines") or []
+        if isinstance(lignes, str):
+            import json
+            try:
+                lignes = json.loads(lignes)
+            except:
+                lignes = []
+
+        if not lignes:
+            return elements
+
+        # En-têtes du tableau
+        header = ['Description', 'Quantité', 'Prix\nunitaire', 'Taxes', 'Montant']
+        col_widths = [85*mm, 20*mm, 25*mm, 20*mm, 25*mm]
+
+        table_data = [header]
+
+        # Parcourir les lignes dans l'ordre et grouper par section pour les sous-totaux
+        current_section = None
+        section_total = Decimal("0")
+        section_rows_start = len(table_data)  # Pour savoir où commence la section courante
+
+        for i, ligne in enumerate(lignes):
+            line_type = ligne.get("line_type", "product")
+
+            # Ligne de type section (titre)
+            if line_type == "section":
+                # Afficher le sous-total de la section précédente si elle existe
+                if current_section and section_total > 0:
+                    table_data.append([
+                        Paragraph(f"<b>Sous-total {current_section}</b>", self.styles['SectionTitle']),
+                        '', '', '',
+                        Paragraph(f"<b>{self._format_money(section_total)} €</b>", self.styles['Value'])
+                    ])
+
+                # Nouvelle section
+                current_section = ligne.get("description", "Section")
+                section_total = Decimal("0")
+
+                # Afficher le titre de section (ligne colorée)
+                table_data.append([
+                    Paragraph(f"<b>{current_section}</b>", self.styles['SectionTitle']),
+                    '', '', '', ''
+                ])
+                continue
+
+            # Ligne de type note (commentaire)
+            elif line_type == "note":
+                note_text = ligne.get("description", "")
+                if note_text:
+                    table_data.append([
+                        Paragraph(f"<i>{note_text}</i>", self.styles['Notes']),
+                        '', '', '', ''
+                    ])
+                continue
+
+            # Ligne produit standard
+            description = ligne.get("description") or ligne.get("product_name", "")
+            code = ligne.get("product_code") or ligne.get("code", "")
+            if code:
+                description = f"[{code}] {description}"
+
+            quantite = ligne.get("quantite") or ligne.get("quantity", 1)
+            unite = ligne.get("unite") or ligne.get("unit", "Unité(s)")
+            qte_str = f"{self._format_money(quantite)}\n{unite}"
+
+            prix_unitaire = Decimal(str(ligne.get("prix_unitaire") or ligne.get("unit_price", 0)))
+            prix_str = f"{self._format_money(prix_unitaire)}"
+
+            taux_tva = ligne.get("taux_tva") or ligne.get("tax_rate", 0)
+            tva_str = f"TVA {int(taux_tva)}%"
+
+            # Calcul du montant
+            remise_pct = Decimal(str(ligne.get("remise_percent") or ligne.get("discount_percent", 0)))
+            montant = prix_unitaire * Decimal(str(quantite)) * (1 - remise_pct / 100)
+            section_total += montant
+            montant_str = f"{self._format_money(montant)} €"
+
+            table_data.append([
+                Paragraph(description, self.styles['Notes']),
+                Paragraph(qte_str, self.styles['Notes']),
+                Paragraph(prix_str, self.styles['Notes']),
+                Paragraph(tva_str, self.styles['Notes']),
+                Paragraph(f"<b>{montant_str}</b>", self.styles['Value'])
+            ])
+
+        # Afficher le sous-total de la dernière section si elle existe
+        if current_section and section_total > 0:
+            table_data.append([
+                Paragraph(f"<b>Sous-total {current_section}</b>", self.styles['SectionTitle']),
+                '', '', '',
+                Paragraph(f"<b>{self._format_money(section_total)} €</b>", self.styles['Value'])
+            ])
+
+        # Créer le tableau
+        table = Table(table_data, colWidths=col_widths)
+
+        # Style du tableau - Style Odoo avec header coloré
+        style_commands = [
+            # En-tête avec couleur primaire (style Odoo)
+            ('BACKGROUND', (0, 0), (-1, 0), self.primary_color),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),     # Description alignée à gauche
+            ('ALIGN', (1, 0), (-1, 0), 'CENTER'),  # Reste centré
+            ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+
+            # Corps
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ALIGN', (0, 1), (0, -1), 'LEFT'),    # Description
+            ('ALIGN', (1, 1), (1, -1), 'CENTER'),  # Quantité
+            ('ALIGN', (2, 1), (2, -1), 'RIGHT'),   # Prix unitaire
+            ('ALIGN', (3, 1), (3, -1), 'CENTER'),  # Taxes
+            ('ALIGN', (4, 1), (4, -1), 'RIGHT'),   # Montant
+            ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
+
+            # Padding
+            ('TOPPADDING', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('TOPPADDING', (0, 1), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+
+            # Bordures style Odoo
+            ('BOX', (0, 0), (-1, -1), 1, self.border_color),
+            ('LINEBELOW', (0, 0), (-1, 0), 2, self.primary_color),
+            ('LINEBELOW', (0, 1), (-1, -2), 0.5, self.border_color),
+        ]
+
+        # Lignes alternées (style Odoo)
+        for i in range(1, len(table_data)):
+            if i % 2 == 0:
+                style_commands.append(('BACKGROUND', (0, i), (-1, i), self.header_bg))
+
+        table.setStyle(TableStyle(style_commands))
+        elements.append(table)
         elements.append(Spacer(1, 8*mm))
 
         return elements
 
-    def _build_notes_section(self, doc_data: Dict) -> List:
-        """Construit la section notes/conditions."""
+    def _build_totals(self, doc_data: Dict) -> List:
+        """Construit la section des totaux style Odoo (encadré)."""
         elements = []
 
-        notes = doc_data.get("notes", "")
-        conditions = doc_data.get("conditions", "")
+        total_ht = Decimal(str(doc_data.get("total_ht") or doc_data.get("subtotal", 0) or 0))
+        total_tva = Decimal(str(doc_data.get("total_tva") or doc_data.get("tax_amount", 0) or 0))
+        total_ttc = Decimal(str(doc_data.get("total_ttc") or doc_data.get("total", 0) or 0))
 
-        if notes or conditions:
-            elements.append(HRFlowable(width="100%", thickness=0.5, color=self.border_color))
-            elements.append(Spacer(1, 4*mm))
+        # Déterminer le taux TVA principal
+        taux_tva = 20
+        lignes = doc_data.get("lignes") or doc_data.get("lines") or []
+        if lignes and isinstance(lignes, list) and len(lignes) > 0:
+            if isinstance(lignes[0], dict):
+                taux_tva = lignes[0].get("taux_tva") or lignes[0].get("tax_rate", 20)
 
-            if notes:
-                elements.append(Paragraph("NOTES", self.styles['SectionTitle']))
-                elements.append(Paragraph(notes.replace('\n', '<br/>'), self.styles['Notes']))
-                elements.append(Spacer(1, 4*mm))
+        # Tableau des totaux style Odoo (encadré, aligné à droite)
+        totals_data = [
+            [Paragraph("Sous-total HT", self.styles['Value']),
+             Paragraph(f"{self._format_money(total_ht)} €", self.styles['Value'])],
+            [Paragraph(f"TVA ({taux_tva}%)", self.styles['Label']),
+             Paragraph(f"{self._format_money(total_tva)} €", self.styles['Value'])],
+            [Paragraph("<b>Total TTC</b>", self.styles['Value']),
+             Paragraph(f"<b><font size='12'>{self._format_money(total_ttc)} €</font></b>", self.styles['Value'])],
+        ]
 
-            if conditions:
-                elements.append(Paragraph("CONDITIONS", self.styles['SectionTitle']))
-                elements.append(Paragraph(conditions.replace('\n', '<br/>'), self.styles['Notes']))
+        totals_table = Table(totals_data, colWidths=[45*mm, 40*mm])
+        totals_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+            # Ligne de séparation avant Total
+            ('LINEABOVE', (0, -1), (-1, -1), 1.5, self.primary_color),
+            # Fond coloré pour la ligne Total
+            ('BACKGROUND', (0, -1), (-1, -1), self.header_bg),
+            # Bordure du box
+            ('BOX', (0, 0), (-1, -1), 1, self.border_color),
+            ('LINEBELOW', (0, 0), (-1, -2), 0.5, self.border_color),
+        ]))
 
-        return elements
+        # Aligner à droite
+        outer_data = [['', totals_table]]
+        outer_table = Table(outer_data, colWidths=[90*mm, 85*mm])
+        elements.append(outer_table)
 
-    def _build_footer_section(self, doc_type: str, tenant_data: Dict) -> List:
-        """Construit le pied de page avec informations bancaires et mentions legales."""
-        elements = []
-
-        # Informations bancaires
-        iban = tenant_data.get("iban", "")
-        bic = tenant_data.get("bic", "")
-        banque = tenant_data.get("banque", "")
-        titulaire = tenant_data.get("titulaire_compte", "")
-
-        if iban or bic:
-            elements.append(Spacer(1, 6*mm))
-            elements.append(HRFlowable(width="100%", thickness=0.5, color=self.border_color))
-            elements.append(Spacer(1, 4*mm))
-            elements.append(Paragraph("COORDONNEES BANCAIRES", self.styles['SectionTitle']))
-
-            bank_info = []
-            if titulaire:
-                bank_info.append(f"<b>Titulaire:</b> {titulaire}")
-            if banque:
-                bank_info.append(f"<b>Banque:</b> {banque}")
-            if iban:
-                # Formater IBAN avec espaces
-                iban_formatted = " ".join([iban[i:i+4] for i in range(0, len(iban), 4)])
-                bank_info.append(f"<b>IBAN:</b> {iban_formatted}")
-            if bic:
-                bank_info.append(f"<b>BIC:</b> {bic}")
-
-            bank_text = "<br/>".join(bank_info)
-            elements.append(Paragraph(bank_text, self.styles['Notes']))
-
-        # Mentions legales specifiques au type de document
-        mention = ""
-        if doc_type == "facture":
-            mention = tenant_data.get("mention_facture", "")
-        elif doc_type == "devis":
-            mention = tenant_data.get("mention_devis", "")
-
-        mentions_legales = tenant_data.get("mentions_legales", "")
-
-        if mention or mentions_legales:
-            elements.append(Spacer(1, 4*mm))
-            elements.append(HRFlowable(width="100%", thickness=0.5, color=self.border_color))
-            elements.append(Spacer(1, 4*mm))
-            elements.append(Paragraph("MENTIONS LEGALES", self.styles['SectionTitle']))
-
-            all_mentions = []
-            if mention:
-                all_mentions.append(mention)
-            if mentions_legales:
-                all_mentions.append(mentions_legales)
-
-            mentions_text = "<br/><br/>".join(all_mentions).replace('\n', '<br/>')
-            elements.append(Paragraph(mentions_text, self.styles['Notes']))
-
-        return elements
-
-    def _build_signature_section(self, doc_data: Dict) -> List:
-        """Construit la section signature electronique si presente."""
-        elements = []
-
-        signature = doc_data.get("signature_client")
-        signature_date = doc_data.get("signature_date")
-        signature_ip = doc_data.get("signature_ip")
-
-        if not signature:
-            return elements
-
-        # Ligne de separation
-        elements.append(Spacer(1, 6*mm))
-        elements.append(HRFlowable(width="100%", thickness=0.5, color=self.border_color))
+        # === MENTIONS LEGALES TVA ===
         elements.append(Spacer(1, 4*mm))
 
-        # Titre de la section
-        elements.append(Paragraph("SIGNATURE ELECTRONIQUE", self.styles['SectionTitle']))
-        elements.append(Spacer(1, 2*mm))
+        # Mention TVA selon le taux ou le régime de l'entreprise
+        regime_tva = ""
+        if self.tenant_data:
+            regime_tva = self.tenant_data.get("regime_tva", "")
 
-        # Formater la date
-        date_str = ""
-        if signature_date:
-            if hasattr(signature_date, "strftime"):
-                date_str = signature_date.strftime("%d/%m/%Y a %H:%M")
-            else:
-                date_str = str(signature_date)
+        if taux_tva == 0 or regime_tva in ["EXONERE", "FRANCHISE"]:
+            # TVA non applicable
+            tva_mention = doc_data.get("mention_tva") or ""
+            if not tva_mention:
+                if regime_tva == "EXONERE":
+                    tva_mention = "TVA non applicable, art. 293 B du CGI"
+                elif regime_tva == "FRANCHISE":
+                    tva_mention = "TVA non applicable, art. 293 B du CGI - Franchise en base"
+                else:
+                    tva_mention = "TVA non applicable, art. 293 B du CGI"
+            elements.append(Paragraph(
+                f"<i>{tva_mention}</i>",
+                self.styles['Notes']
+            ))
 
-        # Texte d'information
-        info_text = f"<font color='#065F46'><b>Document signe electroniquement</b></font><br/>"
-        if date_str:
-            info_text += f"Date: {date_str}<br/>"
-        if signature_ip:
-            info_text += f"IP: {signature_ip}"
+        # === CONDITIONS DE PAIEMENT ===
+        payment_terms = doc_data.get("payment_terms") or doc_data.get("conditions_paiement") or ""
+        payment_text = doc_data.get("payment_terms_text") or ""
 
-        # Creer l'image de la signature depuis le base64
-        signature_image = None
-        try:
-            # Retirer le prefixe data:image/png;base64, si present
-            if signature.startswith("data:image/"):
-                signature_data = signature.split(",", 1)[1]
-            else:
-                signature_data = signature
+        # Mapper les codes vers texte lisible
+        terms_mapping = {
+            "IMMEDIATE": "Paiement comptant",
+            "COMPTANT": "Paiement comptant",
+            "15_DAYS": "Paiement à 15 jours",
+            "30_DAYS": "Paiement à 30 jours",
+            "30JOURS": "Paiement à 30 jours",
+            "45_DAYS": "Paiement à 45 jours",
+            "60_DAYS": "Paiement à 60 jours",
+            "END_OF_MONTH": "Paiement fin de mois",
+        }
 
-            # Decoder le base64
-            image_bytes = base64.b64decode(signature_data)
-            image_buffer = BytesIO(image_bytes)
+        if payment_terms or payment_text:
+            terms_display = payment_text or terms_mapping.get(str(payment_terms).upper(), str(payment_terms))
+            if terms_display:
+                elements.append(Paragraph(
+                    f"<b>Conditions de paiement :</b> {terms_display}",
+                    self.styles['Notes']
+                ))
 
-            # Creer l'image ReportLab
-            signature_image = Image(image_buffer, width=50*mm, height=20*mm)
-        except Exception as e:
-            logger.warning("signature_image_error", error=str(e))
+        # === NOTES / CONDITIONS GENERALES ===
+        notes = doc_data.get("notes") or ""
+        conditions = doc_data.get("conditions") or doc_data.get("terms") or ""
 
-        # Construction du tableau avec l'image de signature
-        if signature_image:
-            # Style pour le texte d'info
-            info_style = ParagraphStyle(
-                'SignatureInfo',
-                parent=self.styles['Notes'],
-                fontSize=9,
-                leading=12
-            )
+        if notes:
+            elements.append(Spacer(1, 2*mm))
+            elements.append(Paragraph(notes, self.styles['Notes']))
 
-            # Creer un conteneur pour le texte et l'image
-            sig_data = [
-                [Paragraph(info_text, info_style), signature_image]
-            ]
-
-            sig_table = Table(sig_data, colWidths=[100*mm, 60*mm])
-            sig_table.setStyle(TableStyle([
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-                ('BACKGROUND', (0, 0), (-1, -1), hex_to_color("#dcfce7")),
-                ('BOX', (0, 0), (-1, -1), 1, hex_to_color("#a7f3d0")),
-                ('LEFTPADDING', (0, 0), (-1, -1), 10),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
-                ('TOPPADDING', (0, 0), (-1, -1), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-            ]))
-
-            elements.append(sig_table)
-        else:
-            # Juste le texte si l'image n'a pas pu etre chargee
-            elements.append(Paragraph(info_text, self.styles['Notes']))
+        if conditions:
+            elements.append(Spacer(1, 2*mm))
+            elements.append(Paragraph(conditions, self.styles['Notes']))
 
         return elements
 
-    def _generate_pdf(self, doc_type: str, doc_data: Dict) -> bytes:
-        """Genere le PDF complet."""
-        # Recuperer les informations
-        client_data = self._get_client_info(doc_data.get("client"))
-        tenant_data = self._get_tenant_info()
+    def _build_options_section(self, doc_data: Dict) -> List:
+        """Construit la section Options (produits optionnels)."""
+        elements = []
 
-        # Creer le buffer
+        # Récupérer les options depuis custom_fields ou lignes optionnelles
+        custom = doc_data.get("custom_fields") or {}
+        options = custom.get("produits_optionnels") or []
+
+        if not options:
+            # Chercher les lignes marquées comme optionnelles
+            lignes = doc_data.get("lignes") or doc_data.get("lines") or []
+            for ligne in lignes:
+                if isinstance(ligne, dict) and ligne.get("optional"):
+                    options.append(ligne)
+
+        if not options:
+            return elements
+
+        elements.append(Spacer(1, 6*mm))
+        elements.append(Paragraph("<b>Options</b>", self.styles['SectionTitle']))
+
+        # En-têtes
+        header = ['Description', 'Prix unitaire']
+        table_data = [header]
+
+        for opt in options:
+            if isinstance(opt, dict):
+                desc = opt.get("description") or opt.get("product_name", "")
+                prix = opt.get("prix_unitaire") or opt.get("unit_price", 0)
+            else:
+                continue
+
+            table_data.append([
+                Paragraph(desc, self.styles['Notes']),
+                Paragraph(f"{self._format_money(prix)} €", self.styles['Value'])
+            ])
+
+        table = Table(table_data, colWidths=[130*mm, 45*mm])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), self.light_gray),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('LINEBELOW', (0, 0), (-1, -1), 0.5, self.border_color),
+        ]))
+
+        elements.append(table)
+        return elements
+
+    def _get_footer_text(self, tenant_data: Dict) -> str:
+        """Prépare le texte du pied de page."""
+        nom = tenant_data.get("nom") or tenant_data.get("raison_sociale", "")
+        tel = tenant_data.get("telephone", "")
+        email = tenant_data.get("email", "")
+        site = tenant_data.get("site_web", "")
+        siret = tenant_data.get("siret", "")
+        iban = tenant_data.get("iban", "")
+        tva_intra = tenant_data.get("tva_intra", "")
+
+        # Adresse sur une ligne
+        addr_parts = []
+        if tenant_data.get("adresse"):
+            addr_parts.append(tenant_data.get("adresse"))
+        cp_ville = f"{tenant_data.get('code_postal', '')} {tenant_data.get('ville', '')}".strip()
+        if cp_ville:
+            addr_parts.append(cp_ville)
+        adresse_line = " | ".join(addr_parts) if addr_parts else ""
+
+        # Contact sur une ligne
+        contact_parts = []
+        if tel:
+            contact_parts.append(f"Tél: {tel}")
+        if email:
+            contact_parts.append(email)
+        if site:
+            contact_parts.append(site)
+        contact_line = " | ".join(contact_parts) if contact_parts else ""
+
+        # Legal sur une ligne
+        legal_parts = []
+        if siret:
+            siret_fmt = " ".join([siret[i:i+3] for i in range(0, len(siret), 3)])
+            legal_parts.append(f"SIRET: {siret_fmt}")
+        if tva_intra:
+            legal_parts.append(f"TVA: {tva_intra}")
+        if iban:
+            iban_fmt = " ".join([iban[i:i+4] for i in range(0, len(iban), 4)])
+            legal_parts.append(f"IBAN: {iban_fmt}")
+        legal_line = " | ".join(legal_parts) if legal_parts else ""
+
+        # Assemblage
+        lines = []
+        if nom:
+            lines.append(nom)
+        if adresse_line:
+            lines.append(adresse_line)
+        if contact_line:
+            lines.append(contact_line)
+        if legal_line:
+            lines.append(legal_line)
+
+        return lines
+
+    def _generate_pdf(self, doc_type: str, doc_data: Dict) -> bytes:
+        """Génère le PDF complet avec footer en bas de page."""
+        tenant_data = self._get_tenant_info()
+        client_data = self._get_client_info(doc_data.get("client") or doc_data.get("customer_id"))
+
+        # Fallback pour adresse client depuis billing_address
+        if not client_data.get("adresse") and doc_data.get("billing_address"):
+            lines = str(doc_data.get("billing_address", "")).split("\n")
+            client_data["adresse"] = lines[0] if len(lines) > 0 else ""
+            if len(lines) > 1:
+                parts = lines[1].split()
+                client_data["code_postal"] = parts[0] if parts else ""
+                client_data["ville"] = " ".join(parts[1:]) if len(parts) > 1 else ""
+
         buffer = BytesIO()
 
-        # Marges depuis le theme
-        margin_str = self.theme.get("marges", "15mm")
-        try:
-            margin = float(margin_str.replace("mm", "")) * mm
-        except (ValueError, AttributeError):
-            margin = 15 * mm
+        # Marges - plus d'espace en bas pour le footer
+        margin = 15 * mm
+        footer_height = 30 * mm  # Espace réservé pour le footer
 
-        # Creer le document
+        # Préparer les données du footer
+        footer_lines = self._get_footer_text(tenant_data)
+        primary_hex = self.primary_color.hexval()[2:] if hasattr(self.primary_color, 'hexval') else '3454D1'
+
+        # Fonction pour dessiner le footer en bas de chaque page
+        def draw_footer(canvas, doc):
+            canvas.saveState()
+            page_width, page_height = A4
+
+            # Position du footer (en bas)
+            footer_y = 12 * mm
+
+            # Ligne de séparation colorée
+            canvas.setStrokeColor(self.primary_color)
+            canvas.setLineWidth(2)
+            canvas.line(margin, footer_y + 22*mm, page_width - margin, footer_y + 22*mm)
+
+            # Texte du footer centré
+            canvas.setFont("Helvetica", 7)
+            canvas.setFillColor(self.gray_color)
+
+            y_pos = footer_y + 18*mm
+            for line in footer_lines:
+                # Première ligne en gras
+                if line == footer_lines[0]:
+                    canvas.setFont("Helvetica-Bold", 8)
+                else:
+                    canvas.setFont("Helvetica", 7)
+
+                text_width = canvas.stringWidth(line, canvas._fontname, canvas._fontsize)
+                x_pos = (page_width - text_width) / 2
+                canvas.drawString(x_pos, y_pos, line)
+                y_pos -= 10
+
+            canvas.restoreState()
+
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
             leftMargin=margin,
             rightMargin=margin,
             topMargin=margin,
-            bottomMargin=margin
+            bottomMargin=footer_height  # Espace pour le footer
         )
 
-        # Construire les elements
+        # Construire les éléments (sans footer, il est dessiné séparément)
         elements = []
-        elements.extend(self._build_header(doc_type, doc_data, tenant_data))
-        elements.extend(self._build_client_section(client_data))
-        elements.extend(self._build_object_section(doc_data))
+        elements.extend(self._build_header(doc_type, doc_data, tenant_data, client_data))
         elements.extend(self._build_lines_table(doc_data))
-        elements.extend(self._build_totals_section(doc_type, doc_data))
-        elements.extend(self._build_notes_section(doc_data))
-        elements.extend(self._build_footer_section(doc_type, tenant_data))
-        elements.extend(self._build_signature_section(doc_data))
+        elements.extend(self._build_totals(doc_data))
+        elements.extend(self._build_options_section(doc_data))
 
-        # Generer le PDF
-        doc.build(elements)
+        logger.debug("pdf_elements_count",
+                     total_elements=len(elements),
+                     doc_type=doc_type,
+                     numero=doc_data.get("numero"),
+                     lignes_count=len(doc_data.get("lignes") or []))
+
+        # Build avec callback pour le footer
+        doc.build(elements, onFirstPage=draw_footer, onLaterPages=draw_footer)
 
         pdf_bytes = buffer.getvalue()
         buffer.close()
 
+        logger.debug("pdf_generated_size", size=len(pdf_bytes))
+
         return pdf_bytes
 
     def generate_devis_pdf(self, devis_data: Dict) -> bytes:
-        """
-        Genere le PDF d'un devis.
+        """Génère le PDF d'un devis."""
+        lignes = devis_data.get("lignes") or [] if devis_data else []
+        logger.debug("generate_devis_pdf_input",
+                     keys=list(devis_data.keys()) if devis_data else [],
+                     numero=devis_data.get("numero"),
+                     client=devis_data.get("client") or devis_data.get("customer_id"),
+                     lignes_count=len(lignes))
 
-        Args:
-            devis_data: Donnees du devis (depuis la base)
-
-        Returns:
-            bytes: Contenu du PDF
-        """
         pdf_bytes = self._generate_pdf("devis", devis_data)
 
-        logger.info(
-            "devis_pdf_generated",
-            tenant_id=str(self.tenant_id),
-            numero=devis_data.get("numero")
-        )
+        logger.info("devis_pdf_generated",
+                    numero=devis_data.get("numero"),
+                    tenant_id=str(self.tenant_id))
 
         return pdf_bytes
 
     def generate_facture_pdf(self, facture_data: Dict) -> bytes:
-        """
-        Genere le PDF d'une facture.
+        """Génère le PDF d'une facture."""
+        lignes = facture_data.get("lignes") or [] if facture_data else []
+        logger.debug("generate_facture_pdf_input",
+                     keys=list(facture_data.keys()) if facture_data else [],
+                     numero=facture_data.get("numero"),
+                     client=facture_data.get("client") or facture_data.get("customer_id"),
+                     lignes_count=len(lignes))
 
-        Args:
-            facture_data: Donnees de la facture (depuis la base)
-
-        Returns:
-            bytes: Contenu du PDF
-        """
         pdf_bytes = self._generate_pdf("facture", facture_data)
 
-        logger.info(
-            "facture_pdf_generated",
-            tenant_id=str(self.tenant_id),
-            numero=facture_data.get("numero")
-        )
+        logger.info("facture_pdf_generated",
+                    numero=facture_data.get("numero"),
+                    tenant_id=str(self.tenant_id))
 
         return pdf_bytes
-
-
-# =============================================================================
-# Fonctions utilitaires (raccourcis)
-# =============================================================================
-def generate_devis_pdf(tenant_id: PyUUID, devis_data: Dict) -> bytes:
-    """
-    Raccourci pour generer un PDF de devis.
-
-    Args:
-        tenant_id: UUID du tenant
-        devis_data: Donnees du devis
-
-    Returns:
-        bytes: Contenu du PDF
-    """
-    generator = PDFGenerator(tenant_id)
-    return generator.generate_devis_pdf(devis_data)
-
-
-def generate_facture_pdf(tenant_id: PyUUID, facture_data: Dict) -> bytes:
-    """
-    Raccourci pour generer un PDF de facture.
-
-    Args:
-        tenant_id: UUID du tenant
-        facture_data: Donnees de la facture
-
-    Returns:
-        bytes: Contenu du PDF
-    """
-    generator = PDFGenerator(tenant_id)
-    return generator.generate_facture_pdf(facture_data)

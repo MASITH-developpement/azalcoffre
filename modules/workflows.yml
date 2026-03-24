@@ -7,74 +7,87 @@ description: Configuration des workflows automatiques
 champs:
   - nom: nom
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du workflow
     autocompletion: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: false
     description: Description du workflow
 
   - nom: module
     type: text
+    groupe: Informations
     obligatoire: true
     description: Module concerne
     autocompletion: true
 
   - nom: actif
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true
     description: Workflow actif
 
   - nom: declencheur
     type: select
+    groupe: Informations
     obligatoire: true
     options: [on_create, on_update, on_status_change, scheduled]
     description: Type de declencheur
 
   - nom: cron_expression
     type: text
+    groupe: Informations
     obligatoire: false
     description: Expression cron pour les workflows planifies
     autocompletion: true
 
   - nom: conditions
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Conditions au format JSON
 
   - nom: actions
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Actions a executer au format JSON
 
   - nom: executions_total
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 0
     description: Nombre total d'executions
 
   - nom: executions_succes
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Nombre d'executions reussies
 
   - nom: executions_echec
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Nombre d'executions echouees
 
   - nom: derniere_execution
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de derniere execution
 
   - nom: dernier_resultat
     type: text
+    groupe: Informations
     obligatoire: false
     description: Resultat de la derniere execution
     autocompletion: true

@@ -7,6 +7,7 @@ description: Gestion des retenues de garantie conformement a la Loi 71-584
 champs:
   - nom: chantier_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Chantiers
     description: Chantier concerne
@@ -14,12 +15,14 @@ champs:
 
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     description: Reference (ex RG-CHANTIER-001)
     autocompletion: true
 
   - nom: type_retenue
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: parfait_achevement
     options: [parfait_achevement, bon_fonctionnement, decennale, autre]
@@ -27,32 +30,38 @@ champs:
 
   - nom: taux_retenue
     type: number
+    groupe: Montants
     obligatoire: false
     defaut: 5.00
     description: Taux de retenue (max 5% selon loi 71-584)
 
   - nom: montant_base_ht
     type: number
+    groupe: Montants
     obligatoire: true
     description: Montant de base HT pour calcul
 
   - nom: montant_retenue_ht
     type: number
+    groupe: Montants
     obligatoire: true
     description: Montant de la retenue HT
 
   - nom: montant_retenue_ttc
     type: number
+    groupe: Montants
     obligatoire: true
     description: Montant de la retenue TTC
 
   - nom: montant_restant_ht
     type: number
+    groupe: Montants
     obligatoire: true
     description: Montant restant HT
 
   - nom: situation_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: SituationsTravaux
     description: Situation de travaux d'origine
@@ -60,61 +69,72 @@ champs:
 
   - nom: date_constitution
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date de constitution de la retenue
 
   - nom: date_reception_travaux
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de reception des travaux
 
   - nom: date_liberation_prevue
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date de liberation prevue (+1 an apres reception)
 
   - nom: date_liberation_effective
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de liberation effective
 
   - nom: est_consignee
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: false
     description: Retenue consignee aupres d'un organisme
 
   - nom: organisme_consignation
     type: text
+    groupe: Informations
     obligatoire: false
     description: Organisme de consignation
     autocompletion: true
 
   - nom: a_caution_substitution
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: false
     description: Retenue remplacee par caution bancaire
 
   - nom: banque_caution
     type: text
+    groupe: Informations
     obligatoire: false
     description: Banque emettrice de la caution
     autocompletion: true
 
   - nom: numero_caution
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero de la caution bancaire
     autocompletion: true
 
   - nom: date_expiration_caution
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date d'expiration de la caution
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: active
     options: [active, caution, demandee, partielle, liberee, perdue]
@@ -122,17 +142,20 @@ champs:
 
   - nom: reserves_bloquantes
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Liste des reserves bloquantes
 
   - nom: reserves_levees
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Toutes les reserves sont levees
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

@@ -1918,22 +1918,68 @@ async def get_theme_css():
 
 @theme_router.get("/manifest.json")
 async def get_manifest():
-    """Sert le manifest.json pour PWA."""
+    """Sert le manifest.json pour PWA (dynamique selon APP_NAME)."""
+    import os
     from pathlib import Path
-    manifest_path = Path(__file__).parent.parent / "static" / "manifest.json"
-    if manifest_path.exists():
-        return Response(content=manifest_path.read_text(), media_type="application/json")
-    # Manifest par défaut si le fichier n'existe pas
-    return Response(content='{"name":"AzalPlus","short_name":"AzalPlus","display":"standalone"}', media_type="application/json")
+
+    # Récupérer le nom de l'application et le chemin statique
+    app_name = os.environ.get("APP_NAME", "AZALPLUS").lower()
+    static_path_env = os.environ.get("AZALPLUS_STATIC_PATH", "")
+
+    # Chemins à rechercher (priorité: app spécifique > fallback AZALPLUS)
+    search_paths = []
+
+    # 1. Chemin depuis variable d'environnement
+    if static_path_env:
+        search_paths.append(Path(static_path_env) / "manifest.json")
+
+    # 2. Chemin basé sur APP_NAME
+    search_paths.append(Path(f"/home/ubuntu/{app_name}/static/manifest.json"))
+
+    # 3. Fallback AZALPLUS (chemin original)
+    search_paths.append(Path(__file__).parent.parent / "static" / "manifest.json")
+
+    # Chercher le premier fichier existant
+    for manifest_path in search_paths:
+        if manifest_path.exists():
+            return Response(content=manifest_path.read_text(), media_type="application/json")
+
+    # Manifest par défaut si aucun fichier trouvé
+    default_name = app_name.upper() if app_name != "azalplus" else "AzalPlus"
+    return Response(
+        content=f'{{"name":"{default_name}","short_name":"{default_name}","display":"standalone"}}',
+        media_type="application/json"
+    )
 
 
 @theme_router.get("/icons/{icon_name}")
 async def get_icon(icon_name: str):
-    """Sert les icônes PWA."""
+    """Sert les icônes PWA (dynamique selon APP_NAME)."""
+    import os
     from pathlib import Path
     from fastapi.responses import FileResponse
-    icon_path = Path(__file__).parent.parent / "static" / "icons" / icon_name
-    if icon_path.exists() and icon_path.suffix in [".png", ".ico", ".svg"]:
-        return FileResponse(icon_path)
-    # Icône transparente 1x1 par défaut
+
+    # Récupérer le nom de l'application et le chemin statique
+    app_name = os.environ.get("APP_NAME", "AZALPLUS").lower()
+    static_path_env = os.environ.get("AZALPLUS_STATIC_PATH", "")
+
+    # Chemins à rechercher (priorité: app spécifique > fallback AZALPLUS)
+    search_paths = []
+
+    # 1. Chemin depuis variable d'environnement
+    if static_path_env:
+        search_paths.append(Path(static_path_env) / "icons" / icon_name)
+
+    # 2. Chemin basé sur APP_NAME
+    search_paths.append(Path(f"/home/ubuntu/{app_name}/static/icons/{icon_name}"))
+
+    # 3. Fallback AZALPLUS (chemin original)
+    search_paths.append(Path(__file__).parent.parent / "static" / "icons" / icon_name)
+
+    # Chercher le premier fichier existant
+    for icon_path in search_paths:
+        if icon_path.exists() and icon_path.suffix in [".png", ".ico", ".svg"]:
+            return FileResponse(icon_path)
+
+    # Icône non trouvée
     return Response(content="", status_code=404)

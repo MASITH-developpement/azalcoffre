@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Corps dossier (secondaire) -->
-  <path d="M4 6H10L12 8H20C21.1 8 22 8.9 22 10V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V8C2 6.9 2.9 6 4 6Z" fill="#93C5FD"/>
-  <!-- Rabat superieur (principale) -->
-  <path d="M2 8V6C2 4.9 2.9 4 4 4H9L11 6H20C21.1 6 22 6.9 22 8V10H2V8Z" fill="#2563EB"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Corps dossier (secondaire) --><path d="M4 6H10L12 8H20C21.1 8 22 8.9 22 10V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V8C2 6.9 2.9 6 4 6Z" fill="#93C5FD"/><!-- Rabat superieur (principale) --><path d="M2 8V6C2 4.9 2.9 4 4 4H9L11 6H20C21.1 6 22 6.9 22 8V10H2V8Z" fill="#2563EB"/></svg> 

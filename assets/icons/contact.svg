@@ -1,10 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- Secondary: Card background -->
-  <rect x="2" y="4" width="20" height="16" rx="2" fill="#93C5FD"/>
-  <!-- Primary: Person silhouette -->
-  <circle cx="12" cy="10" r="3" fill="#2563EB"/>
-  <path d="M7 18C7 15.2386 9.23858 13 12 13C14.7614 13 17 15.2386 17 18V20H7V18Z" fill="#2563EB"/>
-  <!-- Primary: Card tabs -->
-  <rect x="7" y="2" width="3" height="4" rx="1" fill="#2563EB"/>
-  <rect x="14" y="2" width="3" height="4" rx="1" fill="#2563EB"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><!-- Secondary: Card background --><rect x="2" y="4" width="20" height="16" rx="2" fill="#93C5FD"/><!-- Primary: Person silhouette --><circle cx="12" cy="10" r="3" fill="#2563EB"/><path d="M7 18C7 15.2386 9.23858 13 12 13C14.7614 13 17 15.2386 17 18V20H7V18Z" fill="#2563EB"/><!-- Primary: Card tabs --><rect x="7" y="2" width="3" height="4" rx="1" fill="#2563EB"/><rect x="14" y="2" width="3" height="4" rx="1" fill="#2563EB"/></svg> 

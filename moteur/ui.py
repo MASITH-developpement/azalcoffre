@@ -11,7 +11,16 @@ from fastapi.responses import HTMLResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
 from typing import Optional, Dict, Any, List
+from uuid import UUID
 import structlog
+import os
+import json
+import html as html_module
+
+# =============================================================================
+# App Name (configurable via environment variable)
+# =============================================================================
+APP_NAME = os.environ.get("APP_NAME", "AZALPLUS")
 
 from .parser import ModuleParser, ModuleDefinition, FieldDefinition
 from .auth import get_current_user, require_auth
@@ -126,13 +135,13 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         </div>
         '''
 
-    elif field.type == "oui/non" or field.type == "booleen":
+    elif field.type in ("oui/non", "booleen", "boolean"):
         checked = "checked" if value else ""
         return f'''
         <div class="o-field-row">
             <label class="o-field-label" for="{field_id}">{label}</label>
             <div class="o-field-widget o-field-boolean">
-                <input type="checkbox" id="{field_id}" name="{field.nom}" {checked}>
+                <input type="checkbox" id="{field_id}" name="{field.nom}" {checked} data-type="boolean">
             </div>
         </div>
         '''
@@ -199,11 +208,15 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         # Configuration auto-fill pour certains champs de relation
         autofill_config = ""
         if field.nom == "client_id":
-            autofill_config = 'data-autofill="adresse_ligne1:address_line1,adresse_ligne2:address_line2,ville:city,code_postal:postal_code,contact_sur_place:contact_name,telephone_contact:phone,email_contact:email"'
+            # Pour les interventions, utiliser les noms de champs spécifiques
+            if module_name and module_name.lower() in ["interventions", "intervention"]:
+                autofill_config = 'data-autofill="adresse_intervention:_compose_address:address_line1|address_line2|postal_code|city,contact_nom:contact_name,contact_telephone:phone,contact_email:email,ville:city,code_postal:postal_code"'
+            else:
+                autofill_config = 'data-autofill="adresse_ligne1:address_line1,adresse_ligne2:address_line2,ville:city,code_postal:postal_code,contact_sur_place:contact_name,telephone_contact:phone,email_contact:email"'
         elif field.nom == "customer_id":
             # Pour les factures : construire l'adresse complète dans billing_address (textarea)
-            # Note: l'API /clients/{id} retourne adresse1, adresse2, cp, ville (noms français)
-            autofill_config = 'data-autofill="billing_address:_compose_address:adresse1|adresse2|cp|ville"'
+            # Les champs clients sont: address_line1, address_line2, postal_code, city
+            autofill_config = 'data-autofill="billing_address:_compose_address:address_line1|address_line2|postal_code|city"'
         elif field.nom == "donneur_ordre_id":
             autofill_config = 'data-autofill="adresse_ligne1:adresse_ligne1,adresse_ligne2:adresse_ligne2,ville:ville,code_postal:code_postal,contact_sur_place:contact_principal,telephone_contact:telephone,email_contact:email"'
 
@@ -248,9 +261,9 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         <div class="o-field-row">
             <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
             <div class="o-field-widget">
-                <input type="text" class="o-field-char" id="{field_id}" name="{field.nom}"
+                <input type="text" class="o-field-char o-field-tags" id="{field_id}" name="{field.nom}"
                        value="{tags_value}" {required_attr} placeholder="Tag1, Tag2, Tag3...">
-                <small class="form-help">Séparer les tags par des virgules</small>
+                <small class="form-help"> Séparer les tags par des virgules</small>
             </div>
         </div>
         '''
@@ -364,6 +377,385 @@ def get_status_badge(statut: str) -> str:
     }
     color = colors.get(statut, "gray")
     return f'<span class="badge badge-{color}">{statut}</span>'
+
+
+def generate_module_action_buttons(module_name: str, item: dict) -> str:
+    """Génère les boutons d'action spécifiques à certains modules."""
+
+    # Boutons pour le module import_odoo
+    if module_name == "import_odoo":
+        source_type = item.get('source_type', 'CSV')
+        module_cible = item.get('module_cible', 'clients')
+        odoo_model = item.get('odoo_model', 'res.partner')
+
+        return f'''
+        <div class="flex gap-2" style="margin-left: auto;">
+            <button onclick="testOdooConnection()" class="btn btn-info btn-sm" title="Tester la connexion Odoo">
+                🔌 Tester connexion
+            </button>
+            <button onclick="previewImport()" class="btn btn-warning btn-sm" title="Prévisualiser les données à importer">
+                👁️ Prévisualiser
+            </button>
+            <button onclick="launchImport()" class="btn btn-success btn-sm" title="Lancer l'import">
+                ▶️ Lancer l'import
+            </button>
+        </div>
+
+        <!-- Modal pour upload CSV -->
+        <div id="csv-upload-modal" class="modal" style="display: none;">
+            <div class="modal-backdrop" onclick="closeCsvModal()"></div>
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>Import CSV depuis Odoo</h3>
+                    <button onclick="closeCsvModal()" class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Fichier CSV exporté d'Odoo</label>
+                        <input type="file" id="csv-file-input" accept=".csv" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="update-existing"> Mettre à jour les enregistrements existants
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeCsvModal()" class="btn btn-secondary">Annuler</button>
+                    <button onclick="uploadCsvAndImport()" class="btn btn-primary">Importer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal résultat import -->
+        <div id="import-result-modal" class="modal" style="display: none;">
+            <div class="modal-backdrop" onclick="closeResultModal()"></div>
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3>Résultat de l'import</h3>
+                    <button onclick="closeResultModal()" class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body" id="import-result-content">
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeResultModal()" class="btn btn-primary">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        // Variables pour import Odoo
+        const odooConfig = {{
+            sourceType: '{source_type}',
+            moduleCible: '{module_cible}',
+            odooModel: '{odoo_model}',
+            odooUrl: document.querySelector('[name="odoo_url"]')?.value || '',
+            odooDb: document.querySelector('[name="odoo_db"]')?.value || '',
+            odooLogin: document.querySelector('[name="odoo_login"]')?.value || '',
+            odooApiKey: document.querySelector('[name="odoo_api_key"]')?.value || ''
+        }};
+
+        function getOdooConfig() {{
+            return {{
+                url: document.querySelector('[name="odoo_url"]')?.value || '',
+                db: document.querySelector('[name="odoo_db"]')?.value || '',
+                username: document.querySelector('[name="odoo_login"]')?.value || '',
+                password: document.querySelector('[name="odoo_api_key"]')?.value || ''
+            }};
+        }}
+
+        async function testOdooConnection() {{
+            const config = getOdooConfig();
+            if (!config.url || !config.db || !config.username || !config.password) {{
+                alert('Veuillez remplir tous les champs de connexion Odoo (URL, Base, Login, Clé API)');
+                return;
+            }}
+
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Test en cours...';
+
+            try {{
+                const response = await fetch('/api/odoo/test-connection', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    credentials: 'include',
+                    body: JSON.stringify(config)
+                }});
+
+                const result = await response.json();
+                if (result.success) {{
+                    alert('✅ Connexion réussie !\\n\\nVersion Odoo: ' + (result.version?.server_version || 'N/A'));
+                }} else {{
+                    alert('❌ Échec de connexion:\\n' + (result.error || 'Erreur inconnue'));
+                }}
+            }} catch (error) {{
+                alert('❌ Erreur: ' + error.message);
+            }} finally {{
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }}
+        }}
+
+        async function previewImport() {{
+            const sourceType = document.querySelector('[name="source_type"]')?.value || 'CSV';
+
+            if (sourceType === 'CSV' || sourceType === 'EXCEL') {{
+                alert('Pour prévisualiser un import CSV/Excel, utilisez le bouton "Lancer l\\'import" et sélectionnez votre fichier.');
+                return;
+            }}
+
+            // Pour API, on pourrait faire un fetch limité
+            const config = getOdooConfig();
+            if (!config.url) {{
+                alert('Veuillez configurer la connexion Odoo');
+                return;
+            }}
+
+            const moduleCible = document.querySelector('[name="module_cible"]')?.value || 'clients';
+            alert('Prévisualisation pour ' + moduleCible + ' via API...\\n\\nCette fonctionnalité affichera les 10 premiers enregistrements.');
+        }}
+
+        function launchImport() {{
+            const sourceType = document.querySelector('[name="source_type"]')?.value || 'CSV';
+
+            if (sourceType === 'CSV' || sourceType === 'EXCEL') {{
+                // Ouvrir le modal d'upload CSV
+                document.getElementById('csv-upload-modal').style.display = 'flex';
+            }} else if (sourceType === 'API_XMLRPC') {{
+                launchApiImport();
+            }} else {{
+                alert('Type de source non supporté: ' + sourceType);
+            }}
+        }}
+
+        async function launchApiImport() {{
+            const config = getOdooConfig();
+            if (!config.url || !config.db || !config.username || !config.password) {{
+                alert('Veuillez remplir tous les champs de connexion Odoo');
+                return;
+            }}
+
+            const moduleCible = document.querySelector('[name="module_cible"]')?.value || 'clients';
+            const odooModel = document.querySelector('[name="odoo_model"]')?.value || 'res.partner';
+
+            if (!confirm('Lancer l\\'import ' + moduleCible + ' depuis Odoo (modèle: ' + odooModel + ') ?')) {{
+                return;
+            }}
+
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Import en cours...';
+
+            try {{
+                // Construire l'URL avec le paramètre odoo_model
+                let apiUrl = '/api/odoo/' + moduleCible + '/api?odoo_model=' + encodeURIComponent(odooModel);
+                console.log('Import API URL:', apiUrl, 'Model:', odooModel);
+
+                const response = await fetch(apiUrl, {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    credentials: 'include',
+                    body: JSON.stringify({{
+                        config: config,
+                        options: {{
+                            update_existing: false,
+                            limit: parseInt(document.querySelector('[name="nb_lignes_total"]')?.value) || null
+                        }}
+                    }})
+                }});
+
+                const result = await response.json();
+                showImportResult(result);
+            }} catch (error) {{
+                alert('❌ Erreur: ' + error.message);
+            }} finally {{
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }}
+        }}
+
+        function closeCsvModal() {{
+            document.getElementById('csv-upload-modal').style.display = 'none';
+        }}
+
+        function closeResultModal() {{
+            document.getElementById('import-result-modal').style.display = 'none';
+        }}
+
+        async function uploadCsvAndImport() {{
+            const fileInput = document.getElementById('csv-file-input');
+            const file = fileInput.files[0];
+
+            if (!file) {{
+                alert('Veuillez sélectionner un fichier CSV');
+                return;
+            }}
+
+            const moduleCible = document.querySelector('[name="module_cible"]')?.value || 'clients';
+            const updateExisting = document.getElementById('update-existing').checked;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('update_existing', updateExisting);
+
+            closeCsvModal();
+
+            try {{
+                const response = await fetch('/api/odoo/' + moduleCible + '/csv', {{
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                }});
+
+                const result = await response.json();
+                showImportResult(result);
+            }} catch (error) {{
+                alert('❌ Erreur: ' + error.message);
+            }}
+        }}
+
+        function showImportResult(result) {{
+            const content = document.getElementById('import-result-content');
+            const stats = result.stats || {{}};
+
+            let html = '<div class="import-result">';
+
+            if (result.success) {{
+                html += '<div class="alert alert-success">✅ Import terminé avec succès !</div>';
+            }} else {{
+                html += '<div class="alert alert-danger">❌ Import terminé avec des erreurs</div>';
+            }}
+
+            html += '<table class="table table-bordered" style="margin-top: 16px;">';
+            html += '<tr><th>Module</th><td>' + (result.module || '-') + '</td></tr>';
+            html += '<tr><th>Modèle Odoo</th><td>' + (result.odoo_model || '-') + '</td></tr>';
+            html += '<tr><th>Total traités</th><td>' + (stats.total || 0) + '</td></tr>';
+            html += '<tr><th>Importés</th><td style="color: green;">' + (stats.imported || 0) + '</td></tr>';
+            html += '<tr><th>Mis à jour</th><td style="color: blue;">' + (stats.updated || 0) + '</td></tr>';
+            html += '<tr><th>Ignorés</th><td style="color: orange;">' + (stats.skipped || 0) + '</td></tr>';
+            html += '<tr><th>Erreurs</th><td style="color: red;">' + (stats.errors || 0) + '</td></tr>';
+            html += '<tr><th>Durée</th><td>' + (result.duration_seconds?.toFixed(2) || '0') + 's</td></tr>';
+            html += '</table>';
+
+            if (result.errors && result.errors.length > 0) {{
+                html += '<div style="margin-top: 16px;"><strong>Détails des erreurs:</strong></div>';
+                html += '<ul class="error-list" style="max-height: 200px; overflow: auto; color: red;">';
+                result.errors.slice(0, 10).forEach(err => {{
+                    html += '<li>' + (err.message || err.error || JSON.stringify(err)) + '</li>';
+                }});
+                if (result.errors.length > 10) {{
+                    html += '<li>... et ' + (result.errors.length - 10) + ' autres erreurs</li>';
+                }}
+                html += '</ul>';
+            }}
+
+            html += '</div>';
+            content.innerHTML = html;
+
+            document.getElementById('import-result-modal').style.display = 'flex';
+        }}
+        </script>
+
+        <style>
+        .modal {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .modal-backdrop {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }}
+        .modal-content {{
+            position: relative;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            width: 90%;
+            max-height: 90vh;
+            overflow: auto;
+        }}
+        .modal-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #e5e5e5;
+        }}
+        .modal-header h3 {{
+            margin: 0;
+        }}
+        .modal-close {{
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }}
+        .modal-body {{
+            padding: 16px;
+        }}
+        .modal-footer {{
+            padding: 16px;
+            border-top: 1px solid #e5e5e5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }}
+        .btn-info {{
+            background: #17a2b8;
+            color: white;
+        }}
+        .btn-info:hover {{
+            background: #138496;
+        }}
+        .btn-success {{
+            background: #28a745;
+            color: white;
+        }}
+        .btn-success:hover {{
+            background: #218838;
+        }}
+        .btn-warning {{
+            background: #ffc107;
+            color: #212529;
+        }}
+        .btn-warning:hover {{
+            background: #e0a800;
+        }}
+        .alert {{
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }}
+        .alert-success {{
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }}
+        .alert-danger {{
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }}
+        </style>
+        '''
+
+    # Autres modules peuvent avoir leurs propres boutons ici
+    return ""
 
 
 def generate_documents_section(module_name: str, item_id: str) -> str:
@@ -1026,11 +1418,11 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
         inspiration = theme.get('inspiration', '')
         description = theme.get('description', '')
         couleurs = theme.get('couleurs', {})
-        gradient = theme.get('gradient', couleurs.get('sidebar', '#714B67'))
+        gradient = theme.get('gradient', couleurs.get('sidebar', '#1E3A8A'))
         has_border = theme.get('border', False)
 
-        primary = couleurs.get('primary', '#714B67')
-        sidebar = couleurs.get('sidebar', '#714B67')
+        primary = couleurs.get('primary', '#1E3A8A')
+        sidebar = couleurs.get('sidebar', '#1E3A8A')
         background = couleurs.get('background', '#FFFFFF')
 
         preview_style = f"background: {gradient};"
@@ -1080,7 +1472,7 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
                     <div class="theme-option">
                         <label class="label">Couleur principale</label>
                         <div class="color-options">
-                            <button class="color-btn active" style="background: #2563EB;" data-color="#2563EB"></button>
+                            <button class="color-btn active" style="background: #3454D1;" data-color="#3454D1"></button>
                             <button class="color-btn" style="background: #10B981;" data-color="#10B981"></button>
                             <button class="color-btn" style="background: #F59E0B;" data-color="#F59E0B"></button>
                             <button class="color-btn" style="background: #EF4444;" data-color="#EF4444"></button>
@@ -1512,6 +1904,646 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
 
             // Init preview on load
             document.addEventListener('DOMContentLoaded', updatePreview);
+        </script>
+        ''',
+        user=user,
+        modules=get_all_modules()
+    )
+    return HTMLResponse(content=html)
+
+
+@ui_router.get("/parametres/utilisateur", response_class=HTMLResponse)
+async def user_settings(request: Request, user: dict = Depends(require_auth), tenant_id: UUID = Depends(get_current_tenant)):
+    """Page de paramètres utilisateur avec configuration email SMTP."""
+    from .db import Database
+
+    # Charger la configuration email existante depuis la table administration_mail
+    email_config = {}
+    try:
+        configs = Database.query("administration_mail", tenant_id, limit=1)
+        if configs:
+            email_config = configs[0]
+    except Exception as e:
+        logger.debug("email_config_not_found", error=str(e))
+
+    # Valeurs actuelles
+    smtp_host = email_config.get("smtp_host", "")
+    smtp_port = email_config.get("smtp_port", 587)
+    smtp_user = email_config.get("smtp_user", "")
+    smtp_from = email_config.get("smtp_from", "")
+    smtp_ssl = email_config.get("smtp_ssl", False)
+    imap_host = email_config.get("imap_host", "")
+    imap_port = email_config.get("imap_port", 993)
+    imap_user = email_config.get("imap_user", "")
+
+    # Échapper les valeurs utilisateur pour éviter les injections HTML
+    user_nom = html_module.escape(str(user.get('nom', '') or ''))
+    user_email = html_module.escape(str(user.get('email', '') or ''))
+    user_telephone = html_module.escape(str(user.get('telephone', '') or ''))
+    user_fonction = html_module.escape(str(user.get('fonction', '') or ''))
+    smtp_host_escaped = html_module.escape(str(smtp_host or ''))
+    smtp_user_escaped = html_module.escape(str(smtp_user or ''))
+    smtp_from_escaped = html_module.escape(str(smtp_from or ''))
+    imap_host_escaped = html_module.escape(str(imap_host or ''))
+    imap_user_escaped = html_module.escape(str(imap_user or ''))
+
+    html = generate_layout(
+        title="Paramètres utilisateur",
+        content=f'''
+        <div class="settings-container" style="max-width: 900px;">
+            <!-- Onglets -->
+            <div class="tabs-container" style="background: var(--white); border-radius: var(--radius-lg) var(--radius-lg) 0 0; margin-bottom: 0;">
+                <div class="tabs">
+                    <a href="#" class="tab active" onclick="showSettingsTab('profil', this)">👤 Profil</a>
+                    <a href="#" class="tab" onclick="showSettingsTab('email', this)">📧 Email (SMTP)</a>
+                    <a href="#" class="tab" onclick="showSettingsTab('pdf', this)">📄 PDF</a>
+                    <a href="#" class="tab" onclick="showSettingsTab('securite', this)">🔒 Sécurité</a>
+                </div>
+            </div>
+
+            <!-- Tab Profil -->
+            <div id="tab-profil" class="settings-tab-content">
+                <div class="card" style="border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+                    <div class="card-header">
+                        <h2 class="card-title">Informations personnelles</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="profil-form" class="form-grid">
+                            <div class="form-group">
+                                <label class="label">Nom complet</label>
+                                <input type="text" class="input" id="user_nom" value="{user_nom}" placeholder="Votre nom">
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Email</label>
+                                <input type="email" class="input" id="user_email" value="{user_email}" readonly style="background: var(--gray-100);">
+                                <small class="text-gray-500">L'email ne peut pas être modifié</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Téléphone</label>
+                                <input type="tel" class="input" id="user_telephone" value="{user_telephone}" placeholder="06 12 34 56 78">
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Fonction</label>
+                                <input type="text" class="input" id="user_fonction" value="{user_fonction}" placeholder="Directeur, Technicien...">
+                            </div>
+                        </form>
+                        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                            <button type="button" class="btn btn-primary" onclick="saveProfile()">
+                                💾 Enregistrer le profil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Email SMTP -->
+            <div id="tab-email" class="settings-tab-content" style="display: none;">
+                <div class="card" style="border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+                    <div class="card-header">
+                        <h2 class="card-title">Configuration Email (SMTP)</h2>
+                        <p class="text-gray-500" style="margin-top: 4px; font-size: 13px;">
+                            Configurez les paramètres SMTP pour envoyer des emails (devis, factures, notifications)
+                        </p>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info" style="margin-bottom: 24px; padding: 16px; background: #EFF6FF; border-radius: 8px; border-left: 4px solid #3B82F6;">
+                            <strong>💡 Astuce :</strong> Pour Gmail, utilisez smtp.gmail.com (port 587) avec un
+                            <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: #3454D1;">mot de passe d'application</a>.
+                            Pour OVH, utilisez ssl0.ovh.net (port 465 SSL ou 587 TLS).
+                        </div>
+
+                        <form id="smtp-form">
+                            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--gray-700);">📤 Serveur d'envoi (SMTP)</h3>
+                            <div class="form-grid" style="grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px;">
+                                <div class="form-group">
+                                    <label class="label">Serveur SMTP</label>
+                                    <input type="text" class="input" id="smtp_host" value="{smtp_host_escaped}" placeholder="smtp.gmail.com, ssl0.ovh.net...">
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Port</label>
+                                    <select class="input" id="smtp_port">
+                                        <option value="587" {"selected" if smtp_port == 587 else ""}>587 (TLS/STARTTLS)</option>
+                                        <option value="465" {"selected" if smtp_port == 465 else ""}>465 (SSL)</option>
+                                        <option value="25" {"selected" if smtp_port == 25 else ""}>25 (Non sécurisé)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-grid" style="gap: 16px; margin-bottom: 24px;">
+                                <div class="form-group">
+                                    <label class="label">Identifiant (email)</label>
+                                    <input type="email" class="input" id="smtp_user" value="{smtp_user_escaped}" placeholder="votre@email.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Mot de passe</label>
+                                    <input type="password" class="input" id="smtp_password" placeholder="••••••••">
+                                    <small class="text-gray-500">Laissez vide pour conserver le mot de passe actuel</small>
+                                </div>
+                            </div>
+                            <div class="form-grid" style="gap: 16px; margin-bottom: 24px;">
+                                <div class="form-group">
+                                    <label class="label">Email expéditeur (From)</label>
+                                    <input type="email" class="input" id="smtp_from" value="{smtp_from_escaped}" placeholder="noreply@votreentreprise.com">
+                                    <small class="text-gray-500">Adresse qui apparaît comme expéditeur</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label" style="margin-bottom: 12px;">Options</label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="smtp_ssl" {"checked" if smtp_ssl else ""}>
+                                        <span>Utiliser SSL (port 465)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="border-top: 1px solid var(--gray-200); padding-top: 24px; margin-top: 24px;">
+                                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--gray-700);">📥 Serveur de réception (IMAP) - Optionnel</h3>
+                                <div class="form-grid" style="grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px;">
+                                    <div class="form-group">
+                                        <label class="label">Serveur IMAP</label>
+                                        <input type="text" class="input" id="imap_host" value="{imap_host_escaped}" placeholder="imap.gmail.com, ssl0.ovh.net...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="label">Port</label>
+                                        <select class="input" id="imap_port">
+                                            <option value="993" {"selected" if imap_port == 993 else ""}>993 (SSL)</option>
+                                            <option value="143" {"selected" if imap_port == 143 else ""}>143 (Non sécurisé)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-grid" style="gap: 16px;">
+                                    <div class="form-group">
+                                        <label class="label">Identifiant IMAP</label>
+                                        <input type="email" class="input" id="imap_user" value="{imap_user_escaped}" placeholder="votre@email.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="label">Mot de passe IMAP</label>
+                                        <input type="password" class="input" id="imap_password" placeholder="••••••••">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+                            <button type="button" class="btn btn-secondary" onclick="testSmtpConnection()">
+                                🔌 Tester la connexion
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="saveEmailConfig()">
+                                💾 Enregistrer la configuration
+                            </button>
+                        </div>
+
+                        <div id="smtp-test-result" style="margin-top: 16px; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab PDF (Mise en page documents) -->
+            <div id="tab-pdf" class="settings-tab-content" style="display: none;">
+                <div class="card" style="border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+                    <div class="card-header">
+                        <h2 class="card-title">Mise en page des documents PDF</h2>
+                        <p class="text-gray-500" style="margin-top: 4px; font-size: 13px;">
+                            Personnalisez l'apparence de vos devis et factures
+                        </p>
+                    </div>
+                    <div class="card-body">
+                        <form id="pdf-config-form">
+                            <!-- Section En-tête -->
+                            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--gray-700);">📋 En-tête du document</h3>
+                            <div class="form-grid" style="gap: 16px; margin-bottom: 24px;">
+                                <div class="form-group">
+                                    <label class="label">Afficher le logo</label>
+                                    <select class="input" id="pdf_show_logo">
+                                        <option value="true">Oui</option>
+                                        <option value="false">Non</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Position du logo</label>
+                                    <select class="input" id="pdf_logo_position">
+                                        <option value="left">Gauche</option>
+                                        <option value="center">Centre</option>
+                                        <option value="right">Droite</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Section Style -->
+                            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--gray-700);">🎨 Style visuel</h3>
+                            <div class="form-grid" style="gap: 16px; margin-bottom: 24px;">
+                                <div class="form-group">
+                                    <label class="label">Couleur principale</label>
+                                    <input type="color" class="input" id="pdf_primary_color" value="#3454D1" style="height: 42px; padding: 4px;">
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Couleur d'accent</label>
+                                    <input type="color" class="input" id="pdf_accent_color" value="#6B9FFF" style="height: 42px; padding: 4px;">
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Style du tableau</label>
+                                    <select class="input" id="pdf_table_style">
+                                        <option value="simple">Simple</option>
+                                        <option value="striped">Lignes alternées</option>
+                                        <option value="bordered">Bordures complètes</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Coins</label>
+                                    <select class="input" id="pdf_corners">
+                                        <option value="rounded">Arrondis</option>
+                                        <option value="square">Carrés</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Section Typographie -->
+                            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--gray-700);">🔤 Typographie</h3>
+                            <div class="form-grid" style="gap: 16px; margin-bottom: 24px;">
+                                <div class="form-group">
+                                    <label class="label">Police</label>
+                                    <select class="input" id="pdf_font">
+                                        <option value="Helvetica">Helvetica (défaut)</option>
+                                        <option value="Times">Times New Roman</option>
+                                        <option value="Courier">Courier</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Taille de police</label>
+                                    <select class="input" id="pdf_font_size">
+                                        <option value="10">Petite (10pt)</option>
+                                        <option value="11" selected>Normale (11pt)</option>
+                                        <option value="12">Grande (12pt)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Section Marges -->
+                            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--gray-700);">📐 Marges et mise en page</h3>
+                            <div class="form-grid" style="gap: 16px; margin-bottom: 24px;">
+                                <div class="form-group">
+                                    <label class="label">Marges (mm)</label>
+                                    <select class="input" id="pdf_margins">
+                                        <option value="10">Étroites (10mm)</option>
+                                        <option value="15" selected>Normales (15mm)</option>
+                                        <option value="20">Larges (20mm)</option>
+                                        <option value="25">Très larges (25mm)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Format papier</label>
+                                    <select class="input" id="pdf_paper_size">
+                                        <option value="A4" selected>A4</option>
+                                        <option value="Letter">Letter (US)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Section Contenu -->
+                            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--gray-700);">📝 Contenu affiché</h3>
+                            <div class="form-grid" style="gap: 16px; margin-bottom: 24px;">
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="pdf_show_siret" checked>
+                                        <span>Afficher SIRET</span>
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="pdf_show_tva_intra" checked>
+                                        <span>Afficher TVA intracommunautaire</span>
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="pdf_show_bank_details" checked>
+                                        <span>Afficher coordonnées bancaires</span>
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: flex; align-items; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="pdf_show_signature_zone" checked>
+                                        <span>Zone de signature client</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Mentions légales -->
+                            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--gray-700);">⚖️ Mentions légales</h3>
+                            <div class="form-group" style="margin-bottom: 24px;">
+                                <label class="label">Mention pied de page (devis)</label>
+                                <textarea class="input" id="pdf_footer_devis" rows="2" placeholder="Ex: Devis valable 30 jours..."></textarea>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 24px;">
+                                <label class="label">Mention pied de page (factures)</label>
+                                <textarea class="input" id="pdf_footer_facture" rows="2" placeholder="Ex: En cas de retard de paiement, des pénalités seront appliquées..."></textarea>
+                            </div>
+                        </form>
+
+                        <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--gray-200);">
+                            <button type="button" class="btn btn-primary" onclick="savePdfConfig()">
+                                💾 Enregistrer la configuration
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="previewPdf()">
+                                👁️ Aperçu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Sécurité -->
+            <div id="tab-securite" class="settings-tab-content" style="display: none;">
+                <div class="card" style="border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+                    <div class="card-header">
+                        <h2 class="card-title">Sécurité du compte</h2>
+                    </div>
+                    <div class="card-body">
+                        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Changer le mot de passe</h3>
+                        <form id="password-form" class="form-grid" style="max-width: 400px;">
+                            <div class="form-group">
+                                <label class="label">Mot de passe actuel</label>
+                                <input type="password" class="input" id="current_password" placeholder="••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Nouveau mot de passe</label>
+                                <input type="password" class="input" id="new_password" placeholder="••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Confirmer le mot de passe</label>
+                                <input type="password" class="input" id="confirm_password" placeholder="••••••••">
+                            </div>
+                        </form>
+                        <div style="margin-top: 24px;">
+                            <button type="button" class="btn btn-primary" onclick="changePassword()">
+                                🔐 Changer le mot de passe
+                            </button>
+                        </div>
+
+                        <div style="border-top: 1px solid var(--gray-200); padding-top: 24px; margin-top: 32px;">
+                            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Sessions actives</h3>
+                            <p class="text-gray-500" style="margin-bottom: 16px;">Déconnectez toutes les autres sessions pour sécuriser votre compte.</p>
+                            <button type="button" class="btn btn-secondary" onclick="logoutAllSessions()">
+                                🚪 Déconnecter toutes les autres sessions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .settings-container {{ max-width: 900px; }}
+            .form-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }}
+            .form-group {{ display: flex; flex-direction: column; gap: 6px; }}
+            .label {{ font-size: 14px; font-weight: 500; color: var(--gray-700); }}
+            .tabs {{ display: flex; gap: 0; border-bottom: 1px solid var(--gray-200); padding: 0 24px; }}
+            .tab {{ padding: 16px 20px; color: var(--gray-600); text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s; }}
+            .tab:hover {{ color: var(--gray-900); }}
+            .tab.active {{ color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }}
+            @media (max-width: 640px) {{ .form-grid {{ grid-template-columns: 1fr; }} }}
+        </style>
+
+        <script>
+        function showSettingsTab(tabId, el) {{
+            event.preventDefault();
+            document.querySelectorAll('.settings-tab-content').forEach(c => c.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tabId).style.display = 'block';
+            el.classList.add('active');
+        }}
+
+        async function saveProfile() {{
+            const data = {{
+                nom: document.getElementById('user_nom').value,
+                telephone: document.getElementById('user_telephone').value,
+                fonction: document.getElementById('user_fonction').value
+            }};
+
+            try {{
+                const response = await fetch('/api/auth/profile', {{
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify(data)
+                }});
+
+                if (response.ok) {{
+                    alert('Profil enregistré avec succès !');
+                    location.reload();
+                }} else {{
+                    const err = await response.json();
+                    alert(err.detail || 'Erreur lors de la sauvegarde');
+                }}
+            }} catch (e) {{
+                alert('Erreur: ' + e.message);
+            }}
+        }}
+
+        async function saveEmailConfig() {{
+            const data = {{
+                smtp_host: document.getElementById('smtp_host').value,
+                smtp_port: parseInt(document.getElementById('smtp_port').value),
+                smtp_user: document.getElementById('smtp_user').value,
+                smtp_from: document.getElementById('smtp_from').value,
+                smtp_ssl: document.getElementById('smtp_ssl').checked,
+                imap_host: document.getElementById('imap_host').value,
+                imap_port: parseInt(document.getElementById('imap_port').value),
+                imap_user: document.getElementById('imap_user').value
+            }};
+
+            // Ajouter les mots de passe seulement s'ils sont remplis
+            const smtpPwd = document.getElementById('smtp_password').value;
+            const imapPwd = document.getElementById('imap_password').value;
+            if (smtpPwd) data.smtp_password = smtpPwd;
+            if (imapPwd) data.imap_password = imapPwd;
+
+            try {{
+                const response = await fetch('/api/administration_mail', {{
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify(data)
+                }});
+
+                if (response.ok) {{
+                    alert('Configuration email enregistrée !');
+                }} else {{
+                    const err = await response.json();
+                    alert(err.detail || 'Erreur lors de la sauvegarde');
+                }}
+            }} catch (e) {{
+                alert('Erreur: ' + e.message);
+            }}
+        }}
+
+        async function testSmtpConnection() {{
+            const resultDiv = document.getElementById('smtp-test-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div style="padding: 12px; background: #FEF3C7; border-radius: 8px;">⏳ Test en cours...</div>';
+
+            const data = {{
+                smtp_host: document.getElementById('smtp_host').value,
+                smtp_port: parseInt(document.getElementById('smtp_port').value),
+                smtp_user: document.getElementById('smtp_user').value,
+                smtp_password: document.getElementById('smtp_password').value,
+                smtp_ssl: document.getElementById('smtp_ssl').checked
+            }};
+
+            try {{
+                const response = await fetch('/api/email/test-connection', {{
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify(data)
+                }});
+
+                const result = await response.json();
+                if (response.ok && result.success) {{
+                    resultDiv.innerHTML = '<div style="padding: 12px; background: #D1FAE5; border-radius: 8px; color: #065F46;">✅ Connexion réussie ! Le serveur SMTP est fonctionnel.</div>';
+                }} else {{
+                    resultDiv.innerHTML = '<div style="padding: 12px; background: #FEE2E2; border-radius: 8px; color: #991B1B;">❌ Échec de connexion: ' + (result.detail || result.error || 'Erreur inconnue') + '</div>';
+                }}
+            }} catch (e) {{
+                resultDiv.innerHTML = '<div style="padding: 12px; background: #FEE2E2; border-radius: 8px; color: #991B1B;">❌ Erreur: ' + e.message + '</div>';
+            }}
+        }}
+
+        async function changePassword() {{
+            const current = document.getElementById('current_password').value;
+            const newPwd = document.getElementById('new_password').value;
+            const confirm = document.getElementById('confirm_password').value;
+
+            if (!current || !newPwd || !confirm) {{
+                alert('Veuillez remplir tous les champs');
+                return;
+            }}
+
+            if (newPwd !== confirm) {{
+                alert('Les mots de passe ne correspondent pas');
+                return;
+            }}
+
+            if (newPwd.length < 8) {{
+                alert('Le mot de passe doit contenir au moins 8 caractères');
+                return;
+            }}
+
+            try {{
+                const response = await fetch('/api/auth/change-password', {{
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{
+                        current_password: current,
+                        new_password: newPwd
+                    }})
+                }});
+
+                if (response.ok) {{
+                    alert('Mot de passe modifié avec succès !');
+                    document.getElementById('current_password').value = '';
+                    document.getElementById('new_password').value = '';
+                    document.getElementById('confirm_password').value = '';
+                }} else {{
+                    const err = await response.json();
+                    alert(err.detail || 'Erreur lors du changement de mot de passe');
+                }}
+            }} catch (e) {{
+                alert('Erreur: ' + e.message);
+            }}
+        }}
+
+        async function logoutAllSessions() {{
+            if (!confirm('Êtes-vous sûr de vouloir déconnecter toutes les autres sessions ?')) return;
+
+            try {{
+                const response = await fetch('/api/auth/logout-all', {{
+                    method: 'POST',
+                    credentials: 'include'
+                }});
+
+                if (response.ok) {{
+                    alert('Toutes les autres sessions ont été déconnectées');
+                }} else {{
+                    alert('Erreur lors de la déconnexion');
+                }}
+            }} catch (e) {{
+                alert('Erreur: ' + e.message);
+            }}
+        }}
+
+        // ========== PDF Configuration ==========
+        async function savePdfConfig() {{
+            const config = {{
+                show_logo: document.getElementById('pdf_show_logo').value === 'true',
+                logo_position: document.getElementById('pdf_logo_position').value,
+                primary_color: document.getElementById('pdf_primary_color').value,
+                accent_color: document.getElementById('pdf_accent_color').value,
+                table_style: document.getElementById('pdf_table_style').value,
+                corners: document.getElementById('pdf_corners').value,
+                font: document.getElementById('pdf_font').value,
+                font_size: document.getElementById('pdf_font_size').value,
+                margins: document.getElementById('pdf_margins').value,
+                paper_size: document.getElementById('pdf_paper_size').value,
+                show_siret: document.getElementById('pdf_show_siret').checked,
+                show_tva_intra: document.getElementById('pdf_show_tva_intra').checked,
+                show_bank_details: document.getElementById('pdf_show_bank_details').checked,
+                show_signature_zone: document.getElementById('pdf_show_signature_zone').checked,
+                footer_devis: document.getElementById('pdf_footer_devis').value,
+                footer_facture: document.getElementById('pdf_footer_facture').value
+            }};
+
+            try {{
+                const response = await fetch('/api/settings/pdf-config', {{
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify(config)
+                }});
+
+                if (response.ok) {{
+                    alert('Configuration PDF enregistrée avec succès !');
+                }} else {{
+                    const err = await response.json();
+                    alert(err.detail || 'Erreur lors de la sauvegarde');
+                }}
+            }} catch (e) {{
+                alert('Erreur: ' + e.message);
+            }}
+        }}
+
+        function previewPdf() {{
+            alert('Fonctionnalité aperçu PDF à venir. Vos modifications seront visibles lors du prochain téléchargement de devis/facture.');
+        }}
+
+        // Charger la configuration PDF au chargement
+        document.addEventListener('DOMContentLoaded', async () => {{
+            try {{
+                const response = await fetch('/api/settings/pdf-config', {{ credentials: 'include' }});
+                if (response.ok) {{
+                    const config = await response.json();
+                    if (config) {{
+                        document.getElementById('pdf_show_logo').value = config.show_logo ? 'true' : 'false';
+                        if (config.logo_position) document.getElementById('pdf_logo_position').value = config.logo_position;
+                        if (config.primary_color) document.getElementById('pdf_primary_color').value = config.primary_color;
+                        if (config.accent_color) document.getElementById('pdf_accent_color').value = config.accent_color;
+                        if (config.table_style) document.getElementById('pdf_table_style').value = config.table_style;
+                        if (config.corners) document.getElementById('pdf_corners').value = config.corners;
+                        if (config.font) document.getElementById('pdf_font').value = config.font;
+                        if (config.font_size) document.getElementById('pdf_font_size').value = config.font_size;
+                        if (config.margins) document.getElementById('pdf_margins').value = config.margins;
+                        if (config.paper_size) document.getElementById('pdf_paper_size').value = config.paper_size;
+                        document.getElementById('pdf_show_siret').checked = config.show_siret !== false;
+                        document.getElementById('pdf_show_tva_intra').checked = config.show_tva_intra !== false;
+                        document.getElementById('pdf_show_bank_details').checked = config.show_bank_details !== false;
+                        document.getElementById('pdf_show_signature_zone').checked = config.show_signature_zone !== false;
+                        if (config.footer_devis) document.getElementById('pdf_footer_devis').value = config.footer_devis;
+                        if (config.footer_facture) document.getElementById('pdf_footer_facture').value = config.footer_facture;
+                    }}
+                }}
+            }} catch (e) {{
+                console.log('Config PDF non chargée:', e);
+            }}
+        }});
         </script>
         ''',
         user=user,
@@ -3712,6 +4744,554 @@ async def technicien_temps(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# =============================================================================
+# Administration Mail - Liste des configurations
+# =============================================================================
+@ui_router.get("/administration_mail", response_class=HTMLResponse)
+async def administration_mail_list(
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant)
+):
+    """Liste des configurations email."""
+
+    items = Database.query("administration_mail", tenant_id, limit=50)
+
+    rows_html = ""
+    for item in items:
+        status_class = "badge-success" if item.get("imap_actif") else "badge-pending"
+        status_text = "Actif" if item.get("imap_actif") else "Inactif"
+        rows_html += f'''
+        <tr onclick="window.location='/ui/administration_mail/{item['id']}'" style="cursor:pointer">
+            <td><strong>{item.get('imap_user', 'Non configuré')}</strong></td>
+            <td>{item.get('imap_host', '-')}</td>
+            <td>{item.get('smtp_host', '-')}</td>
+            <td><span class="badge {status_class}">{status_text}</span></td>
+            <td>{(item.get('dernier_statut') or 'Non testé')[:30]}</td>
+        </tr>
+        '''
+
+    if not items:
+        rows_html = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#6b7280;">Aucune configuration. Cliquez sur "Nouveau" pour en créer une.</td></tr>'
+
+    html = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Configuration Email - {APP_NAME}</title>
+        <link rel="stylesheet" href="/assets/style.css">
+        <style>
+            .container {{ max-width: 1200px; margin: 0 auto; padding: 20px; }}
+            .header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }}
+            .btn {{ padding: 10px 20px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }}
+            .btn-primary {{ background: var(--primary); color: white; }}
+            .btn-secondary {{ background: #f3f4f6; color: #374151; }}
+            table {{ width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
+            th, td {{ padding: 14px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }}
+            th {{ background: #f9fafb; font-weight: 600; color: #374151; }}
+            tr:hover {{ background: #f9fafb; }}
+            .badge {{ padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }}
+            .badge-success {{ background: #d1fae5; color: #065f46; }}
+            .badge-pending {{ background: #fef3c7; color: #92400e; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div>
+                    <h1 style="margin:0;font-size:24px;">Configuration Email</h1>
+                    <p style="margin:4px 0 0;color:#6b7280;">Gérez vos comptes email pour la réception et l'envoi</p>
+                </div>
+                <div style="display:flex;gap:12px;">
+                    <a href="/ui/" class="btn btn-secondary">Retour</a>
+                    <a href="/ui/administration_mail/nouveau" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                        Nouveau
+                    </a>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Serveur IMAP</th>
+                        <th>Serveur SMTP</th>
+                        <th>Statut</th>
+                        <th>Dernier test</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows_html}
+                </tbody>
+            </table>
+        </div>
+    </body>
+    </html>
+    '''
+    return HTMLResponse(content=html)
+
+
+# =============================================================================
+# Administration Mail - Formulaire (nouveau / édition)
+# =============================================================================
+@ui_router.get("/administration_mail/nouveau", response_class=HTMLResponse)
+@ui_router.get("/administration_mail/{item_id}", response_class=HTMLResponse)
+async def administration_mail_form(
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id = Depends(get_current_tenant),
+    item_id: str = None
+):
+    """Formulaire de configuration email avec layout en colonnes et boutons de test."""
+
+    # Récupérer la config existante ou créer vide
+    data = {}
+    if item_id and item_id != "nouveau":
+        items = Database.query("administration_mail", tenant_id, filters={"id": item_id}, limit=1)
+        data = items[0] if items else {}
+
+    # Valeurs par défaut
+    defaults = {
+        "imap_port": 993, "smtp_port": 587, "intervalle_polling": 300,
+        "imap_dossier": "INBOX", "mots_cles": "INTERPARTNER ASSISTANCE France"
+    }
+    for k, v in defaults.items():
+        if not data.get(k):
+            data[k] = v
+
+    def get_val(key):
+        val = data.get(key, "")
+        if isinstance(val, list):
+            return ", ".join(str(v) for v in val)
+        # Convertir les nombres flottants en entiers pour l'affichage
+        if isinstance(val, float) and val == int(val):
+            return int(val)
+        return val if val else ""
+
+    def is_checked(key):
+        return "checked" if data.get(key) else ""
+
+    html = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Configuration Email - {APP_NAME}</title>
+        <link rel="stylesheet" href="/assets/style.css">
+        <style>
+            .config-container {{ max-width: 1200px; margin: 0 auto; padding: 20px; }}
+            .columns {{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }}
+            .column {{ background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
+            .column h3 {{ margin: 0 0 20px 0; padding-bottom: 12px; border-bottom: 2px solid var(--primary); display: flex; align-items: center; gap: 10px; }}
+            .form-group {{ margin-bottom: 16px; }}
+            .form-group label {{ display: block; font-weight: 500; margin-bottom: 6px; color: #374151; }}
+            .form-group input, .form-group select {{ width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }}
+            .form-group input:focus {{ outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }}
+            .form-group small {{ color: #6b7280; font-size: 12px; margin-top: 4px; display: block; }}
+            .form-row {{ display: grid; grid-template-columns: 1fr 120px; gap: 12px; }}
+            .toggle-group {{ display: flex; align-items: center; gap: 12px; padding: 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 16px; }}
+            .toggle {{ width: 48px; height: 26px; background: #d1d5db; border-radius: 13px; position: relative; cursor: pointer; transition: 0.2s; }}
+            .toggle.active {{ background: var(--primary); }}
+            .toggle::after {{ content: ''; position: absolute; width: 22px; height: 22px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.2s; }}
+            .toggle.active::after {{ left: 24px; }}
+            .btn {{ padding: 12px 24px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }}
+            .btn-primary {{ background: var(--primary); color: white; }}
+            .btn-primary:hover {{ background: var(--primary-dark, #2563eb); }}
+            .btn-secondary {{ background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }}
+            .btn-test {{ background: #10b981; color: white; }}
+            .btn-test:hover {{ background: #059669; }}
+            .actions {{ display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb; }}
+            .test-result {{ padding: 12px 16px; border-radius: 8px; margin-top: 12px; display: none; }}
+            .test-result.success {{ background: #d1fae5; color: #065f46; display: block; }}
+            .test-result.error {{ background: #fee2e2; color: #991b1b; display: block; }}
+            .status-box {{ background: #f9fafb; border-radius: 8px; padding: 16px; margin-top: 24px; }}
+            .status-box h4 {{ margin: 0 0 12px 0; color: #374151; }}
+            .status-item {{ display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }}
+            .status-item:last-child {{ border-bottom: none; }}
+            .badge {{ padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }}
+            .badge-success {{ background: #d1fae5; color: #065f46; }}
+            .badge-error {{ background: #fee2e2; color: #991b1b; }}
+            .badge-pending {{ background: #fef3c7; color: #92400e; }}
+            .spinner {{ width: 16px; height: 16px; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; }}
+            @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+            @media (max-width: 768px) {{ .columns {{ grid-template-columns: 1fr; }} }}
+        </style>
+    </head>
+    <body>
+        <div class="config-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div>
+                    <h1 style="margin: 0; font-size: 24px;">Configuration Email</h1>
+                    <p style="margin: 4px 0 0; color: #6b7280;">Paramètres IMAP/SMTP pour la réception et l'envoi d'emails</p>
+                </div>
+                <a href="/ui/administration_mail" class="btn btn-secondary">Retour à la liste</a>
+            </div>
+
+            <form id="mail-config-form" method="POST" action="javascript:void(0);" onsubmit="return handleSubmit(event);">
+                <input type="hidden" name="id" value="{item_id or ''}">
+
+                <div class="columns">
+                    <!-- Colonne IMAP -->
+                    <div class="column">
+                        <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg> Réception (IMAP)</h3>
+
+                        <div class="toggle-group">
+                            <div class="toggle {is_checked('imap_actif').replace('checked', 'active')}" onclick="toggleSwitch(this, 'imap_actif')"></div>
+                            <input type="hidden" name="imap_actif" id="imap_actif" value="{str(data.get('imap_actif', False)).lower()}">
+                            <span>Activer la réception des emails</span>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Serveur IMAP</label>
+                                <input type="text" name="imap_host" value="{get_val('imap_host')}" list="imap-hosts" placeholder="ex: pro3.mail.ovh.net">
+                                <datalist id="imap-hosts">
+                                    <option value="ssl0.ovh.net">OVH Mutualisé</option>
+                                    <option value="pro1.mail.ovh.net">OVH Pro 1</option>
+                                    <option value="pro2.mail.ovh.net">OVH Pro 2</option>
+                                    <option value="pro3.mail.ovh.net">OVH Pro 3</option>
+                                    <option value="imap.gmail.com">Gmail</option>
+                                    <option value="imap.ionos.fr">IONOS</option>
+                                    <option value="mail.gandi.net">Gandi</option>
+                                </datalist>
+                                <small style="color: #9ca3af;">OVH Pro: pro1/pro2/pro3.mail.ovh.net</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Port</label>
+                                <input type="number" name="imap_port" value="{get_val('imap_port')}" list="imap-ports" placeholder="993">
+                                <datalist id="imap-ports">
+                                    <option value="993">SSL (recommandé)</option>
+                                    <option value="143">Non sécurisé</option>
+                                </datalist>
+                                <small style="color: #9ca3af;">993 = SSL (recommandé)</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="imap_user" value="{get_val('imap_user')}" placeholder="ex: contact@votredomaine.com">
+                            <small style="color: #9ca3af;">Adresse email complète</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mot de passe</label>
+                            <input type="password" name="imap_password" value="{get_val('imap_password')}" placeholder="Mot de passe de la boîte mail">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Dossier source</label>
+                                <input type="text" name="imap_dossier" value="{get_val('imap_dossier')}" list="imap-folders" placeholder="INBOX">
+                                <datalist id="imap-folders">
+                                    <option value="INBOX">Boîte de réception</option>
+                                    <option value="INBOX/Interventions">Interventions</option>
+                                    <option value="INBOX/SAV">SAV</option>
+                                </datalist>
+                                <small style="color: #9ca3af;">INBOX = boîte de réception</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Dossier traités</label>
+                                <input type="text" name="imap_dossier_traite" value="{get_val('imap_dossier_traite')}" placeholder="INBOX/Traites">
+                                <small style="color: #9ca3af;">Où déplacer les emails traités</small>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-test" onclick="testIMAP(event)" style="width: 100%; margin-top: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                            Tester la réception
+                        </button>
+                        <div id="imap-result" class="test-result"></div>
+                    </div>
+
+                    <!-- Colonne SMTP -->
+                    <div class="column">
+                        <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Envoi (SMTP)</h3>
+
+                        <div class="toggle-group">
+                            <div class="toggle {is_checked('smtp_actif').replace('checked', 'active')}" onclick="toggleSwitch(this, 'smtp_actif')"></div>
+                            <input type="hidden" name="smtp_actif" id="smtp_actif" value="{str(data.get('smtp_actif', False)).lower()}">
+                            <span>Activer l'envoi d'emails</span>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Serveur SMTP</label>
+                                <input type="text" name="smtp_host" value="{get_val('smtp_host')}" list="smtp-hosts" placeholder="ex: pro3.mail.ovh.net">
+                                <datalist id="smtp-hosts">
+                                    <option value="ssl0.ovh.net">OVH Mutualisé</option>
+                                    <option value="pro1.mail.ovh.net">OVH Pro 1</option>
+                                    <option value="pro2.mail.ovh.net">OVH Pro 2</option>
+                                    <option value="pro3.mail.ovh.net">OVH Pro 3</option>
+                                    <option value="smtp.gmail.com">Gmail</option>
+                                    <option value="smtp.ionos.fr">IONOS</option>
+                                    <option value="mail.gandi.net">Gandi</option>
+                                </datalist>
+                                <small style="color: #9ca3af;">Souvent identique au serveur IMAP</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Port</label>
+                                <input type="number" name="smtp_port" value="{get_val('smtp_port')}" list="smtp-ports" placeholder="587">
+                                <datalist id="smtp-ports">
+                                    <option value="587">STARTTLS (recommandé)</option>
+                                    <option value="465">SSL</option>
+                                    <option value="25">Non sécurisé</option>
+                                </datalist>
+                                <small style="color: #9ca3af;">587 = STARTTLS (recommandé)</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Identifiant SMTP</label>
+                            <input type="email" name="smtp_user" value="{get_val('smtp_user')}" placeholder="ex: contact@votredomaine.com">
+                            <small style="color: #9ca3af;">Souvent identique à l'email IMAP</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mot de passe SMTP</label>
+                            <input type="password" name="smtp_password" value="{get_val('smtp_password')}" placeholder="Mot de passe SMTP">
+                            <small style="color: #9ca3af;">Souvent identique au mot de passe IMAP</small>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nom expéditeur</label>
+                                <input type="text" name="smtp_from_name" value="{get_val('smtp_from_name')}" placeholder="ex: Service SAV">
+                                <small style="color: #9ca3af;">Nom affiché dans les emails</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Email expéditeur</label>
+                                <input type="email" name="smtp_from_email" value="{get_val('smtp_from_email')}" placeholder="ex: sav@votredomaine.com">
+                                <small style="color: #9ca3af;">Adresse de réponse</small>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-test" onclick="testSMTP(event)" style="width: 100%; margin-top: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                            Tester l'envoi
+                        </button>
+                        <div id="smtp-result" class="test-result"></div>
+                    </div>
+                </div>
+
+                <!-- Options intervention -->
+                <div class="column" style="margin-bottom: 24px;">
+                    <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg> Options création intervention</h3>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                        <div class="toggle-group" style="margin: 0;">
+                            <div class="toggle {is_checked('intervention_auto').replace('checked', 'active')}" onclick="toggleSwitch(this, 'intervention_auto')"></div>
+                            <input type="hidden" name="intervention_auto" id="intervention_auto" value="{str(data.get('intervention_auto', True)).lower()}">
+                            <span style="font-size: 14px;">Création auto</span>
+                        </div>
+                        <div class="toggle-group" style="margin: 0;">
+                            <div class="toggle {is_checked('reponse_auto').replace('checked', 'active')}" onclick="toggleSwitch(this, 'reponse_auto')"></div>
+                            <input type="hidden" name="reponse_auto" id="reponse_auto" value="{str(data.get('reponse_auto', True)).lower()}">
+                            <span style="font-size: 14px;">Réponse auto</span>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 13px;">Intervalle (sec)</label>
+                            <input type="number" name="intervalle_polling" value="{get_val('intervalle_polling')}" style="padding: 8px;" placeholder="300">
+                            <small style="color: #9ca3af;">300 = 5 min</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>Mots-clés / Donneurs d'ordre déclencheurs</label>
+                        <input type="text" name="mots_cles" class="o-field-tags" value="{get_val('mots_cles')}" placeholder="ex: INTERPARTNER, URGENT, DEPANNAGE">
+                        <small style="color: #9ca3af;">Séparer par des virgules. Ces mots-clés dans l'objet du mail déclenchent la création d'intervention.</small>
+                    </div>
+                </div>
+
+                <!-- Statut -->
+                <div class="status-box">
+                    <h4>Statut de la connexion</h4>
+                    <div class="status-item">
+                        <span>Dernière vérification</span>
+                        <span>{data.get('derniere_verification') or 'Jamais'}</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Statut</span>
+                        <span class="badge {'badge-success' if 'OK' in str(data.get('dernier_statut', '')) else 'badge-pending'}">{data.get('dernier_statut') or 'Non testé'}</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Emails non lus</span>
+                        <span class="badge badge-pending">{data.get('emails_non_lus') or 0}</span>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="btn btn-test" onclick="testAll()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                        Tester IMAP + SMTP
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            // Empêcher toute soumission GET du formulaire
+            function handleSubmit(e) {{
+                e.preventDefault();
+                e.stopPropagation();
+                submitForm();
+                return false;
+            }}
+
+            async function submitForm() {{
+                const btn = document.querySelector('#mail-config-form [type="submit"]');
+                if (!btn || btn.disabled) return;
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span> Enregistrement...';
+
+                try {{
+                    const result = await saveConfig();
+                    btn.innerHTML = '✓ Enregistré';
+                    setTimeout(() => {{
+                        btn.disabled = false;
+                        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg> Enregistrer';
+                    }}, 2000);
+                }} catch (e) {{
+                    alert('Erreur: ' + e.message);
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg> Enregistrer';
+                }}
+            }}
+
+            function toggleSwitch(el, inputId) {{
+                el.classList.toggle('active');
+                document.getElementById(inputId).value = el.classList.contains('active') ? 'true' : 'false';
+            }}
+
+            async function testIMAP(e) {{
+                const btn = e ? e.target.closest('button') : document.querySelector('[onclick*="testIMAP"]');
+                const result = document.getElementById('imap-result');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span> Test en cours...';
+                result.className = 'test-result';
+                result.style.display = 'none';
+
+                try {{
+                    // Sauvegarder d'abord
+                    await saveConfig();
+
+                    const response = await fetch('/api/email-to-intervention/test-connexion', {{
+                        method: 'POST',
+                        credentials: 'include'
+                    }});
+                    const data = await response.json();
+
+                    if (data.imap_ok) {{
+                        result.className = 'test-result success';
+                        result.innerHTML = '✓ ' + data.imap_message;
+                    }} else {{
+                        result.className = 'test-result error';
+                        result.innerHTML = '✗ ' + data.imap_message;
+                    }}
+                }} catch (e) {{
+                    result.className = 'test-result error';
+                    result.innerHTML = '✗ Erreur: ' + e.message;
+                }}
+
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Tester la réception';
+            }}
+
+            async function testSMTP(e) {{
+                const btn = e ? e.target.closest('button') : document.querySelector('[onclick*="testSMTP"]');
+                const result = document.getElementById('smtp-result');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span> Test en cours...';
+                result.className = 'test-result';
+                result.style.display = 'none';
+
+                try {{
+                    await saveConfig();
+
+                    const response = await fetch('/api/email-to-intervention/test-connexion', {{
+                        method: 'POST',
+                        credentials: 'include'
+                    }});
+                    const data = await response.json();
+
+                    if (data.smtp_ok) {{
+                        result.className = 'test-result success';
+                        result.innerHTML = '✓ ' + data.smtp_message;
+                    }} else {{
+                        result.className = 'test-result error';
+                        result.innerHTML = '✗ ' + data.smtp_message;
+                    }}
+                }} catch (e) {{
+                    result.className = 'test-result error';
+                    result.innerHTML = '✗ Erreur: ' + e.message;
+                }}
+
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Tester l\'envoi';
+            }}
+
+            async function testAll() {{
+                await testIMAP();
+                await testSMTP();
+            }}
+
+            async function saveConfig() {{
+                const form = document.getElementById('mail-config-form');
+                const formData = new FormData(form);
+                const data = {{}};
+
+                formData.forEach((value, key) => {{
+                    if (value === 'true') data[key] = true;
+                    else if (value === 'false') data[key] = false;
+                    else if (key === 'mots_cles' && value) {{
+                        data[key] = value.split(',').map(t => t.trim()).filter(t => t);
+                    }} else {{
+                        data[key] = value || null;
+                    }}
+                }});
+
+                // Convertir les ports en nombres
+                if (data.imap_port) data.imap_port = parseInt(data.imap_port);
+                if (data.smtp_port) data.smtp_port = parseInt(data.smtp_port);
+                if (data.intervalle_polling) data.intervalle_polling = parseInt(data.intervalle_polling);
+
+                const itemId = data.id;
+                delete data.id;
+
+                const method = itemId ? 'PUT' : 'POST';
+                const url = itemId ? '/api/administration_mail/' + itemId : '/api/administration_mail';
+
+                const response = await fetch(url, {{
+                    method: method,
+                    credentials: 'include',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify(data)
+                }});
+
+                if (!response.ok) {{
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Erreur sauvegarde');
+                }}
+
+                return await response.json();
+            }}
+
+            // Event listener supprimé - géré par onsubmit="handleSubmit(event)"
+        </script>
+    </body>
+    </html>
+    '''
+
+    return HTMLResponse(content=html)
+
+
 @ui_router.get("/{module_name}", response_class=HTMLResponse)
 async def module_list(
     module_name: str,
@@ -3728,8 +5308,28 @@ async def module_list(
     # Pour les modules createur_only, utiliser SYSTEM_TENANT_ID
     query_tenant_id = SYSTEM_TENANT_ID if module.acces == "createur_only" else tenant_id
 
+    # Paramètres de tri depuis la requête
+    sort_field = request.query_params.get("sort", "")
+    sort_order = request.query_params.get("order", "desc")
+
+    # Tri par défaut si non spécifié: created_at DESC (le plus récent en haut)
+    if not sort_field:
+        sort_field = "created_at"
+        sort_order = "desc"
+
+    # Construire l'ordre de tri (sécurisé contre injection SQL)
+    order_by = None
+    # created_at est un champ système, toujours disponible
+    if sort_field == "created_at":
+        order_direction = "ASC" if sort_order.lower() == "asc" else "DESC"
+        order_by = f"created_at {order_direction}"
+    elif sort_field and sort_field in module.champs:
+        # Valider que le champ existe dans le module
+        order_direction = "ASC" if sort_order.lower() == "asc" else "DESC"
+        order_by = f"{sort_field} {order_direction}"
+
     # Récupérer les données
-    items = Database.query(module_name, query_tenant_id, limit=50)
+    items = Database.query(module_name, query_tenant_id, limit=50, order_by=order_by)
 
     # Colonnes à afficher (max 5)
     # Utiliser liste_colonnes si défini dans le YAML, sinon les 5 premiers champs
@@ -3748,9 +5348,18 @@ async def module_list(
         if statut_field.enum_values:
             status_values = statut_field.enum_values
 
-    # Générer le tableau avec checkbox
+    # Générer le tableau avec checkbox et tri
+    def make_sortable_header(field_name: str, label: str) -> str:
+        """Génère un header de colonne triable."""
+        is_sorted = sort_field == field_name
+        next_order = "desc" if is_sorted and sort_order == "asc" else "asc"
+        sort_icon = ""
+        if is_sorted:
+            sort_icon = ' <span class="sort-icon">▲</span>' if sort_order == "asc" else ' <span class="sort-icon">▼</span>'
+        return f'<th class="sortable" data-field="{field_name}" data-order="{next_order}" onclick="sortBy(\'{field_name}\', \'{next_order}\')">{label}{sort_icon}</th>'
+
     table_headers = "".join([
-        f'<th>{module.champs[f].label or f.replace("_", " ").title()}</th>'
+        make_sortable_header(f, module.champs[f].label or f.replace("_", " ").title())
         for f in display_fields
     ])
 
@@ -3796,7 +5405,76 @@ async def module_list(
 
         return str(value)[:8] + "..."
 
+    def format_cell_with_actions(field_name: str, field_config, value, item: dict) -> str:
+        """Formate une cellule avec actions contextuelles (appel, SMS, GPS)."""
+        if value is None or value == "":
+            return "-"
+
+        # Détection téléphone (par type ou nom de champ)
+        is_phone = (
+            (field_config and field_config.type == "tel") or
+            any(x in field_name.lower() for x in ["telephone", "phone", "tel", "mobile", "portable"])
+        )
+
+        if is_phone and value and value != "-":
+            # Nettoyer le numéro pour les liens
+            clean_phone = str(value).replace(" ", "").replace(".", "").replace("-", "")
+            return f'''<span class="cell-with-actions">
+                {value}
+                <a href="tel:{clean_phone}" class="action-btn" title="Appeler" onclick="event.stopPropagation()">📞</a>
+                <a href="sms:{clean_phone}" class="action-btn" title="SMS" onclick="event.stopPropagation()">💬</a>
+            </span>'''
+
+        # Détection adresse (par nom de champ)
+        is_address = any(x in field_name.lower() for x in ["adresse", "address", "rue", "street"])
+
+        if is_address and value and value != "-":
+            # Construire l'adresse complète pour GPS
+            addr_parts = [str(value)]
+            if item.get("code_postal"):
+                addr_parts.append(str(item.get("code_postal")))
+            if item.get("ville"):
+                addr_parts.append(str(item.get("ville")))
+            full_addr = " ".join(addr_parts)
+            maps_url = f"https://www.google.com/maps/search/?api=1&query={full_addr.replace(' ', '+')}"
+            return f'''<span class="cell-with-actions">
+                {value}
+                <a href="{maps_url}" target="_blank" class="action-btn" title="GPS" onclick="event.stopPropagation()">🗺️</a>
+            </span>'''
+
+        return str(value)
+
+    # Pour interventions: générer les boutons d'actions rapides
+    def get_quick_actions(item: dict) -> str:
+        """Génère les boutons d'actions rapides (appel, SMS, GPS) pour une intervention."""
+        actions = []
+
+        # Téléphone du contact
+        phone = item.get("contact_telephone") or item.get("telephone_contact")
+        if phone:
+            clean_phone = str(phone).replace(" ", "").replace(".", "").replace("-", "")
+            actions.append(f'<a href="tel:{clean_phone}" class="quick-action-btn" title="Appeler {phone}" onclick="event.stopPropagation()">📞</a>')
+            actions.append(f'<a href="sms:{clean_phone}" class="quick-action-btn" title="SMS" onclick="event.stopPropagation()">💬</a>')
+
+        # Adresse pour GPS
+        addr = item.get("adresse_intervention") or item.get("adresse_ligne1")
+        if addr:
+            addr_parts = [str(addr)]
+            if item.get("code_postal"):
+                addr_parts.append(str(item.get("code_postal")))
+            if item.get("ville"):
+                addr_parts.append(str(item.get("ville")))
+            full_addr = " ".join(addr_parts)
+            maps_url = f"https://www.google.com/maps/search/?api=1&query={full_addr.replace(' ', '+').replace(',', '')}"
+            actions.append(f'<a href="{maps_url}" target="_blank" class="quick-action-btn" title="GPS: {full_addr[:30]}" onclick="event.stopPropagation()">🗺️</a>')
+
+        if actions:
+            return '<div class="quick-actions">' + ''.join(actions) + '</div>'
+        return ''
+
     table_rows = ""
+    is_intervention_module = module_name.lower() in ["interventions", "intervention"]
+
     for item in items:
         cells = ""
         for f in display_fields:
@@ -3807,16 +5485,32 @@ async def module_list(
                 value = get_status_badge(value)
             elif field_config and field_config.type in ["relation", "lien"]:
                 value = resolve_relation(f, field_config, value)
-            elif value is None:
-                value = "-"
+            else:
+                value = format_cell_with_actions(f, field_config, value, item)
+
+            # Pour interventions: ajouter les boutons sous le nom du contact
+            if is_intervention_module and f in ["contact_nom", "contact_sur_place"]:
+                quick_actions = get_quick_actions(item)
+                if quick_actions:
+                    value = f'{value}{quick_actions}'
 
             cells += f"<td>{value}</td>"
+
+        # Cellule Actions avec boutons
+        actions_cell = f'''
+            <td class="actions-cell" onclick="event.stopPropagation()">
+                <a href="/ui/{module_name}/{item['id']}" class="action-btn" title="Modifier">✏️</a>
+                <button class="action-btn" onclick="confirmDelete('{item['id']}')" title="Supprimer">🗑️</button>
+            </td>
+        '''
+
         table_rows += f'''
         <tr data-id="{item['id']}" onclick="handleRowClick(event, '{item['id']}', '/ui/{module_name}/{item['id']}')" style="cursor:pointer">
             <td class="checkbox-cell" onclick="event.stopPropagation()">
                 <input type="checkbox" class="row-checkbox" data-id="{item['id']}" onchange="updateBulkActions()">
             </td>
             {cells}
+            {actions_cell}
         </tr>
         '''
 
@@ -3846,9 +5540,12 @@ async def module_list(
 async def module_create_form(
     module_name: str,
     request: Request,
-    user: dict = Depends(require_auth)
+    user: dict = Depends(require_auth),
+    tenant_id: UUID = Depends(get_current_tenant)
 ):
     """Formulaire de création style Odoo."""
+    import sys
+    print(f"[DEBUG] module_create_form called for: {module_name}", file=sys.stderr, flush=True)
 
     module = ModuleParser.get(module_name)
     if not module:
@@ -3871,7 +5568,7 @@ async def module_create_form(
 
     html = generate_layout(
         title=f"Nouveau {module.nom_affichage}",
-        content=generate_sectioned_form(module_name, sections, module),
+        content=generate_sectioned_form(module_name, sections, module, tenant_id=tenant_id),
         user=user,
         modules=get_all_modules()
     )
@@ -3880,11 +5577,16 @@ async def module_create_form(
 
 def organize_intervention_fields(module) -> dict:
     """Organisation specifique des champs pour le module Interventions."""
+    import sys
+    print(f"[DEBUG] organize_intervention_fields called, fields: {list(module.champs.keys())[:15]}", file=sys.stderr, flush=True)
+    print(f"[DEBUG] objet in champs: {'objet' in module.champs}, description in champs: {'description' in module.champs}", file=sys.stderr, flush=True)
 
     # Champs par section dans l'ordre souhaite
     general_fields = [
-        "reference", "donneur_ordre_id", "reference_externe", "client_id",
-        "type_intervention", "priorite", "corps_etat", "titre", "description"
+        "numero", "statut", "date_demande", "donneur_ordre_id", "type_intervention",
+        "numero_os", "client_id", "type_fiche", "objet", "description",
+        "adresse_intervention", "code_postal", "ville", "contact_telephone",
+        "contact_nom", "date_prevue", "technicien_id"
     ]
 
     planning_fields = [
@@ -3892,9 +5594,8 @@ def organize_intervention_fields(module) -> dict:
         "intervenant_id"
     ]
 
-    adresse_fields = [
-        "adresse_ligne1", "adresse_ligne2", "code_postal", "ville", "pays"
-    ]
+    # Adresse intervention supprimée - champs intégrés dans General
+    adresse_fields = []
 
     contact_fields = [
         "contact_civilite", "contact_sur_place", "telephone_contact", "email_contact"
@@ -3926,7 +5627,6 @@ def organize_intervention_fields(module) -> dict:
     sections = {
         "General": [],
         "Planning": [],
-        "Adresse intervention": [],
         "Contact sur place": [],
         "Execution": [],
         "Materiel": [],
@@ -3942,8 +5642,7 @@ def organize_intervention_fields(module) -> dict:
         field_to_section[f] = "General"
     for f in planning_fields:
         field_to_section[f] = "Planning"
-    for f in adresse_fields:
-        field_to_section[f] = "Adresse intervention"
+    # adresse_fields supprimé - intégré dans General
     for f in contact_fields:
         field_to_section[f] = "Contact sur place"
     for f in execution_fields:
@@ -3968,7 +5667,7 @@ def organize_intervention_fields(module) -> dict:
     # Trier les champs dans chaque section selon l'ordre defini
     def sort_key(item):
         nom = item[0]
-        for idx, f in enumerate(general_fields + planning_fields + adresse_fields +
+        for idx, f in enumerate(general_fields + planning_fields +
                                 contact_fields + execution_fields + materiel_fields +
                                 facturation_fields + signature_fields + liens_fields):
             if f == nom:
@@ -3984,10 +5683,17 @@ def organize_intervention_fields(module) -> dict:
 
 def organize_fields_into_sections(module) -> dict:
     """Organise les champs en sections basées sur l'attribut 'groupe' du champ."""
+    module_name = getattr(module, 'nom', '').lower()
+
+    # Debug log
+    with open('/tmp/debug_sections.log', 'a') as f:
+        f.write(f"organize_fields_into_sections called for: {module_name}\n")
+        f.write(f"Fields in module: {list(module.champs.keys())[:20]}\n")
 
     # Organisation specifique pour les interventions
-    module_name = getattr(module, 'nom', '').lower()
     if 'intervention' in module_name:
+        with open('/tmp/debug_sections.log', 'a') as f:
+            f.write(f"Calling organize_intervention_fields\n")
         return organize_intervention_fields(module)
 
     # Utiliser les groupes définis dans les YAML
@@ -4031,110 +5737,433 @@ def organize_fields_into_sections(module) -> dict:
     return sections_ordonnees
 
 
-def generate_sectioned_form(module_name: str, sections: dict, module) -> str:
-    """Génère un formulaire style Odoo avec 2 colonnes et onglets."""
+def generate_sectioned_form(module_name: str, sections: dict, module, tenant_id: UUID = None) -> str:
+    """Génère un formulaire professionnel AZAL avec sidebar et onglets."""
+    from datetime import datetime
 
     section_names = list(sections.keys())
+    module_title = module.nom_affichage if module else module_name.replace('_', ' ').title()
 
-    # Générer les onglets Odoo
-    tabs_html = ""
+    # Pré-générer le numéro auto si configuré
+    auto_number = None
+    if tenant_id:
+        try:
+            from .api_v1 import generate_auto_number
+            auto_number = generate_auto_number(module_name, tenant_id)
+            import structlog
+            structlog.get_logger().debug("auto_number_generated", module=module_name, number=auto_number)
+        except Exception as e:
+            import structlog
+            structlog.get_logger().error("auto_number_error", module=module_name, error=str(e))
+
+    # Générer les onglets dans la sidebar
+    sidebar_tabs_html = ""
     for i, section_name in enumerate(section_names):
         active = "active" if i == 0 else ""
-        tabs_html += f'<a href="#" class="o-notebook-header {active}" onclick="showSection(\'{i}\', event)">{section_name}</a>'
+        sidebar_tabs_html += f'''
+            <button class="azal-sidebar-item {active}" onclick="showSection({i}, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                {section_name}
+            </button>'''
 
-    # Générer le contenu des sections en 2 colonnes
+    # Générer le contenu des sections
     sections_html = ""
     for i, (section_name, fields) in enumerate(sections.items()):
         display = "block" if i == 0 else "none"
 
-        # Séparer les champs en 2 colonnes
-        col1_fields = []
-        col2_fields = []
-        full_width_fields = []
+        # Générer les champs en grille
+        fields_html = ""
+        for nom, field in fields:
+            # Appliquer les valeurs par défaut pour un nouveau formulaire
+            default_value = None
 
-        for idx, (nom, field) in enumerate(fields):
-            # Les textareas prennent toute la largeur
-            if field.type in ["textarea", "texte long"]:
-                full_width_fields.append((nom, field))
-            elif idx % 2 == 0:
-                col1_fields.append((nom, field))
-            else:
-                col2_fields.append((nom, field))
-
-        # Générer colonne 1
-        col1_html = ""
-        for nom, field in col1_fields:
-            col1_html += get_field_html(field, module_name=module_name)
-
-        # Générer colonne 2
-        col2_html = ""
-        for nom, field in col2_fields:
-            col2_html += get_field_html(field, module_name=module_name)
-
-        # Champs pleine largeur (textareas)
-        full_width_html = ""
-        for nom, field in full_width_fields:
-            full_width_html += f'''
-            <div style="grid-column: 1 / -1;">
-                {get_field_html(field, module_name=module_name)}
-            </div>'''
+            # Numéro auto-généré
+            if nom == "numero" and auto_number:
+                default_value = auto_number
+            elif field.defaut is not None:
+                if field.defaut == "now":
+                    # Date/datetime actuelle
+                    if field.type == "datetime":
+                        default_value = datetime.now().strftime("%Y-%m-%d %H:%M")
+                    elif field.type == "date":
+                        default_value = datetime.now().strftime("%Y-%m-%d")
+                else:
+                    default_value = field.defaut
+            fields_html += get_field_html(field, value=default_value, module_name=module_name)
 
         sections_html += f'''
-        <div class="o-notebook-content" id="section-{i}" style="display: {display};">
-            <div class="o-group">
-                <div class="o-group-col">
-                    {col1_html}
-                </div>
-                <div class="o-group-col">
-                    {col2_html}
-                </div>
+        <div class="azal-section-content" id="section-{i}" style="display: {display};">
+            <div class="azal-section-title">{section_name}</div>
+            <div class="azal-form-grid">
+                {fields_html}
             </div>
-            {full_width_html}
         </div>'''
 
     return f'''
-    <!-- Control Panel Odoo -->
-    <div class="control-panel">
-        <div class="control-panel-left">
-            <div class="breadcrumb">
-                <a href="/ui/{module_name}">{module.nom_affichage}</a>
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-current">Nouveau</span>
-            </div>
-        </div>
-        <div class="control-panel-right">
-            <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
-            <button type="button" id="submit-btn" onclick="submitForm()" class="btn btn-primary">Enregistrer</button>
-        </div>
-    </div>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
 
-    <!-- Form Sheet Odoo -->
-    <div class="o-form-sheet">
-        <form id="create-form">
-            <!-- Notebook (onglets) -->
-            <div class="o-notebook">
-                <div class="o-notebook-headers">
-                    {tabs_html}
+    <style>
+        .azal-section-content {{ padding: 20px 0; }}
+        .azal-section-title {{
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+        }}
+    </style>
+
+    <div class="azal-container">
+        <!-- Sidebar -->
+        <div class="azal-sidebar">
+            <div class="azal-sidebar-header">
+                <div class="azal-sidebar-logo">
+                    <div class="azal-sidebar-logo-icon">A</div>
+                    <div class="azal-sidebar-logo-text">AZAL</div>
                 </div>
-                {sections_html}
             </div>
-        </form>
+            <div class="azal-sidebar-nav">
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Navigation</div>
+                    <a href="/ui/{module_name}" class="azal-sidebar-item">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Liste {module_title}
+                    </a>
+                </div>
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Sections</div>
+                    {sidebar_tabs_html}
+                </div>
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Actions</div>
+                    <button class="azal-sidebar-item" onclick="submitForm()">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="azal-main">
+            <div class="azal-header">
+                <div class="azal-header-top">
+                    <div class="azal-header-left">
+                        <div class="azal-header-icon">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div class="azal-header-title">
+                            <h1>Nouveau {module_title}</h1>
+                            <span class="subtitle">En cours de création</span>
+                        </div>
+                    </div>
+                    <div class="azal-header-meta">
+                        <div class="azal-status">Nouveau</div>
+                        <div class="azal-header-actions">
+                            <a href="/ui/{module_name}" class="btn btn-cancel">Annuler</a>
+                            <button id="submit-btn" class="btn btn-save" onclick="submitForm()">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="azal-content">
+                <div class="azal-form-card">
+                    <form id="create-form">
+                        {sections_html}
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
     function showSection(index, event) {{
         if (event) event.preventDefault();
         // Cacher toutes les sections
-        document.querySelectorAll('.o-notebook-content').forEach(s => s.style.display = 'none');
-        // Désactiver tous les onglets
-        document.querySelectorAll('.o-notebook-header').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.azal-section-content').forEach(s => s.style.display = 'none');
+        // Désactiver tous les onglets sidebar
+        document.querySelectorAll('.azal-sidebar-section:nth-child(2) .azal-sidebar-item').forEach(t => t.classList.remove('active'));
         // Afficher la section sélectionnée
         document.getElementById('section-' + index).style.display = 'block';
         // Activer l'onglet sélectionné
-        document.querySelectorAll('.o-notebook-header')[index].classList.add('active');
+        document.querySelectorAll('.azal-sidebar-section:nth-child(2) .azal-sidebar-item')[index].classList.add('active');
     }}
     </script>
     ''' + generate_form_scripts(module_name)
+
+
+def generate_sectioned_form_edit(module_name: str, sections: dict, module, existing_data: dict) -> str:
+    """Génère un formulaire professionnel AZAL avec sidebar et onglets pour l'édition."""
+
+    section_names = list(sections.keys())
+    module_title = module.nom_affichage if module else module_name.replace('_', ' ').title()
+    item_id = existing_data.get('id', '')
+    display_name = existing_data.get('numero', existing_data.get('nom', existing_data.get('name', 'Sans nom')))
+    current_status = existing_data.get('statut', existing_data.get('status', ''))
+
+    # Générer les onglets dans la sidebar
+    sidebar_tabs_html = ""
+    for i, section_name in enumerate(section_names):
+        active = "active" if i == 0 else ""
+        sidebar_tabs_html += f'''
+            <button class="azal-sidebar-item {active}" onclick="showSection({i}, event)">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                {section_name}
+            </button>'''
+
+    # Générer le contenu des sections
+    sections_html = ""
+    for i, (section_name, fields) in enumerate(sections.items()):
+        display = "block" if i == 0 else "none"
+
+        # Générer les champs en grille avec valeurs existantes
+        fields_html = ""
+        for nom, field in fields:
+            value = existing_data.get(nom)
+            fields_html += get_field_html(field, value, module_name=module_name)
+
+        sections_html += f'''
+        <div class="azal-section-content" id="section-{i}" style="display: {display};">
+            <div class="azal-section-title">{section_name}</div>
+            <div class="azal-form-grid">
+                {fields_html}
+            </div>
+        </div>'''
+
+    return f'''
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+
+    <style>
+        .azal-section-content {{ padding: 20px 0; }}
+        .azal-section-title {{
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+        }}
+    </style>
+
+    <div class="azal-container">
+        <!-- Sidebar -->
+        <div class="azal-sidebar">
+            <div class="azal-sidebar-header">
+                <div class="azal-sidebar-logo">
+                    <div class="azal-sidebar-logo-icon">A</div>
+                    <div class="azal-sidebar-logo-text">AZAL</div>
+                </div>
+            </div>
+            <div class="azal-sidebar-nav">
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Navigation</div>
+                    <a href="/ui/{module_name}" class="azal-sidebar-item">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Liste {module_title}
+                    </a>
+                </div>
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Sections</div>
+                    {sidebar_tabs_html}
+                </div>
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Actions</div>
+                    <button class="azal-sidebar-item" onclick="submitFormEdit()">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Enregistrer
+                    </button>
+                    <button class="azal-sidebar-item azal-sidebar-item-danger" onclick="deleteRecord()">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="azal-main">
+            <div class="azal-header">
+                <div class="azal-header-top">
+                    <div class="azal-header-left">
+                        <div class="azal-header-icon">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div class="azal-header-title">
+                            <h1>{display_name}</h1>
+                            <span class="subtitle">{module_title}</span>
+                        </div>
+                    </div>
+                    <div class="azal-header-meta">
+                        <div class="azal-status">{current_status.replace('_', ' ').title() if current_status else 'Édition'}</div>
+                        <div class="azal-header-actions">
+                            <a href="/ui/{module_name}" class="btn btn-cancel">Annuler</a>
+                            <button id="submit-btn" class="btn btn-save" onclick="submitFormEdit()">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="azal-content">
+                <div class="azal-form-card">
+                    <form id="create-form">
+                        <input type="hidden" name="id" value="{item_id}">
+                        {sections_html}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const itemId = '{item_id}';
+    const moduleName = '{module_name}';
+
+    function showSection(index, event) {{
+        if (event) event.preventDefault();
+        document.querySelectorAll('.azal-section-content').forEach(s => s.style.display = 'none');
+        document.querySelectorAll('.azal-sidebar-section:nth-child(2) .azal-sidebar-item').forEach(t => t.classList.remove('active'));
+        document.getElementById('section-' + index).style.display = 'block';
+        document.querySelectorAll('.azal-sidebar-section:nth-child(2) .azal-sidebar-item')[index].classList.add('active');
+    }}
+
+    async function submitFormEdit() {{
+        const submitBtn = document.getElementById('submit-btn');
+        const originalText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {{
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span>Enregistrement...';
+        }}
+        try {{
+            const data = collectFormData();
+            const response = await fetch('/api/' + moduleName + '/' + itemId, {{
+                method: 'PUT',
+                credentials: 'include',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify(data)
+            }});
+            if (response.ok) {{
+                showNotification('Modifications enregistrées !', 'success');
+                setTimeout(() => {{ window.location.href = '/ui/' + moduleName; }}, 1500);
+            }} else {{
+                const err = await response.json().catch(() => ({{}}));
+                showNotification(err.detail || 'Erreur', 'error');
+                if (submitBtn) {{
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }}
+            }}
+        }} catch (e) {{
+            showNotification('Erreur de connexion', 'error');
+            if (submitBtn) {{
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }}
+        }}
+    }}
+
+    async function deleteRecord() {{
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cet enregistrement ?')) return;
+        try {{
+            const response = await fetch('/api/' + moduleName + '/' + itemId, {{
+                method: 'DELETE',
+                credentials: 'include'
+            }});
+            if (response.ok) {{
+                showNotification('Enregistrement supprimé', 'success');
+                setTimeout(() => {{ window.location.href = '/ui/' + moduleName; }}, 1500);
+            }} else {{
+                const err = await response.json().catch(() => ({{}}));
+                showNotification(err.detail || 'Erreur lors de la suppression', 'error');
+            }}
+        }} catch (e) {{
+            showNotification('Erreur de connexion', 'error');
+        }}
+    }}
+    </script>
+    ''' + generate_form_scripts_edit(module_name)
+
+
+def generate_form_scripts_edit(module_name: str) -> str:
+    """Génère les scripts communs pour les formulaires en mode édition."""
+    return f'''
+    <div id="notification" class="notification hidden"></div>
+    <style>
+        .notification {{
+            position: fixed; top: 20px; right: 20px; padding: 16px 24px;
+            border-radius: 8px; font-weight: 500; z-index: 1000;
+            transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }}
+        .notification.hidden {{ opacity: 0; transform: translateY(-20px); pointer-events: none; }}
+        .notification.success {{ background: #10B981; color: white; }}
+        .notification.error {{ background: #EF4444; color: white; }}
+        .spinner {{
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid #ffffff; border-radius: 50%;
+            border-top-color: transparent; animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }}
+        @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+    </style>
+    <script>
+    function showNotification(message, type) {{
+        const notif = document.getElementById('notification');
+        notif.textContent = message;
+        notif.className = 'notification ' + type;
+        setTimeout(() => {{ notif.classList.add('hidden'); }}, 4000);
+    }}
+
+    function collectFormData() {{
+        const form = document.getElementById('create-form');
+        const formData = new FormData(form);
+        const data = {{}};
+        for (const [key, value] of formData.entries()) {{
+            if (key === 'id') continue;
+            const input = form.querySelector(`[name="${{key}}"]`);
+            if (input && input.type === 'checkbox') {{
+                data[key] = input.checked;
+            }} else if (input && input.type === 'number') {{
+                data[key] = value ? parseFloat(value) : null;
+            }} else {{
+                data[key] = value || null;
+            }}
+        }}
+        form.querySelectorAll('input[type="checkbox"]').forEach(cb => {{
+            if (!data.hasOwnProperty(cb.name)) data[cb.name] = cb.checked;
+        }});
+        return data;
+    }}
+    </script>
+    '''
 
 
 def generate_form_scripts(module_name: str) -> str:
@@ -4250,6 +6279,24 @@ def generate_form_scripts(module_name: str) -> str:
             }} else if (input && input.classList.contains('datetime-picker')) {{
                 // Utiliser la valeur ISO stockée dans data-iso-value
                 data[key] = input.dataset.isoValue || value || null;
+            }} else if (input && input.classList.contains('o-field-json')) {{
+                // Champs JSON: parser ou utiliser objet/array vide
+                if (value && value.trim()) {{
+                    try {{
+                        data[key] = JSON.parse(value);
+                    }} catch (e) {{
+                        data[key] = {{}};
+                    }}
+                }} else {{
+                    data[key] = {{}};
+                }}
+            }} else if (input && input.classList.contains('o-field-tags')) {{
+                // Champs tags: convertir en liste
+                if (value && value.trim()) {{
+                    data[key] = value.split(',').map(t => t.trim()).filter(t => t);
+                }} else {{
+                    data[key] = [];
+                }}
             }} else {{
                 data[key] = value || null;
             }}
@@ -4260,11 +6307,20 @@ def generate_form_scripts(module_name: str) -> str:
         return data;
     }}
 
-    async function submitForm() {{
-        const submitBtn = document.getElementById('submit-btn');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner"></span>Enregistrement...';
+    async function submitForm(event) {{
+        // Trouver le bouton cliqué ou le bouton principal
+        const submitBtn = document.getElementById('submit-btn') || (event && event.target) || document.querySelector('.btn-save');
+        const originalText = submitBtn ? submitBtn.innerHTML : '';
+
+        // Désactiver tous les boutons save pendant l'enregistrement
+        document.querySelectorAll('.btn-save, .azal-sidebar-item').forEach(btn => {{
+            if (btn.textContent.includes('Enregistrer')) btn.disabled = true;
+        }});
+
+        if (submitBtn) {{
+            submitBtn.innerHTML = '<span class="spinner"></span>Enregistrement...';
+        }}
+
         try {{
             const data = collectFormData();
             const response = await fetch('/api/{module_name}', {{
@@ -4280,28 +6336,28 @@ def generate_form_scripts(module_name: str) -> str:
                 const params = new URLSearchParams(window.location.search);
                 const redirectUrl = params.get('redirect');
                 if (redirectUrl) {{
-                    // Retourner à la page précédente avec l'ID du nouveau record
                     const decodedUrl = decodeURIComponent(redirectUrl);
                     const selectField = params.get('select_field');
-                    // Stocker l'ID créé pour pré-sélection
                     if (result.id && selectField) {{
                         sessionStorage.setItem('newlyCreatedId', result.id);
                         sessionStorage.setItem('newlyCreatedField', selectField);
                     }}
-                    setTimeout(() => {{ window.location.href = decodedUrl; }}, 2000);
+                    setTimeout(() => {{ window.location.href = decodedUrl; }}, 1500);
                 }} else {{
-                    setTimeout(() => {{ window.location.href = '/ui/{module_name}'; }}, 2000);
+                    setTimeout(() => {{ window.location.href = '/ui/{module_name}'; }}, 1500);
                 }}
             }} else {{
                 const err = await response.json().catch(() => ({{}}));
-                showNotification(err.detail || 'Erreur', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
+                showNotification(err.detail || 'Erreur lors de l\\'enregistrement', 'error');
+                // Réactiver les boutons
+                document.querySelectorAll('.btn-save, .azal-sidebar-item').forEach(btn => btn.disabled = false);
+                if (submitBtn) submitBtn.innerHTML = originalText;
             }}
         }} catch (e) {{
-            showNotification('Erreur de connexion', 'error');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
+            console.error('Erreur submitForm:', e);
+            showNotification('Erreur de connexion au serveur', 'error');
+            document.querySelectorAll('.btn-save, .azal-sidebar-item').forEach(btn => btn.disabled = false);
+            if (submitBtn) submitBtn.innerHTML = originalText;
         }}
     }}
 
@@ -4313,6 +6369,27 @@ def generate_form_scripts(module_name: str) -> str:
             return match ? match[2] : null;
         }};
         const authToken = urlParams.get('token') || localStorage.getItem('access_token') || localStorage.getItem('auth_token') || getCookie('access_token') || getCookie('token') || '';
+
+        // Auto-remplir Objet avec les 5 premiers mots de Description
+        const descriptionField = document.getElementById('field_description');
+        const objetField = document.getElementById('field_objet');
+        let objetManuallyEdited = false;
+
+        if (objetField) {{
+            objetField.addEventListener('input', function() {{
+                objetManuallyEdited = true;
+            }});
+        }}
+
+        if (descriptionField && objetField) {{
+            descriptionField.addEventListener('input', function() {{
+                if (!objetManuallyEdited || !objetField.value.trim()) {{
+                    const words = this.value.trim().split(/\s+/).slice(0, 5);
+                    objetField.value = words.join(' ');
+                    objetManuallyEdited = false;
+                }}
+            }});
+        }}
 
         document.querySelectorAll('select[data-link]').forEach(async select => {{
             const linkedModule = select.dataset.link;
@@ -4402,7 +6479,7 @@ def generate_form_scripts(module_name: str) -> str:
 
                     // Trouver le champ local et le remplir
                     const input = document.querySelector(`[name="${{localField}}"]`);
-                    if (input && !input.value) {{
+                    if (input) {{
                         input.value = value;
                         // Trigger change event pour d'autres listeners
                         input.dispatchEvent(new Event('change', {{ bubbles: true }}));
@@ -4553,34 +6630,179 @@ def generate_form_scripts(module_name: str) -> str:
     '''
 
 
-def generate_form(module_name: str, fields_html: str) -> str:
-    """Génère un formulaire standard style Odoo avec soumission API."""
+def generate_form(module_name: str, fields_html: str, module=None, existing_data: dict = None) -> str:
+    """Génère un formulaire professionnel style AZAL avec sidebar et actions."""
+
+    is_edit_mode = existing_data is not None
+    item_id = existing_data.get('id', '') if existing_data else ''
+    module_title = module.nom_affichage if module else module_name.replace('_', ' ').title()
+    current_status = existing_data.get('status', existing_data.get('statut', 'Nouveau')) if existing_data else 'Nouveau'
 
     return f'''
-    <div class="card">
-        <div class="card-header">
-            <div class="flex items-center gap-2">
-                <span class="badge badge-gray">Nouveau</span>
+    <!-- AZAL PROFESSIONAL FORM - Styles in /assets/style.css -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+
+    <div class="azal-container">
+        <!-- Sidebar -->
+        <div class="azal-sidebar">
+            <div class="azal-sidebar-header">
+                <div class="azal-sidebar-logo">
+                    <div class="azal-sidebar-logo-icon">A</div>
+                    <div class="azal-sidebar-logo-text">AZAL</div>
+                </div>
             </div>
-            <div class="flex gap-2">
-                <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
-                <button type="button" id="submit-btn" onclick="submitForm()" class="btn btn-primary">Enregistrer</button>
+            <div class="azal-sidebar-nav">
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Navigation</div>
+                    <a href="/ui/{module_name}" class="azal-sidebar-item">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Liste {module_title}
+                    </a>
+                </div>
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Actions</div>
+                    <button class="azal-sidebar-item" onclick="submitForm()">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Enregistrer
+                    </button>
+                    {'<button class="azal-sidebar-item azal-sidebar-item-danger" onclick="deleteRecord()">' +
+                        '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />' +
+                        '</svg>' +
+                        'Supprimer' +
+                    '</button>' if is_edit_mode else ''}
+                </div>
             </div>
         </div>
 
-        <form id="create-form" class="card-body">
-            <div class="doc-section">
-                <div class="form-fields-container">
-                    {fields_html}
+        <!-- Main content -->
+        <div class="azal-main">
+            <div class="azal-header">
+                <div class="azal-header-top">
+                    <div class="azal-header-left">
+                        <div class="azal-header-icon">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div class="azal-header-title">
+                            <h1>{'Modifier' if is_edit_mode else 'Nouveau'} {module_title}</h1>
+                            <span class="subtitle">{item_id if is_edit_mode else 'En cours de création'}</span>
+                        </div>
+                    </div>
+                    <div class="azal-header-meta">
+                        <div class="azal-status">{current_status.replace('_', ' ').title()}</div>
+                        <div class="azal-header-actions">
+                            <a href="/ui/{module_name}" class="btn btn-cancel">Annuler</a>
+                            <button class="btn btn-save" onclick="submitForm()">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </form>
+
+            <div class="azal-content">
+                <div class="azal-form-card">
+                    <form id="create-form">
+                        <div class="azal-form-grid">
+                            {fields_html}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    ''' + generate_form_scripts(module_name)
+
+    <script>
+        const isEditMode = {'true' if is_edit_mode else 'false'};
+        const itemId = '{item_id}';
+        const moduleName = '{module_name}';
+
+        async function submitForm() {{
+            const form = document.getElementById('create-form');
+            const formData = new FormData(form);
+            const data = {{}};
+
+            formData.forEach((value, key) => {{
+                if (value !== '' && value !== null) {{
+                    const input = form.querySelector(`[name="${{key}}"]`);
+                    if (input && input.type === 'checkbox') {{
+                        data[key] = input.checked;
+                    }} else if (input && input.type === 'number') {{
+                        data[key] = parseFloat(value) || 0;
+                    }} else {{
+                        data[key] = value;
+                    }}
+                }}
+            }});
+
+            form.querySelectorAll('input[type="checkbox"]').forEach(cb => {{
+                if (!cb.checked) data[cb.name] = false;
+            }});
+
+            try {{
+                const url = isEditMode ? `/api/${{moduleName}}/${{itemId}}` : `/api/${{moduleName}}`;
+                const method = isEditMode ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {{
+                    method: method,
+                    credentials: 'include',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify(data)
+                }});
+
+                if (response.ok) {{
+                    window.location.href = `/ui/${{moduleName}}`;
+                }} else {{
+                    const error = await response.json().catch(() => ({{}}));
+                    alert(error.detail || 'Erreur lors de l\\'enregistrement');
+                }}
+            }} catch (e) {{
+                console.error(e);
+                alert('Erreur de connexion');
+            }}
+        }}
+
+        async function deleteRecord() {{
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) return;
+
+            try {{
+                const response = await fetch(`/api/${{moduleName}}/${{itemId}}`, {{
+                    method: 'DELETE',
+                    credentials: 'include'
+                }});
+
+                if (response.ok) {{
+                    window.location.href = `/ui/${{moduleName}}`;
+                }} else {{
+                    alert('Erreur lors de la suppression');
+                }}
+            }} catch (e) {{
+                alert('Erreur de connexion');
+            }}
+        }}
+    </script>
+    '''
 
 
-def generate_document_form(module, module_name: str) -> str:
-    """Génère un formulaire style Odoo pour documents avec lignes."""
+def generate_document_form(module, module_name: str, existing_data: dict = None) -> str:
+    """Génère un formulaire style Odoo pour documents avec lignes.
+
+    Args:
+        module: Definition du module YAML
+        module_name: Nom du module
+        existing_data: Données existantes pour mode édition (optionnel)
+    """
+    is_edit_mode = existing_data is not None
+    item_id = existing_data.get('id', '') if existing_data else ''
 
     # Déterminer le type de document
     doc_types = {
@@ -4604,160 +6826,1538 @@ def generate_document_form(module, module_name: str) -> str:
     tva_default_decimal = tva_default / 100  # 0.20 pour 20%
 
     return f'''
-    <div class="card">
-        <div class="card-header">
-            <div class="flex items-center gap-2">
-                <span class="badge badge-gray">Nouveau</span>
+    <!-- AZAL BOLD IDENTITY -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+        :root {{
+            --azal-primary: #3454D1;
+            --azal-primary-dark: #2a44a8;
+            --azal-primary-light: #6B9FFF;
+            --azal-electric: #6B9FFF;
+            --azal-bg: #F1F5F9;
+            --azal-card: #FFFFFF;
+            --azal-text: #1E293B;
+            --azal-text-muted: #64748B;
+            --azal-border: #E2E8F0;
+            --azal-input-bg: #FFFFFF;
+            --azal-success: #10B981;
+        }}
+
+        @media (prefers-color-scheme: dark) {{
+            :root {{
+                --azal-primary: #6B9FFF;
+                --azal-primary-dark: #3454D1;
+                --azal-primary-light: #93C5FD;
+                --azal-electric: #93C5FD;
+                --azal-bg: #0F172A;
+                --azal-card: #1E293B;
+                --azal-text: #F1F5F9;
+                --azal-text-muted: #94A3B8;
+                --azal-border: #334155;
+                --azal-input-bg: #1E293B;
+            }}
+        }}
+
+        .azal-doc-container {{
+            max-width: 1200px;
+            margin: 0 auto;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            min-height: calc(100vh - 80px);
+        }}
+
+        /* ========== BARRE LATERALE NAVIGATION ========== */
+        .azal-sidebar {{
+            width: 220px;
+            background: linear-gradient(180deg, var(--azal-primary) 0%, var(--azal-primary-dark) 100%);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 0;
+            position: relative;
+        }}
+
+        .azal-sidebar::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 30%);
+            pointer-events: none;
+        }}
+
+        .azal-sidebar-header {{
+            padding: 0 20px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 16px;
+        }}
+
+        .azal-sidebar-logo {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }}
+
+        .azal-sidebar-logo-icon {{
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--azal-primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }}
+
+        .azal-sidebar-logo-text {{
+            font-weight: 700;
+            font-size: 18px;
+            color: white;
+        }}
+
+        .azal-sidebar-nav {{
+            flex: 1;
+            padding: 0 12px;
+        }}
+
+        .azal-sidebar-section {{
+            margin-bottom: 24px;
+        }}
+
+        .azal-sidebar-section-title {{
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 8px;
+            margin-bottom: 8px;
+        }}
+
+        .azal-sidebar-item {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 12px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }}
+
+        .azal-sidebar-item:hover {{
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }}
+
+        .azal-sidebar-item.active {{
+            background: white;
+            color: var(--azal-primary);
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }}
+
+        .azal-sidebar-item svg {{
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }}
+
+        .azal-sidebar-item-success {{
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981 !important;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            margin-top: 8px;
+        }}
+
+        .azal-sidebar-item-success:hover {{
+            background: #10B981;
+            color: white !important;
+        }}
+
+        .azal-sidebar-item .badge {{
+            margin-left: auto;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }}
+
+        .azal-sidebar-item.active .badge {{
+            background: var(--azal-primary);
+            color: white;
+        }}
+
+        .azal-doc-container * {{
+            font-family: inherit;
+        }}
+
+
+        /* ========== CONTENU PRINCIPAL ========== */
+        .azal-main {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--azal-bg);
+        }}
+
+        /* ========== HEADER AZAL ========== */
+        .azal-doc-header {{
+            background: var(--azal-card);
+            border-bottom: 1px solid var(--azal-border);
+            position: relative;
+        }}
+
+        .azal-doc-header::before {{
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 30%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--azal-primary) 0%, var(--azal-electric) 100%);
+        }}
+
+        .azal-doc-header-top {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 32px;
+        }}
+
+        .azal-doc-header-left {{
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }}
+
+        .azal-doc-badge {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }}
+
+        .azal-doc-icon {{
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(30, 58, 138, 0.25);
+            position: relative;
+        }}
+
+        .azal-doc-icon::after {{
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+        }}
+
+        .azal-doc-icon svg {{
+            width: 28px;
+            height: 28px;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }}
+
+        .azal-doc-title {{
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }}
+
+        .azal-doc-title h1 {{
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            color: var(--azal-text);
+            letter-spacing: -0.5px;
+        }}
+
+        .azal-doc-title .subtitle {{
+            font-size: 13px;
+            color: var(--azal-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+
+        .azal-doc-title .subtitle::before {{
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--azal-electric);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }}
+
+        @keyframes pulse-dot {{
+            0%, 100% {{ transform: scale(1); opacity: 1; }}
+            50% {{ transform: scale(1.2); opacity: 0.7; }}
+        }}
+
+        .azal-doc-meta {{
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }}
+
+        .azal-doc-status {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border: 1px solid var(--azal-primary);
+            padding: 10px 20px;
+            border-radius: 100px;
+            color: var(--azal-primary);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }}
+
+        .azal-doc-actions {{
+            display: flex;
+            gap: 12px;
+        }}
+
+        .azal-doc-actions .btn {{
+            padding: 14px 28px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+        }}
+
+        .azal-doc-actions .btn-cancel {{
+            background: transparent;
+            color: var(--azal-text-muted);
+            border: 1px solid var(--azal-border);
+            text-decoration: none;
+        }}
+
+        .azal-doc-actions .btn-cancel:hover {{
+            color: var(--azal-text);
+            border-color: var(--azal-text-muted);
+            background: var(--azal-bg);
+        }}
+
+        .azal-doc-actions .btn-save {{
+            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(30, 58, 138, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+
+        .azal-doc-actions .btn-save:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(30, 58, 138, 0.4);
+        }}
+
+        .azal-doc-actions .btn-save svg {{
+            width: 18px;
+            height: 18px;
+        }}
+
+        /* ========== CORPS ========== */
+        .azal-doc-body {{
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }}
+
+        .azal-doc-content {{
+            background: var(--azal-card);
+            border-radius: 20px;
+            border: 1px solid var(--azal-border);
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+        }}
+
+        /* ========== SECTIONS ========== */
+        .azal-section {{
+            padding: 32px;
+            border-bottom: 1px solid var(--azal-border);
+        }}
+
+        .azal-section:last-child {{
+            border-bottom: none;
+        }}
+
+        .azal-section-header {{
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+        }}
+
+        .azal-section-icon {{
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--azal-primary);
+        }}
+
+        .azal-section-icon svg {{
+            width: 22px;
+            height: 22px;
+        }}
+
+        .azal-section-title {{
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--azal-text);
+        }}
+
+        /* ========== CHAMPS ========== */
+        .azal-fields-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }}
+
+        @media (max-width: 768px) {{
+            .azal-fields-grid {{
+                grid-template-columns: 1fr;
+            }}
+        }}
+
+        .azal-field {{
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }}
+
+        .azal-field.full-width {{
+            grid-column: 1 / -1;
+        }}
+
+        .azal-field label {{
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--azal-text-muted);
+        }}
+
+        .azal-field .input,
+        .azal-field select,
+        .azal-field textarea {{
+            padding: 14px 16px;
+            font-size: 15px;
+            border: 2px solid var(--azal-border);
+            border-radius: 12px;
+            background: var(--azal-input-bg);
+            color: var(--azal-text);
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }}
+
+        .azal-field .input:focus,
+        .azal-field select:focus,
+        .azal-field textarea:focus {{
+            outline: none;
+            border-color: var(--azal-primary);
+            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+        }}
+
+        .azal-field .select-with-create {{
+            display: flex;
+            gap: 8px;
+        }}
+
+        .azal-field .select-with-create select {{
+            flex: 1;
+        }}
+
+        .azal-field .btn-create-inline {{
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+        }}
+
+        .azal-field .btn-create-inline:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 58, 138, 0.35);
+        }}
+
+        /* ========== ONGLETS ========== */
+        .azal-tabs {{
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: var(--azal-bg);
+            padding: 6px;
+            border-radius: 14px;
+        }}
+
+        .azal-tab {{
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--azal-text-muted);
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+            text-align: center;
+        }}
+
+        .azal-tab:hover {{
+            color: var(--azal-text);
+            background: var(--azal-card);
+        }}
+
+        .azal-tab.active {{
+            color: white;
+            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+        }}
+
+        /* ========== TABLEAU ========== */
+        .azal-lines-table {{
+            width: 100%;
+            border-collapse: collapse;
+        }}
+
+        .azal-lines-table thead {{
+            background: var(--azal-bg);
+        }}
+
+        .azal-lines-table th {{
+            padding: 16px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--azal-text-muted);
+            text-align: left;
+            border-bottom: 1px solid var(--azal-border);
+        }}
+
+        .azal-lines-table tbody tr {{
+            transition: background 0.15s ease;
+        }}
+
+        .azal-lines-table tbody tr:hover {{
+            background: rgba(30, 58, 138, 0.03);
+        }}
+
+        .azal-lines-table td {{
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--azal-border);
+            vertical-align: middle;
+            color: var(--azal-text);
+        }}
+
+        .azal-lines-table td:last-child {{
+            text-align: center;
+        }}
+
+        .azal-lines-table .input,
+        .azal-lines-table select {{
+            padding: 12px 14px;
+            font-size: 14px;
+            border: 2px solid var(--azal-border);
+            border-radius: 10px;
+            background: var(--azal-input-bg);
+            color: var(--azal-text);
+            font-weight: 500;
+            font-family: inherit;
+            width: 100%;
+        }}
+
+        .azal-lines-table .input:focus,
+        .azal-lines-table select:focus {{
+            outline: none;
+            border-color: var(--azal-primary);
+        }}
+
+        .azal-lines-table .btn-remove {{
+            width: 36px;
+            height: 36px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 400;
+            transition: all 0.15s ease;
+        }}
+
+        .azal-lines-table .btn-remove:hover {{
+            background: #EF4444;
+            color: white;
+        }}
+
+        .azal-lines-table .montant {{
+            font-weight: 700;
+            color: var(--azal-primary);
+            font-size: 15px;
+        }}
+
+        .azal-empty-lines {{
+            text-align: center;
+            padding: 60px 24px !important;
+            color: var(--azal-text-muted);
+        }}
+
+        .azal-empty-lines svg {{
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+            color: var(--azal-primary);
+        }}
+
+        .azal-empty-lines p {{
+            font-size: 16px;
+            font-weight: 500;
+        }}
+
+        /* ========== BOUTONS AJOUT ========== */
+        .azal-add-buttons {{
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }}
+
+        .azal-add-btn {{
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--azal-primary);
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
+            border: 2px dashed var(--azal-primary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }}
+
+        .azal-add-btn:hover {{
+            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
+            border-style: solid;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 58, 138, 0.25);
+        }}
+
+        .azal-add-btn:disabled {{
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }}
+
+        .azal-add-btn svg {{
+            width: 18px;
+            height: 18px;
+        }}
+
+        /* ========== TOTAUX ========== */
+        .azal-totals {{
+            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-dark) 100%);
+            padding: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 20px 20px;
+        }}
+
+        .azal-totals::before {{
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }}
+
+        .azal-totals-brand {{
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }}
+
+        .azal-totals-brand .logo {{
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -1px;
+        }}
+
+        .azal-totals-brand .tagline {{
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }}
+
+        .azal-totals-box {{
+            min-width: 320px;
+            z-index: 1;
+        }}
+
+        .azal-total-row {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }}
+
+        .azal-total-row:last-child {{
+            border-bottom: none;
+            padding-top: 16px;
+            margin-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }}
+
+        .azal-total-row .label {{
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            font-weight: 500;
+        }}
+
+        .azal-total-row .value {{
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }}
+
+        .azal-total-row.grand-total .label {{
+            color: rgba(255,255,255,0.9);
+            font-size: 16px;
+            font-weight: 600;
+        }}
+
+        .azal-total-row.grand-total .value {{
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }}
+
+        /* ========== TAB CONTENT ========== */
+        .azal-tab-content {{
+            display: none;
+        }}
+
+        .azal-tab-content.active {{
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }}
+
+        @keyframes fadeIn {{
+            from {{ opacity: 0; transform: translateY(10px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+
+        .azal-info-empty {{
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--azal-text-muted);
+        }}
+
+        .azal-info-empty svg {{
+            width: 56px;
+            height: 56px;
+            margin-bottom: 16px;
+            opacity: 0.25;
+        }}
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 900px) {{
+            .azal-doc-container {{
+                flex-direction: column;
+            }}
+
+            .azal-doc-container {{
+                flex-direction: column;
+            }}
+
+            .azal-sidebar {{
+                width: 100%;
+                flex-direction: row;
+                padding: 12px 16px;
+                overflow-x: auto;
+            }}
+
+            .azal-sidebar::before {{
+                display: none;
+            }}
+
+            .azal-sidebar-header {{
+                border-bottom: none;
+                border-right: 1px solid rgba(255,255,255,0.1);
+                padding: 0 16px 0 0;
+                margin-bottom: 0;
+                margin-right: 16px;
+            }}
+
+            .azal-sidebar-logo {{
+                margin-bottom: 0;
+            }}
+
+            .azal-sidebar-nav {{
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+                padding: 0;
+            }}
+
+            .azal-sidebar-section {{
+                display: flex;
+                flex-direction: row;
+                gap: 4px;
+                margin-bottom: 0;
+                align-items: center;
+            }}
+
+            .azal-sidebar-section-title {{
+                display: none;
+            }}
+
+            .azal-sidebar-nav {{
+                flex-direction: row;
+            }}
+
+            .azal-sidebar-item.active::before {{
+                display: none;
+            }}
+        }}
+
+        .azal-doc-header-bar {{
+            display: none;
+        }}
+
+        /* ========== OPTIONS TAB STYLES ========== */
+        .azal-option-section {{
+            background: var(--azal-card);
+            border: 1px solid var(--azal-border);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }}
+
+        .azal-option-header {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+            border-bottom: 1px solid var(--azal-border);
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--azal-text);
+        }}
+
+        .azal-option-header svg {{
+            color: var(--azal-primary);
+        }}
+
+        .azal-option-subtitle {{
+            font-size: 12px;
+            color: var(--azal-text-muted);
+            font-weight: 400;
+            margin-left: 8px;
+        }}
+
+        .azal-option-content {{
+            padding: 24px;
+        }}
+
+        /* Radio Cards pour livraison */
+        .azal-delivery-options {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }}
+
+        .azal-radio-card {{
+            display: block;
+            cursor: pointer;
+        }}
+
+        .azal-radio-card input[type="radio"] {{
+            display: none;
+        }}
+
+        .azal-radio-card-content {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 24px 16px;
+            background: var(--azal-bg);
+            border: 2px solid var(--azal-border);
+            border-radius: 16px;
+            transition: all 0.2s ease;
+            text-align: center;
+        }}
+
+        .azal-radio-card input[type="radio"]:checked + .azal-radio-card-content {{
+            border-color: var(--azal-primary);
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
+            box-shadow: 0 4px 16px rgba(30, 58, 138, 0.15);
+        }}
+
+        .azal-radio-card:hover .azal-radio-card-content {{
+            border-color: var(--azal-primary-light);
+            transform: translateY(-2px);
+        }}
+
+        .azal-radio-card-icon {{
+            width: 56px;
+            height: 56px;
+            background: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--azal-primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }}
+
+        .azal-radio-card input[type="radio"]:checked + .azal-radio-card-content .azal-radio-card-icon {{
+            background: var(--azal-primary);
+            color: white;
+        }}
+
+        .azal-radio-card-info {{
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }}
+
+        .azal-radio-card-info strong {{
+            font-size: 15px;
+            color: var(--azal-text);
+        }}
+
+        .azal-radio-card-info span {{
+            font-size: 12px;
+            color: var(--azal-text-muted);
+        }}
+
+        .azal-radio-card-price {{
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--azal-primary);
+            background: rgba(30, 58, 138, 0.1);
+            padding: 6px 16px;
+            border-radius: 100px;
+        }}
+
+        /* Produits optionnels */
+        .azal-optional-products {{
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }}
+
+        .azal-optional-product {{
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--azal-bg);
+            border: 1px solid var(--azal-border);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }}
+
+        .azal-optional-product:hover {{
+            border-color: var(--azal-primary-light);
+        }}
+
+        .azal-optional-product input[type="checkbox"] {{
+            width: 20px;
+            height: 20px;
+            accent-color: var(--azal-primary);
+            cursor: pointer;
+        }}
+
+        .azal-optional-product-info {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }}
+
+        .azal-optional-product-name {{
+            font-weight: 600;
+            color: var(--azal-text);
+        }}
+
+        .azal-optional-product-desc {{
+            font-size: 13px;
+            color: var(--azal-text-muted);
+        }}
+
+        .azal-optional-product-price {{
+            font-weight: 700;
+            color: var(--azal-primary);
+            font-size: 15px;
+        }}
+
+        .azal-optional-product-remove {{
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--azal-text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }}
+
+        .azal-optional-product-remove:hover {{
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+        }}
+
+        .azal-optional-empty {{
+            text-align: center;
+            padding: 32px;
+            color: var(--azal-text-muted);
+            font-size: 14px;
+        }}
+
+        /* Checkbox adresse */
+        .azal-option-content label input[type="checkbox"] {{
+            margin-right: 8px;
+            accent-color: var(--azal-primary);
+        }}
+    </style>
+
+    <div class="azal-doc-container">
+        <!-- Barre latérale navigation -->
+        <div class="azal-sidebar">
+            <div class="azal-sidebar-header">
+                <div class="azal-sidebar-logo">
+                    <div class="azal-sidebar-logo-icon">A</div>
+                    <span class="azal-sidebar-logo-text">AZAL</span>
+                </div>
             </div>
-            <div class="flex gap-2">
-                <a href="/ui/{module_name}" class="btn btn-secondary">Annuler</a>
-                <button class="btn btn-primary" onclick="saveDocument()">Enregistrer</button>
+            <div class="azal-sidebar-nav">
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Client</div>
+                    <button class="azal-sidebar-item active" data-tab="client">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Informations
+                    </button>
+                </div>
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Document</div>
+                    <button class="azal-sidebar-item" data-tab="lignes">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Lignes
+                        <span class="badge" id="lignes-count">0</span>
+                    </button>
+                    <button class="azal-sidebar-item" data-tab="optionnels">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Options
+                    </button>
+                    <button class="azal-sidebar-item" data-tab="autres">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Infos
+                    </button>
+                </div>
+                <div class="azal-sidebar-section">
+                    <div class="azal-sidebar-section-title">Actions</div>
+                    <button class="azal-sidebar-item" onclick="envoyerParEmail()">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Envoyer par email
+                    </button>
+                    <button class="azal-sidebar-item" onclick="telechargerPDF()">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Télécharger PDF
+                    </button>
+                    <button class="azal-sidebar-item" onclick="imprimerDocument()">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Imprimer
+                    </button>
+                    {'<button class="azal-sidebar-item azal-sidebar-item-success" onclick="convertirEnCommande()">' +
+                        '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />' +
+                        '</svg>' +
+                        'Convertir en Commande' +
+                    '</button>' if module_name.lower() == 'devis' else ''}
+                </div>
             </div>
         </div>
 
-        <div class="card-body">
-            <!-- Section Client -->
-            <div class="doc-section">
-                <div class="doc-row">
-                    <div class="doc-field">
-                        <label class="label">Client</label>
+        <!-- Contenu principal -->
+        <div class="azal-main">
+            <!-- Header du document -->
+            <div class="azal-doc-header">
+                <div class="azal-doc-header-top">
+                    <div class="azal-doc-header-left">
+                        <div class="azal-doc-badge">
+                            <div class="azal-doc-icon">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div class="azal-doc-title">
+                                <h1>{'Modifier ' + doc_type if is_edit_mode else 'Nouveau ' + doc_type}</h1>
+                                <span class="subtitle">{existing_data.get('numero', existing_data.get('number', 'Edition')) if is_edit_mode else 'En cours de création'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="azal-doc-meta">
+                        <div class="azal-doc-status">
+                            {existing_data.get('statut', existing_data.get('status', 'Brouillon')).replace('_', ' ').title() if is_edit_mode else 'Brouillon'}
+                        </div>
+                        <div class="azal-doc-actions">
+                            <a href="/ui/{module_name}" class="btn btn-cancel">Annuler</a>
+                            <button class="btn btn-save" onclick="saveDocument()">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="azal-doc-body">
+                <div class="azal-doc-content">
+                    <!-- Tab: Client -->
+                    <div id="tab-client" class="azal-tab-content active">
+                        <!-- Section Client -->
+            <div class="azal-section">
+                <div class="azal-section-header">
+                    <div class="azal-section-icon">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                    <span class="azal-section-title">Informations client</span>
+                </div>
+
+                <div class="azal-fields-grid">
+                    <div class="azal-field">
+                        <label>Client</label>
                         <div class="select-with-create">
-                            <select class="input" id="client_id" name="client_id" data-link="Clients" data-autofill="adresse_facturation:_compose_address:adresse1|adresse2|cp|ville" onchange="handleRelationAutofill(this)">
-                                <option value="">Sélectionner un client...</option>
+                            <select class="input" id="client_id" name="client_id" data-link="Clients" data-autofill="adresse_facturation:_compose_address:address_line1|address_line2|postal_code|city" onchange="handleRelationAutofill(this)">
+                                <option value="">Selectionner un client...</option>
                             </select>
-                            <button type="button" class="btn-create-inline" onclick="openFullCreatePage('clients', 'client_id')" title="Créer nouveau client">
+                            <button type="button" class="btn-create-inline" onclick="openFullCreatePage('clients', 'client_id')" title="Creer nouveau client">
                                 +
                             </button>
                         </div>
                     </div>
-                    <div class="doc-field">
-                        <label class="label">Date d'expiration</label>
+                    <div class="azal-field">
+                        <label>Date d'expiration</label>
                         <input type="date" class="input" id="date_validite" value="">
                     </div>
-                </div>
-
-                <div class="doc-row">
-                    <div class="doc-field">
-                        <label class="label">Adresse de facturation</label>
-                        <textarea class="input" id="adresse_facturation" name="adresse_facturation" rows="2" placeholder="Adresse..."></textarea>
+                    <div class="azal-field">
+                        <label>Adresse de facturation</label>
+                        <textarea class="input" id="adresse_facturation" name="adresse_facturation" rows="2" placeholder="Adresse complete..."></textarea>
+                                </div>
+                                <div class="azal-field">
+                                    <label>Conditions de paiement</label>
+                                    <select class="input" id="conditions" name="conditions">
+                                        <option value="immediate">Paiement immediat</option>
+                                        <option value="30j">30 jours</option>
+                                        <option value="45j">45 jours</option>
+                                        <option value="60j">60 jours</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="doc-field">
-                        <label class="label">Conditions de paiement</label>
-                        <select class="input" id="conditions" name="conditions">
-                            <option value="immediate">Paiement immédiat</option>
-                            <option value="30j">30 jours</option>
-                            <option value="45j">45 jours</option>
-                            <option value="60j">60 jours</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Section Lignes -->
-            <div class="doc-section" style="margin-top: 24px;">
-                <div class="doc-tabs">
-                    <button class="doc-tab active" data-tab="lignes">Lignes de commande</button>
-                    <button class="doc-tab" data-tab="optionnels">Produits optionnels</button>
-                    <button class="doc-tab" data-tab="autres">Autres informations</button>
-                </div>
-
-                <!-- Tab: Lignes de commande -->
-                <div id="tab-lignes" class="tab-content active">
-                    <table class="table" style="margin-top: 16px;">
+                    <!-- Tab: Lignes de commande -->
+                    <div id="tab-lignes" class="azal-tab-content">
+                        <table class="azal-lines-table">
                         <thead>
                             <tr>
-                                <th style="width: 40%;">Produit</th>
-                                <th style="width: 70px;">Tarif</th>
-                                <th>Prix unit.</th>
-                                <th>Quantité</th>
-                                <th>Taxes</th>
-                                <th>Montant</th>
-                                <th></th>
+                                <th style="width: 35%;">Produit</th>
+                                <th style="width: 80px;">Tarif</th>
+                                <th style="width: 100px;">Prix unit.</th>
+                                <th style="width: 80px;">Qte</th>
+                                <th style="width: 100px;">TVA</th>
+                                <th style="width: 110px;">Montant HT</th>
+                                <th style="width: 50px;"></th>
                             </tr>
                         </thead>
                         <tbody id="lignes-table">
                             <tr class="ligne-vide">
-                                <td colspan="7" style="text-align: center; padding: 32px; color: var(--gray-400);">
-                                    Aucune ligne. Ajoutez un produit ci-dessous.
+                                <td colspan="7" class="azal-empty-lines">
+                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                    <p>Aucune ligne. Ajoutez un produit ci-dessous.</p>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <div class="doc-actions" style="margin-top: 12px;">
-                        <button type="button" id="btn-ajouter-produit" class="btn btn-secondary btn-sm" onclick="ajouterLigne()" disabled title="Chargement des produits...">+ Ajouter un produit</button>
-                        <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une section</button>
-                        <button type="button" class="btn btn-secondary btn-sm">+ Ajouter une note</button>
+                    <div class="azal-add-buttons">
+                        <button type="button" id="btn-ajouter-produit" class="azal-add-btn" onclick="ajouterLigne()" disabled title="Chargement des produits...">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Ajouter un produit
+                        </button>
+                        <button type="button" class="azal-add-btn" onclick="ajouterSection()">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                            </svg>
+                            Ajouter une section
+                        </button>
+                        <button type="button" class="azal-add-btn" onclick="ajouterNote()">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                            </svg>
+                            Ajouter une note
+                        </button>
                     </div>
-                </div>
+                    </div>
 
-                <!-- Tab: Produits optionnels -->
-                <div id="tab-optionnels" class="tab-content" style="display: none;">
-                    <p style="padding: 24px; color: var(--gray-400); text-align: center;">
-                        Produits optionnels (non inclus dans le total)
-                    </p>
-                </div>
+                    <!-- Tab: Options -->
+                    <div id="tab-optionnels" class="azal-tab-content">
+                        <!-- Section Remises -->
+                        <div class="azal-option-section">
+                            <div class="azal-option-header">
+                                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                </svg>
+                                <span>Remises</span>
+                            </div>
+                            <div class="azal-option-content">
+                                <div class="azal-fields-grid">
+                                    <div class="azal-field">
+                                        <label>Type de remise</label>
+                                        <select class="input" id="remise_type" onchange="updateRemise()">
+                                            <option value="">Aucune remise</option>
+                                            <option value="percent">Pourcentage (%)</option>
+                                            <option value="amount">Montant fixe (€)</option>
+                                        </select>
+                                    </div>
+                                    <div class="azal-field">
+                                        <label>Valeur</label>
+                                        <input type="number" class="input" id="remise_value" placeholder="0" min="0" step="0.01" onchange="updateRemise()">
+                                    </div>
+                                    <div class="azal-field">
+                                        <label>Code promo</label>
+                                        <div class="select-with-create">
+                                            <input type="text" class="input" id="code_promo" placeholder="Entrer un code...">
+                                            <button type="button" class="btn-create-inline" onclick="appliquerCodePromo()" title="Appliquer">
+                                                ✓
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="azal-field">
+                                        <label>Remise calculée</label>
+                                        <input type="text" class="input" id="remise_calculee" value="0,00 €" readonly style="background: var(--azal-bg); font-weight: 600; color: var(--azal-primary);">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                <!-- Tab: Autres informations -->
-                <div id="tab-autres" class="tab-content" style="display: none; margin-top: 16px;">
-                    <div class="doc-row">
-                        <div class="doc-field">
-                            <label class="label">Référence client</label>
-                            <input type="text" class="input" id="reference_client" name="reference_client" placeholder="Numéro donné par le client...">
+                        <!-- Section Livraison -->
+                        <div class="azal-option-section">
+                            <div class="azal-option-header">
+                                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                                <span>Options de livraison</span>
+                            </div>
+                            <div class="azal-option-content">
+                                <div class="azal-delivery-options">
+                                    <label class="azal-radio-card">
+                                        <input type="radio" name="livraison" value="standard" onchange="updateLivraison()">
+                                        <div class="azal-radio-card-content">
+                                            <div class="azal-radio-card-icon">
+                                                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                </svg>
+                                            </div>
+                                            <div class="azal-radio-card-info">
+                                                <strong>Standard</strong>
+                                                <span>5-7 jours ouvrés</span>
+                                            </div>
+                                            <div class="azal-radio-card-price">Gratuit</div>
+                                        </div>
+                                    </label>
+                                    <label class="azal-radio-card">
+                                        <input type="radio" name="livraison" value="express" onchange="updateLivraison()">
+                                        <div class="azal-radio-card-content">
+                                            <div class="azal-radio-card-icon">
+                                                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                            </div>
+                                            <div class="azal-radio-card-info">
+                                                <strong>Express</strong>
+                                                <span>24-48h</span>
+                                            </div>
+                                            <div class="azal-radio-card-price">+15,00 €</div>
+                                        </div>
+                                    </label>
+                                    <label class="azal-radio-card">
+                                        <input type="radio" name="livraison" value="sursite" checked onchange="updateLivraison()">
+                                        <div class="azal-radio-card-content">
+                                            <div class="azal-radio-card-icon">
+                                                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                            <div class="azal-radio-card-info">
+                                                <strong>Sur site</strong>
+                                                <span>Installation incluse</span>
+                                            </div>
+                                            <div class="azal-radio-card-price">Sur devis</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="azal-fields-grid" style="margin-top: 20px;">
+                                    <div class="azal-field">
+                                        <label>
+                                            <input type="checkbox" id="adresse_differente" onchange="toggleAdresseLivraison()">
+                                            Adresse de livraison différente
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="adresse_livraison_section" class="azal-fields-grid" style="display: none; margin-top: 16px;">
+                                    <div class="azal-field full-width">
+                                        <label>Adresse de livraison</label>
+                                        <textarea class="input" id="adresse_livraison" rows="3" placeholder="Adresse complète de livraison..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="doc-field">
-                            <label class="label">Date de livraison</label>
-                            <input type="date" class="input" id="delivery_date" name="delivery_date">
+
+                        <!-- Section Produits optionnels -->
+                        <div class="azal-option-section">
+                            <div class="azal-option-header">
+                                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <span>Produits optionnels</span>
+                                <span class="azal-option-subtitle">(non inclus dans le total sauf si cochés)</span>
+                            </div>
+                            <div class="azal-option-content">
+                                <div id="produits-optionnels-list" class="azal-optional-products">
+                                    <!-- Les produits optionnels seront ajoutés ici -->
+                                </div>
+                                <button type="button" class="azal-add-btn" onclick="ajouterProduitOptionnel()" style="margin-top: 16px;">
+                                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Ajouter un produit optionnel
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div class="doc-row">
-                        <div class="doc-field">
-                            <label class="label">Vendeur</label>
-                            <input type="text" class="input" id="vendeur" name="vendeur" value="Stéphane MOREAU">
-                        </div>
-                        <div class="doc-field">
-                            <label class="label">Commercial</label>
-                            <select class="input" id="commercial_id" name="commercial_id">
-                                <option value="">-- Sélectionner --</option>
-                            </select>
+
+                    <!-- Tab: Autres informations -->
+                    <div id="tab-autres" class="azal-tab-content">
+                        <div class="azal-fields-grid" style="margin-top: 16px;">
+                            <div class="azal-field">
+                                <label>Reference client</label>
+                                <input type="text" class="input" id="reference_client" name="reference_client" placeholder="Numero donne par le client...">
+                            </div>
+                            <div class="azal-field">
+                                <label>Date de livraison</label>
+                                <input type="date" class="input" id="delivery_date" name="delivery_date">
+                            </div>
+                            <div class="azal-field">
+                                <label>Vendeur</label>
+                                <input type="text" class="input" id="vendeur" name="vendeur" value="">
+                            </div>
+                            <div class="azal-field">
+                                <label>Commercial</label>
+                                <select class="input" id="commercial_id" name="commercial_id">
+                                    <option value="">-- Selectionner --</option>
+                                </select>
+                            </div>
+                            <div class="azal-field">
+                                <label>Banque destinataire</label>
+                                <select class="input" id="banque_destinataire" name="banque_destinataire">
+                                    <option value="">-- Selectionner --</option>
+                                </select>
+                            </div>
+                            <div class="azal-field">
+                                <label>Reference du paiement</label>
+                                <input type="text" class="input" id="reference_paiement" name="reference_paiement" placeholder="Auto-genere" readonly>
+                            </div>
                         </div>
                     </div>
-                    <div class="doc-row">
-                        <div class="doc-field">
-                            <label class="label">Banque destinataire</label>
-                            <select class="input" id="banque_destinataire" name="banque_destinataire">
-                                <option value="">-- Sélectionner --</option>
-                            </select>
+
+                    <!-- Totaux -->
+                <div class="azal-totals">
+                    <div class="azal-totals-brand">
+                        <span class="logo">AZAL</span>
+                        <span class="tagline">Votre ERP intelligent</span>
+                    </div>
+                    <div class="azal-totals-box">
+                        <div class="azal-total-row">
+                            <span class="label">Sous-total HT</span>
+                            <span class="value" id="sous-total-ht">0,00 EUR</span>
                         </div>
-                        <div class="doc-field">
-                            <label class="label">Référence du paiement</label>
-                            <input type="text" class="input" id="reference_paiement" name="reference_paiement" placeholder="FAC/2025/00001" readonly>
+                        <div class="azal-total-row" id="row-remise" style="display: none;">
+                            <span class="label">Remise</span>
+                            <span class="value" id="total-remise" style="color: #10B981;">-0,00 EUR</span>
+                        </div>
+                        <div class="azal-total-row" id="row-livraison" style="display: none;">
+                            <span class="label">Livraison</span>
+                            <span class="value" id="total-livraison">0,00 EUR</span>
+                        </div>
+                        <div class="azal-total-row" id="row-optionnels" style="display: none;">
+                            <span class="label">Options</span>
+                            <span class="value" id="total-optionnels">0,00 EUR</span>
+                        </div>
+                        <div class="azal-total-row">
+                            <span class="label">Total HT</span>
+                            <span class="value" id="total-ht">0,00 EUR</span>
+                        </div>
+                        <div class="azal-total-row">
+                            <span class="label" id="tva-label">TVA ({tva_default}%)</span>
+                            <span class="value" id="total-tva">0,00 EUR</span>
+                        </div>
+                        <div class="azal-total-row grand-total">
+                            <span class="label">Total TTC</span>
+                            <span class="value" id="total-ttc">0,00 EUR</span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Totaux -->
-            <div class="doc-totals" style="margin-top: 24px; text-align: right;">
-                <div class="doc-total-row">
-                    <span>Total HT</span>
-                    <span id="total-ht">0,00 €</span>
-                </div>
-                <div class="doc-total-row">
-                    <span id="tva-label">TVA {tva_default}%</span>
-                    <span id="total-tva">0,00 €</span>
-                </div>
-                <div class="doc-total-row" style="font-weight: 700; font-size: 18px;">
-                    <span>Total TTC</span>
-                    <span id="total-ttc">0,00 €</span>
-                </div>
             </div>
         </div>
     </div>
 
     <script>
+    // Initialisation mode edition
+    window.currentDocumentId = {'`' + str(item_id) + '`' if is_edit_mode else 'null'};
+    window.isEditMode = {str(is_edit_mode).lower()};
+    window.existingData = {json.dumps(existing_data, default=str) if existing_data else 'null'};
+
     let lignes = [];
     let ligneIndex = 0;
+
+    // Afficher un message de succes discret
+    function showSaveSuccess(message) {{
+        const toast = document.createElement('div');
+        toast.className = 'save-toast';
+        toast.innerHTML = `
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>${{message}}</span>
+        `;
+        toast.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+        `;
+        document.body.appendChild(toast);
+
+        // Ajouter l'animation CSS si pas deja presente
+        if (!document.getElementById('toast-animation')) {{
+            const style = document.createElement('style');
+            style.id = 'toast-animation';
+            style.textContent = `
+                @keyframes slideIn {{
+                    from {{ transform: translateX(100%); opacity: 0; }}
+                    to {{ transform: translateX(0); opacity: 1; }}
+                }}
+                @keyframes slideOut {{
+                    from {{ transform: translateX(0); opacity: 1; }}
+                    to {{ transform: translateX(100%); opacity: 0; }}
+                }}
+            `;
+            document.head.appendChild(style);
+        }}
+
+        // Disparaitre apres 3 secondes
+        setTimeout(() => {{
+            toast.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => toast.remove(), 300);
+        }}, 3000);
+    }}
 
     function getProduitsOptions() {{
         const produits = window.produitsData || [];
@@ -4794,6 +8394,12 @@ def generate_document_form(module, module_name: str) -> str:
         onProduitChange(produitSelect);
     }}
 
+    function updateLignesCount() {{
+        const count = document.querySelectorAll('#lignes-table tr:not(.ligne-vide)').length;
+        const badge = document.getElementById('lignes-count');
+        if (badge) badge.textContent = count;
+    }}
+
     function ajouterLigne() {{
         const tbody = document.getElementById('lignes-table');
         const videRow = tbody.querySelector('.ligne-vide');
@@ -4801,55 +8407,210 @@ def generate_document_form(module, module_name: str) -> str:
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><select class="input" onchange="onProduitChange(this)">${{getProduitsOptions()}}</select></td>
+            <td><select class="input" onchange="onProduitChange(this)" style="width:100%">${{getProduitsOptions()}}</select></td>
             <td>
-                <select class="input niveau-prix" style="width:70px" onchange="onNiveauPrixChange(this)">
+                <select class="input niveau-prix" style="width:100%" onchange="onNiveauPrixChange(this)">
                     <option value="pu1">PU1</option>
                     <option value="pu2">PU2</option>
                     <option value="pu3">PU3</option>
                 </select>
             </td>
-            <td><input type="number" class="input" value="0" step="0.01" style="width:80px" onchange="calculerTotaux()"></td>
-            <td><input type="number" class="input" value="1" style="width:60px" onchange="calculerTotaux()"></td>
-            <td><select class="input" style="width:100px" onchange="calculerTotaux()">{tva_options_html}</select></td>
-            <td class="montant">0,00 €</td>
-            <td><button class="btn btn-sm" onclick="this.closest('tr').remove(); calculerTotaux();">✕</button></td>
+            <td><input type="number" class="input" value="0" step="0.01" style="width:100%" onchange="calculerTotaux()"></td>
+            <td><input type="number" class="input" value="1" style="width:100%" onchange="calculerTotaux()"></td>
+            <td><select class="input tva-select" style="width:100%" onchange="calculerTotaux()">{tva_options_html}</select></td>
+            <td class="montant">0.00 EUR</td>
+            <td>
+                <button type="button" class="btn-delete" onclick="supprimerLigne(this)" title="Supprimer">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </td>
         `;
         tbody.appendChild(tr);
         ligneIndex++;
+        updateLignesCount();
     }}
 
     function calculerTotaux() {{
-        let totalHT = 0;
-        let totalTVA = 0;
-        document.querySelectorAll('#lignes-table tr:not(.ligne-vide)').forEach(tr => {{
+        // Calculer les montants par ligne (ignorer sections et notes)
+        document.querySelectorAll('#lignes-table tr:not(.ligne-vide):not(.ligne-section):not(.ligne-note)').forEach(tr => {{
             const inputs = tr.querySelectorAll('input[type="number"]');
-            const selects = tr.querySelectorAll('select');
-            // selects[0] = produit, selects[1] = niveau prix, selects[2] = TVA
-            // inputs[0] = prix, inputs[1] = quantité
             if (inputs.length >= 2) {{
                 const prix = parseFloat(inputs[0].value) || 0;
                 const qte = parseFloat(inputs[1].value) || 0;
-                const tvaSelect = selects[2];
-                const parsedTVA = parseFloat(tvaSelect?.value);
-                const tauxTVA = isNaN(parsedTVA) ? {tva_default} : parsedTVA;
                 const montantHT = prix * qte;
-                const montantTVA = montantHT * (tauxTVA / 100);
-                totalHT += montantHT;
-                totalTVA += montantTVA;
-                tr.querySelector('.montant').textContent = montantHT.toFixed(2) + ' €';
+                // Chercher .montant ou .total-ligne (compatibilité)
+                const montantEl = tr.querySelector('.montant, .total-ligne');
+                if (montantEl) montantEl.textContent = montantHT.toFixed(2) + ' EUR';
             }}
         }});
 
-        const ttc = totalHT + totalTVA;
+        // Déléguer le calcul complet (avec options) à la fonction dédiée
+        if (typeof recalculerTotauxAvecOptions === 'function') {{
+            recalculerTotauxAvecOptions();
+        }} else {{
+            // Fallback si la fonction n'existe pas encore
+            let totalHT = 0;
+            let totalTVA = 0;
+            document.querySelectorAll('#lignes-table tr:not(.ligne-vide):not(.ligne-section):not(.ligne-note)').forEach(tr => {{
+                const inputs = tr.querySelectorAll('input[type="number"]');
+                const selects = tr.querySelectorAll('select');
+                if (inputs.length >= 2) {{
+                    const prix = parseFloat(inputs[0].value) || 0;
+                    const qte = parseFloat(inputs[1].value) || 0;
+                    // TVA - chercher le select avec classe tva-select ou le dernier select avec valeur numérique
+                    let tauxTVA = {tva_default};
+                    const tvaSelect = tr.querySelector('.tva-select');
+                    if (tvaSelect) {{
+                        tauxTVA = parseFloat(tvaSelect.value) || {tva_default};
+                    }} else {{
+                        for (let i = selects.length - 1; i >= 0; i--) {{
+                            const val = parseFloat(selects[i].value);
+                            if (!isNaN(val) && val >= 0 && val <= 100) {{
+                                tauxTVA = val;
+                                break;
+                            }}
+                        }}
+                    }}
+                    const montantHT = prix * qte;
+                    const montantTVA = montantHT * (tauxTVA / 100);
+                    totalHT += montantHT;
+                    totalTVA += montantTVA;
+                }}
+            }});
+            const ttc = totalHT + totalTVA;
+            const totalHTEl = document.getElementById('total-ht');
+            const totalTVAEl = document.getElementById('total-tva');
+            const totalTTCEl = document.getElementById('total-ttc');
+            if (totalHTEl) totalHTEl.textContent = totalHT.toFixed(2) + ' EUR';
+            if (totalTVAEl) totalTVAEl.textContent = totalTVA.toFixed(2) + ' EUR';
+            if (totalTTCEl) totalTTCEl.textContent = ttc.toFixed(2) + ' EUR';
+        }}
 
-        document.getElementById('total-ht').textContent = totalHT.toFixed(2) + ' €';
-        document.getElementById('total-tva').textContent = totalTVA.toFixed(2) + ' €';
-        document.getElementById('total-ttc').textContent = ttc.toFixed(2) + ' €';
-
-        // Mettre à jour le label TVA si taux mixtes
+        // Mettre à jour le label TVA
         const tvaLabel = document.getElementById('tva-label');
         if (tvaLabel) tvaLabel.textContent = 'TVA';
+    }}
+
+    // Ajouter une section de titre dans le devis
+    function ajouterSection() {{
+        const tbody = document.getElementById('lignes-table');
+        const videRow = tbody.querySelector('.ligne-vide');
+        if (videRow) videRow.remove();
+
+        const tr = document.createElement('tr');
+        tr.className = 'ligne-section';
+        tr.innerHTML = `
+            <td colspan="7" style="background: var(--azal-primary-light, #3B82F6); background: linear-gradient(90deg, var(--azal-primary, #1E3A8A) 0%, var(--azal-primary-light, #3B82F6) 100%);">
+                <input type="text" class="input section-title-input" placeholder="Titre de la section..."
+                    style="background: transparent; border: none; color: white; font-weight: 600; font-size: 14px; width: 100%; padding: 8px 12px;">
+            </td>
+            <td style="background: var(--azal-primary-light, #3B82F6); text-align: center; white-space: nowrap;">
+                <button type="button" class="btn-move" onclick="monterLigne(this)" title="Monter" style="color: white; background: transparent; border: none; cursor: pointer; padding: 4px;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                </button>
+                <button type="button" class="btn-move" onclick="descendreLigne(this)" title="Descendre" style="color: white; background: transparent; border: none; cursor: pointer; padding: 4px;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </td>
+            <td style="background: var(--azal-primary-light, #3B82F6);">
+                <button type="button" class="btn-delete" onclick="supprimerLigne(this)" title="Supprimer" style="color: white;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        tr.querySelector('input').focus();
+        ligneIndex++;
+        updateLignesCount();
+    }}
+
+    // Ajouter une note/commentaire dans le devis
+    function ajouterNote() {{
+        const tbody = document.getElementById('lignes-table');
+        const videRow = tbody.querySelector('.ligne-vide');
+        if (videRow) videRow.remove();
+
+        const tr = document.createElement('tr');
+        tr.className = 'ligne-note';
+        tr.innerHTML = `
+            <td colspan="7" style="background: #FEF3C7; border-left: 4px solid #F59E0B;">
+                <textarea class="input note-input" placeholder="Ajouter une note ou un commentaire..." rows="2"
+                    style="background: transparent; border: none; width: 100%; resize: vertical; font-style: italic; color: #92400E;"></textarea>
+            </td>
+            <td style="background: #FEF3C7; text-align: center; white-space: nowrap;">
+                <button type="button" class="btn-move" onclick="monterLigne(this)" title="Monter" style="color: #92400E; background: transparent; border: none; cursor: pointer; padding: 4px;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                </button>
+                <button type="button" class="btn-move" onclick="descendreLigne(this)" title="Descendre" style="color: #92400E; background: transparent; border: none; cursor: pointer; padding: 4px;">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </td>
+            <td style="background: #FEF3C7;">
+                <button type="button" class="btn-delete" onclick="supprimerLigne(this)" title="Supprimer">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        tr.querySelector('textarea').focus();
+        ligneIndex++;
+        updateLignesCount();
+    }}
+
+    // Monter une ligne (section, note ou produit)
+    function monterLigne(btn) {{
+        const tr = btn.closest('tr');
+        const tbody = tr.parentNode;
+        const prev = tr.previousElementSibling;
+        if (prev && !prev.classList.contains('ligne-vide')) {{
+            tbody.insertBefore(tr, prev);
+            calculerTotaux();
+        }}
+    }}
+
+    // Descendre une ligne (section, note ou produit)
+    function descendreLigne(btn) {{
+        const tr = btn.closest('tr');
+        const tbody = tr.parentNode;
+        const next = tr.nextElementSibling;
+        if (next) {{
+            tbody.insertBefore(next, tr);
+            calculerTotaux();
+        }}
+    }}
+
+    // Supprimer une ligne (section, note ou produit)
+    function supprimerLigne(btn) {{
+        const tr = btn.closest('tr');
+        if (tr) {{
+            tr.remove();
+            calculerTotaux();
+            updateLignesCount();
+
+            // Si plus aucune ligne, afficher la ligne vide
+            const tbody = document.getElementById('lignes-table');
+            const remainingRows = tbody.querySelectorAll('tr:not(.ligne-vide)');
+            if (remainingRows.length === 0) {{
+                const videRow = document.createElement('tr');
+                videRow.className = 'ligne-vide';
+                videRow.innerHTML = '<td colspan="9" style="text-align:center; padding: 40px; color: #9CA3AF;">Aucune ligne. Cliquez sur "Ajouter un produit" pour commencer.</td>';
+                tbody.appendChild(videRow);
+            }}
+        }}
     }}
 
     function collectDocumentData() {{
@@ -4862,13 +8623,50 @@ def generate_document_form(module, module_name: str) -> str:
         }};
         const conditionsValue = document.getElementById('conditions').value || 'immediate';
 
-        // Collecter d'abord les lignes
+        // Collecter d'abord les lignes (produits, sections, notes)
         const lignesData = [];
         let lineNumber = 1;
         let subtotalCalc = 0;
         let taxAmountCalc = 0;
 
         document.querySelectorAll('#lignes-table tr:not(.ligne-vide)').forEach(tr => {{
+            // Ligne section (titre)
+            if (tr.classList.contains('ligne-section')) {{
+                const titleInput = tr.querySelector('.section-title-input');
+                if (titleInput && titleInput.value.trim()) {{
+                    lignesData.push({{
+                        line_number: lineNumber++,
+                        line_type: 'section',
+                        description: titleInput.value.trim(),
+                        quantity: 0,
+                        unit_price: 0,
+                        subtotal: 0,
+                        tax_amount: 0,
+                        total: 0
+                    }});
+                }}
+                return;
+            }}
+
+            // Ligne note (commentaire)
+            if (tr.classList.contains('ligne-note')) {{
+                const noteInput = tr.querySelector('.note-input');
+                if (noteInput && noteInput.value.trim()) {{
+                    lignesData.push({{
+                        line_number: lineNumber++,
+                        line_type: 'note',
+                        description: noteInput.value.trim(),
+                        quantity: 0,
+                        unit_price: 0,
+                        subtotal: 0,
+                        tax_amount: 0,
+                        total: 0
+                    }});
+                }}
+                return;
+            }}
+
+            // Ligne produit standard
             const selects = tr.querySelectorAll('select');
             const inputs = tr.querySelectorAll('input[type="number"]');
             if (inputs.length >= 2 && selects.length >= 3) {{
@@ -4889,6 +8687,7 @@ def generate_document_form(module, module_name: str) -> str:
                     taxAmountCalc += taxAmount;
                     lignesData.push({{
                         line_number: lineNumber++,
+                        line_type: 'product',
                         product_id: productId,
                         product_code: productCode,
                         description: productName,
@@ -4903,25 +8702,56 @@ def generate_document_form(module, module_name: str) -> str:
             }}
         }});
 
+        // Collecter les données des options
+        const remiseType = document.getElementById('remise_type')?.value || '';
+        const remiseValue = parseFloat(document.getElementById('remise_value')?.value) || 0;
+        const livraisonType = document.querySelector('input[name="livraison"]:checked')?.value || 'standard';
+        const adresseDifferente = document.getElementById('adresse_differente')?.checked || false;
+        const adresseLivraison = adresseDifferente ? document.getElementById('adresse_livraison')?.value : null;
+
+        // Collecter les produits optionnels inclus
+        const optionnelsInclus = Object.values(produitsOptionnels || {{}}).filter(opt => opt && opt.inclus).map(opt => ({{
+            product_id: opt.productId,
+            description: opt.productName,
+            quantity: opt.quantite,
+            unit_price: opt.prix,
+            total: opt.total,
+            optional: true
+        }}));
+
+        // Ajuster les totaux avec options
+        const remiseAmount = remiseType === 'percent' ? subtotalCalc * (remiseValue / 100) : remiseValue;
+        const optionnelsTotal = optionnelsInclus.reduce((sum, opt) => sum + opt.total, 0);
+        const livraisonFraisVal = livraisonType === 'express' ? 15 : 0;
+        const subtotalFinal = subtotalCalc - remiseAmount + optionnelsTotal + livraisonFraisVal;
+        const taxAmountFinal = subtotalFinal * 0.20; // TVA simplifiée
+
         const data = {{
+            // Inclure l'ID et le numéro si document existant
+            id: window.existingData?.id || null,
+            numero: window.existingData?.numero || null,
             customer_id: document.getElementById('client_id').value || null,
-            date: new Date().toISOString().split('T')[0],
-            due_date: document.getElementById('date_validite').value || null,
-            delivery_date: document.getElementById('delivery_date')?.value || null,
+            date: window.existingData?.date || new Date().toISOString().split('T')[0],
+            validity_date: document.getElementById('date_validite').value || null,
             billing_address: document.getElementById('adresse_facturation').value || null,
+            delivery_address: adresseLivraison,
             payment_terms: conditionsMap[conditionsValue] || 'NET_30',
             reference: document.getElementById('reference_client')?.value || null,
-            status: 'DRAFT',
-            subtotal: subtotalCalc,
-            tax_amount: taxAmountCalc,
-            total: subtotalCalc + taxAmountCalc,
-            // Tous les champs additionnels dans custom_fields (y compris lignes)
+            status: window.existingData?.status || 'BROUILLON',
+            subtotal: subtotalFinal,
+            tax_amount: taxAmountFinal,
+            total: subtotalFinal + taxAmountFinal,
+            discount_percent: remiseType === 'percent' ? remiseValue : 0,
+            discount_amount: remiseAmount,
+            lignes: lignesData,
+            delivery_terms: livraisonType,
+            assigned_to: document.getElementById('commercial_id')?.value || null,
+            // Données supplémentaires pour les options
             custom_fields: {{
-                lignes: lignesData,
-                vendeur: document.getElementById('vendeur')?.value || null,
-                commercial_id: document.getElementById('commercial_id')?.value || null,
-                banque_destinataire: document.getElementById('banque_destinataire')?.value || null,
-                reference_paiement: document.getElementById('reference_paiement')?.value || null
+                livraison_type: livraisonType,
+                livraison_frais: livraisonFraisVal,
+                produits_optionnels: optionnelsInclus,
+                code_promo: document.getElementById('code_promo')?.value || null
             }}
         }};
 
@@ -4929,7 +8759,7 @@ def generate_document_form(module, module_name: str) -> str:
     }}
 
     async function saveDocument() {{
-        const saveBtn = document.querySelector('.btn-primary[onclick="saveDocument()"]');
+        const saveBtn = document.querySelector('.btn-save[onclick="saveDocument()"]') || document.querySelector('.btn-primary[onclick="saveDocument()"]');
         if (!saveBtn || saveBtn.disabled) return;
 
         const originalText = saveBtn.innerHTML;
@@ -4955,8 +8785,13 @@ def generate_document_form(module, module_name: str) -> str:
         try {{
             const data = collectDocumentData();
 
-            const response = await fetch('/api/{module_name}', {{
-                method: 'POST',
+            // Determiner si c'est une creation ou une mise a jour
+            const isUpdate = window.currentDocumentId && window.currentDocumentId !== 'null';
+            const apiUrl = isUpdate ? `/api/{module_name}/${{window.currentDocumentId}}` : '/api/{module_name}';
+            const method = isUpdate ? 'PUT' : 'POST';
+
+            const response = await fetch(apiUrl, {{
+                method: method,
                 credentials: 'include',
                 headers: {{
                     'Content-Type': 'application/json',
@@ -4966,8 +8801,18 @@ def generate_document_form(module, module_name: str) -> str:
 
             if (response.ok) {{
                 const result = await response.json();
-                alert('{doc_type} cree avec succes !');
-                window.location.href = '/ui/{module_name}';
+                // Mettre a jour l'URL sans recharger (mode edition)
+                const newId = result.id || window.currentDocumentId;
+                if (newId && !window.location.pathname.includes(newId)) {{
+                    // Premier enregistrement: mettre a jour l'URL pour mode edition
+                    window.history.replaceState({{}}, '', '/ui/{module_name}/' + newId);
+                    window.currentDocumentId = newId;
+                    window.isEditMode = true;
+                }}
+                // Afficher un message de succes discret
+                showSaveSuccess(isUpdate ? '{doc_type} mis a jour !' : '{doc_type} enregistre !');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
             }} else {{
                 const errorData = await response.json().catch(() => ({{}}));
                 const errorMessage = errorData.detail || errorData.message || 'Erreur lors de l\\'enregistrement';
@@ -4983,10 +8828,781 @@ def generate_document_form(module, module_name: str) -> str:
         }}
     }}
 
+    // Envoyer par email au client
+    async function envoyerParEmail() {{
+        const clientSelect = document.getElementById('client_id');
+        const clientId = clientSelect.value;
+
+        if (!clientId) {{
+            alert('Veuillez d\\'abord sélectionner un client');
+            return;
+        }}
+
+        const lignes = document.querySelectorAll('#lignes-table tr:not(.ligne-vide)');
+        if (lignes.length === 0) {{
+            alert('Veuillez ajouter au moins une ligne avant d\\'envoyer');
+            return;
+        }}
+
+        // Récupérer l'email du client
+        try {{
+            const urlParams = new URLSearchParams(window.location.search);
+            const authToken = urlParams.get('token') || localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
+
+            // Vérifier si c'est un donneur d'ordre ou un client
+            const selectedOption = clientSelect.options[clientSelect.selectedIndex];
+            const isDonneurOrdre = selectedOption && selectedOption.dataset.type === 'donneur_ordre';
+            const apiEndpoint = isDonneurOrdre ? 'donneur_ordre' : 'clients';
+
+            const response = await fetch(`/api/${{apiEndpoint}}/${{clientId}}`, {{
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + authToken
+                }}
+            }});
+
+            if (!response.ok) {{
+                console.error('Erreur API client:', response.status, response.statusText);
+                alert('Impossible de récupérer les informations du client (erreur ' + response.status + ')');
+                return;
+            }}
+
+            const client = await response.json();
+            const email = client.email || client.custom_fields?.email || client.email_facturation;
+
+            if (!email) {{
+                alert('Ce client n\\'a pas d\\'adresse email enregistrée');
+                return;
+            }}
+
+            const confirmed = confirm(`Envoyer ce {doc_type} à ${{email}} ?`);
+            if (!confirmed) return;
+
+            // Collecter les données du document
+            const data = collectDocumentData();
+
+            // Envoyer l'email via l'API
+            const emailResponse = await fetch('/api/email/send-document', {{
+                method: 'POST',
+                credentials: 'include',
+                headers: {{
+                    'Content-Type': 'application/json',
+                }},
+                body: JSON.stringify({{
+                    to: email,
+                    document_type: '{doc_type}',
+                    document_data: data,
+                    client_id: clientId
+                }})
+            }});
+
+            if (emailResponse.ok) {{
+                alert('Email envoyé avec succès à ' + email);
+            }} else {{
+                const errorData = await emailResponse.json().catch(() => ({{}}));
+                alert(errorData.detail || 'Erreur lors de l\\'envoi de l\\'email');
+            }}
+        }} catch (error) {{
+            console.error('Erreur:', error);
+            alert('Erreur lors de l\\'envoi de l\\'email');
+        }}
+    }}
+
+    // Télécharger en PDF
+    async function telechargerPDF() {{
+        const clientId = document.getElementById('client_id').value;
+        const lignes = document.querySelectorAll('#lignes-table tr:not(.ligne-vide)');
+
+        if (!clientId) {{
+            alert('Veuillez d\\'abord sélectionner un client');
+            return;
+        }}
+
+        if (lignes.length === 0) {{
+            alert('Veuillez ajouter au moins une ligne');
+            return;
+        }}
+
+        try {{
+            const data = collectDocumentData();
+
+            const response = await fetch('/api/pdf/generate', {{
+                method: 'POST',
+                credentials: 'include',
+                headers: {{
+                    'Content-Type': 'application/json',
+                }},
+                body: JSON.stringify({{
+                    document_type: '{doc_type}',
+                    document_data: data
+                }})
+            }});
+
+            if (response.ok) {{
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '{doc_type.lower()}_' + new Date().toISOString().split('T')[0] + '.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }} else {{
+                const errorData = await response.json().catch(() => ({{}}));
+                alert(errorData.detail || 'Erreur lors de la génération du PDF');
+            }}
+        }} catch (error) {{
+            console.error('Erreur:', error);
+            alert('Erreur lors de la génération du PDF');
+        }}
+    }}
+
+    // Imprimer le document
+    // Imprimer = générer le PDF et l'ouvrir pour impression
+    async function imprimerDocument() {{
+        const clientId = document.getElementById('client_id').value;
+        const lignes = document.querySelectorAll('#lignes-table tr:not(.ligne-vide)');
+
+        if (!clientId) {{
+            alert('Veuillez d\\'abord sélectionner un client');
+            return;
+        }}
+
+        if (lignes.length === 0) {{
+            alert('Veuillez ajouter au moins une ligne');
+            return;
+        }}
+
+        try {{
+            // Utiliser le même endpoint que télécharger PDF
+            const data = collectDocumentData();
+
+            const response = await fetch('/api/pdf/generate', {{
+                method: 'POST',
+                credentials: 'include',
+                headers: {{
+                    'Content-Type': 'application/json',
+                }},
+                body: JSON.stringify({{
+                    document_type: '{doc_type}',
+                    document_data: data
+                }})
+            }});
+
+            if (response.ok) {{
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                // Ouvrir le PDF dans une nouvelle fenêtre pour impression
+                const printWindow = window.open(url, '_blank');
+                if (printWindow) {{
+                    printWindow.onload = function() {{
+                        printWindow.print();
+                    }};
+                }} else {{
+                    // Si popup bloqué, télécharger le fichier
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = '{doc_type.lower()}_impression.pdf';
+                    a.click();
+                    alert('Popup bloqué. Le PDF a été téléchargé - ouvrez-le pour imprimer.');
+                }}
+            }} else {{
+                const errorData = await response.json().catch(() => ({{}}));
+                alert(errorData.detail || 'Erreur lors de la génération du PDF');
+            }}
+        }} catch (error) {{
+            console.error('Erreur:', error);
+            alert('Erreur lors de la génération du PDF pour impression');
+        }}
+    }}
+
+    // Convertir un devis en commande
+    async function convertirEnCommande() {{
+        const devisId = window.location.pathname.split('/').pop();
+        const clientId = document.getElementById('client_id')?.value;
+        const lignes = document.querySelectorAll('#lignes-table tr:not(.ligne-vide)');
+
+        if (!devisId || devisId === 'nouveau') {{
+            alert('Veuillez d\\'abord enregistrer le devis avant de le convertir.');
+            return;
+        }}
+
+        if (!clientId) {{
+            alert('Veuillez sélectionner un client.');
+            return;
+        }}
+
+        if (lignes.length === 0) {{
+            alert('Veuillez ajouter au moins une ligne.');
+            return;
+        }}
+
+        if (!confirm('Voulez-vous convertir ce devis en commande ?\\n\\nUne nouvelle commande sera créée avec les mêmes informations.')) {{
+            return;
+        }}
+
+        try {{
+            // Collecter les données du devis
+            const devisData = collectDocumentData();
+
+            // Préparer les données pour la commande
+            const commandeData = {{
+                customer_id: devisData.customer_id,
+                devis_id: devisId,
+                reference_client: devisData.reference || '',
+                date_commande: new Date().toISOString().split('T')[0],
+                status: 'CONFIRMEE',
+                lignes: devisData.lines,
+                total_ht: devisData.subtotal,
+                total_tva: devisData.tax_amount,
+                total_ttc: devisData.total,
+                notes: devisData.notes || '',
+                conditions: devisData.terms || ''
+            }};
+
+            // Créer la commande
+            const response = await fetch('/api/commandes', {{
+                method: 'POST',
+                credentials: 'include',
+                headers: {{
+                    'Content-Type': 'application/json'
+                }},
+                body: JSON.stringify(commandeData)
+            }});
+
+            if (response.ok) {{
+                const result = await response.json();
+                const commandeId = result.id;
+                const commandeNumber = result.number || 'Nouvelle commande';
+
+                // Mettre à jour le statut du devis en CONVERTI
+                await fetch(`/api/devis/${{devisId}}`, {{
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: {{
+                        'Content-Type': 'application/json'
+                    }},
+                    body: JSON.stringify({{
+                        status: 'CONVERTI',
+                        converted_to: 'commande',
+                        converted_to_id: commandeId
+                    }})
+                }});
+
+                alert(`✅ Commande ${{commandeNumber}} créée avec succès !`);
+
+                // Rediriger vers la commande
+                if (confirm('Voulez-vous ouvrir la commande ?')) {{
+                    window.location.href = `/ui/commandes/${{commandeId}}`;
+                }}
+            }} else {{
+                const errorData = await response.json().catch(() => ({{}}));
+                alert('Erreur: ' + (errorData.detail || 'Impossible de créer la commande'));
+            }}
+        }} catch (error) {{
+            console.error('Erreur:', error);
+            alert('Erreur lors de la conversion en commande');
+        }}
+    }}
+
+    function generatePrintContent() {{
+        // Récupérer les infos du document
+        const clientSelect = document.getElementById('client_id');
+        const clientName = clientSelect.options[clientSelect.selectedIndex]?.text || 'Client';
+        const clientAddress = clientSelect.options[clientSelect.selectedIndex]?.dataset?.adresse || '';
+        const docNumber = document.getElementById('numero')?.value || 'NOUVEAU';
+        const docDate = document.getElementById('date')?.value || new Date().toISOString().split('T')[0];
+        const referenceClient = document.getElementById('reference_client')?.value || '';
+        const validityDate = document.getElementById('validity_date')?.value || '';
+        const notes = document.getElementById('notes')?.value || '';
+        const conditions = document.getElementById('conditions')?.value || '';
+
+        // Données entreprise (depuis window ou valeurs par défaut)
+        const entreprise = window.entrepriseData || {{}};
+        const entrepriseNom = entreprise.nom || entreprise.raison_sociale || 'Mon Entreprise';
+        const entrepriseAdresse = entreprise.adresse || '';
+        const entrepriseEmail = entreprise.email || '';
+        const entrepriseTel = entreprise.telephone || '';
+        const entrepriseSiret = entreprise.siret || '';
+        const entrepriseTva = entreprise.tva_intra || '';
+
+        const totalHT = document.getElementById('total-ht').textContent;
+        const totalTVA = document.getElementById('total-tva').textContent;
+        const totalTTC = document.getElementById('total-ttc').textContent;
+
+        // Formater la date
+        const formatDate = (dateStr) => {{
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('fr-FR');
+        }};
+
+        // Construire les lignes avec sections et sous-totaux
+        let lignesHTML = '';
+        let currentSection = null;
+        let sectionTotal = 0;
+
+        document.querySelectorAll('#lignes-table tr:not(.ligne-vide)').forEach((tr) => {{
+            // Ligne section
+            if (tr.classList.contains('ligne-section')) {{
+                // Afficher sous-total de la section précédente
+                if (currentSection && sectionTotal > 0) {{
+                    lignesHTML += `
+                        <tr class="subtotal-row">
+                            <td colspan="4" style="text-align: right; font-weight: bold; background: #f8f9fa;">Sous-total ${{currentSection}}</td>
+                            <td style="text-align: right; font-weight: bold; background: #f8f9fa;">${{sectionTotal.toFixed(2).replace('.', ',')}} €</td>
+                        </tr>
+                    `;
+                }}
+
+                // Nouvelle section
+                const titleInput = tr.querySelector('.section-title-input');
+                currentSection = titleInput?.value || 'Section';
+                sectionTotal = 0;
+
+                lignesHTML += `
+                    <tr class="section-row">
+                        <td colspan="5" style="background: #1E3A8A; color: white; font-weight: bold; padding: 10px;">${{currentSection}}</td>
+                    </tr>
+                `;
+                return;
+            }}
+
+            // Ligne note
+            if (tr.classList.contains('ligne-note')) {{
+                const noteInput = tr.querySelector('.note-input');
+                const noteText = noteInput?.value || '';
+                if (noteText) {{
+                    lignesHTML += `
+                        <tr class="note-row">
+                            <td colspan="5" style="font-style: italic; color: #666; padding: 8px 12px;">${{noteText}}</td>
+                        </tr>
+                    `;
+                }}
+                return;
+            }}
+
+            // Ligne produit
+            const inputs = tr.querySelectorAll('input[type="number"]');
+            const selects = tr.querySelectorAll('select');
+            const produitSelect = selects[0];
+            const produitName = produitSelect?.options[produitSelect.selectedIndex]?.text || '';
+            const prix = parseFloat(inputs[0]?.value) || 0;
+            const qte = parseFloat(inputs[1]?.value) || 0;
+            const unite = selects[1]?.value || 'Unité(s)';
+            const tva = selects[2]?.value || '20';
+            const montant = prix * qte;
+            sectionTotal += montant;
+
+            if (produitName || prix > 0) {{
+                lignesHTML += `
+                    <tr>
+                        <td>${{produitName}}</td>
+                        <td style="text-align: center;">${{qte.toFixed(2).replace('.', ',')}}<br/><small>${{unite}}</small></td>
+                        <td style="text-align: right;">${{prix.toFixed(2).replace('.', ',')}}</td>
+                        <td style="text-align: center;">TVA ${{tva}}%</td>
+                        <td style="text-align: right; font-weight: bold;">${{montant.toFixed(2).replace('.', ',')}} €</td>
+                    </tr>
+                `;
+            }}
+        }});
+
+        // Sous-total de la dernière section
+        if (currentSection && sectionTotal > 0) {{
+            lignesHTML += `
+                <tr class="subtotal-row">
+                    <td colspan="4" style="text-align: right; font-weight: bold; background: #f8f9fa;">Sous-total ${{currentSection}}</td>
+                    <td style="text-align: right; font-weight: bold; background: #f8f9fa;">${{sectionTotal.toFixed(2).replace('.', ',')}} €</td>
+                </tr>
+            `;
+        }}
+
+        // Construire les infos document
+        let docInfoHTML = `
+            <tr><td><b>N° {doc_type}</b></td><td style="text-align: right;"><b>${{docNumber}}</b></td></tr>
+        `;
+        if (referenceClient) {{
+            docInfoHTML += `<tr><td><b>Réf. client</b></td><td style="text-align: right;">${{referenceClient}}</td></tr>`;
+        }}
+        docInfoHTML += `<tr><td><b>Date</b></td><td style="text-align: right;">${{formatDate(docDate)}}</td></tr>`;
+        if (validityDate) {{
+            const dateLabel = '{doc_type}' === 'Devis' ? "Date d'expiration" : "Date d'échéance";
+            docInfoHTML += `<tr><td><b>${{dateLabel}}</b></td><td style="text-align: right;">${{formatDate(validityDate)}}</td></tr>`;
+        }}
+
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>{doc_type} ${{docNumber}}</title>
+                <style>
+                    * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                    body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #333; font-size: 11px; }}
+
+                    .header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }}
+                    .company-info {{ max-width: 50%; }}
+                    .company-name {{ font-size: 18px; font-weight: bold; color: #1E3A8A; margin-bottom: 5px; }}
+                    .company-details {{ color: #666; font-size: 10px; line-height: 1.4; }}
+                    .doc-title {{ font-size: 24px; font-weight: bold; color: #1E3A8A; text-align: right; }}
+
+                    .info-section {{ display: flex; justify-content: space-between; margin-bottom: 20px; gap: 20px; }}
+                    .client-box {{ flex: 1; border: 1px solid #ddd; padding: 15px; background: white; }}
+                    .client-box h4 {{ color: #1E3A8A; margin-bottom: 8px; font-size: 11px; }}
+                    .client-name {{ font-weight: bold; margin-bottom: 5px; }}
+
+                    .doc-info-box {{ width: 220px; background: #EFF6FF; border: 1px solid #ddd; }}
+                    .doc-info-box table {{ width: 100%; border-collapse: collapse; }}
+                    .doc-info-box td {{ padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 10px; }}
+                    .doc-info-box tr:last-child td {{ border-bottom: none; }}
+
+                    .lines-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; }}
+                    .lines-table th {{ background: #1E3A8A; color: white; padding: 10px 8px; text-align: left; font-size: 10px; }}
+                    .lines-table th:nth-child(2), .lines-table th:nth-child(4) {{ text-align: center; }}
+                    .lines-table th:nth-child(3), .lines-table th:nth-child(5) {{ text-align: right; }}
+                    .lines-table td {{ padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }}
+                    .lines-table tbody tr:nth-child(even) {{ background: #F8FAFC; }}
+
+                    .totals-section {{ display: flex; justify-content: flex-end; margin-bottom: 20px; }}
+                    .totals-box {{ width: 250px; border: 1px solid #ddd; }}
+                    .totals-box table {{ width: 100%; border-collapse: collapse; }}
+                    .totals-box td {{ padding: 8px 12px; border-bottom: 1px solid #eee; }}
+                    .totals-box tr:last-child {{ background: #EFF6FF; }}
+                    .totals-box tr:last-child td {{ border-bottom: none; font-weight: bold; font-size: 12px; }}
+
+                    .notes-section {{ margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; }}
+                    .notes-section h4 {{ color: #1E3A8A; margin-bottom: 8px; }}
+                    .notes-section p {{ white-space: pre-wrap; line-height: 1.5; }}
+
+                    .footer {{ margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 9px; }}
+
+                    @media print {{
+                        body {{ padding: 15px; }}
+                        .no-print {{ display: none; }}
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="company-info">
+                        <div class="company-name">${{entrepriseNom}}</div>
+                        <div class="company-details">
+                            ${{entrepriseAdresse ? entrepriseAdresse + '<br/>' : ''}}
+                            ${{entrepriseEmail}}${{entrepriseTel ? ' | ' + entrepriseTel : ''}}
+                        </div>
+                    </div>
+                    <div class="doc-title">{doc_type}</div>
+                </div>
+
+                <div class="info-section">
+                    <div class="client-box">
+                        <h4>Client</h4>
+                        <div class="client-name">${{clientName}}</div>
+                        ${{clientAddress ? `<div>${{clientAddress}}</div>` : ''}}
+                    </div>
+                    <div class="doc-info-box">
+                        <table>${{docInfoHTML}}</table>
+                    </div>
+                </div>
+
+                <table class="lines-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Description</th>
+                            <th style="width: 15%;">Quantité</th>
+                            <th style="width: 15%;">Prix unit.</th>
+                            <th style="width: 15%;">Taxes</th>
+                            <th style="width: 15%;">Montant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${{lignesHTML}}
+                    </tbody>
+                </table>
+
+                <div class="totals-section">
+                    <div class="totals-box">
+                        <table>
+                            <tr>
+                                <td>Sous-total HT</td>
+                                <td style="text-align: right;">${{totalHT}}</td>
+                            </tr>
+                            <tr>
+                                <td>TVA</td>
+                                <td style="text-align: right;">${{totalTVA}}</td>
+                            </tr>
+                            <tr>
+                                <td><b>Total TTC</b></td>
+                                <td style="text-align: right;"><b>${{totalTTC}}</b></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                ${{notes ? `<div class="notes-section"><h4>Notes</h4><p>${{notes}}</p></div>` : ''}}
+                ${{conditions ? `<div class="notes-section"><h4>Conditions</h4><p>${{conditions}}</p></div>` : ''}}
+
+                <div class="footer">
+                    <p>${{entrepriseNom}}${{entrepriseSiret ? ' - SIRET: ' + entrepriseSiret : ''}}${{entrepriseTva ? ' - TVA: ' + entrepriseTva : ''}}</p>
+                </div>
+            </body>
+            </html>
+        `;
+    }}
+
+    // ========== FONCTIONS OPTIONS ==========
+
+    // Variables pour les options
+    let remiseActuelle = 0;
+    let livraisonFrais = 0;
+    let produitsOptionnels = [];
+    let optionnelIndex = 0;
+
+    // Mettre à jour la remise
+    function updateRemise() {{
+        const type = document.getElementById('remise_type').value;
+        const value = parseFloat(document.getElementById('remise_value').value) || 0;
+        const totalHTElement = document.getElementById('total-ht');
+        const totalHT = parseFloat(totalHTElement.textContent.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+
+        let remise = 0;
+        if (type === 'percent') {{
+            remise = totalHT * (value / 100);
+        }} else if (type === 'amount') {{
+            remise = value;
+        }}
+
+        remiseActuelle = remise;
+        document.getElementById('remise_calculee').value = remise.toFixed(2).replace('.', ',') + ' €';
+
+        // Recalculer les totaux avec la remise
+        recalculerTotauxAvecOptions();
+    }}
+
+    // Appliquer un code promo
+    function appliquerCodePromo() {{
+        const code = document.getElementById('code_promo').value.trim().toUpperCase();
+
+        if (!code) {{
+            alert('Veuillez entrer un code promo');
+            return;
+        }}
+
+        // Codes promo prédéfinis (à remplacer par API)
+        const codesPromo = {{
+            'BIENVENUE10': {{ type: 'percent', value: 10 }},
+            'ETE2024': {{ type: 'percent', value: 15 }},
+            'FIDELE20': {{ type: 'percent', value: 20 }},
+            'REDUCTION50': {{ type: 'amount', value: 50 }}
+        }};
+
+        const promo = codesPromo[code];
+        if (promo) {{
+            document.getElementById('remise_type').value = promo.type;
+            document.getElementById('remise_value').value = promo.value;
+            updateRemise();
+            alert('Code promo "' + code + '" appliqué avec succès !');
+        }} else {{
+            alert('Code promo invalide ou expiré');
+        }}
+    }}
+
+    // Mettre à jour les options de livraison
+    function updateLivraison() {{
+        const livraison = document.querySelector('input[name="livraison"]:checked')?.value || 'standard';
+
+        // Frais de livraison
+        const fraisLivraison = {{
+            'standard': 0,
+            'express': 15,
+            'sursite': 0 // Sur devis = à définir manuellement
+        }};
+
+        livraisonFrais = fraisLivraison[livraison] || 0;
+        recalculerTotauxAvecOptions();
+    }}
+
+    // Afficher/masquer l'adresse de livraison
+    function toggleAdresseLivraison() {{
+        const checkbox = document.getElementById('adresse_differente');
+        const section = document.getElementById('adresse_livraison_section');
+        section.style.display = checkbox.checked ? 'grid' : 'none';
+    }}
+
+    // Ajouter un produit optionnel
+    function ajouterProduitOptionnel() {{
+        const container = document.getElementById('produits-optionnels-list');
+
+        const div = document.createElement('div');
+        div.className = 'azal-optional-product';
+        div.id = 'optionnel-' + optionnelIndex;
+        div.innerHTML = `
+            <input type="checkbox" onchange="toggleProduitOptionnel(this)" data-index="${{optionnelIndex}}">
+            <select class="input" style="flex: 2;" onchange="updateProduitOptionnel(this, ${{optionnelIndex}})">
+                ${{getProduitsOptions()}}
+            </select>
+            <input type="number" class="input" placeholder="Qté" value="1" min="1" style="width: 80px;" onchange="updateProduitOptionnel(this.previousElementSibling, ${{optionnelIndex}})">
+            <span class="azal-optional-product-price" id="optionnel-prix-${{optionnelIndex}}">0,00 €</span>
+            <button type="button" class="azal-optional-product-remove" onclick="supprimerProduitOptionnel(${{optionnelIndex}})">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        `;
+        container.appendChild(div);
+        optionnelIndex++;
+    }}
+
+    // Mettre à jour un produit optionnel
+    function updateProduitOptionnel(select, index) {{
+        const container = document.getElementById('optionnel-' + index);
+        if (!container) return;
+
+        const selectedOption = select.options[select.selectedIndex];
+        const prix = parseFloat(selectedOption?.dataset?.pu1) || 0;
+        const qteInput = container.querySelector('input[type="number"]');
+        const qte = parseFloat(qteInput?.value) || 1;
+        const total = prix * qte;
+
+        document.getElementById('optionnel-prix-' + index).textContent = total.toFixed(2).replace('.', ',') + ' €';
+
+        // Mettre à jour le tableau des produits optionnels
+        produitsOptionnels[index] = {{
+            productId: select.value,
+            productName: selectedOption?.dataset?.nom || '',
+            prix: prix,
+            quantite: qte,
+            total: total,
+            inclus: container.querySelector('input[type="checkbox"]').checked
+        }};
+
+        recalculerTotauxAvecOptions();
+    }}
+
+    // Activer/désactiver un produit optionnel
+    function toggleProduitOptionnel(checkbox) {{
+        const index = parseInt(checkbox.dataset.index);
+        if (produitsOptionnels[index]) {{
+            produitsOptionnels[index].inclus = checkbox.checked;
+        }}
+        recalculerTotauxAvecOptions();
+    }}
+
+    // Supprimer un produit optionnel
+    function supprimerProduitOptionnel(index) {{
+        const element = document.getElementById('optionnel-' + index);
+        if (element) {{
+            element.remove();
+            delete produitsOptionnels[index];
+            recalculerTotauxAvecOptions();
+        }}
+    }}
+
+    // Recalculer les totaux avec options
+    function recalculerTotauxAvecOptions() {{
+        // D'abord calculer les totaux de base (lignes)
+        let sousTotal = 0;
+        let totalTVABase = 0;
+
+        document.querySelectorAll('#lignes-table tr:not(.ligne-vide):not(.ligne-section):not(.ligne-note)').forEach(tr => {{
+            const inputs = tr.querySelectorAll('input[type="number"]');
+            const selects = tr.querySelectorAll('select');
+            if (inputs.length >= 2) {{
+                const prix = parseFloat(inputs[0].value) || 0;
+                const qte = parseFloat(inputs[1].value) || 0;
+                const tvaSelect = selects[2];
+                const parsedTVA = parseFloat(tvaSelect?.value);
+                const tauxTVA = isNaN(parsedTVA) ? {tva_default} : parsedTVA;
+                const montantHT = prix * qte;
+                const montantTVA = montantHT * (tauxTVA / 100);
+                sousTotal += montantHT;
+                totalTVABase += montantTVA;
+                const montantEl = tr.querySelector('.montant');
+                if (montantEl) montantEl.textContent = montantHT.toFixed(2) + ' EUR';
+            }}
+        }});
+
+        // Ajouter les produits optionnels cochés
+        let optionnelsTotal = 0;
+        Object.values(produitsOptionnels).forEach(opt => {{
+            if (opt && opt.inclus) {{
+                optionnelsTotal += opt.total;
+            }}
+        }});
+
+        // Afficher le sous-total
+        const sousTotalEl = document.getElementById('sous-total-ht');
+        if (sousTotalEl) sousTotalEl.textContent = sousTotal.toFixed(2) + ' EUR';
+
+        // Afficher la remise si applicable
+        const rowRemise = document.getElementById('row-remise');
+        const totalRemiseEl = document.getElementById('total-remise');
+        if (remiseActuelle > 0) {{
+            rowRemise.style.display = 'flex';
+            totalRemiseEl.textContent = '-' + remiseActuelle.toFixed(2) + ' EUR';
+        }} else {{
+            rowRemise.style.display = 'none';
+        }}
+
+        // Afficher les frais de livraison si applicable
+        const rowLivraison = document.getElementById('row-livraison');
+        const totalLivraisonEl = document.getElementById('total-livraison');
+        if (livraisonFrais > 0) {{
+            rowLivraison.style.display = 'flex';
+            totalLivraisonEl.textContent = '+' + livraisonFrais.toFixed(2) + ' EUR';
+        }} else {{
+            rowLivraison.style.display = 'none';
+        }}
+
+        // Afficher les optionnels si applicable
+        const rowOptionnels = document.getElementById('row-optionnels');
+        const totalOptionnelsEl = document.getElementById('total-optionnels');
+        if (optionnelsTotal > 0) {{
+            rowOptionnels.style.display = 'flex';
+            totalOptionnelsEl.textContent = '+' + optionnelsTotal.toFixed(2) + ' EUR';
+        }} else {{
+            rowOptionnels.style.display = 'none';
+        }}
+
+        // Calculer le total HT final
+        let totalHT = sousTotal - remiseActuelle + livraisonFrais + optionnelsTotal;
+        if (totalHT < 0) totalHT = 0;
+
+        // Calculer la TVA (taux moyen basé sur les lignes)
+        const tauxMoyen = sousTotal > 0 ? (totalTVABase / sousTotal) : 0.20;
+        const totalTVA = totalHT * tauxMoyen;
+
+        const ttc = totalHT + totalTVA;
+
+        document.getElementById('total-ht').textContent = totalHT.toFixed(2) + ' EUR';
+        document.getElementById('total-tva').textContent = totalTVA.toFixed(2) + ' EUR';
+        document.getElementById('total-ttc').textContent = ttc.toFixed(2) + ' EUR';
+    }}
+
+    // ========== FIN FONCTIONS OPTIONS ==========
+
     // Charger les clients au chargement de la page
     document.addEventListener('DOMContentLoaded', async function() {{
         const urlParams = new URLSearchParams(window.location.search);
         const authToken = urlParams.get('token') || '';
+
+        // Charger les données entreprise pour l'impression
+        try {{
+            const respEntreprise = await fetch('/api/entreprise', {{
+                credentials: 'include',
+                headers: {{ 'Authorization': 'Bearer ' + authToken }}
+            }});
+            if (respEntreprise.ok) {{
+                const dataEntreprise = await respEntreprise.json();
+                const entreprises = dataEntreprise.items || dataEntreprise || [];
+                window.entrepriseData = entreprises[0] || {{}};
+            }}
+        }} catch (e) {{
+            console.log('Info entreprise non chargée:', e);
+            window.entrepriseData = {{}};
+        }}
 
         try {{
             const response = await fetch('/api/clients', {{
@@ -5133,27 +9749,309 @@ def generate_document_form(module, module_name: str) -> str:
             console.error('Erreur chargement comptes bancaires:', e);
         }}
 
-        // Date par defaut : aujourd'hui + 30 jours
+        // Date par defaut : aujourd'hui + 30 jours (sauf en mode edition)
         const dateValidite = document.getElementById('date_validite');
-        const today = new Date();
-        today.setDate(today.getDate() + 30);
-        dateValidite.value = today.toISOString().split('T')[0];
+        if (!window.existingData) {{
+            const today = new Date();
+            today.setDate(today.getDate() + 30);
+            dateValidite.value = today.toISOString().split('T')[0];
+        }}
+
+        // Charger les donnees existantes en mode edition
+        if (window.existingData && window.isEditMode) {{
+            loadExistingData(window.existingData);
+        }}
     }});
 
-    // Gestion des onglets
-    document.querySelectorAll('.doc-tab').forEach(tab => {{
-        tab.addEventListener('click', function() {{
-            // Désactiver tous les onglets
-            document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
+    // Fonction pour charger les donnees existantes dans le formulaire
+    function loadExistingData(data) {{
+        console.log('Chargement donnees existantes:', data);
 
-            // Masquer tous les contenus
-            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        // Client
+        if (data.customer_id || data.client_id) {{
+            const clientSelect = document.getElementById('client_id');
+            if (clientSelect) {{
+                clientSelect.value = data.customer_id || data.client_id;
+            }}
+        }}
 
-            // Afficher le contenu correspondant
+        // Date de validite
+        if (data.validity_date || data.date_validite) {{
+            const dateValidite = document.getElementById('date_validite');
+            if (dateValidite) {{
+                const dateVal = data.validity_date || data.date_validite;
+                if (dateVal) {{
+                    dateValidite.value = dateVal.split('T')[0];
+                }}
+            }}
+        }}
+
+        // Adresse facturation
+        if (data.billing_address || data.adresse_facturation) {{
+            const adresseInput = document.getElementById('adresse_facturation');
+            if (adresseInput) {{
+                adresseInput.value = data.billing_address || data.adresse_facturation || '';
+            }}
+        }}
+
+        // Reference client
+        if (data.reference || data.reference_client) {{
+            const refInput = document.getElementById('reference_client');
+            if (refInput) {{
+                refInput.value = data.reference || data.reference_client || '';
+            }}
+        }}
+
+        // Commercial
+        if (data.assigned_to || data.commercial_id) {{
+            const commercialSelect = document.getElementById('commercial_id');
+            if (commercialSelect) {{
+                commercialSelect.value = data.assigned_to || data.commercial_id;
+            }}
+        }}
+
+        // Conditions de paiement
+        if (data.payment_terms || data.conditions_paiement) {{
+            const conditionsRadios = document.querySelectorAll('input[name="conditions_paiement"]');
+            const value = data.payment_terms || data.conditions_paiement;
+            conditionsRadios.forEach(radio => {{
+                if (radio.value === value) {{
+                    radio.checked = true;
+                }}
+            }});
+        }}
+
+        // Banque destinataire
+        if (data.bank_account_id || data.banque_destinataire) {{
+            const banqueSelect = document.getElementById('banque_destinataire');
+            if (banqueSelect) {{
+                banqueSelect.value = data.bank_account_id || data.banque_destinataire;
+            }}
+        }}
+
+        // Notes
+        if (data.notes) {{
+            const notesInput = document.getElementById('notes');
+            if (notesInput) {{
+                notesInput.value = data.notes;
+            }}
+        }}
+
+        // Conditions
+        if (data.terms || data.conditions) {{
+            const conditionsInput = document.getElementById('conditions');
+            if (conditionsInput) {{
+                conditionsInput.value = data.terms || data.conditions || '';
+            }}
+        }}
+
+        // Options - Remise
+        if (data.discount_percent || data.discount_amount) {{
+            if (data.discount_percent) {{
+                const remisePercent = document.getElementById('remise_percent');
+                if (remisePercent) {{
+                    const radio = document.querySelector('input[name="remise_type"][value="percent"]');
+                    if (radio) radio.checked = true;
+                    remisePercent.value = data.discount_percent;
+                }}
+            }} else if (data.discount_amount) {{
+                const remiseFixe = document.getElementById('remise_fixe');
+                if (remiseFixe) {{
+                    const radio = document.querySelector('input[name="remise_type"][value="fixe"]');
+                    if (radio) radio.checked = true;
+                    remiseFixe.value = data.discount_amount;
+                }}
+            }}
+        }}
+
+        // Options - Livraison
+        if (data.delivery_terms || data.custom_fields?.livraison_type) {{
+            const livraisonType = data.delivery_terms || data.custom_fields?.livraison_type || 'sursite';
+            const livraisonRadio = document.querySelector(`input[name="livraison"][value="${{livraisonType}}"]`);
+            if (livraisonRadio) {{
+                livraisonRadio.checked = true;
+                updateLivraison();
+            }}
+        }}
+
+        // Adresse de livraison differente
+        if (data.delivery_address || data.adresse_livraison) {{
+            const adresseDiff = document.getElementById('adresse_differente');
+            const adresseLivraisonInput = document.getElementById('adresse_livraison');
+            const adresseLivraisonSection = document.getElementById('adresse_livraison_section');
+            if (adresseDiff && adresseLivraisonInput) {{
+                adresseDiff.checked = true;
+                adresseLivraisonInput.value = data.delivery_address || data.adresse_livraison || '';
+                if (adresseLivraisonSection) {{
+                    adresseLivraisonSection.style.display = 'block';
+                }}
+            }}
+        }}
+
+        // Charger les lignes
+        if (data.lignes && Array.isArray(data.lignes)) {{
+            data.lignes.forEach(ligne => {{
+                ajouterLigneAvecDonnees(ligne);
+            }});
+            calculerTotaux();
+        }}
+    }}
+
+    // Ajouter une ligne avec des donnees pre-remplies
+    function ajouterLigneAvecDonnees(ligne) {{
+        const tbody = document.getElementById('lignes-table');
+        const videRow = tbody.querySelector('.ligne-vide');
+        if (videRow) videRow.remove();
+
+        const tr = document.createElement('tr');
+        const lineType = ligne.line_type || 'product';
+
+        // Ligne section (titre)
+        if (lineType === 'section') {{
+            tr.className = 'ligne-section';
+            tr.innerHTML = `
+                <td colspan="7" style="background: var(--azal-primary-light, #3B82F6); background: linear-gradient(90deg, var(--azal-primary, #1E3A8A) 0%, var(--azal-primary-light, #3B82F6) 100%);">
+                    <input type="text" class="input section-title-input" value="${{ligne.description || ''}}" placeholder="Titre de la section..."
+                        style="background: transparent; border: none; color: white; font-weight: 600; font-size: 14px; width: 100%; padding: 8px 12px;">
+                </td>
+                <td style="background: var(--azal-primary-light, #3B82F6); text-align: center; white-space: nowrap;">
+                    <button type="button" class="btn-move" onclick="monterLigne(this)" title="Monter" style="color: white; background: transparent; border: none; cursor: pointer; padding: 4px;">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                        </svg>
+                    </button>
+                    <button type="button" class="btn-move" onclick="descendreLigne(this)" title="Descendre" style="color: white; background: transparent; border: none; cursor: pointer; padding: 4px;">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </td>
+                <td style="background: var(--azal-primary-light, #3B82F6);">
+                    <button type="button" class="btn-delete" onclick="supprimerLigne(this)" title="Supprimer" style="color: white;">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            ligneIndex++;
+            updateLignesCount();
+            return;
+        }}
+
+        // Ligne note (commentaire)
+        if (lineType === 'note') {{
+            tr.className = 'ligne-note';
+            tr.innerHTML = `
+                <td colspan="7" style="background: #FEF3C7; border-left: 4px solid #F59E0B;">
+                    <textarea class="input note-input" placeholder="Ajouter une note ou un commentaire..." rows="2"
+                        style="background: transparent; border: none; width: 100%; resize: vertical; font-style: italic; color: #92400E;">${{ligne.description || ''}}</textarea>
+                </td>
+                <td style="background: #FEF3C7; text-align: center; white-space: nowrap;">
+                    <button type="button" class="btn-move" onclick="monterLigne(this)" title="Monter" style="color: #92400E; background: transparent; border: none; cursor: pointer; padding: 4px;">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                        </svg>
+                    </button>
+                    <button type="button" class="btn-move" onclick="descendreLigne(this)" title="Descendre" style="color: #92400E; background: transparent; border: none; cursor: pointer; padding: 4px;">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </td>
+                <td style="background: #FEF3C7;">
+                    <button type="button" class="btn-delete" onclick="supprimerLigne(this)" title="Supprimer">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            ligneIndex++;
+            updateLignesCount();
+            return;
+        }}
+
+        // Ligne produit standard (7 colonnes: Produit, Tarif, Prix, Qte, TVA, Montant, Actions)
+        tr.innerHTML = `
+            <td><select class="input" onchange="onProduitChange(this)" style="width:100%">${{getProduitsOptions()}}</select></td>
+            <td>
+                <select class="input niveau-prix" style="width:100%" onchange="onNiveauPrixChange(this)">
+                    <option value="pu1">PU1</option>
+                    <option value="pu2">PU2</option>
+                    <option value="pu3">PU3</option>
+                </select>
+            </td>
+            <td><input type="number" class="input" style="width:100%" value="${{ligne.prix_unitaire || ligne.unit_price || 0}}" min="0" step="0.01" onchange="calculerTotaux()"></td>
+            <td><input type="number" class="input" style="width:100%" value="${{ligne.quantite || ligne.quantity || 1}}" min="0" step="1" onchange="calculerTotaux()"></td>
+            <td>
+                <select class="input tva-select" style="width:100%" onchange="calculerTotaux()">
+                    {tva_options_html}
+                </select>
+            </td>
+            <td class="montant" style="text-align:right; font-weight:600;">0.00 EUR</td>
+            <td>
+                <button type="button" class="btn-delete" onclick="supprimerLigne(this)" title="Supprimer">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+
+        // Selectionner le produit si product_id existe
+        if (ligne.product_id || ligne.produit_id) {{
+            const produitSelect = tr.querySelector('select');
+            if (produitSelect) {{
+                produitSelect.value = ligne.product_id || ligne.produit_id;
+            }}
+        }}
+
+        // Selectionner le taux TVA
+        if (ligne.taux_tva || ligne.tax_rate) {{
+            const tvaSelect = tr.querySelectorAll('select')[2];
+            if (tvaSelect) {{
+                tvaSelect.value = ligne.taux_tva || ligne.tax_rate;
+            }}
+        }}
+
+        ligneIndex++;
+        updateLignesCount();
+    }}
+
+    // Gestion des onglets AZAL
+    // Navigation par sidebar
+    function switchTab(tabId) {{
+        // Desactiver tous les onglets sidebar
+        document.querySelectorAll('.azal-sidebar-item[data-tab]').forEach(t => t.classList.remove('active'));
+        // Activer l'onglet cliqué
+        const sidebarItem = document.querySelector(`.azal-sidebar-item[data-tab="${{tabId}}"]`);
+        if (sidebarItem) sidebarItem.classList.add('active');
+
+        // Masquer tous les contenus
+        document.querySelectorAll('.azal-tab-content').forEach(c => c.classList.remove('active'));
+
+        // Afficher le contenu correspondant
+        const content = document.getElementById('tab-' + tabId);
+        if (content) content.classList.add('active');
+    }}
+
+    document.querySelectorAll('.azal-sidebar-item[data-tab]').forEach(item => {{
+        item.addEventListener('click', function() {{
             const tabId = this.dataset.tab;
-            const content = document.getElementById('tab-' + tabId);
-            if (content) content.style.display = 'block';
+            switchTab(tabId);
+        }});
+    }});
+
+    // Compatibilité anciens onglets (si présents)
+    document.querySelectorAll('.azal-tab').forEach(tab => {{
+        tab.addEventListener('click', function() {{
+            const tabId = this.dataset.tab;
+            switchTab(tabId);
         }});
     }});
 
@@ -5313,6 +10211,29 @@ async def module_detail(
     if not item:
         raise HTTPException(status_code=404, detail="Enregistrement non trouvé")
 
+    # Pour les modules documents commerciaux, utiliser le formulaire document
+    document_modules = ["devis", "factures", "facture", "avoirs", "avoir", "bons_livraison", "bon_livraison", "contrats", "contrat", "notes_frais", "note_frais"]
+    if module_name.lower() in document_modules:
+        # Passer les donnees existantes pour pre-remplir le formulaire
+        html = generate_layout(
+            title=f"Modifier {module.nom_affichage}",
+            content=generate_document_form(module, module_name, existing_data=item),
+            user=user,
+            modules=get_all_modules()
+        )
+        return HTMLResponse(content=html)
+
+    # Pour les interventions, utiliser le formulaire sectionné
+    if module_name.lower() in ["interventions", "intervention"]:
+        sections = organize_fields_into_sections(module)
+        html = generate_layout(
+            title=f"{module.nom_affichage} - Détail",
+            content=generate_sectioned_form_edit(module_name, sections, module, item),
+            user=user,
+            modules=get_all_modules()
+        )
+        return HTMLResponse(content=html)
+
     # Générer les champs avec valeurs - layout 2 colonnes style Odoo
     fields_list = []
     full_width_fields = []  # Textareas, JSON fields - pleine largeur
@@ -5383,7 +10304,7 @@ async def module_detail(
         title=f"{module.nom_affichage} - Détail",
         content=f'''
         <div class="mb-4">
-            <a href="/ui/{module_name}" class="text-muted">← Retour à la liste</a>
+            <a href="/ui/{module_name}?sort=created_at&order=desc" class="text-muted">← Retour à la liste</a>
         </div>
 
         <div class="card">
@@ -5418,6 +10339,7 @@ async def module_detail(
                     <button onclick="deleteItem()" class="btn btn-danger btn-sm">Supprimer</button>
                     <button onclick="duplicateItem()" class="btn btn-secondary btn-sm" title="Creer une copie">Dupliquer</button>
                 </div>
+                {generate_module_action_buttons(module_name, item)}
             </div>
         </div>
 
@@ -5425,7 +10347,7 @@ async def module_detail(
         <div class="print-only print-header">
             <div class="print-header-content">
                 <div class="print-company">
-                    <div class="print-company-name">AZALPLUS</div>
+                    <div class="print-company-name">{APP_NAME}</div>
                     <div class="print-company-details">
                         Entreprise Demo<br>
                         123 Rue de l'Exemple<br>
@@ -5444,7 +10366,7 @@ async def module_detail(
         <!-- Print Footer (visible only when printing) -->
         <div class="print-only print-footer">
             <div class="print-footer-legal">
-                AZALPLUS - Document genere automatiquement
+                {APP_NAME} - Document genere automatiquement
             </div>
         </div>
 
@@ -6995,7 +11917,71 @@ def generate_list_with_bulk_actions(
         </div>
     </div>
 
+    <style>
+        .sortable {{
+            cursor: pointer;
+            user-select: none;
+        }}
+        .sortable:hover {{
+            background-color: var(--hover-bg, #f0f0f0);
+        }}
+        .sort-icon {{
+            font-size: 0.8em;
+            margin-left: 4px;
+            color: var(--primary-color, #007bff);
+        }}
+        .cell-with-actions {{
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }}
+        .action-btn {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.7;
+            transition: opacity 0.2s, background-color 0.2s;
+        }}
+        .action-btn:hover {{
+            opacity: 1;
+            background-color: var(--hover-bg, #f0f0f0);
+        }}
+        .quick-actions {{
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }}
+        .quick-action-btn {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 16px;
+            background-color: var(--primary-light, #e3f2fd);
+            transition: all 0.2s;
+        }}
+        .quick-action-btn:hover {{
+            background-color: var(--primary-color, #1976d2);
+            transform: scale(1.1);
+        }}
+    </style>
+
     <script>
+        function sortBy(field, order) {{
+            const url = new URL(window.location.href);
+            url.searchParams.set('sort', field);
+            url.searchParams.set('order', order);
+            window.location.href = url.toString();
+        }}
+
         function handleRowClick(event, id, url) {{
             // Ne pas naviguer si on clique sur une checkbox ou un bouton
             if (event.target.type === 'checkbox' || event.target.tagName === 'BUTTON' || event.target.closest('button')) {{
@@ -7157,7 +12143,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title} - AZALPLUS</title>
+    <title>{title} - {APP_NAME}</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="apple-touch-icon" href="/static/logo.png">
@@ -7214,7 +12200,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- CSS genere depuis theme.yml -->
-    <link rel="stylesheet" href="/assets/style.css?v=20260318f">
+    <link rel="stylesheet" href="/assets/style.css?v=9785f">
     <script>
     // Notification bell - defined early so onclick works
     var notifPanelOpen = false;
@@ -7251,7 +12237,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                     <text x="200" y="360" font-family="Inter, Montserrat, Arial, sans-serif" font-weight="800" font-size="280" fill="#FFFFFF">A</text>
                     <text x="340" y="280" font-family="Inter, Montserrat, Arial, sans-serif" font-weight="700" font-size="140" fill="#FFFFFF">+</text>
                 </svg>
-                <span>AZALPLUS</span>
+                <span>{APP_NAME}</span>
             </div>
 
             <nav class="sidebar-nav">
@@ -7283,6 +12269,10 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                 <!-- Paramètres -->
                 <div class="nav-section">
                     <div class="nav-title">Paramètres</div>
+                    <a href="/ui/parametres/utilisateur" class="nav-item">
+                        <span class="nav-icon">👤</span>
+                        <span>Mon compte</span>
+                    </a>
                     <a href="/ui/parametres/modules" class="nav-item">
                         <span class="nav-icon">📦</span>
                         <span>Modules actifs</span>
@@ -7305,13 +12295,14 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             </div>
 
             <div class="sidebar-user">
-                <div class="user-box">
+                <a href="/ui/parametres/utilisateur" class="user-box" style="text-decoration: none; cursor: pointer;" title="Paramètres utilisateur">
                     <div class="user-avatar">{initials}</div>
                     <div>
                         <div class="user-name">{user.get('nom', 'Utilisateur')}</div>
                         <div class="user-email">{user.get('email', '')}</div>
                     </div>
-                </div>
+                    <span class="user-settings-icon">⚙️</span>
+                </a>
                 <a href="/login" onclick="localStorage.clear();" class="nav-item" style="margin-top: 8px; color: var(--gray-500);">
                     <span class="nav-icon">🚪</span>
                     <span>Déconnexion</span>
@@ -7322,6 +12313,10 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         <!-- Main content -->
         <div class="main-wrapper">
             <header class="main-header">
+                <!-- Bouton hamburger mobile -->
+                <div class="mobile-menu-btn show-mobile" onclick="toggleMobileSidebar()" style="display:none;">
+                    <span style="font-size: 24px;">☰</span>
+                </div>
                 <form class="header-search" action="/ui/search" method="GET">
                     <span style="margin-right: 8px; color: var(--gray-400);">🔍</span>
                     <input type="text" name="q" placeholder="Rechercher clients, factures, devis..." autocomplete="off">
@@ -7412,7 +12407,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             right: -12px;
             width: 24px;
             height: 24px;
-            background: var(--primary, #714B67);
+            background: var(--primary, #1E3A8A);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -8271,7 +13266,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
 
             if (response.ok) {{
                 const data = await response.json();
-                const items = data.items || data || [];
+                const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
 
                 if (items.length === 0) {{
                     list.innerHTML = '<p class="notif-empty">Aucune notification</p>';
@@ -9336,12 +14331,12 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     <div id="mobile-modal" class="mobile-modal-overlay" onclick="closeMobileModal(event)">
         <div class="mobile-modal" onclick="event.stopPropagation()">
             <h2>📱 Application Mobile</h2>
-            <p>Scannez le QR code avec l'application AZALPLUS</p>
+            <p>Scannez le QR code avec l'application {APP_NAME}</p>
 
             <div class="mobile-instructions">
                 <strong>Comment se connecter :</strong>
                 <ol>
-                    <li>Téléchargez l'app AZALPLUS sur votre mobile</li>
+                    <li>Téléchargez l'app {APP_NAME} sur votre mobile</li>
                     <li>Ouvrez l'app et appuyez sur "Scanner QR"</li>
                     <li>Scannez le code ci-dessous</li>
                 </ol>
@@ -9400,8 +14395,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             }}
 
             // Mobile app is on port 5174
-            var mobileBaseUrl = window.location.protocol + '//' + window.location.hostname + ':5174';
-            var mobileUrl = mobileBaseUrl + '/connect?token=' + encodeURIComponent(mobileToken) + '&api=' + encodeURIComponent(window.location.origin);
+            var mobileBaseUrl = window.location.protocol + '//' + window.location.hostname + '/mobile';
+            var mobileUrl = mobileBaseUrl + '/connect?token=' + encodeURIComponent(mobileToken) + '&api=' + encodeURIComponent(window.location.origin + '/api');
 
             // Use external QR API (more reliable)
             var qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&format=svg&data=' + encodeURIComponent(mobileUrl);
@@ -9422,8 +14417,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     }}
 
     function copyMobileLink() {{
-        var mobileBaseUrl = window.location.protocol + '//' + window.location.hostname + ':5174';
-        var mobileUrl = mobileBaseUrl + '/connect?token=' + encodeURIComponent(mobileToken || '') + '&api=' + encodeURIComponent(window.location.origin);
+        var mobileBaseUrl = window.location.protocol + '//' + window.location.hostname + '/mobile';
+        var mobileUrl = mobileBaseUrl + '/connect?token=' + encodeURIComponent(mobileToken || '') + '&api=' + encodeURIComponent(window.location.origin + '/api');
 
         // Fallback pour HTTP (clipboard API ne marche qu'en HTTPS)
         function fallbackCopy(text) {{
@@ -9515,6 +14510,34 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
             if (icon) icon.textContent = '▶';
         }}
     }}
+
+    // --- Mobile sidebar toggle ---
+    function toggleMobileSidebar() {{
+        var sidebar = document.querySelector('.sidebar');
+        var overlay = document.getElementById('mobile-overlay');
+
+        if (!overlay) {{
+            overlay = document.createElement('div');
+            overlay.id = 'mobile-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;display:none;';
+            overlay.onclick = toggleMobileSidebar;
+            document.body.appendChild(overlay);
+        }}
+
+        var isOpen = sidebar.classList.toggle('open');
+        overlay.style.display = isOpen ? 'block' : 'none';
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+    }}
+
+    // Afficher/masquer bouton hamburger selon largeur
+    function updateMobileUI() {{
+        var menuBtn = document.querySelector('.mobile-menu-btn');
+        if (menuBtn) {{
+            menuBtn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+        }}
+    }}
+    window.addEventListener('resize', updateMobileUI);
+    document.addEventListener('DOMContentLoaded', updateMobileUI);
 
     // --- 3. Dropdown + Ajouter ---
     var addDropdownOpen = false;

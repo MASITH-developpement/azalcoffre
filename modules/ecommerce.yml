@@ -9,12 +9,14 @@ description: Boutique en ligne et marketplace
 champs:
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference commande web
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: NOUVELLE
     options: [NOUVELLE, CONFIRMEE, EN_PREPARATION, EXPEDIEE, LIVREE, ANNULEE, REMBOURSEE]
@@ -22,6 +24,7 @@ champs:
 
   - nom: source
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: SITE_WEB
     options: [SITE_WEB, MARKETPLACE_AMAZON, MARKETPLACE_CDISCOUNT, MARKETPLACE_FNAC, INSTAGRAM, FACEBOOK]
@@ -29,72 +32,85 @@ champs:
 
   - nom: client_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Clients
     description: Client (si existant)
 
   - nom: email_client
     type: email
+    groupe: Contact
     obligatoire: true
     description: Email client
 
   - nom: nom_client
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom client
 
   - nom: telephone
     type: tel
+    groupe: Contact
     obligatoire: false
     description: Telephone
 
   - nom: adresse_livraison
     type: textarea
+    groupe: Contact
     obligatoire: true
     description: Adresse livraison
 
   - nom: adresse_facturation
     type: textarea
+    groupe: Contact
     obligatoire: false
     description: Adresse facturation
 
   - nom: lignes
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Lignes commande
 
   - nom: montant_ht
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Montant HT
 
   - nom: montant_tva
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Montant TVA
 
   - nom: frais_port
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Frais de port
 
   - nom: montant_ttc
     type: number
+    groupe: Montants
     obligatoire: false
     readonly: true
     description: Montant TTC
 
   - nom: mode_paiement
     type: select
+    groupe: Configuration
     obligatoire: false
     options: [CB, PAYPAL, VIREMENT, STRIPE, ALMA]
     description: Mode paiement
 
   - nom: paiement_status
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: EN_ATTENTE
     options: [EN_ATTENTE, PAYE, ECHOUE, REMBOURSE]
@@ -102,53 +118,63 @@ champs:
 
   - nom: transaction_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: ID transaction paiement
 
   - nom: transporteur
     type: select
+    groupe: Informations
     obligatoire: false
     options: [COLISSIMO, CHRONOPOST, MONDIAL_RELAY, UPS, DHL, RETRAIT_MAGASIN]
     description: Transporteur
 
   - nom: tracking_number
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero suivi
 
   - nom: date_commande
     type: datetime
+    groupe: Dates
     obligatoire: true
     description: Date commande
 
   - nom: date_expedition
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date expedition
 
   - nom: date_livraison
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date livraison estimee
 
   - nom: facture_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Factures
     description: Facture generee
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 
   - nom: ip_client
     type: text
+    groupe: Informations
     obligatoire: false
     description: IP client
 
   - nom: user_agent
     type: text
+    groupe: Relations
     obligatoire: false
     description: User agent
 

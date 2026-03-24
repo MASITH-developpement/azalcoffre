@@ -7,17 +7,20 @@ acces: createur_only
 champs:
   - nom: email
     type: email
+    groupe: Contact
     obligatoire: true
     unique: true
     label: "Email"
 
   - nom: prenom
     type: text
+    groupe: Informations
     obligatoire: true
     label: "Prénom"
 
   - nom: activite
     type: select
+    groupe: Informations
     options:
       - Artisan
       - Commerçant
@@ -28,6 +31,7 @@ champs:
 
   - nom: source
     type: select
+    groupe: Informations
     options:
       - Ami
       - LinkedIn
@@ -46,31 +50,38 @@ champs:
 
   - nom: ami_email
     type: email
+    groupe: Contact
     label: "Email de l'ami (parrainage)"
     description: "Pour remercier l'ami qui a recommandé AZALPLUS"
 
   - nom: utm_source
     type: text
+    groupe: Informations
     label: "UTM Source"
 
   - nom: utm_campaign
     type: text
+    groupe: Informations
     label: "UTM Campaign"
 
   - nom: utm_content
     type: text
+    groupe: Informations
     label: "UTM Content"
 
   - nom: inscrit_le
     type: datetime
+    groupe: Dates
     auto: now
     label: "Date d'inscription"
 
   - nom: converti
     type: boolean
+    groupe: Informations
     defaut: false
     label: "Compte créé"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     label: "Notes"

@@ -16,18 +16,21 @@ champs:
   # -----------------------------------------------------
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     auto: "SIM-{ANNEE}-{NUMERO:04d}"
     label: Référence simulation
 
   - nom: date_simulation
     type: datetime
+    groupe: Dates
     obligatoire: true
     defaut: maintenant
     label: Date
 
   - nom: business_plan_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Business Plan
     label: Business plan lié
@@ -37,6 +40,7 @@ champs:
   # -----------------------------------------------------
   - nom: situation_actuelle
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - Salarié en poste
@@ -51,18 +55,21 @@ champs:
 
   - nom: maintien_activite_salariee
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     label: Maintien activité salariée en parallèle ?
 
   - nom: droits_chomage
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     label: Bénéficiaire ARE (allocation chômage) ?
 
   - nom: acre_eligible
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: true
     label: Éligible ACRE ?
@@ -73,6 +80,7 @@ champs:
   # -----------------------------------------------------
   - nom: type_activite
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - Vente de marchandises (BIC)
@@ -85,6 +93,7 @@ champs:
 
   - nom: activite_reglementee
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     label: Activité réglementée ?
@@ -92,12 +101,14 @@ champs:
 
   - nom: local_commercial
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     label: Besoin d'un local commercial ?
 
   - nom: stock_important
     type: boolean
+    groupe: Quantites
     obligatoire: false
     defaut: false
     label: Stock important ?
@@ -107,6 +118,7 @@ champs:
   # -----------------------------------------------------
   - nom: nombre_associes
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - "1 (seul)"
@@ -117,12 +129,14 @@ champs:
 
   - nom: associes_actifs
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     label: Associés actifs dans l'entreprise ?
 
   - nom: investisseurs_exterieurs
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     label: Investisseurs extérieurs prévus ?
@@ -132,6 +146,7 @@ champs:
   # -----------------------------------------------------
   - nom: ca_previsionnel
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - "< 10 000 €"
@@ -144,6 +159,7 @@ champs:
 
   - nom: benefice_previsionnel
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - "< 10 000 €"
@@ -155,6 +171,7 @@ champs:
 
   - nom: investissement_depart
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - "< 5 000 €"
@@ -166,6 +183,7 @@ champs:
 
   - nom: emprunt_bancaire
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     label: Emprunt bancaire prévu ?
@@ -175,6 +193,7 @@ champs:
   # -----------------------------------------------------
   - nom: protection_patrimoine
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - Pas importante
@@ -184,6 +203,7 @@ champs:
 
   - nom: couverture_sociale
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - Minimale (coûts bas)
@@ -193,6 +213,7 @@ champs:
 
   - nom: mode_remuneration
     type: select
+    groupe: Configuration
     obligatoire: true
     options:
       - Dividendes principalement
@@ -203,6 +224,7 @@ champs:
 
   - nom: cotisations_retraite
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - Minimiser les cotisations
@@ -215,6 +237,7 @@ champs:
   # -----------------------------------------------------
   - nom: croissance_prevue
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - Stable / Activité solo
@@ -225,6 +248,7 @@ champs:
 
   - nom: embauche_prevue
     type: select
+    groupe: Informations
     obligatoire: true
     options:
       - Non, jamais
@@ -235,6 +259,7 @@ champs:
 
   - nom: cession_transmission
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     label: Cession/transmission envisagée ?
@@ -244,6 +269,7 @@ champs:
   # -----------------------------------------------------
   - nom: statut_recommande
     type: select
+    groupe: Statut
     obligatoire: false
     readonly: true
     options:
@@ -257,12 +283,14 @@ champs:
 
   - nom: statut_score
     type: number
+    groupe: Statut
     obligatoire: false
     readonly: true
     label: Score de pertinence (%)
 
   - nom: statuts_alternatifs
     type: json
+    groupe: Metadata
     obligatoire: false
     readonly: true
     label: Statuts alternatifs
@@ -274,18 +302,21 @@ champs:
 
   - nom: avantages
     type: json
+    groupe: Metadata
     obligatoire: false
     readonly: true
     label: Avantages du statut recommandé
 
   - nom: inconvenients
     type: json
+    groupe: Metadata
     obligatoire: false
     readonly: true
     label: Inconvénients à considérer
 
   - nom: charges_estimees
     type: json
+    groupe: Metadata
     obligatoire: false
     readonly: true
     label: Estimation charges sociales/fiscales
@@ -299,6 +330,7 @@ champs:
 
   - nom: regime_fiscal
     type: text
+    groupe: Informations
     obligatoire: false
     readonly: true
     label: Régime fiscal recommandé
@@ -306,6 +338,7 @@ champs:
 
   - nom: regime_tva
     type: text
+    groupe: Montants
     obligatoire: false
     readonly: true
     label: Régime TVA recommandé
@@ -313,18 +346,21 @@ champs:
 
   - nom: explications
     type: textarea
+    groupe: Notes
     obligatoire: false
     readonly: true
     label: Explications détaillées
 
   - nom: points_vigilance
     type: textarea
+    groupe: Notes
     obligatoire: false
     readonly: true
     label: Points de vigilance
 
   - nom: prochaines_etapes
     type: json
+    groupe: Metadata
     obligatoire: false
     readonly: true
     label: Prochaines étapes
@@ -335,10 +371,12 @@ champs:
   # -----------------------------------------------------
   - nom: created_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
   - nom: created_by
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
 

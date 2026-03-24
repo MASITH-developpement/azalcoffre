@@ -16,59 +16,71 @@ champs:
   # ==========================================================================
   - nom: client_id
     type: relation
+    groupe: Relations
     libelle: "Client"
     relation: clients
     obligatoire: true
 
   - nom: email_connexion
     type: email
+    groupe: Contact
     libelle: "Email connexion"
     obligatoire: true
     unique: true
 
   - nom: mot_de_passe_hash
     type: text
+    groupe: Securite
     libelle: "Mot de passe"
     description: "Hash Argon2"
 
   - nom: actif
     type: boolean
+    groupe: Statut
     libelle: "Compte actif"
     defaut: true
 
   - nom: date_creation
     type: datetime
+    groupe: Dates
     libelle: "Date création"
 
   - nom: date_derniere_connexion
     type: datetime
+    groupe: Dates
     libelle: "Dernière connexion"
 
   - nom: nombre_connexions
     type: number
+    groupe: Informations
     libelle: "Connexions"
     defaut: 0
 
   # Token et sécurité
   - nom: token_activation
     type: text
+    groupe: Securite
     libelle: "Token activation"
 
   - nom: token_expiration
     type: datetime
+    groupe: Securite
     libelle: "Expiration token"
 
   - nom: token_reset_password
     type: text
+    groupe: Securite
     libelle: "Token reset"
 
   - nom: deux_facteurs_actif
     type: boolean
+    groupe: Informations
     libelle: "2FA actif"
     defaut: false
 
   - nom: secret_2fa
     type: text
+    groupe: Securite
     libelle: "Secret 2FA"
 
   # ==========================================================================
@@ -76,6 +88,7 @@ champs:
   # ==========================================================================
   - nom: langue
     type: select
+    groupe: Informations
     libelle: "Langue"
     options:
       - FR
@@ -85,36 +98,43 @@ champs:
 
   - nom: notifications_email
     type: boolean
+    groupe: Contact
     libelle: "Notifications email"
     defaut: true
 
   - nom: notifications_sms
     type: boolean
+    groupe: Informations
     libelle: "Notifications SMS"
     defaut: false
 
   - nom: notification_facture
     type: boolean
+    groupe: Informations
     libelle: "Notif. nouvelles factures"
     defaut: true
 
   - nom: notification_devis
     type: boolean
+    groupe: Informations
     libelle: "Notif. nouveaux devis"
     defaut: true
 
   - nom: notification_ticket
     type: boolean
+    groupe: Informations
     libelle: "Notif. réponses tickets"
     defaut: true
 
   - nom: rappel_echeance
     type: boolean
+    groupe: Informations
     libelle: "Rappel échéances"
     defaut: true
 
   - nom: jours_avant_rappel
     type: number
+    groupe: Informations
     libelle: "Jours avant rappel"
     defaut: 7
 
@@ -123,31 +143,37 @@ champs:
   # ==========================================================================
   - nom: acces_factures
     type: boolean
+    groupe: Informations
     libelle: "Accès factures"
     defaut: true
 
   - nom: acces_devis
     type: boolean
+    groupe: Informations
     libelle: "Accès devis"
     defaut: true
 
   - nom: acces_bons_livraison
     type: boolean
+    groupe: Informations
     libelle: "Accès BL"
     defaut: true
 
   - nom: acces_contrats
     type: boolean
+    groupe: Informations
     libelle: "Accès contrats"
     defaut: true
 
   - nom: acces_attestations
     type: boolean
+    groupe: Informations
     libelle: "Accès attestations"
     defaut: true
 
   - nom: documents_partages
     type: json
+    groupe: Metadata
     libelle: "Documents partagés"
     description: "Liste IDs documents accessibles"
 
@@ -156,34 +182,41 @@ champs:
   # ==========================================================================
   - nom: paiement_cb_autorise
     type: boolean
+    groupe: Informations
     libelle: "Paiement CB"
     defaut: true
 
   - nom: paiement_virement_autorise
     type: boolean
+    groupe: Informations
     libelle: "Paiement virement"
     defaut: true
 
   - nom: paiement_prelevement_autorise
     type: boolean
+    groupe: Informations
     libelle: "Prélèvement SEPA"
     defaut: false
 
   - nom: mandat_sepa_id
     type: text
+    groupe: Relations
     libelle: "Mandat SEPA"
 
   - nom: carte_enregistree
     type: boolean
+    groupe: Informations
     libelle: "Carte enregistrée"
     defaut: false
 
   - nom: stripe_customer_id
     type: text
+    groupe: Relations
     libelle: "Stripe Customer ID"
 
   - nom: total_paye_en_ligne
     type: money
+    groupe: Montants
     libelle: "Total payé en ligne"
     defaut: 0
 
@@ -192,20 +225,24 @@ champs:
   # ==========================================================================
   - nom: peut_creer_ticket
     type: boolean
+    groupe: Informations
     libelle: "Création tickets"
     defaut: true
 
   - nom: tickets_ouverts
     type: number
+    groupe: Informations
     libelle: "Tickets ouverts"
     defaut: 0
 
   - nom: dernier_ticket_date
     type: datetime
+    groupe: Dates
     libelle: "Dernier ticket"
 
   - nom: priorite_support
     type: select
+    groupe: Informations
     libelle: "Priorité support"
     options:
       - STANDARD
@@ -218,16 +255,19 @@ champs:
   # ==========================================================================
   - nom: peut_signer_devis
     type: boolean
+    groupe: Informations
     libelle: "Signature devis"
     defaut: true
 
   - nom: devis_signes
     type: number
+    groupe: Informations
     libelle: "Devis signés"
     defaut: 0
 
   - nom: signature_electronique
     type: text
+    groupe: Informations
     libelle: "Signature enregistrée"
     description: "Base64 ou référence"
 
@@ -236,22 +276,27 @@ champs:
   # ==========================================================================
   - nom: encours_factures
     type: money
+    groupe: Montants
     libelle: "Encours factures"
 
   - nom: factures_impayees
     type: number
+    groupe: Informations
     libelle: "Factures impayées"
 
   - nom: devis_en_attente
     type: number
+    groupe: Informations
     libelle: "Devis en attente"
 
   - nom: derniere_facture_date
     type: date
+    groupe: Dates
     libelle: "Dernière facture"
 
   - nom: ca_annee
     type: money
+    groupe: Montants
     libelle: "CA année"
 
   # ==========================================================================
@@ -259,19 +304,23 @@ champs:
   # ==========================================================================
   - nom: historique_actions
     type: json
+    groupe: Metadata
     libelle: "Historique"
     description: "Actions récentes sur le portail"
 
   - nom: documents_telecharges
     type: json
+    groupe: Metadata
     libelle: "Documents téléchargés"
 
   - nom: ip_derniere_connexion
     type: text
+    groupe: Informations
     libelle: "Dernière IP"
 
   - nom: user_agent
     type: text
+    groupe: Relations
     libelle: "User Agent"
 
   # ==========================================================================
@@ -279,24 +328,29 @@ champs:
   # ==========================================================================
   - nom: contacts_autorises
     type: json
+    groupe: Metadata
     libelle: "Contacts autorisés"
     description: "Autres personnes ayant accès"
 
   - nom: contact_principal_nom
     type: text
+    groupe: Identification
     libelle: "Contact principal"
 
   - nom: contact_principal_email
     type: email
+    groupe: Contact
     libelle: "Email contact"
 
   - nom: contact_principal_tel
     type: tel
+    groupe: Contact
     libelle: "Tél. contact"
 
   # Notes
   - nom: notes_internes
     type: textarea
+    groupe: Notes
     libelle: "Notes internes"
     description: "Non visible par le client"
 

@@ -7,6 +7,7 @@ description: Gestion des patients - Donnees sensibles RGPD
 champs:
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference patient (PAT-XXXX)
@@ -14,12 +15,14 @@ champs:
 
   - nom: civilite
     type: select
+    groupe: Informations
     obligatoire: false
     options: [Mr, Mme, Melle]
     description: Civilite
 
   - nom: first_name
     type: text
+    groupe: Informations
     obligatoire: true
     chiffre: true
     description: Prenom
@@ -27,6 +30,7 @@ champs:
 
   - nom: last_name
     type: text
+    groupe: Informations
     obligatoire: true
     chiffre: true
     description: Nom de famille
@@ -34,6 +38,7 @@ champs:
 
   - nom: maiden_name
     type: text
+    groupe: Informations
     obligatoire: false
     chiffre: true
     description: Nom de naissance
@@ -41,11 +46,13 @@ champs:
 
   - nom: date_of_birth
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date de naissance
 
   - nom: place_of_birth
     type: text
+    groupe: Informations
     obligatoire: false
     chiffre: true
     description: Lieu de naissance
@@ -53,6 +60,7 @@ champs:
 
   - nom: gender
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: UNKNOWN
     options: [MALE, FEMALE, OTHER, UNKNOWN]
@@ -60,6 +68,7 @@ champs:
 
   - nom: social_security_number
     type: text
+    groupe: Informations
     obligatoire: false
     chiffre: true
     sensible: true
@@ -67,56 +76,66 @@ champs:
 
   - nom: email
     type: email
+    groupe: Contact
     obligatoire: false
     chiffre: true
     autocompletion: true
 
   - nom: phone
     type: tel
+    groupe: Contact
     obligatoire: false
     chiffre: true
 
   - nom: mobile_phone
     type: tel
+    groupe: Contact
     obligatoire: false
     chiffre: true
 
   - nom: address_line1
     type: text
+    groupe: Contact
     obligatoire: false
     chiffre: true
     autocompletion: true
 
   - nom: address_line2
     type: text
+    groupe: Contact
     obligatoire: false
     chiffre: true
     autocompletion: true
 
   - nom: postal_code
     type: text
+    groupe: Identification
     obligatoire: false
     autocompletion: true
 
   - nom: city
     type: text
+    groupe: Contact
     obligatoire: false
     autocompletion: true
 
   - nom: country
     type: text
+    groupe: Contact
     obligatoire: false
     defaut: France
     autocompletion: true
 
   - nom: emergency_contact_civilite
     type: select
+    groupe: Informations
     obligatoire: false
     options: [Mr, Mme, Melle]
     description: Civilite du contact d'urgence
 
   - nom: emergency_contact_name
     type: text
+    groupe: Informations
     obligatoire: false
     chiffre: true
     description: Nom du contact d'urgence
@@ -124,18 +143,21 @@ champs:
 
   - nom: emergency_contact_phone
     type: tel
+    groupe: Contact
     obligatoire: false
     chiffre: true
     description: Telephone du contact d'urgence
 
   - nom: emergency_contact_relationship
     type: text
+    groupe: Informations
     obligatoire: false
     description: Lien avec le patient
     autocompletion: true
 
   - nom: blood_type
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: UNKNOWN
     options: [A+, A-, B+, B-, AB+, AB-, O+, O-, UNKNOWN]
@@ -143,16 +165,19 @@ champs:
 
   - nom: weight_kg
     type: number
+    groupe: Informations
     obligatoire: false
     description: Poids en kg
 
   - nom: height_cm
     type: number
+    groupe: Informations
     obligatoire: false
     description: Taille en cm
 
   - nom: primary_practitioner_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Praticiens
     description: Medecin traitant
@@ -160,40 +185,47 @@ champs:
 
   - nom: is_active
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true
     description: Patient actif
 
   - nom: is_deceased
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: false
     description: Patient decede
 
   - nom: date_of_death
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de deces
 
   - nom: consent_data_processing
     type: boolean
+    groupe: Informations
     obligatoire: true
     defaut: false
     description: Consentement traitement des donnees
 
   - nom: consent_date
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date du consentement
 
   - nom: consent_telehealth
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Consentement teleconsultation
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     chiffre: true
     description: Notes generales
@@ -203,42 +235,49 @@ dossier_medical:
   champs:
     - nom: allergies
       type: json
+      groupe: Metadata
       obligatoire: false
       chiffre: true
       description: Liste des allergies
 
     - nom: medical_history
       type: json
+      groupe: Metadata
       obligatoire: false
       chiffre: true
       description: Antecedents medicaux
 
     - nom: family_history
       type: json
+      groupe: Metadata
       obligatoire: false
       chiffre: true
       description: Antecedents familiaux
 
     - nom: surgical_history
       type: json
+      groupe: Metadata
       obligatoire: false
       chiffre: true
       description: Antecedents chirurgicaux
 
     - nom: current_medications
       type: json
+      groupe: Metadata
       obligatoire: false
       chiffre: true
       description: Traitements en cours
 
     - nom: vaccinations
       type: json
+      groupe: Metadata
       obligatoire: false
       chiffre: true
       description: Historique des vaccinations
 
     - nom: clinical_notes
       type: textarea
+      groupe: Notes
       obligatoire: false
       chiffre: true
       description: Notes cliniques generales

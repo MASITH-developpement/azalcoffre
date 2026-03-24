@@ -1,0 +1,95 @@
+# =============================================================================
+# PDF Configuration - Mise en page des documents
+# =============================================================================
+nom: pdf_config
+icone: file-text
+menu: Paramètres
+description: Configuration de la mise en page des documents PDF (devis, factures)
+acces: interne
+actif: true
+
+champs:
+  - nom: show_logo
+    type: boolean
+    defaut: true
+    description: Afficher le logo
+
+  - nom: logo_position
+    type: select
+    options: [left, center, right]
+    defaut: left
+    description: Position du logo
+
+  - nom: primary_color
+    type: text
+    defaut: "#3454D1"
+    description: Couleur principale
+
+  - nom: accent_color
+    type: text
+    defaut: "#6B9FFF"
+    description: Couleur d'accent
+
+  - nom: table_style
+    type: select
+    options: [simple, striped, bordered]
+    defaut: simple
+    description: Style du tableau
+
+  - nom: corners
+    type: select
+    options: [rounded, square]
+    defaut: rounded
+    description: Style des coins
+
+  - nom: font
+    type: select
+    options: [Helvetica, Times, Courier]
+    defaut: Helvetica
+    description: Police
+
+  - nom: font_size
+    type: select
+    options: ["10", "11", "12"]
+    defaut: "11"
+    description: Taille de police
+
+  - nom: margins
+    type: select
+    options: ["10", "15", "20", "25"]
+    defaut: "15"
+    description: Marges en mm
+
+  - nom: paper_size
+    type: select
+    options: [A4, Letter]
+    defaut: A4
+    description: Format papier
+
+  - nom: show_siret
+    type: boolean
+    defaut: true
+    description: Afficher SIRET
+
+  - nom: show_tva_intra
+    type: boolean
+    defaut: true
+    description: Afficher TVA intracommunautaire
+
+  - nom: show_bank_details
+    type: boolean
+    defaut: true
+    description: Afficher coordonnées bancaires
+
+  - nom: show_signature_zone
+    type: boolean
+    defaut: true
+    description: Zone de signature client
+
+  - nom: footer_devis
+    type: textarea
+    description: Mention pied de page devis
+
+  - nom: footer_facture
+    type: textarea
+    description: Mention pied de page factures

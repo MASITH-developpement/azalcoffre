@@ -10,17 +10,20 @@ description: Rapports et etudes de marche a vendre
 champs:
   - nom: reference
     type: text
+    groupe: Identification
     libelle: "Reference"
     obligatoire: true
     unique: true
 
   - nom: titre
     type: text
+    groupe: Identification
     libelle: "Titre de l'etude"
     obligatoire: true
 
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     obligatoire: true
     defaut: BROUILLON
@@ -32,6 +35,7 @@ champs:
 
   - nom: categorie
     type: select
+    groupe: Informations
     libelle: "Categorie"
     obligatoire: true
     options:
@@ -43,29 +47,35 @@ champs:
 
   - nom: secteur
     type: text
+    groupe: Informations
     libelle: "Secteur d'activite"
 
   - nom: region
     type: text
+    groupe: Contact
     libelle: "Region"
 
   - nom: date_debut
     type: date
+    groupe: Dates
     libelle: "Periode - Debut"
     obligatoire: true
 
   - nom: date_fin
     type: date
+    groupe: Dates
     libelle: "Periode - Fin"
     obligatoire: true
 
   - nom: nb_entreprises
     type: number
+    groupe: Quantites
     libelle: "Nombre d'entreprises analysees"
     readonly: true
 
   - nom: format
     type: select
+    groupe: Informations
     libelle: "Format du rapport"
     defaut: PDF
     options:
@@ -75,18 +85,22 @@ champs:
 
   - nom: prix
     type: money
+    groupe: Montants
     libelle: "Prix de vente"
 
   - nom: acheteur
     type: text
+    groupe: Informations
     libelle: "Acheteur"
 
   - nom: date_vente
     type: date
+    groupe: Dates
     libelle: "Date de vente"
 
   - nom: licence
     type: select
+    groupe: Informations
     libelle: "Type de licence"
     defaut: USAGE_UNIQUE
     options:
@@ -96,14 +110,17 @@ champs:
 
   - nom: date_expiration
     type: date
+    groupe: Dates
     libelle: "Date d'expiration"
 
   - nom: description
     type: textarea
+    groupe: Informations
     libelle: "Description"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes internes"
 
 recherche:

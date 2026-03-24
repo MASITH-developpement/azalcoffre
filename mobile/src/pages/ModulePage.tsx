@@ -16,10 +16,11 @@ export default function ModulePage(): React.ReactElement {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // URL de l'UI du module (générée par le moteur)
+  // IMPORTANT: Pas de slash final avant les query params (sinon redirection perd le token)
   const token = TokenManager.getAccessToken();
   const moduleUrl = token
-    ? `${BACKEND_URL}/ui/${moduleId}/?token=${encodeURIComponent(token)}`
-    : `${BACKEND_URL}/ui/${moduleId}/`;
+    ? `${BACKEND_URL}/ui/${moduleId}?token=${encodeURIComponent(token)}`
+    : `${BACKEND_URL}/ui/${moduleId}`;
 
   // Gérer le chargement de l'iframe
   useEffect(() => {

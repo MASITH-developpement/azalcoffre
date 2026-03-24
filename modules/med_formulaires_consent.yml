@@ -1,0 +1,239 @@
+# =============================================================================
+# AZALMED - Module Formulaires de Consentement
+# =============================================================================
+# Templates de formulaires de consentement par spécialité
+# Bibliothèque de modèles prêts à l'emploi
+
+nom: FormulairesConsent
+icone: file-alt
+menu: AZALMED
+description: "Modèles de formulaires de consentement"
+
+champs:
+  # ---------------------------------------------------------------------------
+  # Identification
+  # ---------------------------------------------------------------------------
+  - nom: code
+    type: text
+    groupe: Identification
+    obligatoire: true
+    description: "Code unique du formulaire"
+
+  - nom: titre
+    type: text
+    groupe: Identification
+    obligatoire: true
+    description: Titre du formulaire
+
+  - nom: description
+    type: textarea
+    groupe: Identification
+    obligatoire: false
+    description: Description du formulaire
+
+  - nom: version
+    type: text
+    groupe: Identification
+    obligatoire: true
+    defaut: "1.0"
+    description: Version du formulaire
+
+  # ---------------------------------------------------------------------------
+  # Catégorisation
+  # ---------------------------------------------------------------------------
+  - nom: specialite
+    type: select
+    groupe: Catégorisation
+    obligatoire: true
+    options:
+      - Toutes spécialités
+      - Chirurgie générale
+      - Chirurgie orthopédique
+      - Chirurgie plastique
+      - Chirurgie ophtalmologique
+      - Anesthésie
+      - Dermatologie
+      - Gynécologie
+      - Cardiologie
+      - Imagerie médicale
+      - Médecine esthétique
+      - Dentaire
+      - Autre
+    description: Spécialité concernée
+
+  - nom: type_acte
+    type: select
+    groupe: Catégorisation
+    obligatoire: true
+    options:
+      - CONSULTATION
+      - INTERVENTION_CHIRURGICALE
+      - ANESTHESIE
+      - EXAMEN_IMAGERIE
+      - ACTE_ESTHETIQUE
+      - SOIN_DENTAIRE
+      - VACCINATION
+      - TRAITEMENT
+      - PARTICIPATION_ETUDE
+      - RGPD
+      - AUTRE
+    description: Type d'acte
+
+  - nom: tags
+    type: tags
+    groupe: Catégorisation
+    obligatoire: false
+    description: "Mots-clés pour la recherche"
+
+  # ---------------------------------------------------------------------------
+  # Contenu
+  # ---------------------------------------------------------------------------
+  - nom: contenu_html
+    type: textarea
+    groupe: Contenu
+    obligatoire: true
+    description: "Contenu HTML du formulaire"
+
+  - nom: champs_personnalisables
+    type: json
+    groupe: Contenu
+    obligatoire: false
+    description: "Champs variables à remplir (JSON)"
+
+  - nom: informations_patient
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: "Informations à fournir au patient"
+
+  - nom: risques_standard
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: "Risques standards de l'acte"
+
+  - nom: alternatives_standard
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: "Alternatives standards"
+
+  # ---------------------------------------------------------------------------
+  # Paramètres
+  # ---------------------------------------------------------------------------
+  - nom: necessite_representant
+    type: boolean
+    groupe: Paramètres
+    obligatoire: false
+    defaut: false
+    description: "Proposer signature représentant légal"
+
+  - nom: delai_reflexion_heures
+    type: number
+    groupe: Paramètres
+    obligatoire: false
+    defaut: 0
+    description: "Délai de réflexion obligatoire (heures)"
+
+  - nom: duree_validite_heures
+    type: number
+    groupe: Paramètres
+    obligatoire: false
+    defaut: 72
+    description: "Durée de validité de la demande (heures)"
+
+  - nom: niveau_signature_requis
+    type: select
+    groupe: Paramètres
+    obligatoire: false
+    defaut: AVANCEE
+    options: [SIMPLE, AVANCEE, QUALIFIEE]
+    description: "Niveau de signature requis"
+
+  # ---------------------------------------------------------------------------
+  # Statut
+  # ---------------------------------------------------------------------------
+  - nom: statut
+    type: select
+    groupe: Statut
+    obligatoire: true
+    defaut: ACTIF
+    options: [BROUILLON, ACTIF, OBSOLETE]
+    description: Statut du formulaire
+
+  - nom: est_standard
+    type: boolean
+    groupe: Statut
+    obligatoire: false
+    defaut: false
+    description: "Formulaire standard AZALMED (non modifiable)"
+
+  - nom: est_personnalise
+    type: boolean
+    groupe: Statut
+    obligatoire: false
+    defaut: false
+    description: "Formulaire personnalisé par le praticien"
+
+  - nom: praticien_id
+    type: relation
+    groupe: Statut
+    obligatoire: false
+    relation: Praticiens
+    description: "Praticien propriétaire (si personnalisé)"
+
+  # ---------------------------------------------------------------------------
+  # Audit
+  # ---------------------------------------------------------------------------
+  - nom: nombre_utilisations
+    type: number
+    groupe: Audit
+    obligatoire: false
+    defaut: 0
+    readonly: true
+    description: Nombre de fois utilisé
+
+  - nom: date_creation
+    type: datetime
+    groupe: Audit
+    obligatoire: false
+    readonly: true
+    description: Date de création
+
+  - nom: date_modification
+    type: datetime
+    groupe: Audit
+    obligatoire: false
+    readonly: true
+    description: Dernière modification
+
+# ---------------------------------------------------------------------------
+# Workflow
+# ---------------------------------------------------------------------------
+workflow:
+  BROUILLON -> ACTIF: "Activer le formulaire"
+  ACTIF -> OBSOLETE: "Marquer comme obsolète"
+  OBSOLETE -> ACTIF: "Réactiver"
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+actions:
+  - dupliquer
+  - previsualiser
+  - exporter_pdf
+
+# ---------------------------------------------------------------------------
+# Recherche
+# ---------------------------------------------------------------------------
+recherche:
+  champs: [code, titre, description, tags]
+  tri_defaut: titre
+  ordre_defaut: asc
+
+# ---------------------------------------------------------------------------
+# Liste
+# ---------------------------------------------------------------------------
+liste:
+  colonnes: [code, titre, specialite, type_acte, statut, nombre_utilisations]
+  filtres: [specialite, type_acte, statut, est_standard]

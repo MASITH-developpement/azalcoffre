@@ -7,12 +7,14 @@ description: Gestion des demandes relatives aux droits RGPD
 champs:
   - nom: numero
     type: text
+    groupe: Identification
     obligatoire: true
     description: Numero unique de la demande RGPD
     autocompletion: true
 
   - nom: client_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Clients
     description: Client concerne si dans la base
@@ -20,81 +22,95 @@ champs:
 
   - nom: demandeur_civilite
     type: select
+    groupe: Informations
     obligatoire: false
     options: [Mr, Mme, Melle]
     description: Civilite du demandeur
 
   - nom: nom_demandeur
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom du demandeur
     autocompletion: true
 
   - nom: prenom_demandeur
     type: text
+    groupe: Informations
     obligatoire: true
     description: Prenom du demandeur
     autocompletion: true
 
   - nom: email_demandeur
     type: email
+    groupe: Contact
     obligatoire: true
     description: Email pour verification et envoi des reponses
     autocompletion: true
 
   - nom: telephone_demandeur
     type: text
+    groupe: Informations
     obligatoire: false
     description: Telephone du demandeur
     autocompletion: true
 
   - nom: type_demande
     type: select
+    groupe: Informations
     obligatoire: true
-    options: [ACCES, PORTABILITE, EFFACEMENT, RECTIFICATION, LIMITATION, OPPOSITION]
+    options: $rgpd.types_demande
     description: Article RGPD concerne
 
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: false
     description: Details de la demande
 
   - nom: statut
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: RECUE
-    options: [RECUE, VERIFICATION_IDENTITE, EN_COURS, COMPLETEE, REFUSEE, EXPIREE]
+    options: $statuts.demandes_rgpd.valeurs
     description: Statut de traitement
 
   - nom: date_reception
     type: datetime
+    groupe: Dates
     obligatoire: true
     description: Date de reception
 
   - nom: date_limite
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date limite de reponse (30 jours)
 
   - nom: date_reponse
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de reponse effective
 
   - nom: identite_verifiee
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Identite du demandeur verifiee
 
   - nom: methode_verification
     type: select
+    groupe: Informations
     obligatoire: false
     options: [PIECE_IDENTITE, EMAIL_CONFIRME, TELEPHONE, COURRIER, COMPTE_CLIENT]
     description: Methode de verification utilisee
 
   - nom: traite_par
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
     description: Utilisateur en charge du traitement
@@ -102,11 +118,13 @@ champs:
 
   - nom: motif_refus
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Justification si demande refusee
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes internes
 

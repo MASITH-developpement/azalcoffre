@@ -27,6 +27,7 @@ champs:
   # ===========================================================================
   - nom: reference
     type: text
+    groupe: Identification
     libelle: "Référence"
     obligatoire: true
     unique: true
@@ -36,6 +37,7 @@ champs:
 
   - nom: compte_id
     type: relation
+    groupe: Relations
     libelle: "Compte"
     obligatoire: true
     relation: Comptes_Bancaires
@@ -47,30 +49,35 @@ champs:
   # ===========================================================================
   - nom: date_operation
     type: date
+    groupe: Dates
     libelle: "Date opération"
     obligatoire: true
     description: "Date de l'opération"
 
   - nom: date_valeur
     type: date
+    groupe: Dates
     libelle: "Date valeur"
     obligatoire: false
     description: "Date de valeur bancaire"
 
   - nom: libelle
     type: text
+    groupe: Identification
     libelle: "Libellé"
     obligatoire: true
     description: "Libellé de l'opération bancaire"
 
   - nom: libelle_complementaire
     type: text
+    groupe: Informations
     libelle: "Libellé complémentaire"
     obligatoire: false
     description: "Informations complémentaires"
 
   - nom: sens
     type: select
+    groupe: Informations
     libelle: "Sens"
     obligatoire: true
     options:
@@ -80,12 +87,14 @@ champs:
 
   - nom: montant
     type: number
+    groupe: Montants
     libelle: "Montant"
     obligatoire: true
     description: "Montant de l'opération (toujours positif)"
 
   - nom: devise
     type: text
+    groupe: Informations
     libelle: "Devise"
     obligatoire: true
     defaut: "EUR"
@@ -93,6 +102,7 @@ champs:
 
   - nom: type_operation
     type: select
+    groupe: Informations
     libelle: "Type"
     obligatoire: false
     options:
@@ -113,6 +123,7 @@ champs:
   # ===========================================================================
   - nom: tiers_libelle
     type: text
+    groupe: Informations
     libelle: "Tiers"
     obligatoire: false
     description: "Nom du tiers (émetteur ou bénéficiaire)"
@@ -120,12 +131,14 @@ champs:
 
   - nom: tiers_iban
     type: text
+    groupe: Informations
     libelle: "IBAN tiers"
     obligatoire: false
     description: "IBAN du tiers si disponible"
 
   - nom: tiers_reference
     type: text
+    groupe: Informations
     libelle: "Référence tiers"
     obligatoire: false
     description: "Référence communiquée par le tiers"
@@ -135,6 +148,7 @@ champs:
   # ===========================================================================
   - nom: source
     type: select
+    groupe: Informations
     libelle: "Source"
     obligatoire: true
     options:
@@ -151,6 +165,7 @@ champs:
 
   - nom: provider_id
     type: text
+    groupe: Relations
     libelle: "ID Provider"
     obligatoire: false
     description: "Identifiant unique chez le provider"
@@ -158,6 +173,7 @@ champs:
 
   - nom: provider_data
     type: json
+    groupe: Metadata
     libelle: "Données provider"
     obligatoire: false
     readonly: true
@@ -168,19 +184,16 @@ champs:
   # ===========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     obligatoire: true
-    options:
-      - A_TRAITER
-      - EN_COURS
-      - RAPPROCHE
-      - EXCLU
-      - ERREUR
+    options: $statuts.mouvements_bancaires.valeurs
     defaut: A_TRAITER
     description: "Statut du rapprochement"
 
   - nom: methode_rapprochement
     type: select
+    groupe: Informations
     libelle: "Méthode"
     obligatoire: false
     options:
@@ -194,12 +207,14 @@ champs:
 
   - nom: confiance
     type: number
+    groupe: Informations
     libelle: "Confiance (%)"
     obligatoire: false
     description: "Score de confiance du rapprochement (0-100)"
 
   - nom: date_rapprochement
     type: datetime
+    groupe: Dates
     libelle: "Date rapprochement"
     obligatoire: false
     readonly: true
@@ -207,6 +222,7 @@ champs:
 
   - nom: rapproche_par
     type: text
+    groupe: Informations
     libelle: "Rapproché par"
     obligatoire: false
     readonly: true
@@ -217,6 +233,7 @@ champs:
   # ===========================================================================
   - nom: document_type
     type: select
+    groupe: Informations
     libelle: "Type document"
     obligatoire: false
     options:
@@ -231,18 +248,21 @@ champs:
 
   - nom: document_id
     type: text
+    groupe: Relations
     libelle: "ID Document"
     obligatoire: false
     description: "ID du document principal lié"
 
   - nom: documents_lies
     type: json
+    groupe: Metadata
     libelle: "Documents liés"
     obligatoire: false
     description: "Liste des documents liés si plusieurs (JSON)"
 
   - nom: facture_id
     type: relation
+    groupe: Relations
     libelle: "Facture"
     obligatoire: false
     relation: Factures
@@ -251,6 +271,7 @@ champs:
 
   - nom: client_id
     type: relation
+    groupe: Relations
     libelle: "Client"
     obligatoire: false
     relation: Clients
@@ -259,6 +280,7 @@ champs:
 
   - nom: fournisseur_id
     type: relation
+    groupe: Relations
     libelle: "Fournisseur"
     obligatoire: false
     relation: Fournisseurs
@@ -270,24 +292,28 @@ champs:
   # ===========================================================================
   - nom: compte_comptable
     type: text
+    groupe: Informations
     libelle: "Compte comptable"
     obligatoire: false
     description: "N° compte comptable affecté"
 
   - nom: compte_contrepartie
     type: text
+    groupe: Informations
     libelle: "Contrepartie"
     obligatoire: false
     description: "N° compte de contrepartie"
 
   - nom: journal
     type: text
+    groupe: Informations
     libelle: "Journal"
     obligatoire: false
     description: "Code journal comptable"
 
   - nom: ecriture_id
     type: text
+    groupe: Relations
     libelle: "Écriture comptable"
     obligatoire: false
     description: "ID de l'écriture générée"
@@ -297,6 +323,7 @@ champs:
   # ===========================================================================
   - nom: anomalie
     type: boolean
+    groupe: Informations
     libelle: "Anomalie"
     obligatoire: false
     defaut: false
@@ -304,6 +331,7 @@ champs:
 
   - nom: type_anomalie
     type: select
+    groupe: Informations
     libelle: "Type anomalie"
     obligatoire: false
     options:
@@ -316,12 +344,14 @@ champs:
 
   - nom: anomalie_message
     type: text
+    groupe: Informations
     libelle: "Message anomalie"
     obligatoire: false
     description: "Description de l'anomalie"
 
   - nom: anomalie_resolue
     type: boolean
+    groupe: Informations
     libelle: "Résolue"
     obligatoire: false
     defaut: false
@@ -329,6 +359,7 @@ champs:
 
   - nom: resolution_note
     type: textarea
+    groupe: Notes
     libelle: "Note résolution"
     obligatoire: false
     description: "Note de résolution de l'anomalie"
@@ -338,6 +369,7 @@ champs:
   # ===========================================================================
   - nom: exclu_motif
     type: select
+    groupe: Informations
     libelle: "Motif exclusion"
     obligatoire: false
     options:
@@ -350,12 +382,14 @@ champs:
 
   - nom: exclu_note
     type: textarea
+    groupe: Notes
     libelle: "Note exclusion"
     obligatoire: false
     description: "Explication de l'exclusion"
 
   - nom: exclu_echeance
     type: date
+    groupe: Dates
     libelle: "Échéance résolution"
     obligatoire: false
     description: "Date limite pour résoudre"
@@ -365,6 +399,7 @@ champs:
   # ===========================================================================
   - nom: hash_doublon
     type: text
+    groupe: Informations
     libelle: "Hash"
     obligatoire: false
     readonly: true
@@ -372,6 +407,7 @@ champs:
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
     obligatoire: false
     description: "Notes internes"
@@ -407,12 +443,12 @@ affichage_liste:
 
 # Workflow
 workflow:
-  A_TRAITER -> EN_COURS: null
+  A_TRAITER -> EN_COURS:
   A_TRAITER -> RAPPROCHE: "Rapprocher"
   A_TRAITER -> EXCLU: "Exclure temporairement"
   EN_COURS -> RAPPROCHE: "Valider"
   EN_COURS -> EXCLU: "Exclure"
-  EN_COURS -> ERREUR: null
+  EN_COURS -> ERREUR:
   EXCLU -> A_TRAITER: "Réintégrer"
   ERREUR -> A_TRAITER: "Corriger"
 
@@ -439,6 +475,7 @@ webhooks:
 # Alertes automatiques (Marceau)
 marceau:
   alertes:
-    - si statut = A_TRAITER et date_operation < aujourd'hui - 2 jours: "Mouvement non traité depuis plus de 48h"
+    - si statut = A_TRAITER et date_operation < aujourd'hui - 2 jours: "Mouvement
+        non traité depuis plus de 48h"
     - si anomalie = true et anomalie_resolue = false: "Anomalie non résolue"
     - si statut = EXCLU et exclu_echeance < aujourd'hui: "Exclusion arrivée à échéance"

@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro"
     obligatoire: true
     unique: true
@@ -24,6 +25,7 @@ champs:
 
   - nom: type_entite
     type: select
+    groupe: Informations
     libelle: "Type"
     obligatoire: true
     options:
@@ -37,6 +39,7 @@ champs:
 
   - nom: statut_commercial
     type: select
+    groupe: Statut
     libelle: "Statut commercial"
     options:
       - LEAD_FROID
@@ -53,31 +56,38 @@ champs:
   # ==========================================================================
   - nom: raison_sociale
     type: text
+    groupe: Informations
     libelle: "Raison sociale"
     obligatoire: true
 
   - nom: nom_commercial
     type: text
+    groupe: Identification
     libelle: "Nom commercial"
 
   - nom: siret
     type: text
+    groupe: Informations
     libelle: "SIRET"
 
   - nom: siren
     type: text
+    groupe: Informations
     libelle: "SIREN"
 
   - nom: tva_intra
     type: text
+    groupe: Montants
     libelle: "TVA Intra"
 
   - nom: code_ape
     type: text
+    groupe: Identification
     libelle: "Code APE"
 
   - nom: forme_juridique
     type: select
+    groupe: Informations
     libelle: "Forme juridique"
     options:
       - SARL
@@ -91,22 +101,27 @@ champs:
 
   - nom: capital_social
     type: money
+    groupe: Montants
     libelle: "Capital social"
 
   - nom: effectif
     type: number
+    groupe: Informations
     libelle: "Effectif"
 
   - nom: ca_annuel
     type: money
+    groupe: Montants
     libelle: "CA annuel"
 
   - nom: secteur_activite
     type: text
+    groupe: Informations
     libelle: "Secteur d'activité"
 
   - nom: site_web
     type: text
+    groupe: Informations
     libelle: "Site web"
 
   # ==========================================================================
@@ -114,27 +129,33 @@ champs:
   # ==========================================================================
   - nom: adresse
     type: textarea
+    groupe: Contact
     libelle: "Adresse"
 
   - nom: code_postal
     type: text
+    groupe: Identification
     libelle: "Code postal"
 
   - nom: ville
     type: text
+    groupe: Contact
     libelle: "Ville"
 
   - nom: pays
     type: text
+    groupe: Contact
     libelle: "Pays"
     defaut: "France"
 
   - nom: adresse_livraison
     type: textarea
+    groupe: Contact
     libelle: "Adresse livraison"
 
   - nom: adresse_facturation
     type: textarea
+    groupe: Contact
     libelle: "Adresse facturation"
 
   # ==========================================================================
@@ -142,30 +163,37 @@ champs:
   # ==========================================================================
   - nom: contact_nom
     type: text
+    groupe: Identification
     libelle: "Nom contact"
 
   - nom: contact_prenom
     type: text
+    groupe: Relations
     libelle: "Prénom contact"
 
   - nom: contact_fonction
     type: text
+    groupe: Relations
     libelle: "Fonction"
 
   - nom: contact_email
     type: email
+    groupe: Contact
     libelle: "Email"
 
   - nom: contact_telephone
     type: tel
+    groupe: Relations
     libelle: "Téléphone"
 
   - nom: contact_mobile
     type: tel
+    groupe: Relations
     libelle: "Mobile"
 
   - nom: linkedin
     type: text
+    groupe: Informations
     libelle: "LinkedIn"
 
   # ==========================================================================
@@ -173,6 +201,7 @@ champs:
   # ==========================================================================
   - nom: contacts
     type: json
+    groupe: Metadata
     libelle: "Contacts"
     description: "Liste des contacts de l'entreprise"
 
@@ -181,15 +210,18 @@ champs:
   # ==========================================================================
   - nom: commercial_id
     type: relation
+    groupe: Relations
     libelle: "Commercial"
     relation: employes
 
   - nom: equipe_commerciale
     type: text
+    groupe: Informations
     libelle: "Équipe"
 
   - nom: origine
     type: select
+    groupe: Informations
     libelle: "Origine"
     options:
       - SITE_WEB
@@ -203,10 +235,12 @@ champs:
 
   - nom: source_detail
     type: text
+    groupe: Informations
     libelle: "Source détail"
 
   - nom: campagne_origine
     type: text
+    groupe: Informations
     libelle: "Campagne"
 
   # ==========================================================================
@@ -214,27 +248,33 @@ champs:
   # ==========================================================================
   - nom: score_lead
     type: number
+    groupe: Informations
     libelle: "Score lead"
     defaut: 0
 
   - nom: budget_estime
     type: money
+    groupe: Montants
     libelle: "Budget estimé"
 
   - nom: besoin
     type: textarea
+    groupe: Notes
     libelle: "Besoin exprimé"
 
   - nom: decision_date
     type: date
+    groupe: Dates
     libelle: "Date décision prévue"
 
   - nom: concurrents
     type: text
+    groupe: Informations
     libelle: "Concurrents identifiés"
 
   - nom: critere_decision
     type: text
+    groupe: Informations
     libelle: "Critères de décision"
 
   # ==========================================================================
@@ -242,19 +282,23 @@ champs:
   # ==========================================================================
   - nom: opportunites
     type: json
+    groupe: Metadata
     libelle: "Opportunités"
     description: "Liste des opportunités en cours"
 
   - nom: montant_opportunites
     type: money
+    groupe: Montants
     libelle: "Montant opportunités"
 
   - nom: probabilite_moyenne
     type: number
+    groupe: Informations
     libelle: "Probabilité moyenne (%)"
 
   - nom: pipeline_stage
     type: select
+    groupe: Informations
     libelle: "Étape pipeline"
     options:
       - QUALIFICATION
@@ -270,23 +314,28 @@ champs:
   # ==========================================================================
   - nom: date_premier_contact
     type: date
+    groupe: Dates
     libelle: "Premier contact"
 
   - nom: date_dernier_contact
     type: date
+    groupe: Dates
     libelle: "Dernier contact"
 
   - nom: date_conversion_client
     type: date
+    groupe: Dates
     libelle: "Conversion client"
 
   - nom: nombre_interactions
     type: number
+    groupe: Informations
     libelle: "Interactions"
     defaut: 0
 
   - nom: derniere_interaction
     type: text
+    groupe: Informations
     libelle: "Dernière interaction"
 
   # ==========================================================================
@@ -294,19 +343,23 @@ champs:
   # ==========================================================================
   - nom: activites
     type: json
+    groupe: Metadata
     libelle: "Activités"
     description: "Historique des activités"
 
   - nom: prochaine_action
     type: text
+    groupe: Informations
     libelle: "Prochaine action"
 
   - nom: date_prochaine_action
     type: datetime
+    groupe: Dates
     libelle: "Date action"
 
   - nom: rappel
     type: boolean
+    groupe: Informations
     libelle: "Rappel actif"
     defaut: false
 
@@ -315,6 +368,7 @@ champs:
   # ==========================================================================
   - nom: conditions_paiement
     type: select
+    groupe: Informations
     libelle: "Conditions paiement"
     options:
       - COMPTANT
@@ -326,6 +380,7 @@ champs:
 
   - nom: mode_paiement
     type: select
+    groupe: Configuration
     libelle: "Mode paiement"
     options:
       - VIREMENT
@@ -336,18 +391,22 @@ champs:
 
   - nom: remise_generale
     type: number
+    groupe: Informations
     libelle: "Remise générale (%)"
 
   - nom: encours_autorise
     type: money
+    groupe: Montants
     libelle: "Encours autorisé"
 
   - nom: iban
     type: text
+    groupe: Informations
     libelle: "IBAN"
 
   - nom: bic
     type: text
+    groupe: Informations
     libelle: "BIC"
 
   # ==========================================================================
@@ -355,30 +414,37 @@ champs:
   # ==========================================================================
   - nom: ca_realise
     type: money
+    groupe: Montants
     libelle: "CA réalisé"
 
   - nom: ca_annee_precedente
     type: money
+    groupe: Montants
     libelle: "CA N-1"
 
   - nom: encours_actuel
     type: money
+    groupe: Montants
     libelle: "Encours actuel"
 
   - nom: impaye_total
     type: money
+    groupe: Montants
     libelle: "Impayés"
 
   - nom: nombre_factures
     type: number
+    groupe: Informations
     libelle: "Nb factures"
 
   - nom: nombre_devis
     type: number
+    groupe: Informations
     libelle: "Nb devis"
 
   - nom: taux_transformation
     type: number
+    groupe: Montants
     libelle: "Taux transformation (%)"
 
   # ==========================================================================
@@ -386,6 +452,7 @@ champs:
   # ==========================================================================
   - nom: segment
     type: select
+    groupe: Informations
     libelle: "Segment"
     options:
       - GRAND_COMPTE
@@ -396,14 +463,17 @@ champs:
 
   - nom: categorie
     type: text
+    groupe: Informations
     libelle: "Catégorie"
 
   - nom: tags
     type: tags
+    groupe: Metadata
     libelle: "Tags"
 
   - nom: priorite
     type: select
+    groupe: Informations
     libelle: "Priorité"
     options:
       - HAUTE
@@ -416,10 +486,12 @@ champs:
   # ==========================================================================
   - nom: nps_score
     type: number
+    groupe: Informations
     libelle: "Score NPS"
 
   - nom: satisfaction
     type: select
+    groupe: Informations
     libelle: "Satisfaction"
     options:
       - TRES_SATISFAIT
@@ -430,6 +502,7 @@ champs:
 
   - nom: derniere_enquete
     type: date
+    groupe: Dates
     libelle: "Dernière enquête"
 
   # ==========================================================================
@@ -437,20 +510,24 @@ champs:
   # ==========================================================================
   - nom: rgpd_consentement
     type: boolean
+    groupe: Informations
     libelle: "Consentement RGPD"
     defaut: false
 
   - nom: rgpd_date
     type: datetime
+    groupe: Dates
     libelle: "Date consentement"
 
   - nom: rgpd_newsletter
     type: boolean
+    groupe: Informations
     libelle: "Newsletter"
     defaut: false
 
   - nom: rgpd_prospection
     type: boolean
+    groupe: Informations
     libelle: "Prospection"
     defaut: false
 
@@ -459,28 +536,34 @@ champs:
   # ==========================================================================
   - nom: actif
     type: boolean
+    groupe: Statut
     libelle: "Actif"
     defaut: true
 
   - nom: bloque
     type: boolean
+    groupe: Informations
     libelle: "Bloqué"
     defaut: false
 
   - nom: motif_blocage
     type: text
+    groupe: Informations
     libelle: "Motif blocage"
 
   - nom: date_creation
     type: datetime
+    groupe: Dates
     libelle: "Date création"
 
   - nom: cree_par
     type: text
+    groupe: Informations
     libelle: "Créé par"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

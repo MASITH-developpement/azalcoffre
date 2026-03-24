@@ -29,13 +29,6 @@ async def generated_recent_track(request: Request, data: Optional[GenericRequest
     return {"status": "ok"}
 
 
-@generated_router.post("/modeles_email")
-async def generated_modeles_email(request: Request, data: Optional[GenericRequest] = None):
-    """Endpoint auto-généré par Guardian pour /modeles_email"""
-    logger.debug("generated_endpoint_called", path="/modeles_email", method="post")
-    return {"status": "ok"}
-
-
 @generated_router.post("/calendar/workload")
 async def generated_calendar_workload(request: Request, data: Optional[GenericRequest] = None):
     """Endpoint auto-généré par Guardian pour /calendar/workload"""
@@ -43,26 +36,30 @@ async def generated_calendar_workload(request: Request, data: Optional[GenericRe
     return {"status": "ok"}
 
 
-@generated_router.post("/interventions/e98bd5e4")
-async def generated_interventions_e98bd5e4(request: Request, data: Optional[GenericRequest] = None):
-    """Endpoint auto-généré par Guardian pour /interventions/e98bd5e4"""
-    logger.debug("generated_endpoint_called", path="/interventions/e98bd5e4", method="post")
+@generated_router.post("/devis")
+async def generated_devis(request: Request, data: Optional[GenericRequest] = None):
+    """Endpoint auto-généré par Guardian pour /devis"""
+    logger.debug("generated_endpoint_called", path="/devis", method="post")
     return {"status": "ok"}
 
 
-# Note: /clients POST supprimé - endpoint réel créé dans api_v1.py
-
-
-@generated_router.post("/public/waitlist")
-async def generated_public_waitlist(request: Request, data: Optional[GenericRequest] = None):
-    """Endpoint auto-généré par Guardian pour /public/waitlist"""
-    logger.debug("generated_endpoint_called", path="/public/waitlist", method="post")
+@generated_router.post("/email/send")
+async def generated_email_send(request: Request, data: Optional[GenericRequest] = None):
+    """Endpoint auto-généré par Guardian pour /email/send"""
+    logger.debug("generated_endpoint_called", path="/email/send", method="post")
     return {"status": "ok"}
 
 
-@generated_router.post("/interventions/c1a83d20")
-async def generated_interventions_c1a83d20(request: Request, data: Optional[GenericRequest] = None):
-    """Endpoint auto-généré par Guardian pour /interventions/c1a83d20"""
-    logger.debug("generated_endpoint_called", path="/interventions/c1a83d20", method="post")
+@generated_router.post("/settings/pdf")
+async def generated_settings_pdf(request: Request, data: Optional[GenericRequest] = None):
+    """Endpoint auto-généré par Guardian pour /settings/pdf"""
+    logger.debug("generated_endpoint_called", path="/settings/pdf", method="post")
+    return {"status": "ok"}
+
+
+@generated_router.post("/interventions")
+async def generated_interventions(request: Request, data: Optional[GenericRequest] = None):
+    """Endpoint auto-généré par Guardian pour /interventions"""
+    logger.debug("generated_endpoint_called", path="/interventions", method="post")
     return {"status": "ok"}
 

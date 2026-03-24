@@ -1,7 +1,7 @@
 # =============================================================================
 # AZALPLUS - Module Clients
 # =============================================================================
-# Synchronisé avec la structure de table existante
+# Organisation optimisée pour saisie rapide
 
 nom: Clients
 nom_pluriel: Clients
@@ -11,21 +11,28 @@ description: "Gestion des clients"
 ordre_menu: 2
 
 champs:
+  # =========================================================================
+  # IDENTIFICATION (toutes les infos principales)
+  # =========================================================================
   - nom: code
     type: text
-    libelle: "Code"
+    groupe: Identification
+    libelle: "Code client"
 
   - nom: name
     type: text
+    groupe: Identification
     libelle: "Nom"
     obligatoire: true
 
   - nom: legal_name
     type: text
+    groupe: Identification
     libelle: "Raison sociale"
 
   - nom: type
     type: select
+    groupe: Identification
     libelle: "Type"
     options:
       - ENTREPRISE
@@ -33,67 +40,88 @@ champs:
 
   - nom: civilite
     type: select
+    groupe: Identification
     libelle: "Civilité"
     options:
       - M.
       - Mme
       - Mlle
 
-  - nom: contact_name
-    type: text
-    libelle: "Contact"
-
-  - nom: email
-    type: email
-    libelle: "Email"
-
-  - nom: phone
-    type: tel
-    libelle: "Téléphone"
-
-  - nom: mobile
-    type: tel
-    libelle: "Mobile"
-
-  - nom: website
-    type: url
-    libelle: "Site web"
-
   - nom: address_line1
     type: text
+    groupe: Identification
     libelle: "Adresse"
 
   - nom: address_line2
     type: text
+    groupe: Identification
     libelle: "Complément"
 
   - nom: postal_code
     type: text
+    groupe: Identification
     libelle: "Code postal"
 
   - nom: city
     type: text
+    groupe: Identification
     libelle: "Ville"
 
   - nom: country_code
     type: text
+    groupe: Identification
     libelle: "Pays"
     defaut: "FR"
 
+  - nom: phone
+    type: tel
+    groupe: Identification
+    libelle: "Téléphone"
+
+  - nom: mobile
+    type: tel
+    groupe: Identification
+    libelle: "Mobile"
+
+  - nom: email
+    type: email
+    groupe: Identification
+    libelle: "Email"
+
+  - nom: website
+    type: url
+    groupe: Identification
+    libelle: "Site web"
+
+  - nom: contact_name
+    type: text
+    groupe: Identification
+    libelle: "Contact principal"
+
+  # =========================================================================
+  # INFORMATIONS LÉGALES
+  # =========================================================================
   - nom: tax_id
     type: text
+    groupe: Informations légales
     libelle: "SIRET"
 
   - nom: registration_number
     type: text
+    groupe: Informations légales
     libelle: "SIREN"
 
   - nom: legal_form
     type: text
+    groupe: Informations légales
     libelle: "Forme juridique"
 
+  # =========================================================================
+  # CONDITIONS COMMERCIALES
+  # =========================================================================
   - nom: payment_terms
     type: select
+    groupe: Conditions commerciales
     libelle: "Conditions paiement"
     options:
       - COMPTANT
@@ -103,6 +131,7 @@ champs:
 
   - nom: payment_method
     type: select
+    groupe: Conditions commerciales
     libelle: "Mode paiement"
     options:
       - VIREMENT
@@ -110,21 +139,28 @@ champs:
       - CB
       - PRELEVEMENT
 
-  - nom: credit_limit
-    type: money
-    libelle: "Encours max"
-
   - nom: discount_rate
     type: number
+    groupe: Conditions commerciales
     libelle: "Remise (%)"
 
+  - nom: credit_limit
+    type: money
+    groupe: Conditions commerciales
+    libelle: "Encours max"
+
+  # =========================================================================
+  # NOTES
+  # =========================================================================
   - nom: is_active
     type: boolean
+    groupe: Notes
     libelle: "Actif"
     defaut: true
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Champs recherche

@@ -13,6 +13,7 @@ description: Configuration des regles d'autocompletion par champ
 champs:
   - nom: module
     type: select
+    groupe: Informations
     obligatoire: true
     options: [Clients, Contacts, Fournisseurs, Leads, Employes, Factures, Devis, Interventions, Produits, Projets, Contrats, Tickets, Chantiers, Patients]
     description: Module concerne
@@ -20,12 +21,14 @@ champs:
 
   - nom: champ
     type: text
+    groupe: Informations
     obligatoire: true
     description: Nom du champ (ex nom, email, adresse)
     autocompletion: true
 
   - nom: type_completion
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: text
     options: [text, email, adresse, nom_personne, nom_entreprise, telephone, reference, description, montant, date, code_postal, ville, pays, url, siret, tva_intra]
@@ -33,6 +36,7 @@ champs:
 
   - nom: fournisseur
     type: select
+    groupe: Informations
     obligatoire: false
     options: [defaut, openai, anthropic, local]
     defaut: defaut
@@ -40,22 +44,26 @@ champs:
 
   - nom: modele
     type: text
+    groupe: Informations
     obligatoire: false
     description: Modele specifique (ou defaut du tenant)
     autocompletion: true
 
   - nom: prompt_personnalise
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Prompt personnalise pour ce champ
 
   - nom: contexte_supplementaire
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Contexte metier a ajouter au prompt
 
   - nom: sources_suggestions
     type: json
+    groupe: Metadata
     obligatoire: false
     description: |
       Sources pour les suggestions:
@@ -66,17 +74,20 @@ champs:
 
   - nom: priorite
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 0
     description: Priorite de la regle (plus eleve = prioritaire)
 
   - nom: conditions
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Conditions d'application (ex si type_client = B2B)
 
   - nom: actif
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true
     description: Regle active

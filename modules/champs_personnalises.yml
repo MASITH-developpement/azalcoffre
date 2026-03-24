@@ -16,6 +16,7 @@ champs:
   # Module cible
   - nom: module
     type: select
+    groupe: Informations
     obligatoire: true
     options: [Clients, Fournisseurs, Produits, Factures, Devis, Interventions, Employes, Conges, Stock, Paiements, Documents]
     description: Module auquel ce champ est rattache
@@ -23,6 +24,7 @@ champs:
   # Identification technique
   - nom: nom_technique
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom technique du champ (snake_case, ex custom_field_1)
     autocompletion: true
@@ -30,6 +32,7 @@ champs:
   # Label affiche
   - nom: nom_affichage
     type: text
+    groupe: Identification
     obligatoire: true
     description: Label affiche dans les formulaires
     autocompletion: true
@@ -37,6 +40,7 @@ champs:
   # Type de donnee
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: text
     options: [text, number, date, select, checkbox, textarea, email, tel, url]
@@ -45,12 +49,14 @@ champs:
   # Options pour les selects
   - nom: options
     type: textarea
+    groupe: Configuration
     obligatoire: false
     description: Options pour type select (une par ligne)
 
   # Valeur par defaut
   - nom: valeur_defaut
     type: text
+    groupe: Informations
     obligatoire: false
     description: Valeur par defaut du champ
     autocompletion: true
@@ -58,28 +64,33 @@ champs:
   # Validation
   - nom: obligatoire
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Champ obligatoire
 
   - nom: min
     type: number
+    groupe: Informations
     obligatoire: false
     description: Valeur minimale (pour number) ou longueur minimale (pour text)
 
   - nom: max
     type: number
+    groupe: Informations
     obligatoire: false
     description: Valeur maximale (pour number) ou longueur maximale (pour text)
 
   - nom: regex
     type: text
+    groupe: Informations
     obligatoire: false
     description: Expression reguliere de validation
     autocompletion: true
 
   - nom: message_erreur
     type: text
+    groupe: Informations
     obligatoire: false
     description: Message d'erreur personnalise
     autocompletion: true
@@ -87,24 +98,28 @@ champs:
   # Affichage
   - nom: ordre
     type: number
+    groupe: Informations
     obligatoire: false
     defaut: 100
     description: Ordre d'affichage dans le formulaire
 
   - nom: groupe
     type: text
+    groupe: Informations
     obligatoire: false
     description: Groupe de champs (pour regroupement visuel)
     autocompletion: true
 
   - nom: placeholder
     type: text
+    groupe: Informations
     obligatoire: false
     description: Texte d'aide dans le champ vide
     autocompletion: true
 
   - nom: aide
     type: text
+    groupe: Informations
     obligatoire: false
     description: Texte d'aide affiche sous le champ
     autocompletion: true
@@ -112,18 +127,21 @@ champs:
   # Options d'affichage
   - nom: afficher_liste
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Afficher dans la liste (tableau)
 
   - nom: afficher_recherche
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Inclure dans la recherche
 
   - nom: afficher_filtre
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Proposer comme filtre
@@ -131,6 +149,7 @@ champs:
   # Statut
   - nom: actif
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true
     description: Champ actif (visible)
@@ -138,16 +157,19 @@ champs:
   # Metadonnees
   - nom: created_by
     type: relation
+    groupe: Informations
     obligatoire: false
     relation: Utilisateurs
     autocompletion: true
 
   - nom: created_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
   - nom: updated_at
     type: datetime
+    groupe: Dates
     obligatoire: false
 
 # Actions disponibles

@@ -9,17 +9,20 @@ description: Reponse aux appels d'offres
 champs:
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference AO
 
   - nom: title
     type: text
+    groupe: Identification
     obligatoire: true
     description: Titre de l'appel d'offres
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: IDENTIFIE
     options: [IDENTIFIE, EN_ETUDE, GO, NO_GO, EN_COURS, SOUMIS, GAGNE, PERDU, ANNULE]
@@ -27,110 +30,131 @@ champs:
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: false
     options: [MARCHE_PUBLIC, PRIVE, CONSULTATION, RFQ, RFP]
     description: Type
 
   - nom: client_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Donneur d'ordre
 
   - nom: source
     type: select
+    groupe: Informations
     obligatoire: false
     options: [BOAMP, JOUE, PLACE_MARCHE, DIRECT, PROSPECTION]
     description: Source
 
   - nom: date_publication
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date publication
 
   - nom: date_limite
     type: datetime
+    groupe: Dates
     obligatoire: true
     description: Date limite reponse
 
   - nom: date_ouverture_plis
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Ouverture des plis
 
   - nom: montant_estime
     type: number
+    groupe: Montants
     obligatoire: false
     description: Montant estime
 
   - nom: duree_marche
     type: text
+    groupe: Informations
     obligatoire: false
     description: Duree du marche
 
   - nom: responsable_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Responsable
 
   - nom: equipe
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Equipe projet
 
   - nom: probabilite_gain
     type: number
+    groupe: Informations
     obligatoire: false
     description: Probabilite de gain (%)
 
   - nom: montant_soumis
     type: number
+    groupe: Montants
     obligatoire: false
     description: Montant soumis
 
   - nom: concurrents
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Concurrents identifies
 
   - nom: forces
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Nos forces
 
   - nom: faiblesses
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Nos faiblesses
 
   - nom: documents_requis
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Documents requis
 
   - nom: checklist
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Checklist de reponse
 
   - nom: motif_decision
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Motif GO/NO GO
 
   - nom: resultat_detail
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Detail resultat
 
   - nom: debrief
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Debrief (win/loss)
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

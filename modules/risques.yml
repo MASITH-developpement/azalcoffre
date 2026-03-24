@@ -11,23 +11,27 @@ description: Gestion des risques
 champs:
   - nom: code
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Code risque
 
   - nom: title
     type: text
+    groupe: Identification
     obligatoire: true
     description: Titre du risque
 
   - nom: categorie
     type: select
+    groupe: Informations
     obligatoire: true
     options: [FINANCIER, OPERATIONNEL, JURIDIQUE, STRATEGIQUE, COMMERCIAL, TECHNIQUE, HUMAIN, SECURITE, ENVIRONNEMENTAL]
     description: Categorie
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: IDENTIFIE
     options: [IDENTIFIE, EN_ANALYSE, TRAITE, ACCEPTE, CLOS]
@@ -35,22 +39,26 @@ champs:
 
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: true
     description: Description
 
   - nom: causes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Causes potentielles
 
   - nom: consequences
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Consequences
 
   # Evaluation
   - nom: probabilite
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: MOYENNE
     options: [TRES_FAIBLE, FAIBLE, MOYENNE, ELEVEE, TRES_ELEVEE]
@@ -58,11 +66,13 @@ champs:
 
   - nom: probabilite_score
     type: number
+    groupe: Informations
     obligatoire: false
     description: Score probabilite (1-5)
 
   - nom: impact
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: MOYEN
     options: [NEGLIGEABLE, MINEUR, MOYEN, MAJEUR, CRITIQUE]
@@ -70,17 +80,20 @@ champs:
 
   - nom: impact_score
     type: number
+    groupe: Informations
     obligatoire: false
     description: Score impact (1-5)
 
   - nom: criticite
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Criticite (P x I)
 
   - nom: niveau_risque
     type: select
+    groupe: Informations
     obligatoire: false
     readonly: true
     options: [FAIBLE, MODERE, ELEVE, CRITIQUE]
@@ -89,49 +102,58 @@ champs:
   # Traitement
   - nom: strategie
     type: select
+    groupe: Informations
     obligatoire: false
     options: [EVITER, REDUIRE, TRANSFERER, ACCEPTER]
     description: Strategie de traitement
 
   - nom: actions_mitigation
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Actions de mitigation
 
   - nom: responsable_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Responsable
 
   - nom: date_identification
     type: date
+    groupe: Dates
     obligatoire: true
     description: Date identification
 
   - nom: date_echeance
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date echeance traitement
 
   - nom: cout_traitement
     type: number
+    groupe: Montants
     obligatoire: false
     description: Cout estime traitement
 
   # Risque residuel
   - nom: probabilite_residuelle
     type: number
+    groupe: Informations
     obligatoire: false
     description: Probabilite residuelle
 
   - nom: impact_residuel
     type: number
+    groupe: Informations
     obligatoire: false
     description: Impact residuel
 
   - nom: criticite_residuelle
     type: number
+    groupe: Informations
     obligatoire: false
     readonly: true
     description: Criticite residuelle
@@ -139,21 +161,25 @@ champs:
   # Suivi
   - nom: date_derniere_revue
     type: date
+    groupe: Dates
     obligatoire: false
     description: Derniere revue
 
   - nom: date_prochaine_revue
     type: date
+    groupe: Dates
     obligatoire: false
     description: Prochaine revue
 
   - nom: indicateurs
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Indicateurs de suivi
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

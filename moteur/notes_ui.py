@@ -335,7 +335,7 @@ def generate_client_notes_section(client_id: str) -> str:
         const filterTo = document.getElementById('filter-date-to').value;
 
         try {{
-            let url = `/api/v1/notes_client?order_by=date&order_dir=desc&limit=50`;
+            let url = `/api/notes_client?order_by=date&order_dir=desc&limit=50`;
 
             const res = await fetch(url);
             if (!res.ok) throw new Error('Erreur chargement');
@@ -429,7 +429,7 @@ def generate_client_notes_section(client_id: str) -> str:
         }}
 
         try {{
-            const res = await fetch('/api/v1/notes_client', {{
+            const res = await fetch('/api/notes_client', {{
                 method: 'POST',
                 headers: {{ 'Content-Type': 'application/json' }},
                 body: JSON.stringify(data)
@@ -450,7 +450,7 @@ def generate_client_notes_section(client_id: str) -> str:
 
     async function markReminderDone(noteId) {{
         try {{
-            const res = await fetch(`/api/v1/notes_client/${{noteId}}`, {{
+            const res = await fetch(`/api/notes_client/${{noteId}}`, {{
                 method: 'PUT',
                 headers: {{ 'Content-Type': 'application/json' }},
                 body: JSON.stringify({{ rappel_fait: true }})
@@ -469,7 +469,7 @@ def generate_client_notes_section(client_id: str) -> str:
         if (!confirm('Supprimer cette note ?')) return;
 
         try {{
-            const res = await fetch(`/api/v1/notes_client/${{noteId}}`, {{
+            const res = await fetch(`/api/notes_client/${{noteId}}`, {{
                 method: 'DELETE'
             }});
 
@@ -555,7 +555,7 @@ def generate_reminders_dashboard_widget() -> str:
         const container = document.getElementById('reminders-list');
 
         try {
-            const res = await fetch('/api/v1/notes_client?rappel_fait=false&order_by=rappel_date&order_dir=asc&limit=10');
+            const res = await fetch('/api/notes_client?rappel_fait=false&order_by=rappel_date&order_dir=asc&limit=10');
             if (!res.ok) throw new Error('Erreur');
 
             const data = await res.json();

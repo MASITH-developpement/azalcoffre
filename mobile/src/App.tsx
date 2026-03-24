@@ -16,6 +16,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const OfflinePage = lazy(() => import('./pages/OfflinePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ConnectPage = lazy(() => import('./pages/ConnectPage'));
+const TechnicianPage = lazy(() => import('./pages/TechnicianPage'));
 
 // Loading fallback component
 function LoadingFallback(): React.ReactElement {
@@ -47,6 +48,7 @@ function ProtectedLayout(): React.ReactElement {
     if (location.pathname === '/') return `Bonjour, ${user?.firstName || 'Utilisateur'}`;
     if (location.pathname === '/settings') return 'Paramètres';
     if (location.pathname === '/agenda') return 'Agenda';
+    if (location.pathname === '/technicien') return 'Espace Technicien';
     if (location.pathname === '/modules') return 'Modules';
     if (location.pathname.startsWith('/module/')) {
       const moduleId = location.pathname.split('/')[2];
@@ -112,6 +114,7 @@ function AppRoutes(): React.ReactElement {
           <Route path="/module/:moduleId" element={<ModulePage />} />
           <Route path="/module/:moduleId/:recordId" element={<RecordDetailPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/technicien" element={<TechnicianPage />} />
           <Route path="/offline" element={<OfflinePage />} />
         </Route>
 

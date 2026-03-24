@@ -7,6 +7,7 @@ description: Gestion des consentements clients conformement au RGPD
 champs:
   - nom: client_id
     type: relation
+    groupe: Relations
     obligatoire: true
     relation: Clients
     description: Client concerne par le consentement
@@ -14,53 +15,62 @@ champs:
 
   - nom: type_consentement
     type: select
+    groupe: Informations
     obligatoire: true
-    options: [MARKETING_EMAIL, MARKETING_SMS, MARKETING_TEL, TRAITEMENT_DONNEES, PROFILAGE, NEWSLETTER, COOKIES]
+    options: $rgpd.types_consentement
     description: Type de consentement RGPD
 
   - nom: statut
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: REFUSE
-    options: [ACCORDE, REFUSE, RETIRE, EXPIRE]
+    options: $statuts.consentements.valeurs
     description: Statut actuel du consentement
 
   - nom: date_consentement
     type: datetime
+    groupe: Dates
     obligatoire: true
     description: Date et heure de l'action de consentement
 
   - nom: date_expiration
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date d'expiration automatique du consentement
 
   - nom: source
     type: select
+    groupe: Informations
     obligatoire: true
-    options: [FORMULAIRE_WEB, EMAIL, TELEPHONE, PORTAIL_CLIENT, IMPORT, API]
+    options: $rgpd.sources_consentement
     description: Comment le consentement a ete obtenu
 
   - nom: preuve_url
     type: text
+    groupe: Fichiers
     obligatoire: false
     description: Lien vers le document de preuve
     autocompletion: true
 
   - nom: ip_address
     type: text
+    groupe: Contact
     obligatoire: false
     description: IP lors du consentement web
     autocompletion: true
 
   - nom: version_politique
     type: text
+    groupe: Informations
     obligatoire: false
     description: Version de la politique de confidentialite acceptee
     autocompletion: true
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes internes
 

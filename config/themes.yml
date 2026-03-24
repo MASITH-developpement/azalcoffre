@@ -1,0 +1,108 @@
+# =============================================================================
+# Configuration des thèmes AZALPLUS
+# =============================================================================
+# Ajouter un nouveau thème:
+# 1. Créer le fichier CSS dans assets/ (ambiance_xxx.css ou style_xxx.css)
+# 2. Ajouter l'entrée ci-dessous avec la clé correspondante
+# 3. Redémarrer le serveur - le thème apparaît automatiquement!
+
+themes:
+  energique:
+    nom: "Énergique"
+    inspiration: "Linear, Vercel"
+    description: "Contrastes forts, accents vifs, sidebar sombre. Pour les équipes dynamiques."
+    fichier: "ambiance_energique.css"
+    couleurs:
+      primary: "#8B5CF6"
+      sidebar: "#0F0F0F"
+      background: "#FAFAFA"
+    gradient: "linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%)"
+
+  calme:
+    nom: "Calme"
+    inspiration: "Notion, Basecamp"
+    description: "Tons neutres, beaucoup de blanc, minimaliste. Pour la concentration."
+    fichier: "ambiance_calme.css"
+    couleurs:
+      primary: "#37352F"
+      sidebar: "#F7F6F3"
+      background: "#FFFFFF"
+    gradient: "#F7F6F3"
+    border: true
+
+  premium:
+    nom: "Premium"
+    inspiration: "Stripe, Mercury"
+    description: "Dégradés subtils, ombres douces, sophistiqué. Pour une image haut de gamme."
+    fichier: "ambiance_premium.css"
+    couleurs:
+      primary: "#635BFF"
+      sidebar: "#0A2540"
+      background: "#F6F9FC"
+    gradient: "linear-gradient(180deg, #0A2540 0%, #635BFF 100%)"
+
+  corporate:
+    nom: "Corporate"
+    inspiration: "Salesforce"
+    description: "Bleu dominant, structuré, professionnel. Pour les entreprises établies."
+    fichier: "ambiance_corporate.css"
+    couleurs:
+      primary: "#0176D3"
+      sidebar: "#032D60"
+      background: "#F3F3F3"
+    gradient: "#032D60"
+
+  odoo:
+    nom: "Odoo"
+    inspiration: "Odoo ERP"
+    description: "Violet/Bordeaux élégant, interface ERP classique. Pour les habitués d'Odoo."
+    fichier: "style_odoo.css"
+    couleurs:
+      primary: "#714B67"
+      sidebar: "#714B67"
+      background: "#F0F0F0"
+    gradient: "#714B67"
+
+  penny:
+    nom: "Pennylane"
+    inspiration: "Pennylane"
+    description: "Bleu marine professionnel, interface comptable moderne. Pour les experts-comptables."
+    fichier: "style_penny.css"
+    couleurs:
+      primary: "#1E3A5F"
+      sidebar: "#1E3A5F"
+      background: "#FFFFFF"
+    gradient: "#1E3A5F"
+
+  axo:
+    nom: "Axonaut"
+    inspiration: "Axonaut"
+    description: "Sidebar blanche, bleu vif, interface aérée. Pour la simplicité."
+    fichier: "style_axo.css"
+    couleurs:
+      primary: "#2563EB"
+      sidebar: "#FFFFFF"
+      background: "#F9FAFB"
+    gradient: "#2563EB"
+
+  sage:
+    nom: "Sage"
+    inspiration: "Sage"
+    description: "Vert dominant, interface comptable traditionnelle. Pour les fidèles de Sage."
+    fichier: "style_sage.css"
+    couleurs:
+      primary: "#00A651"
+      sidebar: "#00A651"
+      background: "#FFFFFF"
+    gradient: "#00A651"
+
+  medical:
+    nom: "Médical"
+    inspiration: "Doctolib, Alan, Qare"
+    description: "Bleu santé, blanc clinique, touches vertes. Pour les professionnels de santé."
+    fichier: "ambiance_medical.css"
+    couleurs:
+      primary: "#0891B2"
+      sidebar: "#0E7490"
+      background: "#F8FAFC"
+    gradient: "linear-gradient(135deg, #0891B2 0%, #10B981 100%)"

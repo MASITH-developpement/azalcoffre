@@ -7,16 +7,19 @@ description: Notifications systeme et alertes utilisateur
 champs:
   - nom: titre
     type: text
+    groupe: Identification
     obligatoire: true
     description: Titre de la notification
 
   - nom: message
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Contenu de la notification
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     defaut: INFO
     options:
@@ -29,6 +32,7 @@ champs:
 
   - nom: priorite
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: NORMALE
     options:
@@ -40,36 +44,43 @@ champs:
 
   - nom: destinataire_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: ID utilisateur destinataire
 
   - nom: lue
     type: boolean
+    groupe: Informations
     obligatoire: false
     defaut: false
     description: Notification lue
 
   - nom: date_lecture
     type: datetime
+    groupe: Dates
     obligatoire: false
     description: Date de lecture
 
   - nom: lien
     type: text
+    groupe: Informations
     obligatoire: false
     description: Lien vers la ressource concernee
 
   - nom: module_source
     type: text
+    groupe: Informations
     obligatoire: false
     description: Module source
 
   - nom: record_id
     type: text
+    groupe: Relations
     obligatoire: false
     description: ID enregistrement concerne
 
   - nom: is_active
     type: boolean
+    groupe: Statut
     obligatoire: false
     defaut: true

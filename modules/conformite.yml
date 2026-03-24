@@ -11,18 +11,21 @@ description: Conformite reglementaire
 champs:
   - nom: name
     type: text
+    groupe: Identification
     obligatoire: true
     description: Nom de l'obligation
     autocompletion: true
 
   - nom: type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [RGPD, FACTURATION_ELECTRONIQUE, NF525, ANTI_FRAUDE_TVA, ARCHIVAGE, DROIT_TRAVAIL, SECURITE, ENVIRONNEMENT, AUTRE]
     description: Type
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: A_VERIFIER
     options: [CONFORME, PARTIELLEMENT_CONFORME, NON_CONFORME, A_VERIFIER, NON_APPLICABLE]
@@ -30,6 +33,7 @@ champs:
 
   - nom: priorite
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: MOYENNE
     options: [CRITIQUE, HAUTE, MOYENNE, BASSE]
@@ -37,52 +41,62 @@ champs:
 
   - nom: description
     type: textarea
+    groupe: Informations
     obligatoire: false
     description: Description obligation
 
   - nom: exigences
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Exigences detaillees
 
   - nom: date_echeance
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date limite conformite
 
   - nom: date_dernier_audit
     type: date
+    groupe: Dates
     obligatoire: false
     description: Dernier audit
 
   - nom: date_prochain_audit
     type: date
+    groupe: Dates
     obligatoire: false
     description: Prochain audit
 
   - nom: responsable_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Utilisateurs
     description: Responsable
 
   - nom: score
     type: number
+    groupe: Informations
     obligatoire: false
     description: Score conformite (0-100)
 
   - nom: actions_requises
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Actions a mener
 
   - nom: preuves
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Documents de preuve
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Notes
 

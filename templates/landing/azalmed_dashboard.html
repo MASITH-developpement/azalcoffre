@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AZALMED</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #0596DE;
+            --primary-dark: #0077B6;
+            --primary-light: #48CAE4;
+            --secondary: #00B894;
+            --accent: #6C5CE7;
+            --warning: #F59E0B;
+            --white: #FFFFFF;
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --gray-900: #0F172A;
+            --success: #10B981;
+            --error: #EF4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--gray-50);
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: var(--gray-900);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .sidebar-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .sidebar-logo-text {
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-section {
+            margin-bottom: 32px;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-left: 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 10px;
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item-icon {
+            font-size: 18px;
+        }
+
+        .nav-item-badge {
+            margin-left: auto;
+            background: var(--error);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .sidebar-user {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--gray-500);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 260px;
+            padding: 32px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-icon.blue { background: rgba(5, 150, 222, 0.1); }
+        .stat-icon.green { background: rgba(0, 184, 148, 0.1); }
+        .stat-icon.purple { background: rgba(108, 92, 231, 0.1); }
+        .stat-icon.orange { background: rgba(245, 158, 11, 0.1); }
+
+        .stat-trend {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .stat-trend.up {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-trend.down {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray-500);
+        }
+
+        /* Modules Grid */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .module-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            display: flex;
+            gap: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .module-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(5, 150, 222, 0.15);
+        }
+
+        .module-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .module-icon.scribe { background: linear-gradient(135deg, rgba(5, 150, 222, 0.1), rgba(5, 150, 222, 0.2)); }
+        .module-icon.consent { background: linear-gradient(135deg, rgba(0, 184, 148, 0.1), rgba(0, 184, 148, 0.2)); }
+        .module-icon.veille { background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(108, 92, 231, 0.2)); }
+        .module-icon.archive { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2)); }
+
+        .module-content h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .module-content p {
+            font-size: 14px;
+            color: var(--gray-500);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .module-stats {
+            display: flex;
+            gap: 24px;
+        }
+
+        .module-stat {
+            font-size: 13px;
+        }
+
+        .module-stat strong {
+            color: var(--gray-900);
+        }
+
+        .module-stat span {
+            color: var(--gray-500);
+        }
+
+        /* Activity Section */
+        .activity-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .card-link {
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: var(--gray-100);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-size: 14px;
+            color: var(--gray-700);
+            margin-bottom: 4px;
+        }
+
+        .activity-text strong {
+            color: var(--gray-900);
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--gray-700);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .quick-action:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .quick-action-icon {
+            font-size: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .modules-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .activity-section { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-icon">+</div>
+            <span class="sidebar-logo-text">AZALMED</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Menu</div>
+                <a href="#" class="nav-item active">
+                    <span class="nav-item-icon">📊</span>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-item-icon">👥</span>
+                    Patients
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-item-icon">📅</span>
+                    Consultations
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Modules</div>
+                <a href="#" class="nav-item">
+                    <span class="nav-item-icon">🎤</span>
+                    SCRIBE
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-item-icon">✍️</span>
+                    CONSENT
+                    <span class="nav-item-badge">3</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-item-icon">📚</span>
+                    VEILLE
+                    <span class="nav-item-badge">12</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-item-icon">🔒</span>
+                    ARCHIVE
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Parametres</div>
+                <a href="#" class="nav-item">
+                    <span class="nav-item-icon">⚙️</span>
+                    Configuration
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-item-icon">👤</span>
+                    Mon compte
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="user-avatar" id="userAvatar">SM</div>
+            <div class="user-info">
+                <div class="user-name" id="userName">Dr. S. Moreau</div>
+                <div class="user-role">Administrateur</div>
+            </div>
+            <button class="logout-btn" onclick="logout()" title="Deconnexion">🚪</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="header">
+            <h1>Bonjour, Dr. Moreau 👋</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary">
+                    <span>🎤</span> Nouvelle consultation
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon blue">🎤</div>
+                    <span class="stat-trend up">+12%</span>
+                </div>
+                <div class="stat-value">47</div>
+                <div class="stat-label">Transcriptions ce mois</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon green">✍️</div>
+                    <span class="stat-trend up">+8%</span>
+                </div>
+                <div class="stat-value">23</div>
+                <div class="stat-label">Consentements signes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon purple">📚</div>
+                    <span class="stat-trend up">+5</span>
+                </div>
+                <div class="stat-value">12</div>
+                <div class="stat-label">Articles non lus</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon orange">🔒</div>
+                </div>
+                <div class="stat-value">156</div>
+                <div class="stat-label">Documents archives</div>
+            </div>
+        </div>
+
+        <!-- Modules -->
+        <div class="modules-grid">
+            <div class="module-card" onclick="location.href='#scribe'">
+                <div class="module-icon scribe">🎤</div>
+                <div class="module-content">
+                    <h3>SCRIBE - Transcription IA</h3>
+                    <p>Dictez vos consultations et obtenez des comptes-rendus structures automatiquement.</p>
+                    <div class="module-stats">
+                        <div class="module-stat"><strong>2h15</strong> <span>economisees cette semaine</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="module-card" onclick="location.href='#consent'">
+                <div class="module-icon consent">✍️</div>
+                <div class="module-content">
+                    <h3>CONSENT - Signature eIDAS</h3>
+                    <p>Faites signer vos consentements a distance avec valeur legale.</p>
+                    <div class="module-stats">
+                        <div class="module-stat"><strong>3</strong> <span>en attente de signature</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="module-card" onclick="location.href='#veille'">
+                <div class="module-icon veille">📚</div>
+                <div class="module-content">
+                    <h3>VEILLE - Actualites medicales</h3>
+                    <p>Restez informe des dernieres publications selon votre specialite.</p>
+                    <div class="module-stats">
+                        <div class="module-stat"><strong>12</strong> <span>nouveaux articles</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="module-card" onclick="location.href='#archive'">
+                <div class="module-icon archive">🔒</div>
+                <div class="module-content">
+                    <h3>ARCHIVE - Coffre-fort HDS</h3>
+                    <p>Archivez vos documents avec chiffrement et preuve d'integrite.</p>
+                    <div class="module-stats">
+                        <div class="module-stat"><strong>1.2 Go</strong> <span>utilises sur 5 Go</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity -->
+        <div class="activity-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Activite recente</h2>
+                    <a href="#" class="card-link">Voir tout</a>
+                </div>
+                <ul class="activity-list">
+                    <li class="activity-item">
+                        <div class="activity-icon">✍️</div>
+                        <div class="activity-content">
+                            <div class="activity-text"><strong>Marie Dupont</strong> a signe son consentement</div>
+                            <div class="activity-time">Il y a 15 minutes</div>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon">🎤</div>
+                        <div class="activity-content">
+                            <div class="activity-text">Transcription terminee pour <strong>Jean Martin</strong></div>
+                            <div class="activity-time">Il y a 1 heure</div>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon">📚</div>
+                        <div class="activity-content">
+                            <div class="activity-text">Nouvel article: <strong>Diabete type 2 - nouvelles recommandations HAS</strong></div>
+                            <div class="activity-time">Il y a 3 heures</div>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon">🔒</div>
+                        <div class="activity-content">
+                            <div class="activity-text">Document archive: <strong>IRM_Dupont_2024.pdf</strong></div>
+                            <div class="activity-time">Hier, 16:30</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Actions rapides</h2>
+                </div>
+                <div class="quick-actions">
+                    <a href="#" class="quick-action">
+                        <span class="quick-action-icon">🎤</span>
+                        Demarrer une transcription
+                    </a>
+                    <a href="#" class="quick-action">
+                        <span class="quick-action-icon">✍️</span>
+                        Envoyer un consentement
+                    </a>
+                    <a href="#" class="quick-action">
+                        <span class="quick-action-icon">📤</span>
+                        Archiver un document
+                    </a>
+                    <a href="#" class="quick-action">
+                        <span class="quick-action-icon">👤</span>
+                        Ajouter un patient
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('access_token') || getCookie('access_token');
+        if (!token) {
+            window.location.href = '/azalmed/login';
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            window.location.href = '/azalmed/login';
+        }
+
+        // Load user info
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.ok) {
+                    const user = await response.json();
+                    if (user.prenom && user.nom) {
+                        document.getElementById('userName').textContent = `Dr. ${user.prenom[0]}. ${user.nom}`;
+                        document.getElementById('userAvatar').textContent = `${user.prenom[0]}${user.nom[0]}`;
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load user info');
+            }
+        }
+
+        loadUserInfo();
+    </script>
+</body>
+</html>

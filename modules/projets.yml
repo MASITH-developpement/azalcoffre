@@ -16,6 +16,7 @@ champs:
   # ==========================================================================
   - nom: numero
     type: text
+    groupe: Identification
     libelle: "Numéro"
     obligatoire: true
     unique: true
@@ -24,6 +25,7 @@ champs:
 
   - nom: type_fiche
     type: select
+    groupe: Informations
     libelle: "Type"
     options:
       - PROJET
@@ -35,11 +37,13 @@ champs:
 
   - nom: titre
     type: text
+    groupe: Identification
     libelle: "Titre"
     obligatoire: true
 
   - nom: description
     type: textarea
+    groupe: Informations
     libelle: "Description"
 
   # ==========================================================================
@@ -47,19 +51,23 @@ champs:
   # ==========================================================================
   - nom: client_id
     type: relation
+    groupe: Relations
     libelle: "Client"
     relation: clients
 
   - nom: contact_client
     type: text
+    groupe: Relations
     libelle: "Contact client"
 
   - nom: devis_id
     type: text
+    groupe: Relations
     libelle: "Devis origine"
 
   - nom: contrat_id
     type: text
+    groupe: Relations
     libelle: "Contrat"
 
   # ==========================================================================
@@ -67,26 +75,32 @@ champs:
   # ==========================================================================
   - nom: date_debut_prevue
     type: date
+    groupe: Dates
     libelle: "Début prévu"
 
   - nom: date_fin_prevue
     type: date
+    groupe: Dates
     libelle: "Fin prévue"
 
   - nom: date_debut_reelle
     type: date
+    groupe: Dates
     libelle: "Début réel"
 
   - nom: date_fin_reelle
     type: date
+    groupe: Dates
     libelle: "Fin réelle"
 
   - nom: duree_prevue_jours
     type: number
+    groupe: Informations
     libelle: "Durée prévue (j)"
 
   - nom: duree_reelle_jours
     type: number
+    groupe: Informations
     libelle: "Durée réelle (j)"
 
   # ==========================================================================
@@ -94,15 +108,18 @@ champs:
   # ==========================================================================
   - nom: chef_projet_id
     type: relation
+    groupe: Relations
     libelle: "Chef de projet"
     relation: employes
 
   - nom: equipe
     type: json
+    groupe: Metadata
     libelle: "Équipe"
 
   - nom: ressources_affectees
     type: json
+    groupe: Metadata
     libelle: "Ressources"
 
   # ==========================================================================
@@ -110,30 +127,37 @@ champs:
   # ==========================================================================
   - nom: budget_prevu
     type: money
+    groupe: Montants
     libelle: "Budget prévu"
 
   - nom: budget_consomme
     type: money
+    groupe: Montants
     libelle: "Budget consommé"
 
   - nom: budget_reste
     type: money
+    groupe: Montants
     libelle: "Budget restant"
 
   - nom: cout_interne
     type: money
+    groupe: Montants
     libelle: "Coût interne"
 
   - nom: cout_externe
     type: money
+    groupe: Montants
     libelle: "Coût externe"
 
   - nom: marge_prevue
     type: money
+    groupe: Montants
     libelle: "Marge prévue"
 
   - nom: marge_reelle
     type: money
+    groupe: Montants
     libelle: "Marge réelle"
 
   # ==========================================================================
@@ -141,18 +165,22 @@ champs:
   # ==========================================================================
   - nom: heures_prevues
     type: number
+    groupe: Informations
     libelle: "Heures prévues"
 
   - nom: heures_passees
     type: number
+    groupe: Informations
     libelle: "Heures passées"
 
   - nom: heures_reste
     type: number
+    groupe: Informations
     libelle: "Heures restantes"
 
   - nom: taux_horaire_moyen
     type: money
+    groupe: Montants
     libelle: "Taux horaire moyen"
 
   # ==========================================================================
@@ -160,15 +188,18 @@ champs:
   # ==========================================================================
   - nom: avancement
     type: number
+    groupe: Informations
     libelle: "Avancement (%)"
     defaut: 0
 
   - nom: avancement_temps
     type: number
+    groupe: Informations
     libelle: "Avancement temps (%)"
 
   - nom: avancement_budget
     type: number
+    groupe: Informations
     libelle: "Avancement budget (%)"
 
   # ==========================================================================
@@ -176,22 +207,27 @@ champs:
   # ==========================================================================
   - nom: taches
     type: json
+    groupe: Metadata
     libelle: "Tâches"
 
   - nom: nombre_taches
     type: number
+    groupe: Informations
     libelle: "Nb tâches"
 
   - nom: taches_terminees
     type: number
+    groupe: Informations
     libelle: "Tâches terminées"
 
   - nom: projet_parent_id
     type: text
+    groupe: Relations
     libelle: "Projet parent"
 
   - nom: tache_parent_id
     type: text
+    groupe: Relations
     libelle: "Tâche parent"
 
   # ==========================================================================
@@ -199,14 +235,17 @@ champs:
   # ==========================================================================
   - nom: jalons
     type: json
+    groupe: Metadata
     libelle: "Jalons"
 
   - nom: prochain_jalon
     type: text
+    groupe: Informations
     libelle: "Prochain jalon"
 
   - nom: date_prochain_jalon
     type: date
+    groupe: Dates
     libelle: "Date prochain jalon"
 
   # ==========================================================================
@@ -214,6 +253,7 @@ champs:
   # ==========================================================================
   - nom: priorite
     type: select
+    groupe: Informations
     libelle: "Priorité"
     options:
       - CRITIQUE
@@ -224,6 +264,7 @@ champs:
 
   - nom: niveau_risque
     type: select
+    groupe: Informations
     libelle: "Niveau risque"
     options:
       - FAIBLE
@@ -233,6 +274,7 @@ champs:
 
   - nom: risques
     type: json
+    groupe: Metadata
     libelle: "Risques"
 
   # ==========================================================================
@@ -240,31 +282,38 @@ champs:
   # ==========================================================================
   - nom: est_chantier
     type: boolean
+    groupe: Statut
     libelle: "Est un chantier"
     defaut: false
 
   - nom: adresse_chantier
     type: textarea
+    groupe: Contact
     libelle: "Adresse chantier"
 
   - nom: permis_construire
     type: text
+    groupe: Informations
     libelle: "Permis de construire"
 
   - nom: maitre_ouvrage
     type: text
+    groupe: Informations
     libelle: "Maître d'ouvrage"
 
   - nom: maitre_oeuvre
     type: text
+    groupe: Informations
     libelle: "Maître d'œuvre"
 
   - nom: situations_travaux
     type: json
+    groupe: Metadata
     libelle: "Situations"
 
   - nom: retenue_garantie
     type: money
+    groupe: Montants
     libelle: "Retenue de garantie"
 
   # ==========================================================================
@@ -272,6 +321,7 @@ champs:
   # ==========================================================================
   - nom: mode_facturation
     type: select
+    groupe: Configuration
     libelle: "Mode facturation"
     options:
       - FORFAIT
@@ -281,14 +331,17 @@ champs:
 
   - nom: montant_facture
     type: money
+    groupe: Montants
     libelle: "Montant facturé"
 
   - nom: montant_encaisse
     type: money
+    groupe: Montants
     libelle: "Montant encaissé"
 
   - nom: factures
     type: json
+    groupe: Metadata
     libelle: "Factures"
 
   # ==========================================================================
@@ -296,10 +349,12 @@ champs:
   # ==========================================================================
   - nom: documents
     type: json
+    groupe: Metadata
     libelle: "Documents"
 
   - nom: livrables
     type: json
+    groupe: Metadata
     libelle: "Livrables"
 
   # ==========================================================================
@@ -307,14 +362,17 @@ champs:
   # ==========================================================================
   - nom: derniere_reunion
     type: date
+    groupe: Dates
     libelle: "Dernière réunion"
 
   - nom: prochaine_reunion
     type: date
+    groupe: Dates
     libelle: "Prochaine réunion"
 
   - nom: compte_rendus
     type: json
+    groupe: Metadata
     libelle: "Comptes rendus"
 
   # ==========================================================================
@@ -322,32 +380,39 @@ champs:
   # ==========================================================================
   - nom: temps_date
     type: date
+    groupe: Dates
     libelle: "Date"
 
   - nom: temps_heures
     type: number
+    groupe: Informations
     libelle: "Heures"
 
   - nom: temps_employe_id
     type: relation
+    groupe: Relations
     libelle: "Employé"
     relation: employes
 
   - nom: temps_tache
     type: text
+    groupe: Informations
     libelle: "Tâche"
 
   - nom: temps_description
     type: text
+    groupe: Informations
     libelle: "Description"
 
   - nom: temps_facturable
     type: boolean
+    groupe: Informations
     libelle: "Facturable"
     defaut: true
 
   - nom: temps_valide
     type: boolean
+    groupe: Informations
     libelle: "Validé"
     defaut: false
 
@@ -356,6 +421,7 @@ champs:
   # ==========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     options:
       - PROSPECT
@@ -369,11 +435,13 @@ champs:
 
   - nom: couleur
     type: text
+    groupe: Informations
     libelle: "Couleur"
     defaut: "#3B82F6"
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
 
 # Index

@@ -24,6 +24,7 @@ champs:
   # ===========================================================================
   - nom: code
     type: text
+    groupe: Identification
     libelle: "Code"
     obligatoire: true
     unique: true
@@ -33,12 +34,14 @@ champs:
 
   - nom: libelle
     type: text
+    groupe: Identification
     libelle: "Libellé"
     obligatoire: true
     description: "Nom du compte (ex: Compte courant CA)"
 
   - nom: type_compte
     type: select
+    groupe: Informations
     libelle: "Type"
     obligatoire: true
     options:
@@ -54,6 +57,7 @@ champs:
   # ===========================================================================
   - nom: iban
     type: text
+    groupe: Informations
     libelle: "IBAN"
     obligatoire: true
     unique: true
@@ -61,12 +65,14 @@ champs:
 
   - nom: bic
     type: text
+    groupe: Informations
     libelle: "BIC"
     obligatoire: false
     description: "Code BIC/SWIFT"
 
   - nom: banque
     type: text
+    groupe: Informations
     libelle: "Banque"
     obligatoire: true
     description: "Nom de la banque"
@@ -74,6 +80,7 @@ champs:
 
   - nom: agence
     type: text
+    groupe: Informations
     libelle: "Agence"
     obligatoire: false
     description: "Code ou nom de l'agence"
@@ -83,6 +90,7 @@ champs:
   # ===========================================================================
   - nom: provider
     type: select
+    groupe: Informations
     libelle: "Source"
     obligatoire: true
     options:
@@ -100,12 +108,14 @@ champs:
 
   - nom: provider_account_id
     type: text
+    groupe: Relations
     libelle: "ID Provider"
     obligatoire: false
     description: "Identifiant du compte chez le provider"
 
   - nom: provider_status
     type: text
+    groupe: Informations
     libelle: "Statut Provider"
     obligatoire: false
     readonly: true
@@ -113,6 +123,7 @@ champs:
 
   - nom: derniere_synchro
     type: datetime
+    groupe: Dates
     libelle: "Dernière synchro"
     obligatoire: false
     readonly: true
@@ -120,6 +131,7 @@ champs:
 
   - nom: erreur_synchro
     type: text
+    groupe: Informations
     libelle: "Erreur synchro"
     obligatoire: false
     readonly: true
@@ -130,6 +142,7 @@ champs:
   # ===========================================================================
   - nom: solde_actuel
     type: number
+    groupe: Informations
     libelle: "Solde actuel"
     obligatoire: false
     defaut: 0
@@ -138,6 +151,7 @@ champs:
 
   - nom: solde_comptable
     type: number
+    groupe: Informations
     libelle: "Solde comptable"
     obligatoire: false
     defaut: 0
@@ -146,6 +160,7 @@ champs:
 
   - nom: solde_releve
     type: number
+    groupe: Informations
     libelle: "Solde dernier relevé"
     obligatoire: false
     defaut: 0
@@ -153,12 +168,14 @@ champs:
 
   - nom: date_solde_releve
     type: date
+    groupe: Dates
     libelle: "Date relevé"
     obligatoire: false
     description: "Date du dernier relevé bancaire"
 
   - nom: devise
     type: text
+    groupe: Informations
     libelle: "Devise"
     obligatoire: true
     defaut: "EUR"
@@ -169,6 +186,7 @@ champs:
   # ===========================================================================
   - nom: compte_comptable
     type: text
+    groupe: Informations
     libelle: "Compte comptable"
     obligatoire: false
     description: "Numéro de compte comptable (512xxx)"
@@ -176,6 +194,7 @@ champs:
 
   - nom: journal_comptable
     type: text
+    groupe: Informations
     libelle: "Journal"
     obligatoire: false
     description: "Code journal comptable (BQ, CA)"
@@ -186,6 +205,7 @@ champs:
   # ===========================================================================
   - nom: rapprochement_auto
     type: boolean
+    groupe: Informations
     libelle: "Rapprochement auto"
     obligatoire: false
     defaut: true
@@ -193,6 +213,7 @@ champs:
 
   - nom: seuil_confiance
     type: number
+    groupe: Informations
     libelle: "Seuil confiance (%)"
     obligatoire: false
     defaut: 95
@@ -200,6 +221,7 @@ champs:
 
   - nom: tolerance_montant
     type: number
+    groupe: Montants
     libelle: "Tolérance montant"
     obligatoire: false
     defaut: 0
@@ -207,6 +229,7 @@ champs:
 
   - nom: dernier_rapprochement
     type: datetime
+    groupe: Dates
     libelle: "Dernier rapprochement"
     obligatoire: false
     readonly: true
@@ -217,6 +240,7 @@ champs:
   # ===========================================================================
   - nom: nb_mouvements_total
     type: number
+    groupe: Montants
     libelle: "Mouvements totaux"
     obligatoire: false
     defaut: 0
@@ -225,6 +249,7 @@ champs:
 
   - nom: nb_mouvements_rapproches
     type: number
+    groupe: Quantites
     libelle: "Mouvements rapprochés"
     obligatoire: false
     defaut: 0
@@ -233,6 +258,7 @@ champs:
 
   - nom: taux_rapprochement
     type: number
+    groupe: Montants
     libelle: "Taux rapprochement (%)"
     obligatoire: false
     defaut: 0
@@ -244,6 +270,7 @@ champs:
   # ===========================================================================
   - nom: statut
     type: select
+    groupe: Statut
     libelle: "Statut"
     obligatoire: true
     options:
@@ -256,6 +283,7 @@ champs:
 
   - nom: regles_rapprochement
     type: json
+    groupe: Metadata
     libelle: "Règles apprises"
     obligatoire: false
     readonly: true
@@ -263,6 +291,7 @@ champs:
 
   - nom: notes
     type: textarea
+    groupe: Notes
     libelle: "Notes"
     obligatoire: false
     description: "Notes internes"

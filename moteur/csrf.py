@@ -42,6 +42,7 @@ CSRF_PROTECTED_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
 # Routes exemptees de CSRF (API avec JWT, webhooks, etc.)
 CSRF_EXEMPT_PATHS = [
     "/api/",  # Toutes les API REST utilisent JWT, pas besoin de CSRF
+    "/auth/login",  # Login utilise credentials, pas de CSRF
     "/health",
     "/guardian/frontend-error",  # Endpoint public pour reporting erreurs frontend
 ]

@@ -7,17 +7,20 @@ description: Gestion des polices d'assurance (RC Pro, Decennale, GLI, PNO)
 champs:
   - nom: policy_number
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero de police (attribue par l'assureur)
 
   - nom: reference
     type: text
+    groupe: Identification
     obligatoire: true
     unique: true
     description: Reference interne
 
   - nom: policy_type
     type: select
+    groupe: Informations
     obligatoire: true
     options: [RC_PRO, DECENNALE, GLI, MRP, PJ, CYBER, FLOTTE, PNO]
     description: Type de police d'assurance
@@ -25,6 +28,7 @@ champs:
 
   - nom: provider_id
     type: relation
+    groupe: Relations
     obligatoire: false
     relation: Fournisseurs
     description: Compagnie d'assurance
@@ -32,12 +36,14 @@ champs:
 
   - nom: provider_name
     type: text
+    groupe: Informations
     obligatoire: false
     description: Nom de l'assureur
     autocompletion: true
 
   - nom: status
     type: select
+    groupe: Statut
     obligatoire: true
     defaut: DRAFT
     options: [DRAFT, QUOTE_REQUESTED, QUOTED, PENDING_DOCS, UNDER_REVIEW, ACTIVE, SUSPENDED, CANCELLED, EXPIRED]
@@ -45,141 +51,168 @@ champs:
 
   - nom: insured_company_name
     type: text
+    groupe: Informations
     obligatoire: true
     description: Raison sociale de l'assure
     autocompletion: true
 
   - nom: insured_siren
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero SIREN
     autocompletion: true
 
   - nom: insured_siret
     type: text
+    groupe: Informations
     obligatoire: false
     description: Numero SIRET
     autocompletion: true
 
   - nom: insured_naf_code
     type: text
+    groupe: Identification
     obligatoire: false
     description: Code NAF/APE
     autocompletion: true
 
   - nom: insured_activity
     type: textarea
+    groupe: Notes
     obligatoire: false
     description: Description de l'activite
 
   - nom: insured_revenue
     type: number
+    groupe: Informations
     obligatoire: false
     description: Chiffre d'affaires annuel
 
   - nom: insured_employees
     type: number
+    groupe: Informations
     obligatoire: false
     description: Nombre d'employes
 
   - nom: contact_civilite
     type: select
+    groupe: Relations
     obligatoire: false
     options: [Mr, Mme, Melle]
     description: Civilite du contact
 
   - nom: contact_name
     type: text
+    groupe: Relations
     obligatoire: false
     description: Nom du contact
     autocompletion: true
 
   - nom: contact_email
     type: email
+    groupe: Contact
     obligatoire: false
     autocompletion: true
 
   - nom: contact_phone
     type: tel
+    groupe: Contact
     obligatoire: false
 
   - nom: address_line1
     type: text
+    groupe: Contact
     obligatoire: false
     autocompletion: true
 
   - nom: address_line2
     type: text
+    groupe: Contact
     obligatoire: false
 
   - nom: city
     type: text
+    groupe: Contact
     obligatoire: false
     autocompletion: true
 
   - nom: postal_code
     type: text
+    groupe: Identification
     obligatoire: false
     autocompletion: true
 
   - nom: country_code
     type: text
+    groupe: Identification
     obligatoire: false
     defaut: FR
     autocompletion: true
 
   - nom: coverage_amount
     type: number
+    groupe: Informations
     obligatoire: false
     description: Montant de garantie
 
   - nom: deductible
     type: number
+    groupe: Informations
     obligatoire: false
     description: Franchise
 
   - nom: coverages
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Liste des garanties
 
   - nom: exclusions
     type: json
+    groupe: Metadata
     obligatoire: false
     description: Exclusions
 
   - nom: effective_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date d'effet
 
   - nom: expiry_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date d'expiration
 
   - nom: renewal_date
     type: date
+    groupe: Dates
     obligatoire: false
     description: Date de renouvellement
 
   - nom: premium_amount
     type: number
+    groupe: Informations
     obligatoire: false
     description: Prime annuelle HT
 
   - nom: tax_amount
     type: number
+    groupe: Informations
     obligatoire: false
     description: Taxes
 
   - nom: total_premium
     type: number
+    groupe: Montants
     obligatoire: false
     description: Prime TTC
 
   - nom: payment_frequency
     type: select
+    groupe: Informations
     obligatoire: false
     defaut: ANNUAL
     options: [MONTHLY, QUARTERLY, SEMI_ANNUAL, ANNUAL]
@@ -187,6 +220,7 @@ champs:
 
   - nom: notes
     type: textarea
+    groupe: Notes
     obligatoire: false
 
 workflow:

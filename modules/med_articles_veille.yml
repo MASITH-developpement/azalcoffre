@@ -1,0 +1,326 @@
+# =============================================================================
+# AZALMED - Module Articles Veille (VEILLE)
+# =============================================================================
+# Articles de veille médicale agrégés et résumés par IA
+# Sources : PubMed, HAS, ANSM, sociétés savantes
+
+nom: ArticlesVeille
+icone: newspaper
+menu: AZALMED
+description: "Veille médicale personnalisée"
+
+champs:
+  # ---------------------------------------------------------------------------
+  # Identification
+  # ---------------------------------------------------------------------------
+  - nom: reference
+    type: text
+    groupe: Identification
+    obligatoire: false
+    readonly: true
+    description: "Référence interne"
+
+  - nom: titre
+    type: text
+    groupe: Identification
+    obligatoire: true
+    description: Titre de l'article
+
+  - nom: titre_original
+    type: text
+    groupe: Identification
+    obligatoire: false
+    description: "Titre original (si traduit)"
+
+  - nom: langue_originale
+    type: select
+    groupe: Identification
+    obligatoire: false
+    defaut: fr
+    options: [fr, en, de, es, it]
+    description: Langue originale
+
+  # ---------------------------------------------------------------------------
+  # Source
+  # ---------------------------------------------------------------------------
+  - nom: source
+    type: select
+    groupe: Source
+    obligatoire: true
+    options:
+      - PUBMED
+      - HAS
+      - ANSM
+      - DGS_URGENT
+      - SOCIETE_SAVANTE
+      - REVUE_MEDICALE
+      - AUTRE
+    description: Source de l'article
+
+  - nom: nom_source
+    type: text
+    groupe: Source
+    obligatoire: false
+    description: "Nom précis de la source (journal, société...)"
+
+  - nom: url_source
+    type: text
+    groupe: Source
+    obligatoire: false
+    description: URL de l'article original
+
+  - nom: doi
+    type: text
+    groupe: Source
+    obligatoire: false
+    description: "DOI (Digital Object Identifier)"
+
+  - nom: pmid
+    type: text
+    groupe: Source
+    obligatoire: false
+    description: "PubMed ID"
+
+  - nom: date_publication
+    type: date
+    groupe: Source
+    obligatoire: false
+    description: Date de publication
+
+  - nom: auteurs
+    type: text
+    groupe: Source
+    obligatoire: false
+    description: "Auteurs"
+
+  # ---------------------------------------------------------------------------
+  # Catégorisation
+  # ---------------------------------------------------------------------------
+  - nom: type_article
+    type: select
+    groupe: Catégorisation
+    obligatoire: true
+    options:
+      - RECOMMANDATION
+      - ETUDE_CLINIQUE
+      - META_ANALYSE
+      - REVUE_SYSTEMATIQUE
+      - CAS_CLINIQUE
+      - ALERTE_SECURITE
+      - RETRAIT_MEDICAMENT
+      - AVIS_COMMISSION
+      - ACTUALITE
+      - AUTRE
+    description: Type d'article
+
+  - nom: niveau_preuve
+    type: select
+    groupe: Catégorisation
+    obligatoire: false
+    options: [A, B, C, NON_APPLICABLE]
+    description: Niveau de preuve scientifique
+
+  - nom: specialites
+    type: tags
+    groupe: Catégorisation
+    obligatoire: false
+    description: Spécialités concernées
+
+  - nom: mots_cles
+    type: tags
+    groupe: Catégorisation
+    obligatoire: false
+    description: "Mots-clés"
+
+  - nom: medicaments_concernes
+    type: tags
+    groupe: Catégorisation
+    obligatoire: false
+    description: Médicaments mentionnés
+
+  - nom: pathologies_concernees
+    type: tags
+    groupe: Catégorisation
+    obligatoire: false
+    description: Pathologies concernées
+
+  # ---------------------------------------------------------------------------
+  # Contenu
+  # ---------------------------------------------------------------------------
+  - nom: resume_original
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: Résumé/abstract original
+
+  - nom: resume_ia
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: "Résumé généré par IA (français, simplifié)"
+
+  - nom: points_cles
+    type: json
+    groupe: Contenu
+    obligatoire: false
+    description: "Points clés extraits (JSON array)"
+
+  - nom: implications_pratiques
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: Implications pour la pratique clinique
+
+  - nom: contenu_complet
+    type: textarea
+    groupe: Contenu
+    obligatoire: false
+    description: Contenu complet (si disponible)
+
+  # ---------------------------------------------------------------------------
+  # Importance
+  # ---------------------------------------------------------------------------
+  - nom: est_alerte
+    type: boolean
+    groupe: Importance
+    obligatoire: false
+    defaut: false
+    description: "Alerte urgente (ANSM, DGS-Urgent)"
+
+  - nom: priorite
+    type: select
+    groupe: Importance
+    obligatoire: false
+    defaut: NORMALE
+    options: [CRITIQUE, HAUTE, NORMALE, BASSE]
+    description: Priorité de lecture
+
+  - nom: score_pertinence
+    type: number
+    groupe: Importance
+    obligatoire: false
+    description: "Score de pertinence (0-100)"
+
+  # ---------------------------------------------------------------------------
+  # Lecture par praticien
+  # ---------------------------------------------------------------------------
+  - nom: praticien_id
+    type: relation
+    groupe: Lecture
+    obligatoire: false
+    relation: Praticiens
+    description: Praticien destinataire
+
+  - nom: est_lu
+    type: boolean
+    groupe: Lecture
+    obligatoire: false
+    defaut: false
+    description: Article lu
+
+  - nom: date_lecture
+    type: datetime
+    groupe: Lecture
+    obligatoire: false
+    description: Date de lecture
+
+  - nom: est_favori
+    type: boolean
+    groupe: Lecture
+    obligatoire: false
+    defaut: false
+    description: Marqué comme favori
+
+  - nom: est_archive
+    type: boolean
+    groupe: Lecture
+    obligatoire: false
+    defaut: false
+    description: Archivé
+
+  - nom: notes_personnelles
+    type: textarea
+    groupe: Lecture
+    obligatoire: false
+    description: Notes du praticien
+
+  # ---------------------------------------------------------------------------
+  # Partage
+  # ---------------------------------------------------------------------------
+  - nom: est_partage
+    type: boolean
+    groupe: Partage
+    obligatoire: false
+    defaut: false
+    description: Partagé avec des confrères
+
+  - nom: partage_avec
+    type: tags
+    groupe: Partage
+    obligatoire: false
+    description: "IDs des praticiens destinataires"
+
+  - nom: date_partage
+    type: datetime
+    groupe: Partage
+    obligatoire: false
+    description: Date de partage
+
+  # ---------------------------------------------------------------------------
+  # Métadonnées
+  # ---------------------------------------------------------------------------
+  - nom: date_import
+    type: datetime
+    groupe: Métadonnées
+    obligatoire: false
+    readonly: true
+    description: Date d'import dans AZALMED
+
+  - nom: source_import
+    type: text
+    groupe: Métadonnées
+    obligatoire: false
+    readonly: true
+    description: "Méthode d'import (API, RSS, manuel)"
+
+  - nom: statut
+    type: select
+    groupe: Métadonnées
+    obligatoire: true
+    defaut: ACTIF
+    options: [ACTIF, ARCHIVE, SUPPRIME]
+    description: Statut
+
+# ---------------------------------------------------------------------------
+# Workflow
+# ---------------------------------------------------------------------------
+workflow:
+  ACTIF -> ARCHIVE: "Archiver"
+  ARCHIVE -> ACTIF: "Restaurer"
+  ACTIF -> SUPPRIME: "Supprimer"
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+actions:
+  - marquer_lu
+  - ajouter_favori
+  - partager
+  - generer_resume
+  - ouvrir_source
+  - exporter_pdf
+
+# ---------------------------------------------------------------------------
+# Recherche
+# ---------------------------------------------------------------------------
+recherche:
+  champs: [titre, resume_ia, mots_cles, auteurs]
+  tri_defaut: date_publication
+  ordre_defaut: desc
+
+# ---------------------------------------------------------------------------
+# Liste
+# ---------------------------------------------------------------------------
+liste:
+  colonnes: [titre, source, type_article, date_publication, priorite, est_lu]
+  filtres: [source, type_article, specialites, est_lu, est_favori, est_alerte, priorite]
