@@ -696,6 +696,10 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 # Admin - Users Management
 app.include_router(users_router, prefix="/api/admin/users", tags=["Admin - Users"])
 
+# Admin - Tenants Management (Createur uniquement)
+from .admin_tenants import router as admin_tenants_router
+app.include_router(admin_tenants_router, prefix="/api/admin/tenants", tags=["Admin - Tenants"])
+
 # Legacy API (backwards compatibility)
 app.include_router(api_router, prefix="/api", tags=["API (Legacy)"])
 
