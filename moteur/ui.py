@@ -4130,11 +4130,19 @@ async def technicien_dashboard(
         limit=200
     )
 
-    # Filtrer par intervenant_id en Python (plus robuste)
-    all_interventions = [
+    # Filtrer par technicien_id en Python (plus robuste)
+    # Le champ s'appelle technicien_id dans interventions.yml
+    my_interventions = [
         i for i in all_interventions_raw
-        if str(i.get("intervenant_id", "")) == str(user_id)
+        if str(i.get("technicien_id", "")) == str(user_id)
     ]
+
+    # Si l'utilisateur n'a pas d'interventions assignees personnellement,
+    # afficher toutes les interventions du tenant (mode manager/admin)
+    if my_interventions:
+        all_interventions = my_interventions
+    else:
+        all_interventions = all_interventions_raw
 
     interventions_today = []
     interventions_week = []
@@ -4144,7 +4152,8 @@ async def technicien_dashboard(
         if intv.get("statut") == "ANNULEE":
             continue
 
-        date_prevue = intv.get("date_prevue_debut")
+        # Le champ est date_prevue dans interventions.yml (pas date_prevue_debut)
+        date_prevue = intv.get("date_prevue") or intv.get("date_demande")
         statut = intv.get("statut")
 
         if date_prevue:
