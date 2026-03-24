@@ -6138,6 +6138,70 @@ def generate_sectioned_form_edit(module_name: str, sections: dict, module, exist
             showNotification('Erreur de connexion', 'error');
         }}
     }}
+
+    // =========================================================================
+    // Chargement des options des selects relation (EDIT)
+    // =========================================================================
+    function getCookie(name) {{
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? match[2] : null;
+    }}
+
+    function getToken() {{
+        const params = new URLSearchParams(window.location.search);
+        return params.get('token')
+            || localStorage.getItem('access_token')
+            || localStorage.getItem('auth_token')
+            || getCookie('access_token')
+            || getCookie('token')
+            || '';
+    }}
+
+    document.addEventListener('DOMContentLoaded', function() {{
+        const authToken = getToken();
+
+        document.querySelectorAll('select[data-link]').forEach(async select => {{
+            const linkedModule = select.dataset.link;
+            const currentValue = select.dataset.currentValue || '';
+
+            try {{
+                const url = `/api/select/${{linkedModule.toLowerCase()}}`;
+                const headers = {{ 'Content-Type': 'application/json' }};
+                if (authToken) {{
+                    headers['Authorization'] = 'Bearer ' + authToken;
+                }}
+
+                const response = await fetch(url, {{
+                    credentials: 'include',
+                    headers: headers
+                }});
+
+                if (response.ok) {{
+                    const data = await response.json();
+                    const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+
+                    const firstOption = select.options[0];
+                    select.innerHTML = '';
+                    select.appendChild(firstOption);
+
+                    items.forEach(item => {{
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = item.nom || item.name || item.raison_sociale || item.code || item.id;
+                        // Comparaison robuste UUIDs (ignore casse et tirets)
+                        const itemIdNorm = String(item.id).toLowerCase().replace(/-/g, '');
+                        const currentNorm = String(currentValue).toLowerCase().replace(/-/g, '');
+                        if (currentValue && itemIdNorm === currentNorm) {{
+                            opt.selected = true;
+                        }}
+                        select.appendChild(opt);
+                    }});
+                }}
+            }} catch (e) {{
+                console.error('Erreur chargement ' + select.name + ':', e);
+            }}
+        }});
+    }});
     </script>
     ''' + generate_form_scripts_edit(module_name)
 
@@ -6420,20 +6484,27 @@ def generate_form_scripts(module_name: str) -> str:
             }});
         }}
 
+        // Charger les options des champs relation
         document.querySelectorAll('select[data-link]').forEach(async select => {{
             const linkedModule = select.dataset.link;
             const currentValue = select.dataset.currentValue || '';
+
             try {{
-                const response = await fetch(`/api/select/${{linkedModule.toLowerCase()}}`, {{
+                const url = `/api/select/${{linkedModule.toLowerCase()}}`;
+                const headers = {{ 'Content-Type': 'application/json' }};
+                if (authToken) {{
+                    headers['Authorization'] = 'Bearer ' + authToken;
+                }}
+
+                const response = await fetch(url, {{
                     credentials: 'include',
-                    headers: {{
-                        'Authorization': 'Bearer ' + authToken,
-                        'Content-Type': 'application/json'
-                    }}
+                    headers: headers
                 }});
+
                 if (response.ok) {{
                     const data = await response.json();
                     const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+
                     const firstOption = select.options[0];
                     select.innerHTML = '';
                     select.appendChild(firstOption);
@@ -6449,10 +6520,8 @@ def generate_form_scripts(module_name: str) -> str:
                         }}
                         select.appendChild(opt);
                     }});
-                }} else {{
-                    console.warn('Erreur chargement ' + linkedModule + ':', response.status);
                 }}
-            }} catch (e) {{ console.error('Erreur chargement ' + linkedModule + ':', e); }}
+            }} catch (e) {{ console.error('Erreur chargement ' + select.name + ':', e); }}
         }});
     }});
 
@@ -10406,9 +10475,19 @@ async def module_detail(
         {documents_html}
 
         <script>
+        function getCookie(name) {{
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }}
+
         function getToken() {{
             const params = new URLSearchParams(window.location.search);
-            return params.get('token') || localStorage.getItem('auth_token') || '';
+            return params.get('token')
+                || localStorage.getItem('access_token')
+                || localStorage.getItem('auth_token')
+                || getCookie('access_token')
+                || getCookie('token')
+                || '';
         }}
 
         function openPrintPreview() {{
@@ -10632,23 +10711,32 @@ async def module_detail(
 
             // Charger les options des champs relation (select)
             const authToken = getToken();
-            document.querySelectorAll('select[data-link]').forEach(async select => {{
+            const selectsWithLink = document.querySelectorAll('select[data-link]');
+
+            selectsWithLink.forEach(async select => {{
                 const linkedModule = select.dataset.link;
                 const currentValue = select.dataset.currentValue || '';
+
                 try {{
-                    const response = await fetch(`/api/select/${{linkedModule.toLowerCase()}}`, {{
+                    const url = `/api/select/${{linkedModule.toLowerCase()}}`;
+                    const headers = {{ 'Content-Type': 'application/json' }};
+                    if (authToken) {{
+                        headers['Authorization'] = 'Bearer ' + authToken;
+                    }}
+
+                    const response = await fetch(url, {{
                         credentials: 'include',
-                        headers: {{
-                            'Authorization': 'Bearer ' + authToken,
-                            'Content-Type': 'application/json'
-                        }}
+                        headers: headers
                     }});
+
                     if (response.ok) {{
                         const data = await response.json();
                         const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+
                         const firstOption = select.options[0];
                         select.innerHTML = '';
                         select.appendChild(firstOption);
+
                         items.forEach(item => {{
                             const opt = document.createElement('option');
                             opt.value = item.id;
@@ -10661,10 +10749,10 @@ async def module_detail(
                             }}
                             select.appendChild(opt);
                         }});
-                    }} else {{
-                        console.warn('Erreur chargement ' + linkedModule + ':', response.status);
                     }}
-                }} catch (e) {{ console.error('Erreur chargement ' + linkedModule + ':', e); }}
+                }} catch (e) {{
+                    console.error('Erreur chargement ' + select.name + ':', e);
+                }}
             }});
         }});
         </script>
@@ -12045,10 +12133,20 @@ def generate_list_with_bulk_actions(
             cb.addEventListener('change', updateBulkActions);
         }});
 
-        // Récupérer le token depuis l'URL
+        // Récupérer le token depuis l'URL, localStorage ou cookies
+        function getCookie(name) {{
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }}
+
         function getToken() {{
             const params = new URLSearchParams(window.location.search);
-            return params.get('token') || '';
+            return params.get('token')
+                || localStorage.getItem('access_token')
+                || localStorage.getItem('auth_token')
+                || getCookie('access_token')
+                || getCookie('token')
+                || '';
         }}
 
         async function applyBulkStatus() {{
