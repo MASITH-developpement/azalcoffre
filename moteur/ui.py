@@ -5549,6 +5549,12 @@ async def module_list(
         for status in status_values:
             status_options += f'<option value="{status}">{status}</option>'
 
+    # Champs disponibles pour le tri (tous les champs du module + created_at)
+    sort_fields = [("created_at", "Date création")]
+    for field_name, field_config in module.champs.items():
+        label = field_config.label or field_name.replace("_", " ").title()
+        sort_fields.append((field_name, label))
+
     html = generate_layout(
         title=module.nom_affichage,
         content=generate_list_with_bulk_actions(
@@ -5557,7 +5563,10 @@ async def module_list(
             table_headers=table_headers,
             table_rows=table_rows,
             has_status=has_status,
-            status_options=status_options
+            status_options=status_options,
+            sort_fields=sort_fields,
+            current_sort=sort_field,
+            current_order=sort_order
         ),
         user=user,
         modules=get_all_modules()
@@ -11976,9 +11985,30 @@ def generate_list_with_bulk_actions(
     table_headers: str,
     table_rows: str,
     has_status: bool = False,
-    status_options: str = ""
+    status_options: str = "",
+    sort_fields: list = None,
+    current_sort: str = "",
+    current_order: str = "desc"
 ) -> str:
-    """Génère une liste avec actions en masse."""
+    """Génère une liste avec actions en masse et sélecteur de tri."""
+
+    # Générer le sélecteur de tri
+    sort_selector_html = ""
+    if sort_fields:
+        sort_options = '<option value="">Trier par...</option>'
+        for field_name, field_label in sort_fields:
+            selected_asc = 'selected' if current_sort == field_name and current_order == 'asc' else ''
+            selected_desc = 'selected' if current_sort == field_name and current_order == 'desc' else ''
+            sort_options += f'<option value="{field_name}:asc" {selected_asc}>{field_label} ↑</option>'
+            sort_options += f'<option value="{field_name}:desc" {selected_desc}>{field_label} ↓</option>'
+
+        sort_selector_html = f'''
+        <div class="sort-selector">
+            <select id="sort-select" class="form-select" onchange="applySortSelection(this.value)" style="width: auto; min-width: 180px;">
+                {sort_options}
+            </select>
+        </div>
+        '''
 
     # Toujours afficher les actions bulk (au moins le bouton supprimer)
     if has_status:
@@ -12013,6 +12043,7 @@ def generate_list_with_bulk_actions(
             <div class="search-box">
                 <input type="text" id="search-input" placeholder="Rechercher..." class="form-control">
             </div>
+            {sort_selector_html}
             {nouveau_btn}
         </div>
 
@@ -12041,6 +12072,25 @@ def generate_list_with_bulk_actions(
     </div>
 
     <style>
+        .list-toolbar {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }}
+        .sort-selector select {{
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300, #ddd);
+            border-radius: 6px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+        }}
+        .sort-selector select:focus {{
+            outline: none;
+            border-color: var(--primary-color, #007bff);
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+        }}
         .sortable {{
             cursor: pointer;
             user-select: none;
@@ -12103,6 +12153,12 @@ def generate_list_with_bulk_actions(
             url.searchParams.set('sort', field);
             url.searchParams.set('order', order);
             window.location.href = url.toString();
+        }}
+
+        function applySortSelection(value) {{
+            if (!value) return;
+            const [field, order] = value.split(':');
+            sortBy(field, order);
         }}
 
         function handleRowClick(event, id, url) {{
