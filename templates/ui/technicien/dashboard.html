@@ -5,9 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#1e3a5f">
+    <meta name="apple-mobile-web-app-title" content="Technicien">
     <title>Tableau de bord - Technicien</title>
-    <link rel="manifest" href="/static/manifest.json">
+    <link rel="manifest" href="/static/technicien/manifest.json">
+    <link rel="apple-touch-icon" href="/static/technicien/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/technicien/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/technicien/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/static/technicien/icon-192x192.png">
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/technicien/sw.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW error:', err));
+        }
+    </script>
     <style>
         :root {
             --primary: #2563eb;

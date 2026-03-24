@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Technicien">
+    <meta name="theme-color" content="#1e3a5f">
+    <link rel="manifest" href="/static/technicien/manifest.json">
+    <link rel="apple-touch-icon" href="/static/technicien/icon-180x180.png">
+    <title>Installer AZALPLUS Technicien</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 40px 0;
+        }
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+        .step:last-child {
+            margin-bottom: 0;
+        }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: white;
+            color: #1e3a5f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .step-desc {
+            font-size: 14px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+        .icon-inline {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin: 0 2px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: white;
+            color: #1e3a5f;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            margin-top: 12px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .feature {
+            background: rgba(255,255,255,0.1);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .feature-text {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        .ios-only {
+            display: none;
+        }
+        .android-only {
+            display: none;
+        }
+        .desktop-only {
+            display: none;
+        }
+        /* iOS detection */
+        @supports (-webkit-touch-callout: none) {
+            .ios-only { display: block; }
+            .android-only { display: none !important; }
+            .desktop-only { display: none !important; }
+        }
+        /* Show install prompt banner */
+        .install-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            color: #1e3a5f;
+            padding: 16px 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+        }
+        .install-banner.show {
+            display: flex;
+        }
+        .install-banner-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+        }
+        .install-banner-text {
+            flex: 1;
+        }
+        .install-banner-title {
+            font-weight: 600;
+        }
+        .install-banner-desc {
+            font-size: 13px;
+            opacity: 0.7;
+        }
+        .install-banner-btn {
+            background: #1e3a5f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .share-icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/%3E%3C/svg%3E") no-repeat center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="/static/technicien/icon.svg" alt="AZALPLUS Technicien" class="logo">
+            <h1>AZALPLUS Technicien</h1>
+            <p class="subtitle">Application mobile pour vos interventions</p>
+        </div>
+
+        <!-- Instructions iOS -->
+        <div class="card ios-only">
+            <div class="card-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                Installation sur iPhone
+            </div>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Ouvrir dans Safari</div>
+                    <div class="step-desc">Assurez-vous d'utiliser Safari (pas Chrome ou autre)</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Appuyer sur Partager</div>
+                    <div class="step-desc">Touchez l'icône <span class="share-icon"></span> en bas de l'écran</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Sur l'écran d'accueil</div>
+                    <div class="step-desc">Faites défiler et touchez "Sur l'écran d'accueil"</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-title">Ajouter</div>
+                    <div class="step-desc">Touchez "Ajouter" en haut à droite</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions Android -->
+        <div class="card android-only">
+            <div class="card-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+                Installation sur Android
+            </div>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Cliquez sur "Installer"</div>
+                    <div class="step-desc">Une bannière apparaîtra en bas de l'écran</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Confirmer l'installation</div>
+                    <div class="step-desc">L'application sera ajoutée à votre écran d'accueil</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bouton principal -->
+        <a href="/ui/technicien/dashboard" class="btn">
+            Ouvrir l'application
+        </a>
+        <a href="/ui/" class="btn btn-secondary">
+            Retour au tableau de bord
+        </a>
+
+        <!-- Fonctionnalités -->
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">📋</div>
+                <div class="feature-text">Interventions du jour</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📸</div>
+                <div class="feature-text">Photos avant/après</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">✍️</div>
+                <div class="feature-text">Signature client</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📄</div>
+                <div class="feature-text">Rapport d'intervention</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bannière d'installation Android/Chrome -->
+    <div class="install-banner" id="installBanner">
+        <img src="/static/technicien/icon.svg" class="install-banner-icon" alt="">
+        <div class="install-banner-text">
+            <div class="install-banner-title">AZALPLUS Technicien</div>
+            <div class="install-banner-desc">Installer l'application</div>
+        </div>
+        <button class="install-banner-btn" id="installBtn">Installer</button>
+    </div>
+
+    <script>
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/technicien/sw.js')
+                .then(reg => console.log('SW registered:', reg.scope))
+                .catch(err => console.log('SW registration failed:', err));
+        }
+
+        // PWA Install prompt (Chrome/Android)
+        let deferredPrompt;
+        const installBanner = document.getElementById('installBanner');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBanner.classList.add('show');
+
+            // Show Android instructions
+            document.querySelectorAll('.android-only').forEach(el => el.style.display = 'block');
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log('Install outcome:', outcome);
+                deferredPrompt = null;
+                installBanner.classList.remove('show');
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed');
+            installBanner.classList.remove('show');
+        });
+
+        // iOS detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.navigator.standalone;
+
+        if (isIOS) {
+            document.querySelectorAll('.ios-only').forEach(el => el.style.display = 'block');
+            if (isStandalone) {
+                // Already installed, redirect to dashboard
+                window.location.href = '/ui/technicien/dashboard';
+            }
+        }
+
+        // Android detection
+        const isAndroid = /Android/.test(navigator.userAgent);
+        if (isAndroid) {
+            document.querySelectorAll('.android-only').forEach(el => el.style.display = 'block');
+        }
+
+        // Desktop detection
+        if (!isIOS && !isAndroid) {
+            document.querySelectorAll('.desktop-only').forEach(el => el.style.display = 'block');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a5f"/>
+      <stop offset="100%" style="stop-color:#2d5a87"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Wrench icon -->
+  <g transform="translate(96, 96) scale(0.625)" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wrench -->
+    <path d="M416 208c0 45.9-14.9 88.3-40 122.7L152.7 107.6C186.1 82.3 228.6 68 274.5 68 354.7 68 421.5 123.6 438.5 198"/>
+    <path d="M96 304c0-45.9 14.9-88.3 40-122.7l223.3 223.1c-33.4 25.3-75.9 39.6-121.8 39.6-80.2 0-147-55.6-164-130"/>
+    <path d="M166.3 166.3L68 264.5 68 320l55.5 0 98.2-98.2"/>
+    <path d="M345.7 345.7L444 247.5 444 192l-55.5 0-98.2 98.2"/>
+  </g>
+  <!-- Text "TECH" -->
+  <text x="256" y="440" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#ffffff">TECH</text>
+</svg>

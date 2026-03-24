@@ -153,6 +153,9 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/azalmed",
         "/azalmed/login",
         "/azalmed/dashboard",
+        # === App Technicien PWA (public) ===
+        "/ui/technicien/installer",
+        "/static/technicien",
     ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

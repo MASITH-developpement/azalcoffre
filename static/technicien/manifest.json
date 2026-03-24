@@ -1,0 +1,88 @@
+{
+  "name": "AZALPLUS Technicien",
+  "short_name": "Technicien",
+  "description": "Application mobile pour les techniciens - Gestion des interventions",
+  "start_url": "/ui/technicien/dashboard",
+  "scope": "/ui/technicien/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1e3a5f",
+  "theme_color": "#1e3a5f",
+  "categories": ["business", "productivity"],
+  "lang": "fr-FR",
+  "icons": [
+    {
+      "src": "/static/technicien/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/technicien/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/technicien/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/technicien/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/technicien/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/technicien/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/technicien/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/technicien/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/technicien/screenshot-dashboard.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard technicien"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mes interventions",
+      "short_name": "Interventions",
+      "description": "Voir mes interventions du jour",
+      "url": "/ui/technicien/interventions",
+      "icons": [{ "src": "/static/technicien/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Saisie temps",
+      "short_name": "Temps",
+      "description": "Saisir mon temps",
+      "url": "/ui/technicien/temps",
+      "icons": [{ "src": "/static/technicien/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ]
+}

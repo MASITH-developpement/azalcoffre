@@ -7,7 +7,7 @@ Utilise Jinja2 pour le templating.
 """
 
 from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
 from typing import Optional, Dict, Any, List
@@ -1305,6 +1305,10 @@ async def dashboard(request: Request, user: dict = Depends(require_auth)):
             <a href="/ui/clients" class="quick-link">
                 {get_icon("users")}
                 <span>Gérer les clients</span>
+            </a>
+            <a href="/ui/technicien/installer" class="quick-link" style="border-left: 3px solid #1e3a5f;">
+                {get_icon("smartphone")}
+                <span>📱 App Technicien</span>
             </a>
         </div>
 
@@ -4086,6 +4090,22 @@ async def calendar_view(
 # =============================================================================
 # Interface Technicien Mobile
 # =============================================================================
+
+@ui_router.get("/technicien/installer", response_class=HTMLResponse)
+async def technicien_install_page(request: Request):
+    """Page d'installation PWA pour l'application technicien."""
+    try:
+        # Lire le template d'installation
+        template_path = Path(__file__).parent.parent / "templates" / "technicien_install.html"
+        if template_path.exists():
+            return HTMLResponse(content=template_path.read_text(encoding="utf-8"))
+        else:
+            # Fallback: redirection vers le dashboard
+            return RedirectResponse(url="/ui/technicien/dashboard")
+    except Exception as e:
+        logger.error("technicien_install_error", error=str(e))
+        return RedirectResponse(url="/ui/technicien/dashboard")
+
 
 @ui_router.get("/technicien/dashboard", response_class=HTMLResponse)
 async def technicien_dashboard(
