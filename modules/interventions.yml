@@ -18,8 +18,12 @@ liste_colonnes:
   - contact_telephone
   - adresse_intervention
   - ville
-  - date_demande
+  - date_prevue
   - statut
+
+# Tri par défaut (date la plus ancienne en premier)
+tri_defaut: date_prevue
+ordre_defaut: asc
 
 champs:
   # ==========================================================================
