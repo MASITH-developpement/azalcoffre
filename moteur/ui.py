@@ -6441,7 +6441,10 @@ def generate_form_scripts(module_name: str) -> str:
                         const opt = document.createElement('option');
                         opt.value = item.id;
                         opt.textContent = item.nom || item.name || item.id;
-                        if (currentValue && item.id === currentValue) {{
+                        // Comparaison robuste des UUIDs (ignore casse et tirets)
+                        const itemIdNorm = String(item.id).toLowerCase().replace(/-/g, '');
+                        const currentNorm = String(currentValue).toLowerCase().replace(/-/g, '');
+                        if (currentValue && itemIdNorm === currentNorm) {{
                             opt.selected = true;
                         }}
                         select.appendChild(opt);
@@ -10650,7 +10653,10 @@ async def module_detail(
                             const opt = document.createElement('option');
                             opt.value = item.id;
                             opt.textContent = item.nom || item.name || item.raison_sociale || item.code || item.id;
-                            if (currentValue && item.id === currentValue) {{
+                            // Comparaison robuste des UUIDs (ignore casse et tirets)
+                            const itemIdNorm = String(item.id).toLowerCase().replace(/-/g, '');
+                            const currentNorm = String(currentValue).toLowerCase().replace(/-/g, '');
+                            if (currentValue && itemIdNorm === currentNorm) {{
                                 opt.selected = true;
                             }}
                             select.appendChild(opt);
