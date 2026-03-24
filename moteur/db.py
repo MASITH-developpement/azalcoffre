@@ -567,6 +567,31 @@ class Database:
         if encrypted_fields:
             data = EncryptionMiddleware.encrypt_dict(data, encrypted_fields, tenant_id)
 
+        # Convertir les dates du format français (DD/MM/YYYY) vers ISO (YYYY-MM-DD)
+        for key, value in list(data.items()):
+            if isinstance(value, str) and '/' in value and len(value) >= 8:
+                # Possible date au format DD/MM/YYYY ou DD/MM/YYYY HH:mm
+                try:
+                    if ' ' in value:
+                        # DD/MM/YYYY HH:mm ou DD/MM/YYYY HH:mm:ss
+                        from datetime import datetime
+                        for fmt in ["%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S"]:
+                            try:
+                                dt = datetime.strptime(value, fmt)
+                                data[key] = dt.strftime("%Y-%m-%d %H:%M:%S")
+                                break
+                            except ValueError:
+                                continue
+                    else:
+                        # DD/MM/YYYY seulement
+                        parts = value.split('/')
+                        if len(parts) == 3 and all(p.isdigit() for p in parts):
+                            day, month, year = parts
+                            if len(year) == 4 and 1 <= int(day) <= 31 and 1 <= int(month) <= 12:
+                                data[key] = f"{year}-{month}-{day}"
+                except Exception:
+                    pass  # Garder la valeur originale si conversion échoue
+
         # Sérialiser les valeurs dict/list en JSON pour JSONB PostgreSQL
         for key, value in data.items():
             if isinstance(value, (dict, list)):

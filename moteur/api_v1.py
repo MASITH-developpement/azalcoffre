@@ -1310,6 +1310,29 @@ async def update_intervention(
         if not update_data:
             raise HTTPException(status_code=400, detail="Aucune donnée à mettre à jour")
 
+        # Convertir les dates du format français (DD/MM/YYYY HH:mm) vers ISO (YYYY-MM-DD HH:mm:ss)
+        date_fields = ['date_demande', 'date_prevue', 'date_debut', 'date_fin', 'date_signature',
+                       'date_installation', 'date_mise_service', 'garantie_debut', 'garantie_fin',
+                       'prochaine_maintenance']
+        for field in date_fields:
+            if field in update_data and update_data[field]:
+                value = update_data[field]
+                if isinstance(value, str) and '/' in value:
+                    # Format DD/MM/YYYY ou DD/MM/YYYY HH:mm
+                    try:
+                        if ' ' in value:
+                            # DD/MM/YYYY HH:mm
+                            from datetime import datetime
+                            dt = datetime.strptime(value, "%d/%m/%Y %H:%M")
+                            update_data[field] = dt.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            # DD/MM/YYYY
+                            parts = value.split('/')
+                            if len(parts) == 3:
+                                update_data[field] = f"{parts[2]}-{parts[1]}-{parts[0]}"
+                    except Exception as e:
+                        logger.warning(f"Impossible de convertir la date {field}={value}: {e}")
+
         # Mettre à jour
         updated = Database.update("interventions", tenant_id, uuid_obj, update_data, user_id)
         return updated
@@ -1317,8 +1340,10 @@ async def update_intervention(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Erreur update_intervention: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Erreur update_intervention: {e}\n{error_details}")
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
 
 
 @legacy_router.get("/entreprise")
