@@ -11,8 +11,8 @@ Endpoints:
     /api/v1/{module}/bulk   - Bulk operations
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body, Path
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body, Path, UploadFile, File
+from fastapi.responses import StreamingResponse, JSONResponse, Response
 from typing import List, Dict, Any, Optional, Union
 from uuid import UUID
 from pydantic import BaseModel, Field, create_model, validator
@@ -29,6 +29,7 @@ from .parser import ModuleParser, ModuleDefinition, FieldDefinition
 from .tenant import get_current_tenant, get_current_user_id, SYSTEM_TENANT_ID
 from .auth import require_auth, require_role
 from .icons import IconManager
+from .import_multi import import_multi_format, generate_excel_template
 # from .calendar_utils import calculate_calendar_workload  # Import commenté car non disponible
 
 logger = structlog.get_logger()
@@ -641,7 +642,14 @@ def create_module_endpoints(module_name: str):
                 return {"data": created_record}
                 
         except Exception as e:
-            logger.error(f"{module_name}_create_error", error=str(e))
+            import traceback
+            logger.error(f"{module_name}_create_error", error=str(e), traceback=traceback.format_exc())
+            # Log dans fichier pour debug
+            with open("/tmp/api_create_error.log", "a") as f:
+                f.write(f"=== {module_name} CREATE ERROR ===\n")
+                f.write(f"Data: {data}\n")
+                f.write(f"Error: {str(e)}\n")
+                f.write(f"Traceback:\n{traceback.format_exc()}\n\n")
             raise HTTPException(status_code=500, detail=str(e))
     
     _dynamic_endpoints_cache[module_name] = True
@@ -1523,123 +1531,328 @@ async def get_interventions(
 # =============================================================================
 AUTO_NUMBER_CONFIG = {
     # Format: module_name -> (prefix, field_name, include_year)
-    "interventions": ("INT", "numero", True, True),  # include_year=True, include_month=True
-    "clients": ("CLI", "numero", False),
-    "fournisseurs": ("FOU", "code", False),
-    "donneur_ordre": ("DO", "code", False),
-    "devis": ("DEV", "numero", True),
+    # ou (prefix, field_name, include_year, include_month) pour numérotation mensuelle
+
+    # === Documents commerciaux (avec année) ===
     "factures": ("FAC", "number", True),
+    "devis": ("DEV", "number", True),
+    "commandes": ("CMD", "number", True),
+    "ventes": ("VTE", "numero", True),
+    "achats": ("ACH", "numero", True),
     "avoirs": ("AVO", "numero", True),
     "bons_livraison": ("BL", "numero", True),
-    "commandes": ("CMD", "numero", True),
-    "ventes": ("VTE", "numero", True),  # Ajouté pour module Ventes
-    "projets": ("PRJ", "code", False),
     "contrats": ("CTR", "numero", True),
+    "abonnements": ("ABO", "reference", True),
+    "location_materiel": ("LOC", "number", True),
+
+    # === Interventions (avec année + mois) ===
+    "interventions": ("INT", "numero", True, True),
+
+    # === CRM / Commercial ===
+    "clients": ("CLI", "code", False),
+    "crm": ("CRM", "numero", True),
+    "appels_offres": ("AO", "reference", True),
+    "apporteurs": ("APP", "code", False),
+    "donneur_ordre": ("DO", "code", False),
+
+    # === Fournisseurs / Achats ===
+    "fournisseurs": ("FOU", "code", False),
+
+    # === Produits / Stock ===
     "produits": ("PRD", "code", False),
+    "inventaire": ("INV", "reference", True),
+
+    # === Projets ===
+    "projets": ("PRJ", "numero", False),
+
+    # === Finance / Comptabilité ===
+    "comptabilite": ("CPT", "numero", True),
+    "comptes_bancaires": ("CB", "code", False),
+    "mouvements_bancaires": ("MVT", "reference", True),
+    "mouvements_credit": ("CRD", "numero", True),
+    "paiements_openbanking": ("POB", "reference", True),
+    "caisse": ("CAI", "code", False),
+    "cautions": ("CAU", "reference", True),
+    "retenues_garantie": ("RG", "reference", True),
+
+    # === RH / Paie ===
+    "paie": ("PAI", "numero", True),
+    "departements": ("DPT", "code", False),
+    "planning": ("PLN", "numero", True),
+
+    # === Support / Tickets ===
+    "support": ("TKT", "numero", True),
     "tickets": ("TKT", "numero", True),
+
+    # === Assurances / Sinistres ===
+    "polices_assurance": ("POL", "reference", False),
+    "sinistres": ("SIN", "reference", True),
+    "risques": ("RSK", "code", False),
+
+    # === Immobilier / Copropriété ===
+    "immobilier": ("IMM", "reference", False),
+    "copropriete": ("COP", "reference", False),
+
+    # === Médical ===
+    "medical": ("MED", "numero", False),
+    "patients": ("PAT", "reference", False),
+    "consultations": ("CST", "reference", True),
+    "med_consultations": ("MCS", "reference", True),
+    "med_documents": ("MDC", "reference", True),
+    "med_consentements": ("MCO", "reference", True),
+    "med_formulaires_consent": ("MFC", "code", False),
+    "med_articles_veille": ("MAV", "reference", True),
+
+    # === Véhicules ===
+    "vehicules": ("VEH", "code", False),
+
+    # === Qualité / RGPD ===
+    "qualite": ("QUA", "reference", True),
+    "rgpd": ("RGPD", "numero", True),
+
+    # === E-commerce / Marketplace ===
+    "ecommerce": ("ECO", "reference", True),
+    "marketplace_btob": ("B2B", "reference", True),
+
+    # === Signature / Documents ===
+    "signature_electronique": ("SIG", "numero", True),
+    "sauvegardes": ("SAV", "reference", True),
+
+    # === Configuration / Système ===
+    "sequences": ("SEQ", "code", False),
+    "sys_listes": ("LST", "code", False),
     "modeles_email": ("TPL", "code", False),
+    "simulateur_statut": ("SIM", "reference", False),
 }
+
+
+def get_auto_number_field(module_name: str, tenant_id: UUID) -> Optional[str]:
+    """
+    Retourne le nom du champ qui reçoit le numéro auto-généré.
+    Cherche d'abord dans la table sequences, puis dans AUTO_NUMBER_CONFIG.
+    """
+    try:
+        with Database.get_session() as session:
+            from sqlalchemy import text
+
+            # Chercher dans la table sequences
+            sql = text("""
+                SELECT champ_cible FROM azalplus.sequences
+                WHERE tenant_id = :tenant_id AND entite = :entite AND archived = false
+                LIMIT 1
+            """)
+            result = session.execute(sql, {
+                "tenant_id": str(tenant_id),
+                "entite": module_name.lower()
+            })
+            row = result.fetchone()
+
+            if row and row[0]:
+                return row[0]
+
+        # Fallback vers AUTO_NUMBER_CONFIG
+        config = AUTO_NUMBER_CONFIG.get(module_name.lower())
+        if config:
+            return config[1]  # field_name est le 2ème élément
+
+        return None
+    except Exception:
+        # Fallback en cas d'erreur
+        config = AUTO_NUMBER_CONFIG.get(module_name.lower())
+        return config[1] if config else None
 
 
 def generate_auto_number(module_name: str, tenant_id: UUID) -> Optional[str]:
     """
     Génère automatiquement un numéro unique pour un module.
-    Format: PREFIX-YYYY-XXXXX ou PREFIX-XXXXX selon la config.
+
+    Priorité:
+    1. Configuration personnalisée dans la table 'sequences' (par tenant)
+    2. Fallback vers AUTO_NUMBER_CONFIG (config par défaut)
+
+    Formats supportés:
+    - PREFIX-XXXXX (sans date)
+    - PREFIX-YYYY-XXXXX (avec année)
+    - PREFIX-YYYYMM-XXXX (avec année + mois)
+    - Séparateur personnalisable (-, /, _, .)
     """
     try:
-        config = AUTO_NUMBER_CONFIG.get(module_name.lower())
-        if not config:
-            return None
-
-        # Config: (prefix, field_name, include_year, include_month=False)
-        if len(config) == 4:
-            prefix, field_name, include_year, include_month = config
-        else:
-            prefix, field_name, include_year = config
-            include_month = False
         year = datetime.now().year
         month = datetime.now().month
 
-        # Récupérer le dernier numéro pour ce module/tenant
         with Database.get_session() as session:
             from sqlalchemy import text
 
-            # Vérifier que la table existe avant d'exécuter la requête
-            check_table_sql = text("""
-                SELECT EXISTS (
-                    SELECT FROM information_schema.tables
-                    WHERE table_schema = 'azalplus'
-                    AND table_name = :table_name
-                )
-            """)
-            table_exists = session.execute(check_table_sql, {"table_name": module_name}).scalar()
-
-            if not table_exists:
-                logger.warning(f"Table azalplus.{module_name} n'existe pas, auto-numbering ignoré")
-                return None
-
-            # Vérifier que le champ existe dans la table
-            check_column_sql = text("""
-                SELECT EXISTS (
-                    SELECT FROM information_schema.columns
-                    WHERE table_schema = 'azalplus'
-                    AND table_name = :table_name
-                    AND column_name = :column_name
-                )
-            """)
-            column_exists = session.execute(check_column_sql, {
-                "table_name": module_name,
-                "column_name": field_name
-            }).scalar()
-
-            if not column_exists:
-                logger.warning(f"Colonne {field_name} n'existe pas dans azalplus.{module_name}, auto-numbering ignoré")
-                return None
-
-            if include_year and include_month:
-                # Chercher le dernier numéro du mois en cours (format: INT-YYYYMM-XXXX)
-                pattern = f"{prefix}-{year}{month:02d}-%"
-            elif include_year:
-                # Chercher le dernier numéro de l'année en cours
-                pattern = f"{prefix}-{year}-%"
-            else:
-                # Chercher le dernier numéro global
-                pattern = f"{prefix}-%"
-
-            sql = text(f"""
-                SELECT {field_name} FROM azalplus.{module_name}
-                WHERE tenant_id = :tenant_id
-                AND {field_name} LIKE :pattern
-                AND deleted_at IS NULL
-                ORDER BY {field_name} DESC
+            # 1. Chercher la configuration personnalisée dans la table sequences
+            seq_sql = text("""
+                SELECT prefixe, separateur, inclure_annee, format_annee, inclure_mois,
+                       padding, reset_annuel, reset_mensuel, compteur_actuel,
+                       annee_actuelle, mois_actuel, champ_cible, id, template,
+                       inclure_jour, inclure_heure, inclure_minute
+                FROM azalplus.sequences
+                WHERE tenant_id = :tenant_id AND entite = :entite AND archived = false
                 LIMIT 1
             """)
-            result = session.execute(sql, {"tenant_id": str(tenant_id), "pattern": pattern})
+            seq_result = session.execute(seq_sql, {
+                "tenant_id": str(tenant_id),
+                "entite": module_name.lower()
+            })
+            seq_row = seq_result.fetchone()
 
-            row = result.fetchone()
+            if seq_row:
+                # Utiliser la configuration personnalisée
+                prefix = seq_row[0]
+                separator = seq_row[1] or "-"
+                include_year = seq_row[2] if seq_row[2] is not None else True
+                format_year = seq_row[3] or "YYYY"
+                include_month = seq_row[4] if seq_row[4] is not None else False
+                padding = seq_row[5] or 5
+                reset_annual = seq_row[6] if seq_row[6] is not None else True
+                reset_monthly = seq_row[7] if seq_row[7] is not None else False
+                current_counter = seq_row[8] or 0
+                stored_year = seq_row[9]
+                stored_month = seq_row[10]
+                field_name = seq_row[11] or "code"
+                seq_id = seq_row[12]
+                template = seq_row[13]  # Template personnalisé
+                include_day = seq_row[14] if len(seq_row) > 14 else False
+                include_hour = seq_row[15] if len(seq_row) > 15 else False
+                include_minute = seq_row[16] if len(seq_row) > 16 else False
 
-            if row and row[0]:
-                # Extraire le numéro séquentiel
-                last_number = row[0]
-                try:
-                    # Format: PREFIX-YYYY-XXXXX ou PREFIX-XXXXX
-                    parts = last_number.split("-")
-                    seq = int(parts[-1]) + 1
-                except (ValueError, IndexError):
-                    seq = 1
+                # Déterminer le prochain numéro
+                next_seq = current_counter + 1
+
+                # Reset annuel si nécessaire
+                if reset_annual and stored_year and stored_year != year:
+                    next_seq = 1
+
+                # Reset mensuel si nécessaire
+                if reset_monthly and stored_month and stored_month != month:
+                    next_seq = 1
+
+                # Mettre à jour le compteur dans la table sequences (atomique)
+                update_sql = text("""
+                    UPDATE azalplus.sequences
+                    SET compteur_actuel = :next_seq,
+                        annee_actuelle = :year,
+                        mois_actuel = :month,
+                        updated_at = NOW()
+                    WHERE id = :seq_id
+                """)
+                session.execute(update_sql, {
+                    "next_seq": next_seq,
+                    "year": year,
+                    "month": month,
+                    "seq_id": str(seq_id)
+                })
+
             else:
-                seq = 1
+                # 2. Fallback vers AUTO_NUMBER_CONFIG
+                config = AUTO_NUMBER_CONFIG.get(module_name.lower())
+                if not config:
+                    return None
 
-            # Générer le nouveau numéro
+                # Config: (prefix, field_name, include_year, include_month=False)
+                if len(config) == 4:
+                    prefix, field_name, include_year, include_month = config
+                else:
+                    prefix, field_name, include_year = config
+                    include_month = False
+
+                separator = "-"
+                padding = 5 if not include_month else 4
+                format_year = "YYYY"
+                template = None  # Pas de template en mode fallback
+
+                # Vérifier que la table et colonne existent
+                check_table_sql = text("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables
+                        WHERE table_schema = 'azalplus' AND table_name = :table_name
+                    )
+                """)
+                if not session.execute(check_table_sql, {"table_name": module_name}).scalar():
+                    logger.warning(f"Table azalplus.{module_name} n'existe pas")
+                    return None
+
+                check_column_sql = text("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.columns
+                        WHERE table_schema = 'azalplus' AND table_name = :table_name AND column_name = :column_name
+                    )
+                """)
+                if not session.execute(check_column_sql, {"table_name": module_name, "column_name": field_name}).scalar():
+                    logger.warning(f"Colonne {field_name} n'existe pas dans azalplus.{module_name}")
+                    return None
+
+                # Construire le pattern pour chercher le dernier numéro
+                if include_year and include_month:
+                    pattern = f"{prefix}{separator}{year}{month:02d}{separator}%"
+                elif include_year:
+                    pattern = f"{prefix}{separator}{year}{separator}%"
+                else:
+                    pattern = f"{prefix}{separator}%"
+
+                # Chercher le dernier numéro
+                sql = text(f"""
+                    SELECT {field_name} FROM azalplus.{module_name}
+                    WHERE tenant_id = :tenant_id AND {field_name} LIKE :pattern AND deleted_at IS NULL
+                    ORDER BY {field_name} DESC LIMIT 1
+                """)
+                result = session.execute(sql, {"tenant_id": str(tenant_id), "pattern": pattern})
+                row = result.fetchone()
+
+                if row and row[0]:
+                    try:
+                        parts = row[0].split(separator)
+                        next_seq = int(parts[-1]) + 1
+                    except (ValueError, IndexError):
+                        next_seq = 1
+                else:
+                    next_seq = 1
+
+            # Générer le numéro formaté
+            now = datetime.now()
+            year_str = str(year) if format_year == "YYYY" else str(year)[2:]
+            seq_str = str(next_seq).zfill(padding)
+            day = now.day
+            hour = now.hour
+            minute = now.minute
+            second = now.second
+
+            # Si un template existe, l'utiliser
+            if template:
+                result = template
+                # Variables de base
+                result = result.replace('{PREFIX}', prefix or '')
+                result = result.replace('{SEP}', separator or '-')
+                result = result.replace('{SEQ}', seq_str)
+                # Variables de date
+                result = result.replace('{YYYY}', str(year))
+                result = result.replace('{YY}', str(year)[2:])
+                result = result.replace('{MM}', f"{month:02d}")
+                result = result.replace('{DD}', f"{day:02d}")
+                result = result.replace('{HH}', f"{hour:02d}")
+                result = result.replace('{MI}', f"{minute:02d}")
+                result = result.replace('{SS}', f"{second:02d}")
+                # Variables contextuelles
+                result = result.replace('{MODULE}', module_name)
+                result = result.replace('{ENTITE}', module_name.lower())
+                result = result.replace('{TENANT}', str(tenant_id)[:8])
+                return result
+
+            # Fallback: logique classique si pas de template
             if include_year and include_month:
-                return f"{prefix}-{year}{month:02d}-{seq:04d}"
+                return f"{prefix}{separator}{year_str}{month:02d}{separator}{seq_str}"
             elif include_year:
-                return f"{prefix}-{year}-{seq:05d}"
+                return f"{prefix}{separator}{year_str}{separator}{seq_str}"
             else:
-                return f"{prefix}-{seq:05d}"
+                return f"{prefix}{separator}{seq_str}"
 
     except Exception as e:
-        logger.error(f"Erreur lors de la génération du numéro automatique pour {module_name}: {str(e)}")
+        logger.error(f"Erreur génération numéro auto pour {module_name}: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return None
 
 # =============================================================================
@@ -2221,16 +2434,26 @@ Cree un(e) nouveau/nouvelle {self.display_name}.
                         if auto_number:
                             data[field_name] = auto_number
 
+                # Apply default values for fields with 'defaut' defined
+                for field_name, field_def in self.module.champs.items():
+                    if field_def.defaut is not None:
+                        # Appliquer la valeur par défaut si le champ n'est pas fourni ou est vide
+                        if field_name not in data or data.get(field_name) in (None, '', []):
+                            data[field_name] = field_def.defaut
+
                 # Validate required fields (skip auto-generated fields)
                 for field_name, field_def in self.module.champs.items():
-                    if field_def.requis and field_name not in data:
+                    if field_def.requis:
                         # Skip if it's an auto-generated field
                         if config and field_name == config[1]:
                             continue
-                        raise HTTPException(
-                            status_code=422,
-                            detail=f"Champ requis manquant: {field_name}"
-                        )
+                        # Check if field is missing OR empty
+                        value = data.get(field_name)
+                        if value is None or (isinstance(value, str) and value.strip() == ''):
+                            raise HTTPException(
+                                status_code=422,
+                                detail=f"Champ requis manquant: {field_name}"
+                            )
 
                 item = Database.insert(
                     self.table_name,
@@ -2447,6 +2670,172 @@ Exporte les {self.display_name} au format CSV ou JSON.
                         "Content-Disposition": f"attachment; filename={module_name}_export.json"
                     }
                 )
+
+        # =================================================================
+        # IMPORT TEMPLATE - GET /{module}/import/template
+        # =================================================================
+        @router.get(
+            f"/{module_name}/import/template",
+            tags=[tag],
+            summary=f"Telecharger le template d'import pour {self.display_name}",
+            description=f"""
+Telecharge un fichier Excel template pour l'import de {self.display_name}.
+
+Le template contient:
+- Les en-tetes avec les noms des champs
+- Une ligne d'exemple avec le format attendu
+            """,
+            responses={
+                200: {
+                    "description": "Fichier Excel template",
+                    "content": {
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
+                    }
+                },
+                401: {"description": "Non authentifie", "model": ErrorDetail}
+            }
+        )
+        async def download_import_template(
+            user: dict = Depends(require_auth)
+        ):
+            """Telecharge le template Excel pour l'import."""
+            try:
+                content = generate_excel_template(self.table_name)
+                return Response(
+                    content=content,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={
+                        "Content-Disposition": f"attachment; filename={module_name}_template.xlsx"
+                    }
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+            except Exception as e:
+                logger.error("import_template_error", module=module_name, error=str(e))
+                raise HTTPException(status_code=500, detail="Erreur generation template")
+
+        # =================================================================
+        # IMPORT PREVIEW - POST /{module}/import/preview
+        # =================================================================
+        @router.post(
+            f"/{module_name}/import/preview",
+            tags=[tag],
+            summary=f"Previsualiser un import de {self.display_name}",
+            description=f"""
+Analyse un fichier et retourne un apercu des donnees a importer.
+
+### Formats supportes
+- **Excel** (.xlsx, .xls)
+- **Word** (.docx) - tableaux uniquement
+- **CSV** (.csv)
+- **PDF** (.pdf) - tableaux detectes automatiquement
+
+### Retourne
+- Colonnes detectees
+- Mapping automatique vers les champs du module
+- Apercu des 10 premieres lignes
+            """,
+            responses={
+                200: {"description": "Apercu de l'import"},
+                400: {"description": "Format non supporte ou erreur lecture"},
+                401: {"description": "Non authentifie", "model": ErrorDetail}
+            }
+        )
+        async def preview_import(
+            file: UploadFile = File(..., description="Fichier a importer"),
+            tenant_id: UUID = Depends(get_current_tenant),
+            user: dict = Depends(require_auth)
+        ):
+            """Previsualise l'import sans modifier les donnees."""
+            content = await file.read()
+
+            result = import_multi_format(
+                module_name=self.table_name,
+                file_content=content,
+                filename=file.filename or "unknown",
+                tenant_id=tenant_id,
+                content_type=file.content_type,
+                preview_only=True
+            )
+
+            if not result.get('success'):
+                raise HTTPException(status_code=400, detail=result.get('error', 'Erreur inconnue'))
+
+            return result
+
+        # =================================================================
+        # IMPORT - POST /{module}/import
+        # =================================================================
+        @router.post(
+            f"/{module_name}/import",
+            tags=[tag],
+            summary=f"Importer des {self.display_name}",
+            description=f"""
+Importe des {self.display_name} depuis un fichier.
+
+### Formats supportes
+- **Excel** (.xlsx, .xls)
+- **Word** (.docx) - tableaux uniquement
+- **CSV** (.csv)
+- **PDF** (.pdf) - tableaux detectes automatiquement
+
+### Processus
+1. Upload du fichier
+2. Detection automatique du format
+3. Mapping automatique des colonnes vers les champs
+4. Validation des donnees
+5. Import dans la base
+
+### Conseil
+Utilisez d'abord `/import/preview` pour verifier le mapping avant l'import reel.
+            """,
+            responses={
+                200: {"description": "Resultat de l'import"},
+                400: {"description": "Format non supporte ou erreur"},
+                401: {"description": "Non authentifie", "model": ErrorDetail}
+            }
+        )
+        async def import_items(
+            file: UploadFile = File(..., description="Fichier a importer"),
+            tenant_id: UUID = Depends(get_current_tenant),
+            user_id: UUID = Depends(get_current_user_id),
+            user: dict = Depends(require_auth)
+        ):
+            """Importe des enregistrements depuis un fichier."""
+
+            # Pour les modules createur_only, verifier l'acces
+            if is_createur_only:
+                from .guardian import CREATEUR_EMAIL
+                if user.get("email") != CREATEUR_EMAIL:
+                    raise HTTPException(status_code=403, detail="Acces reserve au createur")
+
+            content = await file.read()
+
+            # Pour les modules createur_only, utiliser SYSTEM_TENANT_ID
+            query_tenant_id = SYSTEM_TENANT_ID if is_createur_only else tenant_id
+
+            result = import_multi_format(
+                module_name=self.table_name,
+                file_content=content,
+                filename=file.filename or "unknown",
+                tenant_id=query_tenant_id,
+                user_id=user_id,
+                content_type=file.content_type,
+                preview_only=False
+            )
+
+            if not result.get('success'):
+                raise HTTPException(status_code=400, detail=result.get('error', 'Erreur inconnue'))
+
+            logger.info(
+                "import_completed",
+                module=module_name,
+                tenant_id=str(query_tenant_id),
+                inserted=result.get('inserted', 0),
+                errors=result.get('total_errors', 0)
+            )
+
+            return result
 
     def _get_required_fields_doc(self) -> str:
         """Generate documentation for required fields."""

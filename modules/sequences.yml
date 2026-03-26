@@ -1,96 +1,237 @@
 # AZALPLUS - Module Sequences de Numerotation
+# Configuration des formats de numérotation automatique par entité
 nom: Sequences
 icone: hash
-menu: Parametres
+menu: Administration
 description: Configuration des sequences de numerotation automatique
+admin_only: true
 
 champs:
-  - nom: nom
-    type: text
-    groupe: Identification
-    obligatoire: true
-    description: Nom de la sequence
-    autocompletion: true
-
-  - nom: code
-    type: text
-    groupe: Identification
-    obligatoire: true
-    description: Code unique de la sequence
-    autocompletion: true
-
-  - nom: type_document
+  # Identification
+  - nom: entite
     type: select
-    groupe: Informations
+    groupe: Identification
     obligatoire: true
-    options: [devis, facture, avoir, commande, bon_livraison, intervention, client, fournisseur, produit, paiement]
-    description: Type de document concerne
+    options:
+      # Documents commerciaux
+      - factures
+      - devis
+      - commandes
+      - ventes
+      - achats
+      - avoirs
+      - bons_livraison
+      - contrats
+      - abonnements
+      - location_materiel
+      # Interventions
+      - interventions
+      # CRM / Commercial
+      - clients
+      - crm
+      - appels_offres
+      - apporteurs
+      - donneur_ordre
+      # Fournisseurs
+      - fournisseurs
+      # Produits / Stock
+      - produits
+      - inventaire
+      # Projets
+      - projets
+      # Finance / Comptabilité
+      - comptabilite
+      - comptes_bancaires
+      - mouvements_bancaires
+      - mouvements_credit
+      - paiements_openbanking
+      - caisse
+      - cautions
+      - retenues_garantie
+      # RH / Paie
+      - paie
+      - departements
+      - planning
+      # Support
+      - support
+      - tickets
+      # Assurances
+      - polices_assurance
+      - sinistres
+      - risques
+      # Immobilier
+      - immobilier
+      - copropriete
+      # Médical
+      - medical
+      - patients
+      - consultations
+      - med_consultations
+      - med_documents
+      - med_consentements
+      - med_formulaires_consent
+      - med_articles_veille
+      # Véhicules
+      - vehicules
+      # Qualité / RGPD
+      - qualite
+      - rgpd
+      # E-commerce
+      - ecommerce
+      - marketplace_btob
+      # Documents
+      - signature_electronique
+      - sauvegardes
+    description: Entite concernee par la sequence
+
+  - nom: champ_cible
+    type: select
+    groupe: Identification
+    obligatoire: false
+    defaut: code
+    options: [code, numero, number, reference, ref]
+    description: "Nom du champ a remplir automatiquement"
 
   - nom: prefixe
     type: text
-    groupe: Informations
+    groupe: Format
     obligatoire: true
-    description: Prefixe de la sequence
-    autocompletion: true
-
-  - nom: suffixe
-    type: text
-    groupe: Informations
-    obligatoire: false
-    description: Suffixe optionnel
-    autocompletion: true
+    description: "Prefixe (ex: FAC, DEV, CLI)"
 
   - nom: separateur
-    type: text
-    groupe: Informations
+    type: select
+    groupe: Format
     obligatoire: false
     defaut: "-"
+    options: ["-", "/", "_", "."]
     description: Separateur entre les elements
-    autocompletion: true
-
-  - nom: format
-    type: text
-    groupe: Informations
-    obligatoire: true
-    description: Format de la sequence
-    autocompletion: true
 
   - nom: padding
     type: number
-    groupe: Informations
+    groupe: Format
     obligatoire: false
-    defaut: 4
-    description: Nombre de chiffres pour le compteur
+    defaut: 5
+    description: Nombre de chiffres (ex 5 = 00001)
 
-  - nom: format_date
-    type: select
-    groupe: Dates
+  # Options de date
+  - nom: inclure_annee
+    type: boolean
+    groupe: Options Date
     obligatoire: false
-    options: [YYYY, YYMM, YYMMDD, null]
-    description: Format de date inclus
+    defaut: true
+    description: Inclure l'annee dans le numero
 
-  - nom: reset
+  - nom: format_annee
     type: select
-    groupe: Informations
+    groupe: Options Date
     obligatoire: false
-    defaut: annuel
-    options: [jamais, annuel, mensuel]
-    description: Frequence de remise a zero
+    defaut: YYYY
+    options: [YYYY, YY]
+    description: "Format de l'annee (YYYY=2026, YY=26)"
+
+  - nom: inclure_mois
+    type: boolean
+    groupe: Options Date
+    obligatoire: false
+    defaut: false
+    description: Inclure le mois dans le numero
+
+  - nom: inclure_jour
+    type: boolean
+    groupe: Options Date
+    obligatoire: false
+    defaut: false
+    description: Inclure le jour dans le numero
+
+  - nom: inclure_heure
+    type: boolean
+    groupe: Options Date
+    obligatoire: false
+    defaut: false
+    description: Inclure l'heure dans le numero
+
+  - nom: inclure_minute
+    type: boolean
+    groupe: Options Date
+    obligatoire: false
+    defaut: false
+    description: Inclure les minutes dans le numero
+
+  # Templates avancés
+  - nom: template
+    type: text
+    groupe: Templates
+    obligatoire: false
+    defaut: "{PREFIX}{SEP}{YYYY}{SEP}{SEQ}"
+    description: "Template de numérotation (variables: {PREFIX}, {SEP}, {YYYY}, {YY}, {MM}, {DD}, {HH}, {MI}, {SS}, {SEQ})"
+
+  - nom: template_fichier
+    type: text
+    groupe: Templates
+    obligatoire: false
+    defaut: "{PREFIX}_{SEQ}.{EXT}"
+    description: "Template pour les noms de fichiers"
+
+  - nom: template_repertoire
+    type: text
+    groupe: Templates
+    obligatoire: false
+    defaut: "{MODULE}/{YYYY}/{MM}"
+    description: "Template pour les chemins de répertoires"
+
+  - nom: type_config
+    type: select
+    groupe: Templates
+    obligatoire: false
+    defaut: numero
+    options: [numero, fichier, repertoire]
+    description: "Type de configuration"
+
+  # Reset du compteur
+  - nom: reset_annuel
+    type: boolean
+    groupe: Compteur
+    obligatoire: false
+    defaut: true
+    description: Remettre le compteur a zero chaque annee
+
+  - nom: reset_mensuel
+    type: boolean
+    groupe: Compteur
+    obligatoire: false
+    defaut: false
+    description: Remettre le compteur a zero chaque mois
 
   - nom: compteur_actuel
     type: number
-    groupe: Informations
+    groupe: Compteur
     obligatoire: false
     defaut: 0
+    readonly: true
     description: Valeur actuelle du compteur
 
-  - nom: actif
-    type: boolean
-    groupe: Statut
+  - nom: annee_actuelle
+    type: number
+    groupe: Compteur
     obligatoire: false
-    defaut: true
-    description: Sequence active
+    readonly: true
+    description: Annee du dernier numero genere
+
+  - nom: mois_actuel
+    type: number
+    groupe: Compteur
+    obligatoire: false
+    readonly: true
+    description: Mois du dernier numero genere
+
+  # Aperçu
+  - nom: apercu
+    type: text
+    groupe: Apercu
+    obligatoire: false
+    readonly: true
+    description: "Exemple: FAC-2026-00001"
 
 actions:
-  - reinitialiser
-  - tester
+  - reinitialiser_compteur
+  - tester_sequence

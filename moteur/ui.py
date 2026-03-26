@@ -92,7 +92,7 @@ def get_tva_default() -> float:
 # =============================================================================
 # Helpers
 # =============================================================================
-def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = False, module_name: str = "", odoo_style: bool = True) -> str:
+def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = False, module_name: str = "", odoo_style: bool = True, user_role: str = "user") -> str:
     """Génère le HTML d'un champ de formulaire style Odoo (label à gauche, input à droite)."""
     import html as html_module
 
@@ -100,8 +100,27 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
     required_attr = "required" if field.requis else ""
     required_class = "required" if field.requis else ""
     label = field.label or field.nom.replace("_", " ").title()
-    placeholder = getattr(field, 'placeholder', None) or ""
     help_text = f'<small class="form-help">{field.aide}</small>' if field.aide else ""
+
+    # Champs auto-générés ou readonly
+    is_auto_genere = getattr(field, 'auto_genere', False)
+    is_readonly = getattr(field, 'readonly', False) or is_auto_genere
+
+    # Vérifier les permissions d'écriture par rôle
+    permissions_ecriture = getattr(field, 'permissions_ecriture', [])
+    if permissions_ecriture:
+        # Si des permissions sont définies, vérifier si l'utilisateur a le droit d'écrire
+        user_role_lower = user_role.lower() if user_role else "user"
+        if user_role_lower not in permissions_ecriture:
+            is_readonly = True
+
+    readonly_attr = "readonly" if is_readonly else ""
+    readonly_style = "background: var(--gray-100); cursor: not-allowed;" if is_readonly else ""
+
+    # Placeholder - "Auto-généré" pour les champs auto-générés
+    placeholder = getattr(field, 'placeholder', None) or ""
+    if is_auto_genere and not placeholder:
+        placeholder = "Auto-généré"
 
     # Échapper la valeur pour HTML
     escaped_value = html_module.escape(str(value)) if value is not None else ""
@@ -351,7 +370,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
             <div class="o-field-row">
                 <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
                 <div class="o-field-widget">
-                    <input type="text" class="o-field-char" id="{field_id}" name="{field.nom}" value="{escaped_value}" {required_attr}>
+                    <input type="text" class="o-field-char" id="{field_id}" name="{field.nom}" value="{escaped_value}" placeholder="{placeholder}" {required_attr} {readonly_attr} style="{readonly_style}">
                 </div>
             </div>
             '''
@@ -444,6 +463,13 @@ def generate_module_action_buttons(module_name: str, item: dict) -> str:
         </div>
 
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
         // Variables pour import Odoo
         const odooConfig = {{
             sourceType: '{source_type}',
@@ -850,6 +876,13 @@ def generate_documents_section(module_name: str, item_id: str) -> str:
     </style>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     // Drag and drop support
     const uploadZone = document.getElementById('upload-zone');
 
@@ -1314,6 +1347,13 @@ async def dashboard(request: Request, user: dict = Depends(require_auth)):
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
             document.addEventListener('DOMContentLoaded', function() {{
                 // Graphique CA annuel
                 const caCtx = document.getElementById('caChart').getContext('2d');
@@ -1402,9 +1442,205 @@ async def dashboard(request: Request, user: dict = Depends(require_auth)):
 
 
 @ui_router.get("/parametres/theme", response_class=HTMLResponse)
-async def theme_settings(request: Request, user: dict = Depends(require_auth)):
-    """Page de personnalisation du thème des documents."""
+async def theme_settings(
+    request: Request,
+    user: dict = Depends(require_auth),
+    tenant_id: UUID = Depends(get_current_tenant)
+):
+    """Page de personnalisation du thème des documents et numérotation."""
     import yaml
+    from sqlalchemy import text
+
+    # Vérifier si admin
+    is_admin = user.get('role') in ('admin', 'superadmin', 'createur')
+
+    # Charger les séquences personnalisées pour ce tenant
+    sequences_html = ""
+    sequences_list = []
+    custom_sequences = {}  # entite -> config
+
+    if is_admin:
+        try:
+            with Database.get_session() as session:
+                sql = text("""
+                    SELECT id, entite, prefixe, separateur, inclure_annee, format_annee,
+                           inclure_mois, padding, reset_annuel, reset_mensuel,
+                           compteur_actuel, champ_cible, template, type_config
+                    FROM azalplus.sequences
+                    WHERE tenant_id = :tenant_id AND archived = false
+                    ORDER BY entite
+                """)
+                result = session.execute(sql, {"tenant_id": str(tenant_id)})
+                for row in result:
+                    custom_sequences[row[1]] = {
+                        "id": str(row[0]),
+                        "entite": row[1],
+                        "prefixe": row[2],
+                        "separateur": row[3] or "-",
+                        "inclure_annee": row[4],
+                        "format_annee": row[5] or "YYYY",
+                        "inclure_mois": row[6],
+                        "padding": row[7] or 4,
+                        "reset_annuel": row[8] if row[8] is not None else True,
+                        "reset_mensuel": row[9] if row[9] is not None else False,
+                        "compteur_actuel": row[10] or 0,
+                        "champ_cible": row[11] or "code",
+                        "template": row[12] or "{PREFIX}{SEP}{YYYY}{SEP}{SEQ}",
+                        "type_config": row[13] or "numero",
+                        "is_custom": True
+                    }
+        except Exception as e:
+            logger.error(f"Erreur chargement séquences: {e}")
+
+    # Charger la configuration par défaut depuis api_v1.py
+    from .api_v1 import AUTO_NUMBER_CONFIG
+
+    # Construire la liste de TOUS les modules avec configuration de numérotation
+    # Combiner: modules par défaut (AUTO_NUMBER_CONFIG) + modules avec config personnalisée
+    all_modules_with_numbering = set(AUTO_NUMBER_CONFIG.keys()) | set(custom_sequences.keys())
+
+    for module_name in sorted(all_modules_with_numbering):
+        if module_name in custom_sequences:
+            # Utiliser la configuration personnalisée
+            sequences_list.append(custom_sequences[module_name])
+        elif module_name in AUTO_NUMBER_CONFIG:
+            # Utiliser la configuration par défaut de AUTO_NUMBER_CONFIG
+            config = AUTO_NUMBER_CONFIG[module_name]
+            prefix = config[0]
+            field_name = config[1]
+            include_year = config[2] if len(config) > 2 else True
+            include_month = config[3] if len(config) > 3 else False
+
+            # Construire le template par défaut
+            if include_year and include_month:
+                default_template = "{PREFIX}{SEP}{YYYY}{SEP}{MM}{SEP}{SEQ}"
+            elif include_year:
+                default_template = "{PREFIX}{SEP}{YYYY}{SEP}{SEQ}"
+            else:
+                default_template = "{PREFIX}{SEP}{SEQ}"
+
+            sequences_list.append({
+                "id": None,
+                "entite": module_name,
+                "prefixe": prefix,
+                "separateur": "-",
+                "inclure_annee": include_year,
+                "format_annee": "YYYY",
+                "inclure_mois": include_month,
+                "padding": 4 if include_month else 5,
+                "reset_annuel": True,
+                "reset_mensuel": False,
+                "compteur_actuel": 0,
+                "champ_cible": field_name,
+                "template": default_template,
+                "type_config": "numero",
+                "is_custom": False
+            })
+
+    # Générer les lignes du tableau des séquences
+    from datetime import datetime
+    now = datetime.now()
+
+    for seq in sequences_list:
+        # Générer l'aperçu à partir du template
+        template = seq.get('template', '{PREFIX}-{YYYY}-{SEQ}')
+        apercu = template
+        apercu = apercu.replace('{PREFIX}', seq['prefixe'])
+        apercu = apercu.replace('{SEP}', seq['separateur'])
+        apercu = apercu.replace('{YYYY}', str(now.year))
+        apercu = apercu.replace('{YY}', str(now.year)[2:])
+        apercu = apercu.replace('{MM}', f"{now.month:02d}")
+        apercu = apercu.replace('{DD}', f"{now.day:02d}")
+        apercu = apercu.replace('{HH}', f"{now.hour:02d}")
+        apercu = apercu.replace('{MI}', f"{now.minute:02d}")
+        apercu = apercu.replace('{SS}', f"{now.second:02d}")
+        apercu = apercu.replace('{SEQ}', '1'.zfill(seq['padding']))
+        apercu = apercu.replace('{MODULE}', seq['entite'])
+        apercu = apercu.replace('{ENTITE}', seq['entite'])
+
+        type_icon = "📄" if seq.get('type_config') == 'numero' else "📁"
+        reset_label = "Annuel" if seq['reset_annuel'] else ("Mensuel" if seq['reset_mensuel'] else "Jamais")
+
+        # Échapper les accolades du template pour l'affichage HTML (éviter l'interprétation par f-string)
+        template_display = template.replace('{', '&#123;').replace('}', '&#125;')
+
+        # Différencier les configs personnalisées des configs par défaut
+        is_custom = seq.get('is_custom', True)
+        if is_custom:
+            # Configuration personnalisée - peut être modifiée ou supprimée
+            badge_html = '<span style="background: var(--success-light, #d1fae5); color: var(--success, #059669); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">Personnalisé</span>'
+            actions_html = f'''
+                <button class="btn btn-sm btn-secondary" onclick="editSequence('{seq['id']}')">Modifier</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSequence('{seq['id']}', '{seq['entite']}')">Supprimer</button>
+            '''
+        else:
+            # Configuration par défaut - peut être personnalisée
+            badge_html = '<span style="background: var(--gray-100); color: var(--gray-500); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">Défaut</span>'
+            prefixe_escaped = seq['prefixe'].replace("'", "\\'")
+            template_escaped = template.replace("'", "\\'")
+            actions_html = f'''
+                <button class="btn btn-sm btn-primary" onclick="configureDefaultSequence('{seq['entite']}', '{prefixe_escaped}', '{template_escaped}', {seq['padding']}, {'true' if seq['reset_annuel'] else 'false'}, {'true' if seq['reset_mensuel'] else 'false'})">Configurer</button>
+            '''
+
+        sequences_html += f'''
+            <tr>
+                <td>{type_icon}</td>
+                <td style="font-weight: 500;">{seq['entite']}{badge_html}</td>
+                <td><code style="font-size: 12px;">{template_display}</code></td>
+                <td><code style="background: var(--primary-light, #e0e7ff); color: var(--primary); padding: 4px 8px; border-radius: 4px;">{apercu}</code></td>
+                <td>{reset_label}</td>
+                <td>{seq['compteur_actuel']}</td>
+                <td>
+                    {actions_html}
+                </td>
+            </tr>'''
+
+    # Charger tous les modules disponibles (AZAP-NC-001: zéro liste hardcodée)
+    modules_dir = Path(__file__).parent.parent / "modules"
+    all_modules = []
+    if modules_dir.exists():
+        for f in sorted(modules_dir.glob("*.yml")):
+            module_name = f.stem
+            # Exclure certains modules système
+            if module_name not in ['audit_log', 'autocompletion_ia_spec', 'champs_personnalises', 'sys_listes', 'tags']:
+                all_modules.append(module_name)
+
+    # Générer les options du select pour les modules
+    modules_options_html = '<option value="">-- Sélectionner --</option>'
+    # Grouper par catégorie
+    categories = {
+        'Documents commerciaux': ['factures', 'devis', 'commandes', 'avoirs', 'bons_livraison', 'ventes', 'achats', 'abonnements'],
+        'CRM / Commercial': ['clients', 'fournisseurs', 'apporteurs', 'donneur_ordre', 'contrats', 'crm', 'appels_offres', 'parrainage'],
+        'Interventions / Projets': ['interventions', 'projets', 'planning', 'support', 'tickets'],
+        'Produits / Stock': ['produits', 'inventaire', 'location_materiel', 'tarifs_donneur_ordre'],
+        'Finance / Comptabilité': ['comptabilite', 'comptes_bancaires', 'mouvements_bancaires', 'mouvements_credit', 'paiements_openbanking', 'caisse', 'cautions', 'retenues_garantie', 'budget', 'previsions'],
+        'RH / Paie': ['paie', 'employes', 'departements', 'rh'],
+        'Documents / GED': ['documents', 'ged', 'modeles_email', 'sauvegardes', 'signature_electronique', 'pdf_config'],
+        'Médical': ['medical', 'patients', 'med_patients', 'consultations', 'med_consultations', 'med_documents', 'med_consentements', 'med_formulaires_consent', 'med_praticiens', 'med_articles_veille'],
+        'Immobilier': ['immobilier', 'copropriete'],
+        'Assurances': ['polices_assurance', 'sinistres', 'risques'],
+        'Véhicules': ['vehicules'],
+        'Qualité / Conformité': ['qualite', 'conformite', 'haccp', 'rgpd', 'consentements'],
+        'E-commerce': ['ecommerce', 'marketplace_btob', 'sites_web', 'waitlist'],
+        'Autres': []
+    }
+
+    # Ajouter les modules non catégorisés à "Autres"
+    categorized = set()
+    for mods in categories.values():
+        categorized.update(mods)
+    for m in all_modules:
+        if m not in categorized:
+            categories['Autres'].append(m)
+
+    for cat, mods in categories.items():
+        available_mods = [m for m in mods if m in all_modules]
+        if available_mods:
+            modules_options_html += f'<optgroup label="{cat}">'
+            for m in available_mods:
+                display_name = m.replace('_', ' ').title()
+                modules_options_html += f'<option value="{m}">{display_name}</option>'
+            modules_options_html += '</optgroup>'
 
     # Charger les thèmes depuis config/themes.yml (AZAP-NC-001: zéro liste hardcodée)
     themes_config = Path(__file__).parent.parent / "config" / "themes.yml"
@@ -1456,15 +1692,18 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
     html = generate_layout(
         title="Style des documents",
         content=f'''
-        <!-- Onglets -->
-        <div class="tabs-container" style="background: var(--white); border-radius: var(--radius-lg) var(--radius-lg) 0 0; margin-bottom: 0;">
-            <div class="tabs">
-                <a href="#" class="tab active" onclick="showTab('documents', this)">Style Documents</a>
-                <a href="#" class="tab" onclick="showTab('ambiance', this)">Ambiance</a>
+        <!-- Container pour tous les onglets -->
+        <div class="theme-tabs-wrapper" style="display: block; width: 100%;">
+            <!-- Onglets -->
+            <div class="tabs-container" style="background: var(--white); border-radius: var(--radius-lg) var(--radius-lg) 0 0; margin-bottom: 0;">
+                <div class="tabs">
+                    <a href="#" class="tab active" onclick="showTab('documents', this)">Style Documents</a>
+                    <a href="#" class="tab" onclick="showTab('ambiance', this)">Ambiance</a>
+                    <a href="#" class="tab" onclick="showTab('numerotation', this)">Numérotation</a>
+                </div>
             </div>
-        </div>
 
-        <!-- Tab Documents -->
+            <!-- Tab Documents -->
         <div id="tab-documents" class="tab-content">
         <div class="card" style="border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
             <div class="card-header">
@@ -1588,6 +1827,13 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
         </style>
 
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
             document.querySelectorAll('.color-btn').forEach(btn => {{
                 btn.onclick = () => {{
                     document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
@@ -1743,7 +1989,229 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
         </div>
         </div>
 
+        <!-- Tab Numérotation -->
+        <div id="tab-numerotation" class="tab-content" style="display: none;">
+        <div class="card" style="border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="card-title">Configuration de la numérotation et nommage</h2>
+                <button class="btn btn-primary" onclick="showAddSequenceForm()">+ Nouvelle configuration</button>
+            </div>
+            <div class="card-body">
+                {'<div class="alert alert-warning" style="margin-bottom: 20px;">Seuls les administrateurs peuvent configurer la numérotation.</div>' if not is_admin else ''}
+
+                <!-- Variables disponibles -->
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 12px; font-size: 14px; color: var(--gray-700);">Variables disponibles (cliquer pour copier)</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <span class="var-tag" onclick="copyVar('{{PREFIX}}')" title="Préfixe configuré">{{PREFIX}}</span>
+                        <span class="var-tag" onclick="copyVar('{{SEQ}}')" title="Numéro séquentiel">{{SEQ}}</span>
+                        <span class="var-tag" onclick="copyVar('{{YYYY}}')" title="Année 4 chiffres">{{YYYY}}</span>
+                        <span class="var-tag" onclick="copyVar('{{YY}}')" title="Année 2 chiffres">{{YY}}</span>
+                        <span class="var-tag" onclick="copyVar('{{MM}}')" title="Mois">{{MM}}</span>
+                        <span class="var-tag" onclick="copyVar('{{DD}}')" title="Jour">{{DD}}</span>
+                        <span class="var-tag" onclick="copyVar('{{HH}}')" title="Heure">{{HH}}</span>
+                        <span class="var-tag" onclick="copyVar('{{MI}}')" title="Minutes">{{MI}}</span>
+                        <span class="var-tag" onclick="copyVar('{{SS}}')" title="Secondes">{{SS}}</span>
+                        <span class="var-tag" onclick="copyVar('{{MODULE}}')" title="Nom du module">{{MODULE}}</span>
+                        <span class="var-tag" onclick="copyVar('{{ENTITE}}')" title="Entité">{{ENTITE}}</span>
+                        <span class="var-tag" onclick="copyVar('{{USER}}')" title="Utilisateur">{{USER}}</span>
+                        <span class="var-tag" onclick="copyVar('{{TENANT}}')" title="Tenant">{{TENANT}}</span>
+                        <span class="var-tag" onclick="copyVar('{{EXT}}')" title="Extension fichier">{{EXT}}</span>
+                        <span class="var-tag" onclick="copyVar('{{UUID}}')" title="Identifiant unique">{{UUID}}</span>
+                    </div>
+                    <style>
+                        .var-tag {{
+                            background: var(--primary-light, #e0e7ff);
+                            color: var(--primary);
+                            padding: 4px 10px;
+                            border-radius: 4px;
+                            font-family: monospace;
+                            font-size: 12px;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                            border: 1px solid var(--primary);
+                        }}
+                        .var-tag:hover {{
+                            background: var(--primary);
+                            color: white;
+                        }}
+                    </style>
+                </div>
+
+                <!-- Formulaire d'ajout/modification -->
+                <div id="sequence-form" style="display: none; background: var(--gray-50); padding: 24px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--gray-200);">
+                    <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 24px;">⚙️</span> Configurer la numérotation
+                    </h3>
+                    <input type="hidden" id="seq-id" value="">
+
+                    <!-- Type de configuration -->
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                        <button type="button" class="btn btn-outline config-type-btn active" data-type="numero" onclick="setConfigType('numero')">📄 Numéros de documents</button>
+                        <button type="button" class="btn btn-outline config-type-btn" data-type="fichier" onclick="setConfigType('fichier')">📁 Fichiers et répertoires</button>
+                    </div>
+                    <input type="hidden" id="seq-type-config" value="numero">
+
+                    <!-- Section commune -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label class="label">Entité / Module *</label>
+                            <select id="seq-entite" class="form-control" required onchange="updateTemplatePreview()">
+                                {modules_options_html}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Préfixe *</label>
+                            <input type="text" id="seq-prefixe" class="form-control" placeholder="FAC, CLI, DOC..." maxlength="15" required oninput="updateTemplatePreview()">
+                        </div>
+                        <div class="form-group" id="grp-champ-cible">
+                            <label class="label">Champ cible</label>
+                            <select id="seq-champ" class="form-control">
+                                <option value="code">code</option>
+                                <option value="numero">numero</option>
+                                <option value="number">number</option>
+                                <option value="reference">reference</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Nb chiffres séquence</label>
+                            <select id="seq-padding" class="form-control" onchange="updateTemplatePreview()">
+                                <option value="3">3 (001)</option>
+                                <option value="4">4 (0001)</option>
+                                <option value="5" selected>5 (00001)</option>
+                                <option value="6">6 (000001)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Section template numéro -->
+                    <div id="section-numero">
+                        <h4 style="margin-bottom: 12px; color: var(--gray-700);">📄 Template du numéro</h4>
+                        <div class="form-group">
+                            <label class="label">Format du numéro</label>
+                            <input type="text" id="seq-template" class="form-control" style="font-family: monospace; font-size: 14px;"
+                                   value="{{PREFIX}}-{{YYYY}}-{{SEQ}}" placeholder="{{PREFIX}}-{{YYYY}}-{{SEQ}}" oninput="updateTemplatePreview()">
+                            <small style="color: var(--gray-500);">Utilisez les variables ci-dessus. Séparateurs libres: - / _ . ou aucun</small>
+                        </div>
+                    </div>
+
+                    <!-- Section template fichier -->
+                    <div id="section-fichier" style="display: none;">
+                        <h4 style="margin-bottom: 12px; color: var(--gray-700);">📁 Templates fichiers</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label class="label">Chemin du répertoire</label>
+                                <input type="text" id="seq-template-repertoire" class="form-control" style="font-family: monospace;"
+                                       value="{{MODULE}}/{{YYYY}}/{{MM}}" placeholder="{{MODULE}}/{{YYYY}}/{{MM}}" oninput="updateTemplatePreview()">
+                                <small style="color: var(--gray-500);">Structure des dossiers de stockage</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Nom du fichier</label>
+                                <input type="text" id="seq-template-fichier" class="form-control" style="font-family: monospace;"
+                                       value="{{PREFIX}}_{{YYYY}}{{MM}}{{DD}}_{{SEQ}}.{{EXT}}" placeholder="{{PREFIX}}_{{SEQ}}.{{EXT}}" oninput="updateTemplatePreview()">
+                                <small style="color: var(--gray-500);">Format du nom de fichier</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options de reset -->
+                    <div style="margin-top: 20px; padding: 16px; background: white; border-radius: 8px; border: 1px solid var(--gray-200);">
+                        <h4 style="margin-bottom: 12px; color: var(--gray-700);">🔄 Remise à zéro du compteur</h4>
+                        <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="radio" name="seq-reset" value="jamais" onchange="updateTemplatePreview()"> Jamais
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="radio" name="seq-reset" value="annuel" checked onchange="updateTemplatePreview()"> Chaque année
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="radio" name="seq-reset" value="mensuel" onchange="updateTemplatePreview()"> Chaque mois
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="radio" name="seq-reset" value="quotidien" onchange="updateTemplatePreview()"> Chaque jour
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Aperçu en temps réel -->
+                    <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, var(--primary-light, #e0e7ff) 0%, white 100%); border-radius: 8px; border: 2px solid var(--primary);">
+                        <h4 style="margin-bottom: 12px; color: var(--gray-700);">👁️ Aperçu en temps réel</h4>
+                        <div id="preview-numero" style="margin-bottom: 8px;">
+                            <strong>Numéro:</strong> <code id="seq-preview" style="font-size: 18px; color: var(--primary); background: white; padding: 6px 12px; border-radius: 4px;">FAC-2026-00001</code>
+                        </div>
+                        <div id="preview-fichier" style="display: none;">
+                            <div style="margin-bottom: 8px;">
+                                <strong>Répertoire:</strong> <code id="seq-preview-repertoire" style="font-size: 14px; color: var(--gray-700); background: white; padding: 4px 8px; border-radius: 4px;">documents/2026/03</code>
+                            </div>
+                            <div>
+                                <strong>Fichier:</strong> <code id="seq-preview-fichier" style="font-size: 14px; color: var(--gray-700); background: white; padding: 4px 8px; border-radius: 4px;">DOC_20260326_00001.pdf</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div style="display: flex; gap: 8px; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="saveSequence()">💾 Enregistrer</button>
+                        <button class="btn btn-secondary" onclick="hideSequenceForm()">Annuler</button>
+                    </div>
+                </div>
+
+                <!-- Tableau des séquences existantes -->
+                <div style="overflow-x: auto;">
+                    <table class="table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Entité</th>
+                                <th>Template</th>
+                                <th>Aperçu</th>
+                                <th>Reset</th>
+                                <th>Compteur</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sequences_html if sequences_html else '<tr><td colspan="7" style="text-align: center; color: var(--gray-500); padding: 40px;">Aucune configuration personnalisée. Les formats par défaut seront utilisés.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-top: 20px; padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                    <h4 style="margin-bottom: 8px;">💡 Note</h4>
+                    <p style="color: var(--gray-600); margin: 0;">Si aucune séquence n'est configurée pour une entité, la numérotation par défaut sera utilisée (ex: CLI-00001 pour les clients).</p>
+                </div>
+            </div>
+        </div>
+        </div>
+        </div><!-- Fin theme-tabs-wrapper -->
+
+        <style>
+            /* Style pour les onglets du thème */
+            .theme-tabs-wrapper {{
+                display: block !important;
+                width: 100% !important;
+            }}
+            .theme-tabs-wrapper .tabs-container {{
+                display: block;
+                width: 100%;
+            }}
+            .theme-tabs-wrapper .tab-content {{
+                display: none;
+                width: 100%;
+            }}
+            .theme-tabs-wrapper .tab-content:first-of-type {{
+                display: block;
+            }}
+        </style>
+
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
             let selectedStyle = null;
 
             function showTab(tabName, element) {{
@@ -1908,6 +2376,227 @@ async def theme_settings(request: Request, user: dict = Depends(require_auth)):
 
             // Init preview on load
             document.addEventListener('DOMContentLoaded', updatePreview);
+
+            // === FONCTIONS SEQUENCES (Templates) ===
+            let currentConfigType = 'numero';
+
+            function copyVar(varName) {{
+                navigator.clipboard.writeText(varName);
+                const el = event.target;
+                const original = el.textContent;
+                el.textContent = '✓ Copié';
+                setTimeout(() => el.textContent = original, 1000);
+            }}
+
+            function setConfigType(type) {{
+                currentConfigType = type;
+                document.getElementById('seq-type-config').value = type;
+                document.querySelectorAll('.config-type-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-type="${{type}}"]`).classList.add('active');
+
+                // Afficher/masquer les sections
+                document.getElementById('section-numero').style.display = type === 'numero' ? 'block' : 'none';
+                document.getElementById('section-fichier').style.display = type === 'fichier' ? 'block' : 'none';
+                document.getElementById('grp-champ-cible').style.display = type === 'numero' ? 'block' : 'none';
+                document.getElementById('preview-numero').style.display = type === 'numero' ? 'block' : 'none';
+                document.getElementById('preview-fichier').style.display = type === 'fichier' ? 'block' : 'none';
+
+                updateTemplatePreview();
+            }}
+
+            function showAddSequenceForm() {{
+                document.getElementById('sequence-form').style.display = 'block';
+                document.getElementById('seq-id').value = '';
+                document.getElementById('seq-entite').value = '';
+                document.getElementById('seq-prefixe').value = '';
+                document.getElementById('seq-padding').value = '5';
+                document.getElementById('seq-champ').value = 'code';
+                document.getElementById('seq-template').value = '{{PREFIX}}-{{YYYY}}-{{SEQ}}';
+                document.getElementById('seq-template-repertoire').value = '{{MODULE}}/{{YYYY}}/{{MM}}';
+                document.getElementById('seq-template-fichier').value = '{{PREFIX}}_{{YYYY}}{{MM}}{{DD}}_{{SEQ}}.{{EXT}}';
+                document.querySelector('input[name="seq-reset"][value="annuel"]').checked = true;
+                setConfigType('numero');
+                updateTemplatePreview();
+                // Scroll vers le formulaire
+                document.getElementById('sequence-form').scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+            }}
+
+            function hideSequenceForm() {{
+                document.getElementById('sequence-form').style.display = 'none';
+            }}
+
+            function updateTemplatePreview() {{
+                const now = new Date();
+                const prefixe = document.getElementById('seq-prefixe').value || 'XXX';
+                const padding = parseInt(document.getElementById('seq-padding').value) || 5;
+                const entite = document.getElementById('seq-entite').value || 'module';
+
+                // Variables de remplacement
+                const vars = {{
+                    '{{PREFIX}}': prefixe,
+                    '{{SEQ}}': '1'.padStart(padding, '0'),
+                    '{{YYYY}}': now.getFullYear().toString(),
+                    '{{YY}}': now.getFullYear().toString().slice(-2),
+                    '{{MM}}': (now.getMonth() + 1).toString().padStart(2, '0'),
+                    '{{DD}}': now.getDate().toString().padStart(2, '0'),
+                    '{{HH}}': now.getHours().toString().padStart(2, '0'),
+                    '{{MI}}': now.getMinutes().toString().padStart(2, '0'),
+                    '{{SS}}': now.getSeconds().toString().padStart(2, '0'),
+                    '{{MODULE}}': entite,
+                    '{{ENTITE}}': entite,
+                    '{{USER}}': 'user',
+                    '{{TENANT}}': 'tenant',
+                    '{{EXT}}': 'pdf',
+                    '{{UUID}}': 'abc123'
+                }};
+
+                // Fonction de remplacement
+                const replaceVars = (template) => {{
+                    let result = template;
+                    for (const [key, value] of Object.entries(vars)) {{
+                        result = result.split(key).join(value);
+                    }}
+                    return result;
+                }};
+
+                // Aperçu numéro
+                const templateNumero = document.getElementById('seq-template').value || '{{PREFIX}}-{{SEQ}}';
+                document.getElementById('seq-preview').textContent = replaceVars(templateNumero);
+
+                // Aperçu fichier
+                const templateRepertoire = document.getElementById('seq-template-repertoire').value || '{{MODULE}}/{{YYYY}}';
+                const templateFichier = document.getElementById('seq-template-fichier').value || '{{PREFIX}}_{{SEQ}}.{{EXT}}';
+                document.getElementById('seq-preview-repertoire').textContent = replaceVars(templateRepertoire);
+                document.getElementById('seq-preview-fichier').textContent = replaceVars(templateFichier);
+            }}
+
+            async function saveSequence() {{
+                const id = document.getElementById('seq-id').value;
+                const resetValue = document.querySelector('input[name="seq-reset"]:checked')?.value || 'annuel';
+
+                const data = {{
+                    entite: document.getElementById('seq-entite').value,
+                    prefixe: document.getElementById('seq-prefixe').value,
+                    padding: parseInt(document.getElementById('seq-padding').value),
+                    champ_cible: document.getElementById('seq-champ').value,
+                    template: document.getElementById('seq-template').value,
+                    template_fichier: document.getElementById('seq-template-fichier').value,
+                    template_repertoire: document.getElementById('seq-template-repertoire').value,
+                    type_config: document.getElementById('seq-type-config').value,
+                    reset_annuel: resetValue === 'annuel',
+                    reset_mensuel: resetValue === 'mensuel',
+                    // Pour compatibilité
+                    inclure_annee: document.getElementById('seq-template').value.includes('{{YYYY}}') || document.getElementById('seq-template').value.includes('{{YY}}'),
+                    inclure_mois: document.getElementById('seq-template').value.includes('{{MM}}'),
+                    inclure_jour: document.getElementById('seq-template').value.includes('{{DD}}'),
+                    inclure_heure: document.getElementById('seq-template').value.includes('{{HH}}'),
+                    inclure_minute: document.getElementById('seq-template').value.includes('{{MI}}')
+                }};
+
+                if (!data.entite || !data.prefixe) {{
+                    alert('Veuillez remplir l\\'entité et le préfixe');
+                    return;
+                }}
+
+                try {{
+                    const url = id ? '/api/sequences/' + id : '/api/sequences';
+                    const method = id ? 'PUT' : 'POST';
+                    const response = await fetch(url, {{
+                        method: method,
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        credentials: 'include',
+                        body: JSON.stringify(data)
+                    }});
+
+                    if (response.ok) {{
+                        alert('Configuration enregistrée !');
+                        window.location.reload();
+                    }} else {{
+                        const err = await response.json();
+                        alert('Erreur: ' + (err.detail || 'Erreur inconnue'));
+                    }}
+                }} catch(e) {{
+                    alert('Erreur: ' + e.message);
+                }}
+            }}
+
+            async function editSequence(id) {{
+                try {{
+                    const response = await fetch('/api/sequences/' + id);
+                    if (response.ok) {{
+                        const seq = await response.json();
+                        document.getElementById('sequence-form').style.display = 'block';
+                        document.getElementById('seq-id').value = id;
+                        document.getElementById('seq-entite').value = seq.entite || '';
+                        document.getElementById('seq-prefixe').value = seq.prefixe || '';
+                        document.getElementById('seq-padding').value = seq.padding || 5;
+                        document.getElementById('seq-champ').value = seq.champ_cible || 'code';
+                        document.getElementById('seq-template').value = seq.template || '{{PREFIX}}-{{YYYY}}-{{SEQ}}';
+                        document.getElementById('seq-template-repertoire').value = seq.template_repertoire || '{{MODULE}}/{{YYYY}}/{{MM}}';
+                        document.getElementById('seq-template-fichier').value = seq.template_fichier || '{{PREFIX}}_{{SEQ}}.{{EXT}}';
+
+                        // Reset type
+                        if (seq.reset_mensuel) {{
+                            document.querySelector('input[name="seq-reset"][value="mensuel"]').checked = true;
+                        }} else if (seq.reset_annuel) {{
+                            document.querySelector('input[name="seq-reset"][value="annuel"]').checked = true;
+                        }} else {{
+                            document.querySelector('input[name="seq-reset"][value="jamais"]').checked = true;
+                        }}
+
+                        setConfigType(seq.type_config || 'numero');
+                        updateTemplatePreview();
+                        // Scroll vers le formulaire
+                        document.getElementById('sequence-form').scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+                    }}
+                }} catch(e) {{
+                    alert('Erreur: ' + e.message);
+                }}
+            }}
+
+            // Configurer une séquence par défaut (crée une nouvelle config personnalisée)
+            function configureDefaultSequence(entite, prefixe, template, padding, resetAnnuel, resetMensuel) {{
+                document.getElementById('sequence-form').style.display = 'block';
+                document.getElementById('seq-id').value = '';  // Nouveau - pas d'ID existant
+                document.getElementById('seq-entite').value = entite;
+                document.getElementById('seq-prefixe').value = prefixe;
+                document.getElementById('seq-padding').value = padding;
+                document.getElementById('seq-template').value = template;
+                document.getElementById('seq-champ').value = 'code';
+
+                // Reset type
+                if (resetMensuel) {{
+                    document.querySelector('input[name="seq-reset"][value="mensuel"]').checked = true;
+                }} else if (resetAnnuel) {{
+                    document.querySelector('input[name="seq-reset"][value="annuel"]').checked = true;
+                }} else {{
+                    document.querySelector('input[name="seq-reset"][value="jamais"]').checked = true;
+                }}
+
+                setConfigType('numero');
+                updateTemplatePreview();
+
+                // Scroll vers le formulaire
+                document.getElementById('sequence-form').scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+            }}
+
+            async function deleteSequence(id, name) {{
+                if (confirm('Supprimer la configuration pour "' + name + '" ?')) {{
+                    try {{
+                        const response = await fetch('/api/sequences/' + id, {{
+                            method: 'DELETE',
+                            credentials: 'include'
+                        }});
+                        if (response.ok) {{
+                            window.location.reload();
+                        }} else {{
+                            alert('Erreur lors de la suppression');
+                        }}
+                    }} catch(e) {{
+                        alert('Erreur: ' + e.message);
+                    }}
+                }}
+            }}
         </script>
         ''',
         user=user,
@@ -2307,6 +2996,13 @@ async def user_settings(request: Request, user: dict = Depends(require_auth), te
         </style>
 
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
         function showSettingsTab(tabId, el) {{
             event.preventDefault();
             document.querySelectorAll('.settings-tab-content').forEach(c => c.style.display = 'none');
@@ -2696,6 +3392,13 @@ async def modules_settings(request: Request, user: dict = Depends(require_auth))
         </style>
 
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
             function selectAll(checked) {{
                 document.querySelectorAll('.module-checkbox').forEach(cb => cb.checked = checked);
             }}
@@ -3016,6 +3719,13 @@ async def autocompletion_ia_settings(request: Request, user: dict = Depends(requ
         </style>
 
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
             // Toggle API key visibility
             function toggleKey(inputId) {
                 const input = document.getElementById(inputId);
@@ -3660,6 +4370,13 @@ async def calendar_view(
     </style>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
         let currentDate = new Date();
         let selectedDate = new Date();
 
@@ -4383,6 +5100,13 @@ async def technicien_navigation(
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Navigation - {intervention.get("reference", "")}</title>
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
         (function(){{
             'use strict';
             var REPORT_ENDPOINT='/guardian/frontend-error';
@@ -5132,6 +5856,50 @@ async def administration_mail_form(
                         <input type="text" name="mots_cles" class="o-field-tags" value="{get_val('mots_cles')}" placeholder="ex: INTERPARTNER, URGENT, DEPANNAGE">
                         <small style="color: #9ca3af;">Séparer par des virgules. Ces mots-clés dans l'objet du mail déclenchent la création d'intervention.</small>
                     </div>
+
+                    <!-- Email dédié interventions -->
+                    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                        <div class="toggle-group" style="margin-bottom: 12px;">
+                            <div class="toggle {is_checked('intervention_email_separe').replace('checked', 'active')}" onclick="toggleSwitch(this, 'intervention_email_separe'); toggleInterventionEmail();"></div>
+                            <input type="hidden" name="intervention_email_separe" id="intervention_email_separe" value="{str(data.get('intervention_email_separe', False)).lower()}">
+                            <span style="font-size: 14px; font-weight: 500;">Utiliser un email dédié pour les interventions</span>
+                        </div>
+                        <small style="color: #6b7280; display: block; margin-bottom: 12px;">Recevoir les demandes d'intervention sur une adresse différente (ex: intervention@masith.fr)</small>
+
+                        <div id="intervention-email-fields" style="display: {'block' if data.get('intervention_email_separe') else 'none'}; background: #f9fafb; padding: 16px; border-radius: 8px;">
+                            <div class="form-row" style="margin-bottom: 12px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label style="font-size: 13px;">Serveur IMAP interventions</label>
+                                    <input type="text" name="intervention_imap_host" value="{get_val('intervention_imap_host')}" placeholder="ssl0.ovh.net" style="padding: 8px;">
+                                    <small style="color: #9ca3af;">Laisser vide = même serveur que principal</small>
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label style="font-size: 13px;">Port</label>
+                                    <input type="number" name="intervention_imap_port" value="{get_val('intervention_imap_port') or 993}" placeholder="993" style="padding: 8px;">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label style="font-size: 13px;">Email interventions</label>
+                                <input type="email" name="intervention_imap_user" value="{get_val('intervention_imap_user')}" placeholder="intervention@votredomaine.com" style="padding: 8px;">
+                                <small style="color: #9ca3af;">Adresse dédiée à la réception des demandes d'intervention</small>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group" style="margin: 0;">
+                                    <label style="font-size: 13px;">Mot de passe</label>
+                                    <input type="password" name="intervention_imap_password" value="{get_val('intervention_imap_password')}" placeholder="Mot de passe" style="padding: 8px;">
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label style="font-size: 13px;">Dossier</label>
+                                    <input type="text" name="intervention_imap_dossier" value="{get_val('intervention_imap_dossier') or 'INBOX'}" placeholder="INBOX" style="padding: 8px;">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-test" onclick="testInterventionIMAP(event)" style="width: 100%; margin-top: 12px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                                Tester email interventions
+                            </button>
+                            <div id="intervention-imap-result" class="test-result"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Statut -->
@@ -5165,6 +5933,13 @@ async def administration_mail_form(
         </div>
 
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
             // Empêcher toute soumission GET du formulaire
             function handleSubmit(e) {{
                 e.preventDefault();
@@ -5197,6 +5972,63 @@ async def administration_mail_form(
             function toggleSwitch(el, inputId) {{
                 el.classList.toggle('active');
                 document.getElementById(inputId).value = el.classList.contains('active') ? 'true' : 'false';
+            }}
+
+            function toggleInterventionEmail() {{
+                const isActive = document.getElementById('intervention_email_separe').value === 'true';
+                document.getElementById('intervention-email-fields').style.display = isActive ? 'block' : 'none';
+            }}
+
+            async function testInterventionIMAP(e) {{
+                const btn = e ? e.target.closest('button') : document.querySelector('[onclick*="testInterventionIMAP"]');
+                const result = document.getElementById('intervention-imap-result');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span> Test en cours...';
+                result.className = 'test-result';
+                result.style.display = 'none';
+
+                try {{
+                    // Récupérer les valeurs du formulaire
+                    const form = document.getElementById('mail-config-form');
+                    const host = form.querySelector('[name="intervention_imap_host"]').value;
+                    const port = parseInt(form.querySelector('[name="intervention_imap_port"]').value) || 993;
+                    const user = form.querySelector('[name="intervention_imap_user"]').value;
+                    const password = form.querySelector('[name="intervention_imap_password"]').value;
+                    const folder = form.querySelector('[name="intervention_imap_dossier"]').value || 'INBOX';
+
+                    if (!host || !user || !password) {{
+                        result.className = 'test-result error';
+                        result.innerHTML = '✗ Veuillez remplir tous les champs (serveur, email, mot de passe)';
+                        result.style.display = 'block';
+                        btn.disabled = false;
+                        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Tester email interventions';
+                        return;
+                    }}
+
+                    const response = await fetch('/api/email-to-intervention/test-intervention-email', {{
+                        method: 'POST',
+                        headers: {{'Content-Type': 'application/json'}},
+                        credentials: 'include',
+                        body: JSON.stringify({{ host, port, user, password, folder }})
+                    }});
+                    const data = await response.json();
+
+                    if (data.imap_ok) {{
+                        result.className = 'test-result success';
+                        result.innerHTML = '✓ ' + data.imap_message;
+                    }} else {{
+                        result.className = 'test-result error';
+                        result.innerHTML = '✗ ' + data.imap_message;
+                    }}
+                    result.style.display = 'block';
+                }} catch (e) {{
+                    result.className = 'test-result error';
+                    result.innerHTML = '✗ Erreur: ' + e.message;
+                    result.style.display = 'block';
+                }}
+
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Tester email interventions';
             }}
 
             async function testIMAP(e) {{
@@ -5263,7 +6095,7 @@ async def administration_mail_form(
                 }}
 
                 btn.disabled = false;
-                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Tester l\'envoi';
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Tester l\\'envoi';
             }}
 
             async function testAll() {{
@@ -5526,8 +6358,20 @@ async def module_list(
             cells += f"<td>{value}</td>"
 
         # Cellule Actions avec boutons
+        # Pour interventions: ajouter icône facture ou bouton générer
+        facture_link = ""
+        if is_intervention_module:
+            if item.get("facture_id"):
+                # Facture existe -> lien vers la facture
+                facture_id = item.get("facture_id")
+                facture_link = f'<a href="/ui/factures/{facture_id}" class="action-btn facture-link" title="Voir la facture">📄</a>'
+            elif item.get("statut") in ["TERMINEE", "A_FACTURER", "TRAVAUX_TERMINES", "termine", "Terminée", "terminee"]:
+                # Intervention terminée sans facture -> bouton générer
+                facture_link = f'<button class="action-btn generer-facture-btn" onclick="genererFacture(\'{item["id"]}\')" title="Générer la facture">💰</button>'
+
         actions_cell = f'''
             <td class="actions-cell" onclick="event.stopPropagation()">
+                {facture_link}
                 <a href="/ui/{module_name}/{item['id']}" class="action-btn" title="Modifier">✏️</a>
                 <button class="action-btn" onclick="confirmDelete('{item['id']}')" title="Supprimer">🗑️</button>
             </td>
@@ -5590,7 +6434,7 @@ async def module_create_form(
         raise HTTPException(status_code=404, detail="Module non trouvé")
 
     # Formulaire spécial pour modules avec lignes (documents commerciaux)
-    document_modules = ["devis", "factures", "facture", "avoirs", "avoir", "bons_livraison", "bon_livraison", "contrats", "contrat", "notes_frais", "note_frais"]
+    document_modules = ["devis", "factures", "facture", "avoirs", "avoir", "bons_livraison", "bon_livraison", "notes_frais", "note_frais"]
     if module_name.lower() in document_modules:
         html = generate_layout(
             title=f"Nouveau {module.nom_affichage}",
@@ -5606,7 +6450,7 @@ async def module_create_form(
 
     html = generate_layout(
         title=f"Nouveau {module.nom_affichage}",
-        content=generate_sectioned_form(module_name, sections, module, tenant_id=tenant_id),
+        content=generate_sectioned_form(module_name, sections, module, tenant_id=tenant_id, user_role=user.get("role", "user")),
         user=user,
         modules=get_all_modules()
     )
@@ -5775,7 +6619,7 @@ def organize_fields_into_sections(module) -> dict:
     return sections_ordonnees
 
 
-def generate_sectioned_form(module_name: str, sections: dict, module, tenant_id: UUID = None) -> str:
+def generate_sectioned_form(module_name: str, sections: dict, module, tenant_id: UUID = None, user_role: str = "user") -> str:
     """Génère un formulaire professionnel AZAL avec sidebar et onglets."""
     from datetime import datetime
 
@@ -5784,12 +6628,16 @@ def generate_sectioned_form(module_name: str, sections: dict, module, tenant_id:
 
     # Pré-générer le numéro auto si configuré
     auto_number = None
+    auto_number_field = None  # Nom du champ qui reçoit l'auto-numéro
     if tenant_id:
         try:
-            from .api_v1 import generate_auto_number
-            auto_number = generate_auto_number(module_name, tenant_id)
-            import structlog
-            structlog.get_logger().debug("auto_number_generated", module=module_name, number=auto_number)
+            from .api_v1 import generate_auto_number, get_auto_number_field
+            # Récupérer le champ cible (depuis DB ou config par défaut)
+            auto_number_field = get_auto_number_field(module_name, tenant_id)
+            if auto_number_field:
+                auto_number = generate_auto_number(module_name, tenant_id)
+                import structlog
+                structlog.get_logger().debug("auto_number_generated", module=module_name, field=auto_number_field, number=auto_number)
         except Exception as e:
             import structlog
             structlog.get_logger().error("auto_number_error", module=module_name, error=str(e))
@@ -5817,9 +6665,10 @@ def generate_sectioned_form(module_name: str, sections: dict, module, tenant_id:
             # Appliquer les valeurs par défaut pour un nouveau formulaire
             default_value = None
 
-            # Numéro auto-généré
-            if nom == "numero" and auto_number:
+            # Numéro/code auto-généré - marquer le champ comme readonly
+            if auto_number_field and nom == auto_number_field and auto_number:
                 default_value = auto_number
+                field.auto_genere = True  # Rendre le champ readonly
             elif field.defaut is not None:
                 if field.defaut == "now":
                     # Date/datetime actuelle
@@ -5829,7 +6678,7 @@ def generate_sectioned_form(module_name: str, sections: dict, module, tenant_id:
                         default_value = datetime.now().strftime("%Y-%m-%d")
                 else:
                     default_value = field.defaut
-            fields_html += get_field_html(field, value=default_value, module_name=module_name)
+            fields_html += get_field_html(field, value=default_value, module_name=module_name, user_role=user_role)
 
         sections_html += f'''
         <div class="azal-section-content" id="section-{i}" style="display: {display};">
@@ -5840,19 +6689,8 @@ def generate_sectioned_form(module_name: str, sections: dict, module, tenant_id:
         </div>'''
 
     return f'''
+    <!-- AZAL IDENTITY - Styles centralisés dans /assets/style.css -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
-
-    <style>
-        .azal-section-content {{ padding: 20px 0; }}
-        .azal-section-title {{
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--gray-800);
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--primary);
-        }}
-    </style>
 
     <div class="azal-container">
         <!-- Sidebar -->
@@ -5930,6 +6768,13 @@ def generate_sectioned_form(module_name: str, sections: dict, module, tenant_id:
     </div>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     function showSection(index, event) {{
         if (event) event.preventDefault();
         // Cacher toutes les sections
@@ -5945,7 +6790,7 @@ def generate_sectioned_form(module_name: str, sections: dict, module, tenant_id:
     ''' + generate_form_scripts(module_name)
 
 
-def generate_sectioned_form_edit(module_name: str, sections: dict, module, existing_data: dict) -> str:
+def generate_sectioned_form_edit(module_name: str, sections: dict, module, existing_data: dict, user_role: str = "user") -> str:
     """Génère un formulaire professionnel AZAL avec sidebar et onglets pour l'édition."""
 
     section_names = list(sections.keys())
@@ -5975,7 +6820,7 @@ def generate_sectioned_form_edit(module_name: str, sections: dict, module, exist
         fields_html = ""
         for nom, field in fields:
             value = existing_data.get(nom)
-            fields_html += get_field_html(field, value, module_name=module_name)
+            fields_html += get_field_html(field, value, module_name=module_name, user_role=user_role)
 
         sections_html += f'''
         <div class="azal-section-content" id="section-{i}" style="display: {display};">
@@ -5986,19 +6831,8 @@ def generate_sectioned_form_edit(module_name: str, sections: dict, module, exist
         </div>'''
 
     return f'''
+    <!-- AZAL IDENTITY - Styles centralisés dans /assets/style.css -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
-
-    <style>
-        .azal-section-content {{ padding: 20px 0; }}
-        .azal-section-title {{
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--gray-800);
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--primary);
-        }}
-    </style>
 
     <div class="azal-container">
         <!-- Sidebar -->
@@ -6083,6 +6917,13 @@ def generate_sectioned_form_edit(module_name: str, sections: dict, module, exist
     </div>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     const itemId = '{item_id}';
     const moduleName = '{module_name}';
 
@@ -6237,6 +7078,13 @@ def generate_form_scripts_edit(module_name: str) -> str:
         @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
     </style>
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     function showNotification(message, type) {{
         const notif = document.getElementById('notification');
         notif.textContent = message;
@@ -6361,6 +7209,13 @@ def generate_form_scripts(module_name: str) -> str:
     </style>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     function showNotification(message, type) {{
         const notif = document.getElementById('notification');
         notif.textContent = message;
@@ -6791,6 +7646,15 @@ def generate_form(module_name: str, fields_html: str, module=None, existing_data
 
         <!-- Main content -->
         <div class="azal-main">
+            <!-- Retour à la liste -->
+            <div class="azal-back-link">
+                <a href="/ui/{module_name}" class="back-to-list">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Retour à la liste
+                </a>
+            </div>
             <div class="azal-header">
                 <div class="azal-header-top">
                     <div class="azal-header-left">
@@ -6832,6 +7696,13 @@ def generate_form(module_name: str, fields_html: str, module=None, existing_data
     </div>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
         const isEditMode = {'true' if is_edit_mode else 'false'};
         const itemId = '{item_id}';
         const moduleName = '{module_name}';
@@ -6936,1061 +7807,9 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
     tva_default_decimal = tva_default / 100  # 0.20 pour 20%
 
     return f'''
-    <!-- AZAL BOLD IDENTITY -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+    <!-- AZAL IDENTITY - Styles centralisés dans /assets/style.css -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
 
-        :root {{
-            --azal-primary: #3454D1;
-            --azal-primary-dark: #2a44a8;
-            --azal-primary-light: #6B9FFF;
-            --azal-electric: #6B9FFF;
-            --azal-bg: #F1F5F9;
-            --azal-card: #FFFFFF;
-            --azal-text: #1E293B;
-            --azal-text-muted: #64748B;
-            --azal-border: #E2E8F0;
-            --azal-input-bg: #FFFFFF;
-            --azal-success: #10B981;
-        }}
-
-        @media (prefers-color-scheme: dark) {{
-            :root {{
-                --azal-primary: #6B9FFF;
-                --azal-primary-dark: #3454D1;
-                --azal-primary-light: #93C5FD;
-                --azal-electric: #93C5FD;
-                --azal-bg: #0F172A;
-                --azal-card: #1E293B;
-                --azal-text: #F1F5F9;
-                --azal-text-muted: #94A3B8;
-                --azal-border: #334155;
-                --azal-input-bg: #1E293B;
-            }}
-        }}
-
-        .azal-doc-container {{
-            max-width: 1200px;
-            margin: 0 auto;
-            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-            display: flex;
-            min-height: calc(100vh - 80px);
-        }}
-
-        /* ========== BARRE LATERALE NAVIGATION ========== */
-        .azal-sidebar {{
-            width: 220px;
-            background: linear-gradient(180deg, var(--azal-primary) 0%, var(--azal-primary-dark) 100%);
-            display: flex;
-            flex-direction: column;
-            padding: 24px 0;
-            position: relative;
-        }}
-
-        .azal-sidebar::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 30%);
-            pointer-events: none;
-        }}
-
-        .azal-sidebar-header {{
-            padding: 0 20px 24px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 16px;
-        }}
-
-        .azal-sidebar-logo {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }}
-
-        .azal-sidebar-logo-icon {{
-            width: 40px;
-            height: 40px;
-            background: white;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 18px;
-            color: var(--azal-primary);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }}
-
-        .azal-sidebar-logo-text {{
-            font-weight: 700;
-            font-size: 18px;
-            color: white;
-        }}
-
-        .azal-sidebar-nav {{
-            flex: 1;
-            padding: 0 12px;
-        }}
-
-        .azal-sidebar-section {{
-            margin-bottom: 24px;
-        }}
-
-        .azal-sidebar-section-title {{
-            font-size: 11px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.5);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 0 8px;
-            margin-bottom: 8px;
-        }}
-
-        .azal-sidebar-item {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 12px;
-            border-radius: 10px;
-            color: rgba(255,255,255,0.7);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 14px;
-            font-weight: 500;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-        }}
-
-        .azal-sidebar-item:hover {{
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }}
-
-        .azal-sidebar-item.active {{
-            background: white;
-            color: var(--azal-primary);
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }}
-
-        .azal-sidebar-item svg {{
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-        }}
-
-        .azal-sidebar-item-success {{
-            background: rgba(16, 185, 129, 0.2);
-            color: #10B981 !important;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            margin-top: 8px;
-        }}
-
-        .azal-sidebar-item-success:hover {{
-            background: #10B981;
-            color: white !important;
-        }}
-
-        .azal-sidebar-item .badge {{
-            margin-left: auto;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 10px;
-        }}
-
-        .azal-sidebar-item.active .badge {{
-            background: var(--azal-primary);
-            color: white;
-        }}
-
-        .azal-doc-container * {{
-            font-family: inherit;
-        }}
-
-
-        /* ========== CONTENU PRINCIPAL ========== */
-        .azal-main {{
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--azal-bg);
-        }}
-
-        /* ========== HEADER AZAL ========== */
-        .azal-doc-header {{
-            background: var(--azal-card);
-            border-bottom: 1px solid var(--azal-border);
-            position: relative;
-        }}
-
-        .azal-doc-header::before {{
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 30%;
-            height: 3px;
-            background: linear-gradient(90deg, var(--azal-primary) 0%, var(--azal-electric) 100%);
-        }}
-
-        .azal-doc-header-top {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 32px;
-        }}
-
-        .azal-doc-header-left {{
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }}
-
-        .azal-doc-badge {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }}
-
-        .azal-doc-icon {{
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 24px rgba(30, 58, 138, 0.25);
-            position: relative;
-        }}
-
-        .azal-doc-icon::after {{
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
-        }}
-
-        .azal-doc-icon svg {{
-            width: 28px;
-            height: 28px;
-            color: white;
-            position: relative;
-            z-index: 1;
-        }}
-
-        .azal-doc-title {{
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }}
-
-        .azal-doc-title h1 {{
-            font-size: 28px;
-            font-weight: 700;
-            margin: 0;
-            color: var(--azal-text);
-            letter-spacing: -0.5px;
-        }}
-
-        .azal-doc-title .subtitle {{
-            font-size: 13px;
-            color: var(--azal-text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }}
-
-        .azal-doc-title .subtitle::before {{
-            content: '';
-            width: 8px;
-            height: 8px;
-            background: var(--azal-electric);
-            border-radius: 50%;
-            animation: pulse-dot 2s infinite;
-        }}
-
-        @keyframes pulse-dot {{
-            0%, 100% {{ transform: scale(1); opacity: 1; }}
-            50% {{ transform: scale(1.2); opacity: 0.7; }}
-        }}
-
-        .azal-doc-meta {{
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }}
-
-        .azal-doc-status {{
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
-            border: 1px solid var(--azal-primary);
-            padding: 10px 20px;
-            border-radius: 100px;
-            color: var(--azal-primary);
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }}
-
-        .azal-doc-actions {{
-            display: flex;
-            gap: 12px;
-        }}
-
-        .azal-doc-actions .btn {{
-            padding: 14px 28px;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            border: none;
-            border-radius: 12px;
-            font-family: inherit;
-        }}
-
-        .azal-doc-actions .btn-cancel {{
-            background: transparent;
-            color: var(--azal-text-muted);
-            border: 1px solid var(--azal-border);
-            text-decoration: none;
-        }}
-
-        .azal-doc-actions .btn-cancel:hover {{
-            color: var(--azal-text);
-            border-color: var(--azal-text-muted);
-            background: var(--azal-bg);
-        }}
-
-        .azal-doc-actions .btn-save {{
-            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
-            color: white;
-            box-shadow: 0 4px 16px rgba(30, 58, 138, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }}
-
-        .azal-doc-actions .btn-save:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(30, 58, 138, 0.4);
-        }}
-
-        .azal-doc-actions .btn-save svg {{
-            width: 18px;
-            height: 18px;
-        }}
-
-        /* ========== CORPS ========== */
-        .azal-doc-body {{
-            flex: 1;
-            padding: 32px;
-            overflow-y: auto;
-        }}
-
-        .azal-doc-content {{
-            background: var(--azal-card);
-            border-radius: 20px;
-            border: 1px solid var(--azal-border);
-            overflow: hidden;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
-        }}
-
-        /* ========== SECTIONS ========== */
-        .azal-section {{
-            padding: 32px;
-            border-bottom: 1px solid var(--azal-border);
-        }}
-
-        .azal-section:last-child {{
-            border-bottom: none;
-        }}
-
-        .azal-section-header {{
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 28px;
-        }}
-
-        .azal-section-icon {{
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--azal-primary);
-        }}
-
-        .azal-section-icon svg {{
-            width: 22px;
-            height: 22px;
-        }}
-
-        .azal-section-title {{
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--azal-text);
-        }}
-
-        /* ========== CHAMPS ========== */
-        .azal-fields-grid {{
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-        }}
-
-        @media (max-width: 768px) {{
-            .azal-fields-grid {{
-                grid-template-columns: 1fr;
-            }}
-        }}
-
-        .azal-field {{
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }}
-
-        .azal-field.full-width {{
-            grid-column: 1 / -1;
-        }}
-
-        .azal-field label {{
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--azal-text-muted);
-        }}
-
-        .azal-field .input,
-        .azal-field select,
-        .azal-field textarea {{
-            padding: 14px 16px;
-            font-size: 15px;
-            border: 2px solid var(--azal-border);
-            border-radius: 12px;
-            background: var(--azal-input-bg);
-            color: var(--azal-text);
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }}
-
-        .azal-field .input:focus,
-        .azal-field select:focus,
-        .azal-field textarea:focus {{
-            outline: none;
-            border-color: var(--azal-primary);
-            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
-        }}
-
-        .azal-field .select-with-create {{
-            display: flex;
-            gap: 8px;
-        }}
-
-        .azal-field .select-with-create select {{
-            flex: 1;
-        }}
-
-        .azal-field .btn-create-inline {{
-            width: 52px;
-            height: 52px;
-            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 24px;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
-        }}
-
-        .azal-field .btn-create-inline:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(30, 58, 138, 0.35);
-        }}
-
-        /* ========== ONGLETS ========== */
-        .azal-tabs {{
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            background: var(--azal-bg);
-            padding: 6px;
-            border-radius: 14px;
-        }}
-
-        .azal-tab {{
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--azal-text-muted);
-            background: transparent;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            flex: 1;
-            text-align: center;
-        }}
-
-        .azal-tab:hover {{
-            color: var(--azal-text);
-            background: var(--azal-card);
-        }}
-
-        .azal-tab.active {{
-            color: white;
-            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
-        }}
-
-        /* ========== TABLEAU ========== */
-        .azal-lines-table {{
-            width: 100%;
-            border-collapse: collapse;
-        }}
-
-        .azal-lines-table thead {{
-            background: var(--azal-bg);
-        }}
-
-        .azal-lines-table th {{
-            padding: 16px 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--azal-text-muted);
-            text-align: left;
-            border-bottom: 1px solid var(--azal-border);
-        }}
-
-        .azal-lines-table tbody tr {{
-            transition: background 0.15s ease;
-        }}
-
-        .azal-lines-table tbody tr:hover {{
-            background: rgba(30, 58, 138, 0.03);
-        }}
-
-        .azal-lines-table td {{
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--azal-border);
-            vertical-align: middle;
-            color: var(--azal-text);
-        }}
-
-        .azal-lines-table td:last-child {{
-            text-align: center;
-        }}
-
-        .azal-lines-table .input,
-        .azal-lines-table select {{
-            padding: 12px 14px;
-            font-size: 14px;
-            border: 2px solid var(--azal-border);
-            border-radius: 10px;
-            background: var(--azal-input-bg);
-            color: var(--azal-text);
-            font-weight: 500;
-            font-family: inherit;
-            width: 100%;
-        }}
-
-        .azal-lines-table .input:focus,
-        .azal-lines-table select:focus {{
-            outline: none;
-            border-color: var(--azal-primary);
-        }}
-
-        .azal-lines-table .btn-remove {{
-            width: 36px;
-            height: 36px;
-            background: rgba(239, 68, 68, 0.1);
-            color: #EF4444;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: 400;
-            transition: all 0.15s ease;
-        }}
-
-        .azal-lines-table .btn-remove:hover {{
-            background: #EF4444;
-            color: white;
-        }}
-
-        .azal-lines-table .montant {{
-            font-weight: 700;
-            color: var(--azal-primary);
-            font-size: 15px;
-        }}
-
-        .azal-empty-lines {{
-            text-align: center;
-            padding: 60px 24px !important;
-            color: var(--azal-text-muted);
-        }}
-
-        .azal-empty-lines svg {{
-            width: 64px;
-            height: 64px;
-            margin-bottom: 16px;
-            opacity: 0.3;
-            color: var(--azal-primary);
-        }}
-
-        .azal-empty-lines p {{
-            font-size: 16px;
-            font-weight: 500;
-        }}
-
-        /* ========== BOUTONS AJOUT ========== */
-        .azal-add-buttons {{
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-            flex-wrap: wrap;
-        }}
-
-        .azal-add-btn {{
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 14px 24px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--azal-primary);
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
-            border: 2px dashed var(--azal-primary);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }}
-
-        .azal-add-btn:hover {{
-            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-light) 100%);
-            border-style: solid;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(30, 58, 138, 0.25);
-        }}
-
-        .azal-add-btn:disabled {{
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none;
-        }}
-
-        .azal-add-btn svg {{
-            width: 18px;
-            height: 18px;
-        }}
-
-        /* ========== TOTAUX ========== */
-        .azal-totals {{
-            background: linear-gradient(135deg, var(--azal-primary) 0%, var(--azal-primary-dark) 100%);
-            padding: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            border-radius: 0 0 20px 20px;
-        }}
-
-        .azal-totals::before {{
-            content: '';
-            position: absolute;
-            top: -100px;
-            right: -100px;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            pointer-events: none;
-        }}
-
-        .azal-totals-brand {{
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }}
-
-        .azal-totals-brand .logo {{
-            font-size: 32px;
-            font-weight: 700;
-            color: white;
-            letter-spacing: -1px;
-        }}
-
-        .azal-totals-brand .tagline {{
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }}
-
-        .azal-totals-box {{
-            min-width: 320px;
-            z-index: 1;
-        }}
-
-        .azal-total-row {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }}
-
-        .azal-total-row:last-child {{
-            border-bottom: none;
-            padding-top: 16px;
-            margin-top: 8px;
-            border-top: 1px solid rgba(255,255,255,0.2);
-        }}
-
-        .azal-total-row .label {{
-            color: rgba(255,255,255,0.7);
-            font-size: 14px;
-            font-weight: 500;
-        }}
-
-        .azal-total-row .value {{
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-        }}
-
-        .azal-total-row.grand-total .label {{
-            color: rgba(255,255,255,0.9);
-            font-size: 16px;
-            font-weight: 600;
-        }}
-
-        .azal-total-row.grand-total .value {{
-            font-size: 36px;
-            font-weight: 700;
-            color: white;
-            text-shadow: 0 2px 12px rgba(0,0,0,0.2);
-        }}
-
-        /* ========== TAB CONTENT ========== */
-        .azal-tab-content {{
-            display: none;
-        }}
-
-        .azal-tab-content.active {{
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }}
-
-        @keyframes fadeIn {{
-            from {{ opacity: 0; transform: translateY(10px); }}
-            to {{ opacity: 1; transform: translateY(0); }}
-        }}
-
-        .azal-info-empty {{
-            text-align: center;
-            padding: 60px 24px;
-            color: var(--azal-text-muted);
-        }}
-
-        .azal-info-empty svg {{
-            width: 56px;
-            height: 56px;
-            margin-bottom: 16px;
-            opacity: 0.25;
-        }}
-
-        /* ========== RESPONSIVE ========== */
-        @media (max-width: 900px) {{
-            .azal-doc-container {{
-                flex-direction: column;
-            }}
-
-            .azal-doc-container {{
-                flex-direction: column;
-            }}
-
-            .azal-sidebar {{
-                width: 100%;
-                flex-direction: row;
-                padding: 12px 16px;
-                overflow-x: auto;
-            }}
-
-            .azal-sidebar::before {{
-                display: none;
-            }}
-
-            .azal-sidebar-header {{
-                border-bottom: none;
-                border-right: 1px solid rgba(255,255,255,0.1);
-                padding: 0 16px 0 0;
-                margin-bottom: 0;
-                margin-right: 16px;
-            }}
-
-            .azal-sidebar-logo {{
-                margin-bottom: 0;
-            }}
-
-            .azal-sidebar-nav {{
-                display: flex;
-                flex-direction: row;
-                gap: 8px;
-                padding: 0;
-            }}
-
-            .azal-sidebar-section {{
-                display: flex;
-                flex-direction: row;
-                gap: 4px;
-                margin-bottom: 0;
-                align-items: center;
-            }}
-
-            .azal-sidebar-section-title {{
-                display: none;
-            }}
-
-            .azal-sidebar-nav {{
-                flex-direction: row;
-            }}
-
-            .azal-sidebar-item.active::before {{
-                display: none;
-            }}
-        }}
-
-        .azal-doc-header-bar {{
-            display: none;
-        }}
-
-        /* ========== OPTIONS TAB STYLES ========== */
-        .azal-option-section {{
-            background: var(--azal-card);
-            border: 1px solid var(--azal-border);
-            border-radius: 16px;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }}
-
-        .azal-option-header {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 18px 24px;
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
-            border-bottom: 1px solid var(--azal-border);
-            font-weight: 600;
-            font-size: 15px;
-            color: var(--azal-text);
-        }}
-
-        .azal-option-header svg {{
-            color: var(--azal-primary);
-        }}
-
-        .azal-option-subtitle {{
-            font-size: 12px;
-            color: var(--azal-text-muted);
-            font-weight: 400;
-            margin-left: 8px;
-        }}
-
-        .azal-option-content {{
-            padding: 24px;
-        }}
-
-        /* Radio Cards pour livraison */
-        .azal-delivery-options {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-        }}
-
-        .azal-radio-card {{
-            display: block;
-            cursor: pointer;
-        }}
-
-        .azal-radio-card input[type="radio"] {{
-            display: none;
-        }}
-
-        .azal-radio-card-content {{
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            padding: 24px 16px;
-            background: var(--azal-bg);
-            border: 2px solid var(--azal-border);
-            border-radius: 16px;
-            transition: all 0.2s ease;
-            text-align: center;
-        }}
-
-        .azal-radio-card input[type="radio"]:checked + .azal-radio-card-content {{
-            border-color: var(--azal-primary);
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
-            box-shadow: 0 4px 16px rgba(30, 58, 138, 0.15);
-        }}
-
-        .azal-radio-card:hover .azal-radio-card-content {{
-            border-color: var(--azal-primary-light);
-            transform: translateY(-2px);
-        }}
-
-        .azal-radio-card-icon {{
-            width: 56px;
-            height: 56px;
-            background: white;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--azal-primary);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }}
-
-        .azal-radio-card input[type="radio"]:checked + .azal-radio-card-content .azal-radio-card-icon {{
-            background: var(--azal-primary);
-            color: white;
-        }}
-
-        .azal-radio-card-info {{
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }}
-
-        .azal-radio-card-info strong {{
-            font-size: 15px;
-            color: var(--azal-text);
-        }}
-
-        .azal-radio-card-info span {{
-            font-size: 12px;
-            color: var(--azal-text-muted);
-        }}
-
-        .azal-radio-card-price {{
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--azal-primary);
-            background: rgba(30, 58, 138, 0.1);
-            padding: 6px 16px;
-            border-radius: 100px;
-        }}
-
-        /* Produits optionnels */
-        .azal-optional-products {{
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }}
-
-        .azal-optional-product {{
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px 20px;
-            background: var(--azal-bg);
-            border: 1px solid var(--azal-border);
-            border-radius: 12px;
-            transition: all 0.2s ease;
-        }}
-
-        .azal-optional-product:hover {{
-            border-color: var(--azal-primary-light);
-        }}
-
-        .azal-optional-product input[type="checkbox"] {{
-            width: 20px;
-            height: 20px;
-            accent-color: var(--azal-primary);
-            cursor: pointer;
-        }}
-
-        .azal-optional-product-info {{
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }}
-
-        .azal-optional-product-name {{
-            font-weight: 600;
-            color: var(--azal-text);
-        }}
-
-        .azal-optional-product-desc {{
-            font-size: 13px;
-            color: var(--azal-text-muted);
-        }}
-
-        .azal-optional-product-price {{
-            font-weight: 700;
-            color: var(--azal-primary);
-            font-size: 15px;
-        }}
-
-        .azal-optional-product-remove {{
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: none;
-            border: none;
-            color: var(--azal-text-muted);
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.15s ease;
-        }}
-
-        .azal-optional-product-remove:hover {{
-            background: rgba(239, 68, 68, 0.1);
-            color: #EF4444;
-        }}
-
-        .azal-optional-empty {{
-            text-align: center;
-            padding: 32px;
-            color: var(--azal-text-muted);
-            font-size: 14px;
-        }}
-
-        /* Checkbox adresse */
-        .azal-option-content label input[type="checkbox"] {{
-            margin-right: 8px;
-            accent-color: var(--azal-primary);
-        }}
-    </style>
 
     <div class="azal-doc-container">
         <!-- Barre latérale navigation -->
@@ -8065,6 +7884,15 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
 
         <!-- Contenu principal -->
         <div class="azal-main">
+            <!-- Retour à la liste -->
+            <div class="azal-back-link">
+                <a href="/ui/{module_name}" class="back-to-list">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Retour à la liste
+                </a>
+            </div>
             <!-- Header du document -->
             <div class="azal-doc-header">
                 <div class="azal-doc-header-top">
@@ -8126,6 +7954,10 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
                         </div>
                     </div>
                     <div class="azal-field">
+                        <label>Référence client</label>
+                        <input type="text" class="input" id="reference_client" name="reference_client" placeholder="N° commande, OS, référence...">
+                    </div>
+                    <div class="azal-field">
                         <label>Date d'expiration</label>
                         <input type="date" class="input" id="date_validite" value="">
                     </div>
@@ -8178,6 +8010,12 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             Ajouter un produit
+                        </button>
+                        <button type="button" class="azal-add-btn azal-add-btn-success" onclick="ouvrirModalProduit()">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Nouveau produit
                         </button>
                         <button type="button" class="azal-add-btn" onclick="ajouterSection()">
                             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -8336,10 +8174,6 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
                     <div id="tab-autres" class="azal-tab-content">
                         <div class="azal-fields-grid" style="margin-top: 16px;">
                             <div class="azal-field">
-                                <label>Reference client</label>
-                                <input type="text" class="input" id="reference_client" name="reference_client" placeholder="Numero donne par le client...">
-                            </div>
-                            <div class="azal-field">
                                 <label>Date de livraison</label>
                                 <input type="date" class="input" id="delivery_date" name="delivery_date">
                             </div>
@@ -8409,6 +8243,13 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
     </div>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     // Initialisation mode edition
     window.currentDocumentId = {'`' + str(item_id) + '`' if is_edit_mode else 'null'};
     window.isEditMode = {str(is_edit_mode).lower()};
@@ -8573,7 +8414,8 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
                     let tauxTVA = {tva_default};
                     const tvaSelect = tr.querySelector('.tva-select');
                     if (tvaSelect) {{
-                        tauxTVA = parseFloat(tvaSelect.value) || {tva_default};
+                        const parsedVal = parseFloat(tvaSelect.value);
+                        tauxTVA = isNaN(parsedVal) ? {tva_default} : parsedVal;
                     }} else {{
                         for (let i = selects.length - 1; i >= 0; i--) {{
                             const val = parseFloat(selects[i].value);
@@ -8787,7 +8629,9 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
                 const productName = selectedOption?.dataset?.nom || '';
                 const prix = parseFloat(inputs[0].value) || 0;
                 const qte = parseFloat(inputs[1].value) || 0;
-                const parsedTVALine = parseFloat(selects[2]?.value);
+                // Utiliser la classe .tva-select pour être sûr de cibler le bon select
+                const tvaSelect = tr.querySelector('.tva-select');
+                const parsedTVALine = parseFloat(tvaSelect?.value);
                 const tauxTVA = isNaN(parsedTVALine) ? {tva_default} : parsedTVALine;
 
                 if (productId || prix > 0) {{
@@ -8834,7 +8678,9 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
         const optionnelsTotal = optionnelsInclus.reduce((sum, opt) => sum + opt.total, 0);
         const livraisonFraisVal = livraisonType === 'express' ? 15 : 0;
         const subtotalFinal = subtotalCalc - remiseAmount + optionnelsTotal + livraisonFraisVal;
-        const taxAmountFinal = subtotalFinal * 0.20; // TVA simplifiée
+        // Calculer la TVA basée sur le taux moyen des lignes (pas hardcodé à 20%)
+        const tauxTVAMoyen = subtotalCalc > 0 ? (taxAmountCalc / subtotalCalc) : 0;
+        const taxAmountFinal = subtotalFinal * tauxTVAMoyen;
 
         const data = {{
             // Inclure l'ID et le numéro si document existant
@@ -10113,6 +9959,15 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
 
         tbody.appendChild(tr);
 
+        // Appliquer le taux TVA par défaut de l'entreprise (si exonéré = 0%)
+        const tvaSelectNew = tr.querySelector('.tva-select');
+        if (tvaSelectNew && window.entrepriseData) {{
+            const tauxTvaDefaut = window.entrepriseData.taux_tva_defaut;
+            if (tauxTvaDefaut !== undefined && tauxTvaDefaut !== null) {{
+                tvaSelectNew.value = tauxTvaDefaut;
+            }}
+        }}
+
         // Selectionner le produit si product_id existe
         if (ligne.product_id || ligne.produit_id) {{
             const produitSelect = tr.querySelector('select');
@@ -10121,11 +9976,12 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
             }}
         }}
 
-        // Selectionner le taux TVA
-        if (ligne.taux_tva || ligne.tax_rate) {{
+        // Selectionner le taux TVA (attention: 0 est une valeur valide pour exonéré)
+        const tauxTva = ligne.taux_tva !== undefined ? ligne.taux_tva : ligne.tax_rate;
+        if (tauxTva !== undefined && tauxTva !== null) {{
             const tvaSelect = tr.querySelectorAll('select')[2];
             if (tvaSelect) {{
-                tvaSelect.value = ligne.taux_tva || ligne.tax_rate;
+                tvaSelect.value = tauxTva;
             }}
         }}
 
@@ -10295,7 +10151,424 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
             console.error('Erreur rafraichissement:', e);
         }}
     }}
+
+    // ========== CRÉATION RAPIDE PRODUIT ==========
+
+    // Ouvrir le modal de création de produit
+    function ouvrirModalProduit() {{
+        const modal = document.getElementById('modal-nouveau-produit');
+        if (modal) {{
+            modal.style.display = 'flex';
+            // Reset form
+            const form = document.getElementById('form-nouveau-produit');
+            if (form) form.reset();
+            // Focus sur le premier champ
+            const firstInput = modal.querySelector('input[name="code"]');
+            if (firstInput) setTimeout(() => firstInput.focus(), 100);
+        }}
+    }}
+
+    // Fermer le modal de création de produit
+    function fermerModalProduit() {{
+        const modal = document.getElementById('modal-nouveau-produit');
+        if (modal) modal.style.display = 'none';
+    }}
+
+    // Créer un nouveau produit via API
+    async function creerProduit(event) {{
+        if (event) event.preventDefault();
+
+        const form = document.getElementById('form-nouveau-produit');
+        const btnSubmit = form.querySelector('button[type="submit"]');
+        const originalText = btnSubmit.innerHTML;
+
+        // Afficher loader
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<svg class="spinner" width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" values="0 12 12;360 12 12" dur="1s" repeatCount="indefinite"/></circle></svg> Création...';
+
+        // Collecter les données
+        const data = {{
+            code: form.querySelector('[name="code"]').value || null,
+            name: form.querySelector('[name="name"]').value,
+            designation: form.querySelector('[name="name"]').value,
+            description: form.querySelector('[name="description"]')?.value || null,
+            sale_price: parseFloat(form.querySelector('[name="sale_price"]').value) || 0,
+            prix_vente: parseFloat(form.querySelector('[name="sale_price"]').value) || 0,
+            purchase_price: parseFloat(form.querySelector('[name="purchase_price"]')?.value) || 0,
+            prix_achat: parseFloat(form.querySelector('[name="purchase_price"]')?.value) || 0,
+            tva_rate: parseFloat(form.querySelector('[name="tva_rate"]')?.value) || 20,
+            type: form.querySelector('[name="type"]')?.value || 'SERVICE',
+            unit: form.querySelector('[name="unit"]')?.value || 'unité',
+            status: form.querySelector('[name="status"]')?.value || 'ACTIVE',
+            is_sellable: form.querySelector('[name="is_sellable"]')?.checked ? 'true' : 'false',
+            is_purchasable: form.querySelector('[name="is_purchasable"]')?.checked ? 'true' : 'false',
+            is_active: form.querySelector('[name="is_active"]')?.checked ? 'true' : 'false',
+            active: true
+        }};
+
+        try {{
+            const authToken = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
+            const response = await fetch('/api/produits', {{
+                method: 'POST',
+                credentials: 'include',
+                headers: {{
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authToken
+                }},
+                body: JSON.stringify(data)
+            }});
+
+            if (response.ok) {{
+                const newProduct = await response.json();
+                console.log('Produit créé:', newProduct);
+
+                // Fermer le modal
+                fermerModalProduit();
+
+                // Rafraîchir la liste des produits
+                await refreshProduitsListe(newProduct.id);
+
+                // Notification de succès
+                showSaveSuccess('Produit "' + data.name + '" créé avec succès');
+
+            }} else {{
+                const errorData = await response.json().catch(() => ({{}}));
+                alert('Erreur lors de la création: ' + (errorData.detail || response.statusText));
+            }}
+        }} catch (e) {{
+            console.error('Erreur création produit:', e);
+            alert('Erreur de connexion: ' + e.message);
+        }} finally {{
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = originalText;
+        }}
+    }}
+
+    // Rafraîchir la liste des produits et optionnellement sélectionner le nouveau
+    async function refreshProduitsListe(selectNewId = null) {{
+        try {{
+            const authToken = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
+            const response = await fetch('/api/produits', {{
+                credentials: 'include',
+                headers: {{
+                    'Authorization': 'Bearer ' + authToken
+                }}
+            }});
+
+            if (response.ok) {{
+                const data = await response.json();
+                window.produitsData = data.items || data || [];
+                console.log('Produits rafraîchis:', window.produitsData.length);
+
+                // Mettre à jour tous les selects de produits existants
+                document.querySelectorAll('#lignes-table select').forEach((select, index) => {{
+                    // Ne mettre à jour que les selects de produits (premier select de chaque ligne)
+                    const tr = select.closest('tr');
+                    if (tr && !tr.classList.contains('ligne-section') && !tr.classList.contains('ligne-note')) {{
+                        const firstSelect = tr.querySelector('select');
+                        if (select === firstSelect) {{
+                            const currentValue = select.value;
+                            select.innerHTML = getProduitsOptions();
+                            // Restaurer la valeur ou sélectionner le nouveau produit
+                            if (selectNewId && !currentValue) {{
+                                select.value = selectNewId;
+                                onProduitChange(select);
+                            }} else if (currentValue) {{
+                                select.value = currentValue;
+                            }}
+                        }}
+                    }}
+                }});
+
+                // Activer le bouton ajouter produit
+                const btnAjouterProduit = document.getElementById('btn-ajouter-produit');
+                if (btnAjouterProduit) {{
+                    btnAjouterProduit.disabled = false;
+                    btnAjouterProduit.title = '';
+                }}
+            }}
+        }} catch (e) {{
+            console.error('Erreur rafraîchissement produits:', e);
+        }}
+    }}
+
+    // Fermer modal en cliquant en dehors
+    document.addEventListener('click', function(e) {{
+        const modal = document.getElementById('modal-nouveau-produit');
+        if (modal && e.target === modal) {{
+            fermerModalProduit();
+        }}
+    }});
+
+    // Fermer modal avec Escape
+    document.addEventListener('keydown', function(e) {{
+        if (e.key === 'Escape') {{
+            fermerModalProduit();
+        }}
+    }});
     </script>
+
+    <!-- Modal Création Rapide Produit -->
+    <div id="modal-nouveau-produit" class="azal-modal" style="display:none;">
+        <div class="azal-modal-content">
+            <div class="azal-modal-header">
+                <h3>
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    Nouveau Produit
+                </h3>
+                <button type="button" class="azal-modal-close" onclick="fermerModalProduit()">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="form-nouveau-produit" onsubmit="creerProduit(event)">
+                <div class="azal-modal-body">
+                    <div class="azal-modal-grid">
+                        <div class="azal-field">
+                            <label>Code / Référence</label>
+                            <input type="text" name="code" class="input" placeholder="REF-001">
+                        </div>
+                        <div class="azal-field">
+                            <label>Type</label>
+                            <select name="type" class="input">
+                                <option value="SERVICE">Service</option>
+                                <option value="PRODUIT">Produit physique</option>
+                                <option value="CONSOMMABLE">Consommable</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="azal-field">
+                        <label>Désignation <span class="required">*</span></label>
+                        <input type="text" name="name" class="input" placeholder="Nom du produit ou service" required>
+                    </div>
+                    <div class="azal-field">
+                        <label>Description</label>
+                        <textarea name="description" class="input" rows="2" placeholder="Description détaillée..."></textarea>
+                    </div>
+                    <div class="azal-modal-grid">
+                        <div class="azal-field">
+                            <label>Prix de vente HT <span class="required">*</span></label>
+                            <input type="number" name="sale_price" class="input" step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                        <div class="azal-field">
+                            <label>Prix d'achat HT</label>
+                            <input type="number" name="purchase_price" class="input" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="azal-modal-grid">
+                        <div class="azal-field">
+                            <label>Taux TVA (%)</label>
+                            <select name="tva_rate" class="input">
+                                <option value="20">20%</option>
+                                <option value="10">10%</option>
+                                <option value="5.5">5.5%</option>
+                                <option value="2.1">2.1%</option>
+                                <option value="0">0% (Exonéré)</option>
+                            </select>
+                        </div>
+                        <div class="azal-field">
+                            <label>Unité</label>
+                            <select name="unit" class="input">
+                                <option value="unité">Unité</option>
+                                <option value="heure">Heure</option>
+                                <option value="jour">Jour</option>
+                                <option value="mois">Mois</option>
+                                <option value="forfait">Forfait</option>
+                                <option value="kg">Kilogramme</option>
+                                <option value="m">Mètre</option>
+                                <option value="m²">Mètre carré</option>
+                                <option value="m³">Mètre cube</option>
+                                <option value="L">Litre</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="azal-modal-grid">
+                        <div class="azal-field">
+                            <label>Statut</label>
+                            <select name="status" class="input">
+                                <option value="ACTIVE" selected>Actif</option>
+                                <option value="INACTIVE">Inactif</option>
+                                <option value="DISCONTINUED">Discontinué</option>
+                            </select>
+                        </div>
+                        <div class="azal-field">
+                            <label>Options</label>
+                            <div style="display: flex; gap: 16px; padding: 8px 0;">
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" name="is_sellable" value="true" checked>
+                                    Vendable
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" name="is_purchasable" value="true" checked>
+                                    Achetable
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" name="is_active" value="true" checked>
+                                    Actif
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="azal-modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="fermerModalProduit()">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Créer le produit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+    /* Modal Styles */
+    .azal-modal {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        backdrop-filter: blur(4px);
+    }}
+    .azal-modal-content {{
+        background: white;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        animation: modalSlideIn 0.2s ease-out;
+    }}
+    @keyframes modalSlideIn {{
+        from {{ transform: translateY(-20px); opacity: 0; }}
+        to {{ transform: translateY(0); opacity: 1; }}
+    }}
+    .azal-modal-header {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--azal-border, #E5E7EB);
+    }}
+    .azal-modal-header h3 {{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--azal-primary, #3454D1);
+        margin: 0;
+    }}
+    .azal-modal-close {{
+        background: none;
+        border: none;
+        padding: 8px;
+        cursor: pointer;
+        color: var(--azal-text-muted, #6B7280);
+        border-radius: 8px;
+        transition: all 0.15s;
+    }}
+    .azal-modal-close:hover {{
+        background: var(--azal-bg, #F1F5F9);
+        color: var(--azal-text, #1F2937);
+    }}
+    .azal-modal-body {{
+        padding: 24px;
+    }}
+    .azal-modal-grid {{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }}
+    .azal-modal-body .azal-field {{
+        margin-bottom: 16px;
+    }}
+    .azal-modal-body .azal-field:last-child {{
+        margin-bottom: 0;
+    }}
+    .azal-modal-body label {{
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--azal-text, #374151);
+        margin-bottom: 6px;
+    }}
+    .azal-modal-body .required {{
+        color: #EF4444;
+    }}
+    .azal-modal-body .input {{
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--azal-border, #D1D5DB);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.15s;
+    }}
+    .azal-modal-body .input:focus {{
+        outline: none;
+        border-color: var(--azal-primary, #3454D1);
+        box-shadow: 0 0 0 3px rgba(52, 84, 209, 0.1);
+    }}
+    .azal-modal-footer {{
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid var(--azal-border, #E5E7EB);
+        background: var(--azal-bg, #F9FAFB);
+        border-radius: 0 0 16px 16px;
+    }}
+    .azal-modal-footer .btn {{
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+    }}
+    .azal-modal-footer .btn-secondary {{
+        background: white;
+        border: 1px solid var(--azal-border, #D1D5DB);
+        color: var(--azal-text, #374151);
+    }}
+    .azal-modal-footer .btn-secondary:hover {{
+        background: var(--azal-bg, #F3F4F6);
+    }}
+    .azal-modal-footer .btn-primary {{
+        background: var(--azal-primary, #3454D1);
+        border: none;
+        color: white;
+    }}
+    .azal-modal-footer .btn-primary:hover {{
+        background: var(--azal-primary-dark, #2a44a8);
+    }}
+    /* Bouton Nouveau produit (vert) */
+    .azal-add-btn-success {{
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+        color: white !important;
+        border-color: #10B981 !important;
+    }}
+    .azal-add-btn-success:hover {{
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }}
+    </style>
     '''
 
 
@@ -10322,7 +10595,7 @@ async def module_detail(
         raise HTTPException(status_code=404, detail="Enregistrement non trouvé")
 
     # Pour les modules documents commerciaux, utiliser le formulaire document
-    document_modules = ["devis", "factures", "facture", "avoirs", "avoir", "bons_livraison", "bon_livraison", "contrats", "contrat", "notes_frais", "note_frais"]
+    document_modules = ["devis", "factures", "facture", "avoirs", "avoir", "bons_livraison", "bon_livraison", "notes_frais", "note_frais"]
     if module_name.lower() in document_modules:
         # Passer les donnees existantes pour pre-remplir le formulaire
         html = generate_layout(
@@ -10333,19 +10606,20 @@ async def module_detail(
         )
         return HTMLResponse(content=html)
 
-    # Pour les interventions, utiliser le formulaire sectionné
-    if module_name.lower() in ["interventions", "intervention"]:
-        sections = organize_fields_into_sections(module)
-        html = generate_layout(
-            title=f"{module.nom_affichage} - Détail",
-            content=generate_sectioned_form_edit(module_name, sections, module, item),
-            user=user,
-            modules=get_all_modules()
-        )
-        return HTMLResponse(content=html)
+    # AZAP-UI-001: TOUS les modules utilisent le formulaire sectionné avec sidebar AZAL
+    # (style uniforme pour toute l'application)
+    sections = organize_fields_into_sections(module)
+    html = generate_layout(
+        title=f"{module.nom_affichage} - Détail",
+        content=generate_sectioned_form_edit(module_name, sections, module, item, user_role=user.get("role", "user")),
+        user=user,
+        modules=get_all_modules()
+    )
+    return HTMLResponse(content=html)
 
-    # Générer les champs avec valeurs - layout 2 colonnes style Odoo
-    fields_list = []
+    # === CODE LEGACY CI-DESSOUS (DÉSACTIVÉ - AZAP-UI-001) ===
+    # Ancien layout 2 colonnes style Odoo - remplacé par le style AZAL unifié
+    _LEGACY_fields_list = []
     full_width_fields = []  # Textareas, JSON fields - pleine largeur
 
     for nom, field in module.champs.items():
@@ -10484,6 +10758,13 @@ async def module_detail(
         {documents_html}
 
         <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
         function getCookie(name) {{
             const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
             return match ? match[2] : null;
@@ -11068,6 +11349,13 @@ def generate_intervention_wizard() -> str:
     </div>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     // État du wizard
     var wizardState = {
         currentStep: 0,
@@ -12035,7 +12323,103 @@ def generate_list_with_bulk_actions(
 
     # Bouton création standard (fenêtre normale)
     nouveau_btn = f'<a href="/ui/{module_name}/nouveau" class="btn btn-primary">+ Nouveau</a>'
+
+    # Bouton import avec dropdown
+    import_btn = f'''
+        <div class="import-dropdown" style="position: relative; display: inline-block;">
+            <button class="btn btn-secondary" onclick="toggleImportMenu()" style="display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                Importer
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div id="import-menu" class="import-menu" style="display: none;">
+                <a href="#" onclick="openImportModal(); return false;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    Importer un fichier
+                </a>
+                <a href="/api/v1/{module_name}/import/template" download>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Telecharger template Excel
+                </a>
+            </div>
+        </div>
+    '''
     wizard_html = ''
+
+    # Modal d'import
+    import_modal = f'''
+    <!-- Modal Import -->
+    <div id="import-modal" class="import-modal-overlay" style="display: none;">
+        <div class="import-modal">
+            <div class="import-modal-header">
+                <h3>Importer des {module_display_name}</h3>
+                <button class="close-btn" onclick="closeImportModal()">&times;</button>
+            </div>
+            <div class="import-modal-body">
+                <div class="import-dropzone" id="import-dropzone">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p><strong>Glissez-deposez votre fichier ici</strong></p>
+                    <p class="import-dropzone-sub">ou cliquez pour selectionner</p>
+                    <p class="import-formats">Formats acceptes: Excel (.xlsx, .xls), Word (.docx), CSV, PDF</p>
+                    <input type="file" id="import-file-input" accept=".xlsx,.xls,.docx,.csv,.pdf" style="display: none;">
+                </div>
+
+                <div id="import-preview" class="import-preview" style="display: none;">
+                    <div class="import-preview-header">
+                        <h4>Apercu de l'import</h4>
+                        <span class="import-file-info" id="import-file-info"></span>
+                    </div>
+                    <div class="import-mapping">
+                        <h5>Colonnes detectees</h5>
+                        <div id="import-mapping-list"></div>
+                    </div>
+                    <div class="import-data-preview">
+                        <h5>Donnees (10 premieres lignes)</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm" id="import-preview-table">
+                                <thead></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="import-result" class="import-result" style="display: none;">
+                    <div class="import-result-icon success" id="import-result-icon">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <h4 id="import-result-title">Import termine</h4>
+                    <div id="import-result-stats"></div>
+                    <div id="import-result-errors" class="import-errors"></div>
+                </div>
+            </div>
+            <div class="import-modal-footer">
+                <button class="btn btn-secondary" onclick="closeImportModal()">Annuler</button>
+                <button class="btn btn-primary" id="btn-preview-import" onclick="previewImport()" style="display: none;">
+                    Analyser le fichier
+                </button>
+                <button class="btn btn-success" id="btn-confirm-import" onclick="confirmImport()" style="display: none;">
+                    Lancer l'import
+                </button>
+                <button class="btn btn-primary" id="btn-close-result" onclick="closeImportModal(); location.reload();" style="display: none;">
+                    Fermer et actualiser
+                </button>
+            </div>
+        </div>
+    </div>
+    '''
 
     return f'''
     <div class="list-container">
@@ -12044,8 +12428,11 @@ def generate_list_with_bulk_actions(
                 <input type="text" id="search-input" placeholder="Rechercher..." class="form-control">
             </div>
             {sort_selector_html}
+            {import_btn}
             {nouveau_btn}
         </div>
+
+    {import_modal}
 
         {bulk_actions_html}
 
@@ -12124,6 +12511,30 @@ def generate_list_with_bulk_actions(
             opacity: 1;
             background-color: var(--hover-bg, #f0f0f0);
         }}
+        .facture-link {{
+            opacity: 1 !important;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white !important;
+            border-radius: 4px;
+            font-size: 12px;
+        }}
+        .facture-link:hover {{
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }}
+        .generer-facture-btn {{
+            opacity: 1 !important;
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white !important;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+        }}
+        .generer-facture-btn:hover {{
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+        }}
         .quick-actions {{
             display: flex;
             gap: 4px;
@@ -12145,9 +12556,250 @@ def generate_list_with_bulk_actions(
             background-color: var(--primary-color, #1976d2);
             transform: scale(1.1);
         }}
+
+        /* === STYLES IMPORT === */
+        .import-dropdown {{
+            position: relative;
+            display: inline-block;
+        }}
+        .import-menu {{
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid var(--gray-200, #e5e7eb);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            min-width: 220px;
+            padding: 8px 0;
+        }}
+        .import-menu a {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            color: var(--gray-700, #374151);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }}
+        .import-menu a:hover {{
+            background: var(--gray-100, #f3f4f6);
+        }}
+        .import-modal-overlay {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }}
+        .import-modal {{
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }}
+        .import-modal-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--gray-200, #e5e7eb);
+        }}
+        .import-modal-header h3 {{
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }}
+        .import-modal-header .close-btn {{
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--gray-500);
+            cursor: pointer;
+        }}
+        .import-modal-body {{
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }}
+        .import-modal-footer {{
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200, #e5e7eb);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }}
+        .import-dropzone {{
+            border: 2px dashed var(--gray-300, #d1d5db);
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+        .import-dropzone:hover, .import-dropzone.dragover {{
+            border-color: var(--primary, #2563eb);
+            background: var(--primary-light, #eff6ff);
+        }}
+        .import-dropzone svg {{
+            color: var(--gray-400);
+            margin-bottom: 16px;
+        }}
+        .import-dropzone p {{
+            margin: 0;
+            color: var(--gray-600);
+        }}
+        .import-dropzone-sub {{
+            font-size: 14px;
+            color: var(--gray-500);
+            margin-top: 8px !important;
+        }}
+        .import-formats {{
+            font-size: 12px;
+            color: var(--gray-400);
+            margin-top: 16px !important;
+        }}
+        .import-preview h4, .import-preview h5 {{
+            margin: 0 0 12px;
+            font-size: 16px;
+            font-weight: 600;
+        }}
+        .import-preview h5 {{
+            font-size: 14px;
+            margin-top: 24px;
+        }}
+        .import-preview-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        .import-file-info {{
+            font-size: 14px;
+            color: var(--gray-500);
+        }}
+        .import-mapping {{
+            background: var(--gray-50, #f9fafb);
+            border-radius: 8px;
+            padding: 16px;
+        }}
+        #import-mapping-list {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }}
+        .mapping-item {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 13px;
+        }}
+        .mapping-item .col-name {{
+            color: var(--gray-600);
+        }}
+        .mapping-item .arrow {{
+            color: var(--gray-400);
+        }}
+        .mapping-item .field-name {{
+            color: var(--primary);
+            font-weight: 500;
+        }}
+        .mapping-item.unmapped {{
+            border-color: var(--warning, #f59e0b);
+            background: #fffbeb;
+        }}
+        .mapping-item.unmapped .field-name {{
+            color: var(--warning);
+        }}
+        .import-data-preview {{
+            margin-top: 16px;
+        }}
+        .import-data-preview table {{
+            font-size: 13px;
+        }}
+        .import-result {{
+            text-align: center;
+            padding: 32px;
+        }}
+        .import-result-icon {{
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }}
+        .import-result-icon.success {{
+            background: #d1fae5;
+            color: #059669;
+        }}
+        .import-result-icon.error {{
+            background: #fee2e2;
+            color: #dc2626;
+        }}
+        #import-result-stats {{
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin: 16px 0;
+        }}
+        .stat-item {{
+            text-align: center;
+        }}
+        .stat-value {{
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }}
+        .stat-value.success {{
+            color: #059669;
+        }}
+        .stat-value.error {{
+            color: #dc2626;
+        }}
+        .stat-label {{
+            font-size: 13px;
+            color: var(--gray-500);
+        }}
+        .import-errors {{
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+            margin-top: 16px;
+        }}
+        .error-item {{
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }}
     </style>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
         function sortBy(field, order) {{
             const url = new URL(window.location.href);
             url.searchParams.set('sort', field);
@@ -12205,6 +12857,33 @@ def generate_list_with_bulk_actions(
                 || '';
         }}
 
+        // Générer une facture pour une intervention terminée
+        async function genererFacture(interventionId) {{
+            if (!confirm('Générer une facture brouillon pour cette intervention ?')) return;
+
+            try {{
+                const response = await fetch('/api/v1/technicien/intervention/' + interventionId + '/generer-facture', {{
+                    method: 'POST',
+                    headers: {{
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + getToken()
+                    }},
+                    credentials: 'include'
+                }});
+
+                if (response.ok) {{
+                    const data = await response.json();
+                    alert('Facture créée avec succès !');
+                    location.reload();
+                }} else {{
+                    const err = await response.json();
+                    alert('Erreur: ' + (err.detail || 'Génération de facture échouée'));
+                }}
+            }} catch (e) {{
+                alert('Erreur: ' + e.message);
+            }}
+        }}
+
         async function applyBulkStatus() {{
             const status = document.getElementById('bulk-status').value;
             if (!status) return alert('Veuillez sélectionner un statut');
@@ -12257,6 +12936,259 @@ def generate_list_with_bulk_actions(
                 alert('Erreur: ' + e.message);
             }}
         }}
+
+        // === FONCTIONS IMPORT ===
+        let importFile = null;
+        let previewData = null;
+
+        function toggleImportMenu() {{
+            const menu = document.getElementById('import-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }}
+
+        // Fermer le menu si on clique ailleurs
+        document.addEventListener('click', function(e) {{
+            const dropdown = document.querySelector('.import-dropdown');
+            const menu = document.getElementById('import-menu');
+            if (dropdown && menu && !dropdown.contains(e.target)) {{
+                menu.style.display = 'none';
+            }}
+        }});
+
+        function openImportModal() {{
+            document.getElementById('import-modal').style.display = 'flex';
+            document.getElementById('import-menu').style.display = 'none';
+            resetImportModal();
+        }}
+
+        function closeImportModal() {{
+            document.getElementById('import-modal').style.display = 'none';
+            resetImportModal();
+        }}
+
+        function resetImportModal() {{
+            importFile = null;
+            previewData = null;
+            document.getElementById('import-dropzone').style.display = 'block';
+            document.getElementById('import-preview').style.display = 'none';
+            document.getElementById('import-result').style.display = 'none';
+            document.getElementById('btn-preview-import').style.display = 'none';
+            document.getElementById('btn-confirm-import').style.display = 'none';
+            document.getElementById('btn-close-result').style.display = 'none';
+            document.getElementById('import-file-input').value = '';
+        }}
+
+        // Dropzone events
+        const dropzone = document.getElementById('import-dropzone');
+        const fileInput = document.getElementById('import-file-input');
+
+        if (dropzone) {{
+            dropzone.addEventListener('click', () => fileInput.click());
+
+            dropzone.addEventListener('dragover', (e) => {{
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            }});
+
+            dropzone.addEventListener('dragleave', () => {{
+                dropzone.classList.remove('dragover');
+            }});
+
+            dropzone.addEventListener('drop', (e) => {{
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {{
+                    handleFileSelect(e.dataTransfer.files[0]);
+                }}
+            }});
+        }}
+
+        if (fileInput) {{
+            fileInput.addEventListener('change', (e) => {{
+                if (e.target.files.length) {{
+                    handleFileSelect(e.target.files[0]);
+                }}
+            }});
+        }}
+
+        function handleFileSelect(file) {{
+            importFile = file;
+            document.getElementById('btn-preview-import').style.display = 'inline-block';
+            document.getElementById('import-dropzone').innerHTML = `
+                <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p><strong>${{file.name}}</strong></p>
+                <p class="import-dropzone-sub">${{formatFileSize(file.size)}}</p>
+            `;
+        }}
+
+        function formatFileSize(bytes) {{
+            if (bytes < 1024) return bytes + ' octets';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' Mo';
+        }}
+
+        async function previewImport() {{
+            if (!importFile) return;
+
+            const formData = new FormData();
+            formData.append('file', importFile);
+
+            try {{
+                const response = await fetch('/api/v1/{module_name}/import/preview', {{
+                    method: 'POST',
+                    headers: {{
+                        'Authorization': 'Bearer ' + getToken()
+                    }},
+                    body: formData
+                }});
+
+                const data = await response.json();
+
+                if (!response.ok) {{
+                    alert('Erreur: ' + (data.detail || 'Analyse echouee'));
+                    return;
+                }}
+
+                previewData = data;
+                showPreview(data);
+
+            }} catch (e) {{
+                alert('Erreur: ' + e.message);
+            }}
+        }}
+
+        function showPreview(data) {{
+            document.getElementById('import-dropzone').style.display = 'none';
+            document.getElementById('import-preview').style.display = 'block';
+            document.getElementById('btn-preview-import').style.display = 'none';
+            document.getElementById('btn-confirm-import').style.display = 'inline-block';
+
+            document.getElementById('import-file-info').textContent =
+                data.file_type.toUpperCase() + ' - ' + data.total_rows + ' lignes detectees';
+
+            // Mapping
+            const mappingList = document.getElementById('import-mapping-list');
+            mappingList.innerHTML = '';
+
+            for (const [col, field] of Object.entries(data.mapping_used || {{}})) {{
+                const fieldLabel = data.module_fields[field] || field;
+                mappingList.innerHTML += `
+                    <div class="mapping-item">
+                        <span class="col-name">${{col}}</span>
+                        <span class="arrow">→</span>
+                        <span class="field-name">${{fieldLabel}}</span>
+                    </div>
+                `;
+            }}
+
+            // Colonnes non mappees
+            for (const col of (data.unmapped_columns || [])) {{
+                mappingList.innerHTML += `
+                    <div class="mapping-item unmapped">
+                        <span class="col-name">${{col}}</span>
+                        <span class="arrow">→</span>
+                        <span class="field-name">Ignoree</span>
+                    </div>
+                `;
+            }}
+
+            // Table preview
+            const table = document.getElementById('import-preview-table');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+
+            const fields = Object.keys(data.preview_data[0] || {{}});
+            thead.innerHTML = '<tr>' + fields.map(f => `<th>${{data.module_fields[f] || f}}</th>`).join('') + '</tr>';
+
+            tbody.innerHTML = data.preview_data.map(row =>
+                '<tr>' + fields.map(f => `<td>${{row[f] || '-'}}</td>`).join('') + '</tr>'
+            ).join('');
+        }}
+
+        async function confirmImport() {{
+            if (!importFile) return;
+
+            document.getElementById('btn-confirm-import').disabled = true;
+            document.getElementById('btn-confirm-import').textContent = 'Import en cours...';
+
+            const formData = new FormData();
+            formData.append('file', importFile);
+
+            try {{
+                const response = await fetch('/api/v1/{module_name}/import', {{
+                    method: 'POST',
+                    headers: {{
+                        'Authorization': 'Bearer ' + getToken()
+                    }},
+                    body: formData
+                }});
+
+                const data = await response.json();
+
+                if (!response.ok) {{
+                    alert('Erreur: ' + (data.detail || 'Import echoue'));
+                    document.getElementById('btn-confirm-import').disabled = false;
+                    document.getElementById('btn-confirm-import').textContent = 'Lancer l\\'import';
+                    return;
+                }}
+
+                showResult(data);
+
+            }} catch (e) {{
+                alert('Erreur: ' + e.message);
+                document.getElementById('btn-confirm-import').disabled = false;
+                document.getElementById('btn-confirm-import').textContent = 'Lancer l\\'import';
+            }}
+        }}
+
+        function showResult(data) {{
+            document.getElementById('import-preview').style.display = 'none';
+            document.getElementById('import-result').style.display = 'block';
+            document.getElementById('btn-confirm-import').style.display = 'none';
+            document.getElementById('btn-close-result').style.display = 'inline-block';
+
+            const hasErrors = data.total_errors > 0;
+            const icon = document.getElementById('import-result-icon');
+            icon.className = 'import-result-icon ' + (hasErrors ? 'error' : 'success');
+            icon.innerHTML = hasErrors
+                ? '<svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>'
+                : '<svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+
+            document.getElementById('import-result-title').textContent =
+                hasErrors ? 'Import termine avec des erreurs' : 'Import termine avec succes';
+
+            document.getElementById('import-result-stats').innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value success">${{data.inserted || 0}}</div>
+                    <div class="stat-label">Importes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${{data.total_rows || 0}}</div>
+                    <div class="stat-label">Total lignes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value error">${{data.total_errors || 0}}</div>
+                    <div class="stat-label">Erreurs</div>
+                </div>
+            `;
+
+            // Errors
+            const errorsDiv = document.getElementById('import-result-errors');
+            if (data.errors && data.errors.length > 0) {{
+                errorsDiv.innerHTML = data.errors.slice(0, 10).map(err => `
+                    <div class="error-item">
+                        <strong>Ligne ${{err.ligne}}:</strong> ${{err.erreur}}
+                    </div>
+                `).join('');
+                if (data.total_errors > 10) {{
+                    errorsDiv.innerHTML += `<p style="text-align:center; color: var(--gray-500);">... et ${{data.total_errors - 10}} autres erreurs</p>`;
+                }}
+            }} else {{
+                errorsDiv.innerHTML = '';
+            }}
+        }}
     </script>
     {wizard_html}
     '''
@@ -12288,6 +13220,28 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                     enabled_modules = json_lib.loads(row[0]) if isinstance(row[0], str) else row[0]
         except Exception:
             pass  # If error, show all modules
+
+    # Récupérer les infos du tenant (nom, logo)
+    tenant_name = APP_NAME
+    tenant_logo_url = None
+    if tenant_id:
+        try:
+            with Database.get_session() as session:
+                from sqlalchemy import text
+                import json as json_lib
+                result = session.execute(
+                    text("SELECT nom, config FROM azalplus.tenants WHERE id = :tenant_id"),
+                    {"tenant_id": str(tenant_id)}
+                )
+                row = result.fetchone()
+                if row:
+                    tenant_name = row[0] or APP_NAME
+                    config = row[1]
+                    if config:
+                        config_dict = json_lib.loads(config) if isinstance(config, str) else config
+                        tenant_logo_url = config_dict.get("logo_url")
+        except Exception:
+            pass  # Utiliser les valeurs par défaut
 
     # Filter modules if user has custom enabled modules
     if enabled_modules is not None and len(enabled_modules) > 0:
@@ -12326,18 +13280,36 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     ]
     modules_json = json_module.dumps(modules_for_palette, ensure_ascii=False)
 
+    # Logo HTML (tenant ou AZALPLUS par défaut)
+    if tenant_logo_url:
+        logo_html = f'<img src="{tenant_logo_url}" alt="{tenant_name}" style="max-width:32px;max-height:32px;object-fit:contain;">'
+    else:
+        logo_html = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24" class="sidebar-logo-icon">
+                    <circle cx="256" cy="256" r="256" fill="#3454D1"/>
+                    <circle cx="380" cy="120" r="24" fill="#6B9FFF"/>
+                    <text x="200" y="360" font-family="Inter, Montserrat, Arial, sans-serif" font-weight="800" font-size="280" fill="#FFFFFF">A</text>
+                    <text x="340" y="280" font-family="Inter, Montserrat, Arial, sans-serif" font-weight="700" font-size="140" fill="#FFFFFF">+</text>
+                </svg>'''
+
     return f'''
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title} - {APP_NAME}</title>
+    <title>{title} - {tenant_name}</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="apple-touch-icon" href="/static/logo.png">
     <!-- Error Reporter INLINE - capture immédiate avant tout autre script -->
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     (function(){{
         'use strict';
         var REPORT_ENDPOINT='/guardian/frontend-error';
@@ -12391,6 +13363,13 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     <!-- CSS genere depuis theme.yml -->
     <link rel="stylesheet" href="/assets/style.css?v=9785f">
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     // Notification bell - defined early so onclick works
     var notifPanelOpen = false;
     function toggleNotifPanel(event) {{
@@ -12420,13 +13399,8 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24" class="sidebar-logo-icon">
-                    <circle cx="256" cy="256" r="256" fill="#3454D1"/>
-                    <circle cx="380" cy="120" r="24" fill="#6B9FFF"/>
-                    <text x="200" y="360" font-family="Inter, Montserrat, Arial, sans-serif" font-weight="800" font-size="280" fill="#FFFFFF">A</text>
-                    <text x="340" y="280" font-family="Inter, Montserrat, Arial, sans-serif" font-weight="700" font-size="140" fill="#FFFFFF">+</text>
-                </svg>
-                <span>{APP_NAME}</span>
+                {logo_html}
+                <span>{tenant_name}</span>
             </div>
 
             <nav class="sidebar-nav">
@@ -13175,6 +14149,13 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     </style>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     // ==========================================================================
     // Token d'authentification global
     // ==========================================================================
@@ -14547,6 +15528,13 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     </div>
 
     <script>
+        // === FONCTIONS COMMUNES GUARDIAN ===
+
+        function confirmDelete(id, name) {{
+            if (confirm('Supprimer "' + name + '" ?')) {{
+                fetch(window.location.pathname + '/' + id, {{method:'DELETE'}}).then(r => r.ok ? location.reload() : alert('Erreur'));
+            }}
+        }}
     var mobileToken = null;
     var qrGenerated = false;
 
