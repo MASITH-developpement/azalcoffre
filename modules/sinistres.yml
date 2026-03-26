@@ -447,22 +447,22 @@ champs:
     description: Photos du sinistre (liste URLs)
 
   - nom: rapport_expert_file
-    type: file
+    type: text
     groupe: Documents
     obligatoire: false
-    description: Rapport d'expertise (fichier)
+    description: Rapport d'expertise (URL ou chemin)
 
   - nom: rapport_police_file
-    type: file
+    type: text
     groupe: Documents
     obligatoire: false
-    description: Rapport de police (fichier)
+    description: Rapport de police (URL ou chemin)
 
   - nom: constat_amiable_file
-    type: file
+    type: text
     groupe: Documents
     obligatoire: false
-    description: Constat amiable (fichier)
+    description: Constat amiable (URL ou chemin)
 
   - nom: autres_documents
     type: json
