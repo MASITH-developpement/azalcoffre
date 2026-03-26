@@ -220,6 +220,35 @@ champs:
     options: [LOW, MEDIUM, HIGH, URGENT]
     description: Priorite
 
+  # Gestionnaire interne
+  - nom: gestionnaire_id
+    type: relation
+    groupe: Gestion
+    obligatoire: false
+    relation: Employes
+    description: Responsable interne du dossier
+
+  # Indicateur de fraude
+  - nom: fraude_suspectee
+    type: boolean
+    groupe: Gestion
+    obligatoire: false
+    defaut: false
+    description: Suspicion de fraude
+
+  - nom: fraude_notes
+    type: textarea
+    groupe: Gestion
+    obligatoire: false
+    description: Notes sur la suspicion de fraude
+
+  # Date declaration assureur
+  - nom: date_declaration_assureur
+    type: date
+    groupe: Dates
+    obligatoire: false
+    description: Date de declaration a l'assureur
+
   - nom: expertise_required
     type: boolean
     groupe: Informations
@@ -256,6 +285,83 @@ champs:
     groupe: Notes
     obligatoire: false
     description: Conclusion de l'expertise
+
+  # Contre-expertise
+  - nom: contre_expertise
+    type: boolean
+    groupe: Contre-Expertise
+    obligatoire: false
+    defaut: false
+    description: Contre-expertise demandee
+
+  - nom: contre_expert_nom
+    type: text
+    groupe: Contre-Expertise
+    obligatoire: false
+    description: Nom du contre-expert
+
+  - nom: contre_expert_reference
+    type: text
+    groupe: Contre-Expertise
+    obligatoire: false
+    description: Reference du contre-expert
+
+  - nom: contre_expertise_date
+    type: datetime
+    groupe: Contre-Expertise
+    obligatoire: false
+    description: Date de la contre-expertise
+
+  - nom: contre_expertise_conclusion
+    type: textarea
+    groupe: Contre-Expertise
+    obligatoire: false
+    description: Conclusion de la contre-expertise
+
+  # Contentieux / Litige
+  - nom: contentieux
+    type: boolean
+    groupe: Contentieux
+    obligatoire: false
+    defaut: false
+    description: Litige en cours
+
+  - nom: contentieux_type
+    type: select
+    groupe: Contentieux
+    obligatoire: false
+    options: [amiable, judiciaire, arbitrage, mediation]
+    description: Type de contentieux
+
+  - nom: contentieux_avocat
+    type: text
+    groupe: Contentieux
+    obligatoire: false
+    description: Avocat en charge
+
+  - nom: contentieux_tribunal
+    type: text
+    groupe: Contentieux
+    obligatoire: false
+    description: Tribunal competent
+
+  - nom: contentieux_reference
+    type: text
+    groupe: Contentieux
+    obligatoire: false
+    description: Reference du dossier judiciaire
+
+  - nom: contentieux_date_audience
+    type: date
+    groupe: Contentieux
+    obligatoire: false
+    description: Date de la prochaine audience
+
+  - nom: contentieux_notes
+    type: textarea
+    groupe: Contentieux
+    obligatoire: false
+    description: Notes sur le contentieux
 
   - nom: decision
     type: select
@@ -325,6 +431,45 @@ champs:
     relation: Factures
     description: Facture des travaux de reparation
 
+  # Lien vers intervention
+  - nom: intervention_id
+    type: relation
+    groupe: Travaux Reparation
+    obligatoire: false
+    relation: Interventions
+    description: Intervention liee aux travaux
+
+  # Photos et documents
+  - nom: photos
+    type: json
+    groupe: Documents
+    obligatoire: false
+    description: Photos du sinistre (liste URLs)
+
+  - nom: rapport_expert_file
+    type: file
+    groupe: Documents
+    obligatoire: false
+    description: Rapport d'expertise (fichier)
+
+  - nom: rapport_police_file
+    type: file
+    groupe: Documents
+    obligatoire: false
+    description: Rapport de police (fichier)
+
+  - nom: constat_amiable_file
+    type: file
+    groupe: Documents
+    obligatoire: false
+    description: Constat amiable (fichier)
+
+  - nom: autres_documents
+    type: json
+    groupe: Documents
+    obligatoire: false
+    description: Autres documents (liste)
+
   # Montants financiers
   - nom: montant_travaux_avant_sinistre
     type: number
@@ -343,6 +488,89 @@ champs:
     groupe: Montants
     obligatoire: false
     description: Montant pris en charge par nous
+
+  - nom: franchise
+    type: number
+    groupe: Montants
+    obligatoire: false
+    description: Montant de la franchise
+
+  - nom: plafond_garantie
+    type: number
+    groupe: Montants
+    obligatoire: false
+    description: Plafond de garantie applicable
+
+  - nom: reserve
+    type: number
+    groupe: Montants
+    obligatoire: false
+    description: Provision reservee pour le sinistre
+
+  # Paiement
+  - nom: paiement_date
+    type: date
+    groupe: Paiement
+    obligatoire: false
+    description: Date du paiement effectif
+
+  - nom: paiement_reference
+    type: text
+    groupe: Paiement
+    obligatoire: false
+    description: Reference du virement
+
+  - nom: paiement_mode
+    type: select
+    groupe: Paiement
+    obligatoire: false
+    options: [virement, cheque, especes, compensation]
+    description: Mode de paiement
+
+  - nom: paiement_beneficiaire
+    type: text
+    groupe: Paiement
+    obligatoire: false
+    description: Beneficiaire du paiement
+
+  # Recours contre tiers
+  - nom: recours
+    type: boolean
+    groupe: Recours
+    obligatoire: false
+    defaut: false
+    description: Recours contre tiers engage
+
+  - nom: recours_tiers_nom
+    type: text
+    groupe: Recours
+    obligatoire: false
+    description: Nom du tiers vise par le recours
+
+  - nom: recours_montant_demande
+    type: number
+    groupe: Recours
+    obligatoire: false
+    description: Montant demande en recours
+
+  - nom: recours_montant_recupere
+    type: number
+    groupe: Recours
+    obligatoire: false
+    description: Montant effectivement recupere
+
+  - nom: recours_statut
+    type: select
+    groupe: Recours
+    obligatoire: false
+    options: [en_cours, accepte, refuse, partiel, abandon]
+    description: Statut du recours
+
+  - nom: recours_notes
+    type: textarea
+    groupe: Recours
+    obligatoire: false
+    description: Notes sur le recours
 
   # Resultat du sinistre
   - nom: resultat
