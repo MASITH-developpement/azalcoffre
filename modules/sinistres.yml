@@ -361,6 +361,167 @@ champs:
     options: [en_expertise, travaux_en_cours, indemnise, abandonne, termine, cloture]
     description: Avancement du dossier
 
+  # ========== RDV EXPERTISE ==========
+  - nom: rdv_expertise_1_date
+    type: datetime
+    groupe: RDV Expertise
+    obligatoire: false
+    description: Date du 1er RDV expertise
+
+  - nom: rdv_expertise_1_lieu
+    type: text
+    groupe: RDV Expertise
+    obligatoire: false
+    description: Lieu du 1er RDV
+
+  - nom: rdv_expertise_1_statut
+    type: select
+    groupe: RDV Expertise
+    obligatoire: false
+    options: [planifie, confirme, realise, annule, reporte]
+    description: Statut du 1er RDV
+
+  - nom: rdv_expertise_1_notes
+    type: textarea
+    groupe: RDV Expertise
+    obligatoire: false
+    description: Notes du 1er RDV
+
+  - nom: rdv_expertise_2_date
+    type: datetime
+    groupe: RDV Expertise
+    obligatoire: false
+    description: Date du 2eme RDV expertise
+
+  - nom: rdv_expertise_2_lieu
+    type: text
+    groupe: RDV Expertise
+    obligatoire: false
+    description: Lieu du 2eme RDV
+
+  - nom: rdv_expertise_2_statut
+    type: select
+    groupe: RDV Expertise
+    obligatoire: false
+    options: [planifie, confirme, realise, annule, reporte]
+    description: Statut du 2eme RDV
+
+  - nom: rdv_expertise_2_notes
+    type: textarea
+    groupe: RDV Expertise
+    obligatoire: false
+    description: Notes du 2eme RDV
+
+  - nom: rdv_expertise_autres
+    type: json
+    groupe: RDV Expertise
+    obligatoire: false
+    description: Autres RDV expertise (tableau JSON)
+
+  # ========== COURRIERS EXPERT ==========
+  - nom: courrier_expert_date_dernier
+    type: date
+    groupe: Courriers Expert
+    obligatoire: false
+    description: Date du dernier courrier expert
+
+  - nom: courrier_expert_nombre
+    type: number
+    groupe: Courriers Expert
+    obligatoire: false
+    defaut: 0
+    description: Nombre de courriers expert
+
+  - nom: courrier_expert_liste
+    type: json
+    groupe: Courriers Expert
+    obligatoire: false
+    description: "Liste des courriers expert (date, type, objet, notes)"
+
+  - nom: courrier_expert_notes
+    type: textarea
+    groupe: Courriers Expert
+    obligatoire: false
+    description: Notes sur les courriers expert
+
+  # ========== COURRIERS ASSURANCE ==========
+  - nom: courrier_assurance_date_dernier
+    type: date
+    groupe: Courriers Assurance
+    obligatoire: false
+    description: Date du dernier courrier assurance
+
+  - nom: courrier_assurance_nombre
+    type: number
+    groupe: Courriers Assurance
+    obligatoire: false
+    defaut: 0
+    description: Nombre de courriers assurance
+
+  - nom: courrier_assurance_liste
+    type: json
+    groupe: Courriers Assurance
+    obligatoire: false
+    description: "Liste des courriers assurance (date, type, objet, notes)"
+
+  - nom: courrier_assurance_notes
+    type: textarea
+    groupe: Courriers Assurance
+    obligatoire: false
+    description: Notes sur les courriers assurance
+
+  # ========== COURRIERS SINISTRE ==========
+  - nom: courrier_sinistre_date_dernier
+    type: date
+    groupe: Courriers Sinistre
+    obligatoire: false
+    description: Date du dernier courrier sinistre
+
+  - nom: courrier_sinistre_nombre
+    type: number
+    groupe: Courriers Sinistre
+    obligatoire: false
+    defaut: 0
+    description: Nombre de courriers sinistre
+
+  - nom: courrier_sinistre_liste
+    type: json
+    groupe: Courriers Sinistre
+    obligatoire: false
+    description: "Liste des courriers sinistre (date, type, objet, notes)"
+
+  - nom: courrier_sinistre_notes
+    type: textarea
+    groupe: Courriers Sinistre
+    obligatoire: false
+    description: Notes sur les courriers sinistre
+
+  # ========== COURRIERS CLIENT ==========
+  - nom: courrier_client_date_dernier
+    type: date
+    groupe: Courriers Client
+    obligatoire: false
+    description: Date du dernier courrier client
+
+  - nom: courrier_client_nombre
+    type: number
+    groupe: Courriers Client
+    obligatoire: false
+    defaut: 0
+    description: Nombre de courriers client
+
+  - nom: courrier_client_liste
+    type: json
+    groupe: Courriers Client
+    obligatoire: false
+    description: "Liste des courriers client (date, type, objet, notes)"
+
+  - nom: courrier_client_notes
+    type: textarea
+    groupe: Courriers Client
+    obligatoire: false
+    description: Notes sur les courriers client
+
   - nom: submitted_at
     type: datetime
     groupe: Dates
