@@ -439,6 +439,13 @@ champs:
     relation: Interventions
     description: Intervention liee aux travaux
 
+  - nom: chantier_id
+    type: relation
+    groupe: Travaux Reparation
+    obligatoire: false
+    relation: Projets
+    description: Chantier/Projet lie au sinistre
+
   # Photos et documents
   - nom: photos
     type: json
