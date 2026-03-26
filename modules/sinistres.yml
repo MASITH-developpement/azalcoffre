@@ -130,6 +130,37 @@ champs:
     options: [owner, tenant, manager, insured, other]
     description: Role du declarant
 
+  # Personne ou societe touchee par le sinistre
+  - nom: victime_type
+    type: select
+    groupe: Victime
+    obligatoire: false
+    options: [personne, societe]
+    description: Type de victime
+
+  - nom: victime_nom
+    type: text
+    groupe: Victime
+    obligatoire: false
+    description: Nom de la personne ou societe touchee
+    autocompletion: true
+
+  - nom: victime_adresse
+    type: textarea
+    groupe: Victime
+    obligatoire: false
+    description: Adresse de la victime
+
+  - nom: victime_telephone
+    type: tel
+    groupe: Victime
+    obligatoire: false
+
+  - nom: victime_email
+    type: email
+    groupe: Victime
+    obligatoire: false
+
   - nom: third_parties
     type: json
     groupe: Metadata
@@ -198,14 +229,20 @@ champs:
 
   - nom: expert_name
     type: text
-    groupe: Informations
+    groupe: Expert
     obligatoire: false
     description: Nom de l'expert
     autocompletion: true
 
+  - nom: expert_reference
+    type: text
+    groupe: Expert
+    obligatoire: false
+    description: Reference de l'expert
+
   - nom: expert_phone
     type: tel
-    groupe: Contact
+    groupe: Expert
     obligatoire: false
 
   - nom: expertise_date
@@ -240,9 +277,89 @@ champs:
 
   - nom: approved_amount
     type: number
-    groupe: Informations
+    groupe: Montants
     obligatoire: false
-    description: Montant approuve
+    description: Montant approuve par l'assureur
+
+  # Documents des travaux ayant cause le sinistre
+  - nom: devis_cause_id
+    type: relation
+    groupe: Travaux Cause
+    obligatoire: false
+    relation: Devis
+    description: Devis des travaux ayant cause le sinistre
+
+  - nom: commande_cause_id
+    type: relation
+    groupe: Travaux Cause
+    obligatoire: false
+    relation: Commandes
+    description: Commande des travaux ayant cause le sinistre
+
+  - nom: facture_cause_id
+    type: relation
+    groupe: Travaux Cause
+    obligatoire: false
+    relation: Factures
+    description: Facture des travaux ayant cause le sinistre
+
+  # Documents des travaux de reparation
+  - nom: devis_travaux_id
+    type: relation
+    groupe: Travaux Reparation
+    obligatoire: false
+    relation: Devis
+    description: Devis des travaux de reparation
+
+  - nom: commande_travaux_id
+    type: relation
+    groupe: Travaux Reparation
+    obligatoire: false
+    relation: Commandes
+    description: Commande des travaux de reparation
+
+  - nom: facture_travaux_id
+    type: relation
+    groupe: Travaux Reparation
+    obligatoire: false
+    relation: Factures
+    description: Facture des travaux de reparation
+
+  # Montants financiers
+  - nom: montant_travaux_avant_sinistre
+    type: number
+    groupe: Montants
+    obligatoire: false
+    description: Montant des travaux realises avant sinistre
+
+  - nom: montant_indemnisation
+    type: number
+    groupe: Montants
+    obligatoire: false
+    description: Montant de l'indemnisation
+
+  - nom: montant_pris_en_charge
+    type: number
+    groupe: Montants
+    obligatoire: false
+    description: Montant pris en charge par nous
+
+  # Resultat du sinistre
+  - nom: resultat
+    type: select
+    groupe: Resultat
+    obligatoire: false
+    options: [a_tort, non_a_tort, sans_suite, non_recevable]
+    description: Resultat du sinistre
+
+  # Avancement
+  - nom: avancement
+    type: select
+    groupe: Suivi
+    obligatoire: false
+    defaut: en_expertise
+    options: [en_expertise, travaux_en_cours, indemnise, abandonne, termine, cloture]
+    description: Avancement du dossier
 
   - nom: submitted_at
     type: datetime
