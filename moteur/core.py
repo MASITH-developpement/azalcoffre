@@ -71,6 +71,11 @@ async def lifespan(app: FastAPI):
                 ALTER TABLE azalplus.utilisateurs
                 ADD COLUMN IF NOT EXISTS fonction VARCHAR(100) DEFAULT NULL
             """))
+            # Add modules_mobile column if missing (migration 006)
+            session.execute(text("""
+                ALTER TABLE azalplus.utilisateurs
+                ADD COLUMN IF NOT EXISTS modules_mobile TEXT DEFAULT NULL
+            """))
             session.commit()
             logger.debug("schema_migrations_applied")
     except Exception as e:
@@ -100,6 +105,23 @@ async def lifespan(app: FastAPI):
     except ImportError:
         logger.debug("claude_fixer_not_available")
 
+    # Initialiser Guardian Learner (auto-apprentissage)
+    try:
+        from .autopilot.guardian_learner import get_guardian_learner
+        guardian_learner = get_guardian_learner()
+        logger.info("guardian_learner_ready",
+                   learnings=guardian_learner.get_stats()["total_learnings"])
+    except Exception as e:
+        logger.warning("guardian_learner_init_failed", error=str(e))
+
+    # Démarrer le collecteur d'erreurs (déclenche Guardian automatiquement)
+    try:
+        from .autopilot.error_collector import start_error_collector
+        start_error_collector()
+        logger.info("error_collector_started")
+    except Exception as e:
+        logger.warning("error_collector_start_failed", error=str(e))
+
     # Vérifier la configuration de l'encryption
     verify_encryption_setup()
 
@@ -123,11 +145,25 @@ async def lifespan(app: FastAPI):
     from .backup import BackupService
     await BackupService.start_scheduler()
 
+    # Demarrer le scheduler de traitement des emails
+    from .email_to_intervention import EmailToInterventionScheduler
+    EmailToInterventionScheduler.start()
+
     logger.info("azalplus_ready", modules_loaded=ModuleParser.count())
 
     yield
 
     # Shutdown
+    EmailToInterventionScheduler.stop()
+
+    # Arrêter le collecteur d'erreurs Guardian
+    try:
+        from .autopilot.error_collector import stop_error_collector
+        stop_error_collector()
+        logger.info("error_collector_stopped")
+    except Exception:
+        pass
+
     await BackupService.stop_scheduler()
     await Database.disconnect()
     logger.info("azalplus_stopped")
@@ -230,7 +266,11 @@ async def security_headers_middleware(request: Request, call_next: Callable):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
     # Permissions Policy (ex-Feature-Policy)
-    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    # Autoriser caméra/micro pour les pages Marceau (analyse expressions faciales, voix)
+    if request.url.path.startswith("/ui/marceau") or request.url.path.startswith("/api/marceau"):
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(self), camera=(self)"
+    else:
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
 
     # Content Security Policy (mode rapport pour ne pas casser l'existant)
     if not request.url.path.startswith("/api/"):
@@ -270,6 +310,7 @@ GUARDIAN_EXEMPT_PATHS = [
     "/guardian/frontend-error",  # Reçoit des stack traces, code JS, etc.
     "/api/v1/technicien/intervention/",  # Upload photos base64, signatures
     "/api/admin/ambiance/custom",  # Codes couleurs hex (#XXXXXX)
+    "/api/admin/tenants",  # Admin tenants - protégé par require_createur
 ]
 
 @app.middleware("http")
@@ -783,6 +824,22 @@ try:
 except ImportError as e:
     logger.warning("import_odoo_routes_not_available", error=str(e))
 
+# POS Router (Point de Vente - Sessions, Tickets, Produits)
+try:
+    from .pos_router import router as pos_router
+    app.include_router(pos_router, prefix="/api/v1", tags=["POS"])
+    logger.info("pos_routes_loaded")
+except ImportError as e:
+    logger.warning("pos_routes_not_available", error=str(e))
+
+# POS Payments Routes (SumUp, Stripe Terminal, Tap to Pay)
+try:
+    from .pos_payments import pos_payments_router
+    app.include_router(pos_payments_router, tags=["POS Payments"])
+    logger.info("pos_payments_routes_loaded")
+except ImportError as e:
+    logger.warning("pos_payments_routes_not_available", error=str(e))
+
 # Generated Endpoints (Auto-created by Guardian)
 try:
     from .generated_endpoints import generated_router
@@ -793,6 +850,25 @@ except ImportError:
 # Recent Items Tracker
 from .activity import recent_router
 app.include_router(recent_router, prefix="/api", tags=["Recent"])
+
+# =============================================================================
+# MARCEAU - Assistant IA
+# =============================================================================
+try:
+    from app.modules.marceau.router import router as marceau_router
+    from app.modules.marceau.router_v2 import router as marceau_router_v2
+    from app.modules.marceau.router_v3 import router as marceau_router_v3
+    from app.modules.marceau.setup import init_marceau_tables
+    app.include_router(marceau_router, tags=["Marceau IA"])
+    app.include_router(marceau_router_v2, tags=["Marceau IA v2 - Agents & Scoring"])
+    app.include_router(marceau_router_v3, tags=["Marceau IA v3 - Vision & Voice"])
+    # Initialiser les tables au démarrage
+    init_marceau_tables()
+    logger.info("marceau_module_loaded", routers=["v1", "v2", "v3"])
+except ImportError as e:
+    logger.debug(f"marceau_module_not_available: {e}")
+except Exception as e:
+    logger.warning(f"marceau_module_error: {e}")
 
 # Debug Module (Simon QA Assistant)
 from .debug import debug_api_router, debug_ui_router
@@ -1762,6 +1838,60 @@ async def starlette_exception_handler(request: Request, exc: StarletteHTTPExcept
         status_code=status_code,
         content={"detail": exc.detail or "Une erreur est survenue"}
     )
+
+
+# =============================================================================
+# POS UI Routes (Point de Vente - Interface tactile)
+# =============================================================================
+from jinja2 import Environment, FileSystemLoader
+
+pos_templates_path = Path(__file__).parent.parent / "templates" / "pos"
+pos_env = Environment(loader=FileSystemLoader(str(pos_templates_path)))
+
+
+@app.get("/ui/pos/", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/ui/pos", response_class=HTMLResponse, include_in_schema=False)
+async def pos_index(request: Request):
+    """Interface POS principale."""
+    try:
+        template = pos_env.get_template("index.html")
+        return HTMLResponse(content=template.render(request=request))
+    except Exception as e:
+        logger.error("pos_index_error", error=str(e))
+        return render_error_page(500, request, "Erreur POS")
+
+
+@app.get("/ui/pos/session/open", response_class=HTMLResponse, include_in_schema=False)
+async def pos_session_open(request: Request):
+    """Page d'ouverture de session POS."""
+    try:
+        template = pos_env.get_template("session_open.html")
+        return HTMLResponse(content=template.render(request=request))
+    except Exception as e:
+        logger.error("pos_session_open_error", error=str(e))
+        return render_error_page(500, request, "Erreur POS")
+
+
+@app.get("/ui/pos/session/close", response_class=HTMLResponse, include_in_schema=False)
+async def pos_session_close(request: Request):
+    """Page de clôture de session POS."""
+    try:
+        template = pos_env.get_template("session_close.html")
+        return HTMLResponse(content=template.render(request=request))
+    except Exception as e:
+        logger.error("pos_session_close_error", error=str(e))
+        return render_error_page(500, request, "Erreur POS")
+
+
+@app.get("/ui/pos/payment", response_class=HTMLResponse, include_in_schema=False)
+async def pos_payment(request: Request):
+    """Page de paiement POS."""
+    try:
+        template = pos_env.get_template("payment.html")
+        return HTMLResponse(content=template.render(request=request))
+    except Exception as e:
+        logger.error("pos_payment_error", error=str(e))
+        return render_error_page(500, request, "Erreur POS")
 
 
 # =============================================================================
