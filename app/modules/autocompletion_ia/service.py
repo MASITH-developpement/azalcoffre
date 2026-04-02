@@ -132,6 +132,7 @@ Règles STRICTES:
         self,
         request: SuggestionRequest,
         historique: list[str],
+        marceau_context: str = "",
     ) -> str:
         """Construire le prompt utilisateur."""
         prompt = f"""Module: {request.module}
@@ -143,6 +144,10 @@ Valeur actuelle: "{request.valeur}"
 
         if request.contexte:
             prompt += f"\nContexte additionnel:\n{json.dumps(request.contexte, ensure_ascii=False, indent=2)}"
+
+        # Ajouter le contexte Marceau (connaissances RAG et métier)
+        if marceau_context:
+            prompt += f"\n\nConnaissances pertinentes (Marceau):{marceau_context}"
 
         prompt += f"\n\nPropose {request.limite} suggestions pertinentes pour compléter cette saisie."
 
@@ -255,6 +260,215 @@ Valeur actuelle: "{request.valeur}"
         except Exception as e:
             logger.warning(f"Could not get historique: {e}")
             return []
+
+    # -------------------------------------------------------------------------
+    # Marceau - Connaissances RAG et bases métier
+    # -------------------------------------------------------------------------
+    async def _get_marceau_suggestions(
+        self,
+        module: str,
+        champ: str,
+        valeur: str,
+        contexte: Optional[dict] = None,
+        limit: int = 3,
+    ) -> tuple[list[Suggestion], str]:
+        """
+        Utilise Marceau pour obtenir des suggestions basées sur :
+        - Les connaissances RAG (documents appris par le tenant)
+        - Les bases de connaissances métier (DTU, comptabilité, etc.)
+
+        Returns:
+            Tuple (suggestions, context_enrichi)
+        """
+        suggestions = []
+        context_text = ""
+
+        try:
+            # ===================================================================
+            # 1. Recherche dans le RAG de Marceau (documents appris)
+            # ===================================================================
+            try:
+                from app.modules.marceau.rag_service import RAGService
+
+                rag = RAGService(self.tenant_id)
+                query = f"{module} {champ} {valeur}"
+
+                # Déterminer les domaines pertinents selon le module
+                domaines = self._get_domaines_for_module(module)
+
+                rag_results = await rag.search(query, domaines=domaines, limit=3, min_score=0.6)
+
+                for result in rag_results:
+                    # Extraire des suggestions du contenu
+                    extracted = self._extract_suggestions_from_rag(
+                        result.extrait,
+                        champ,
+                        valeur,
+                    )
+                    for text in extracted[:2]:  # Max 2 suggestions par document
+                        suggestions.append(Suggestion(
+                            id=uuid4(),
+                            texte=text,
+                            score=result.score,
+                            source="marceau_rag",
+                        ))
+
+                    # Ajouter au contexte pour l'IA
+                    if result.score > 0.7:
+                        context_text += f"\n[{result.document.titre}]: {result.extrait[:200]}"
+
+            except ImportError:
+                logger.debug("RAG service not available")
+            except Exception as e:
+                logger.debug(f"RAG search failed: {e}")
+
+            # ===================================================================
+            # 2. Recherche dans les bases de connaissances métier
+            # ===================================================================
+            try:
+                from app.modules.marceau.knowledge_service import KnowledgeService
+
+                knowledge = KnowledgeService(self.tenant_id)
+                await knowledge.load_all()
+
+                # Recherche par mots-clés
+                search_query = f"{valeur}"
+                knowledge_results = knowledge.search(search_query, limit=3)
+
+                for result in knowledge_results:
+                    if result.score > 0.5:
+                        # Extraire des suggestions du résumé
+                        if result.item.resume:
+                            # Utiliser le résumé pour enrichir le contexte
+                            context_text += f"\n[{result.item.domaine}]: {result.item.resume[:150]}"
+
+                        # Si c'est un champ description ou texte long, suggérer des éléments
+                        if champ.lower() in ["description", "rapport", "observations", "commentaire", "notes"]:
+                            suggestions.append(Suggestion(
+                                id=uuid4(),
+                                texte=result.item.titre,
+                                score=result.score * 0.8,
+                                source="marceau_knowledge",
+                            ))
+
+            except ImportError:
+                logger.debug("Knowledge service not available")
+            except Exception as e:
+                logger.debug(f"Knowledge search failed: {e}")
+
+            # ===================================================================
+            # 3. Suggestions intelligentes basées sur le contexte du formulaire
+            # ===================================================================
+            if contexte:
+                # Si on a un contexte de formulaire, l'utiliser pour des suggestions ciblées
+                context_suggestions = await self._get_context_aware_suggestions(
+                    module, champ, valeur, contexte
+                )
+                suggestions.extend(context_suggestions)
+
+        except Exception as e:
+            logger.warning(f"Marceau suggestions error: {e}")
+
+        # Dédupliquer et limiter
+        seen = set()
+        unique_suggestions = []
+        for s in suggestions:
+            if s.texte.lower() not in seen:
+                seen.add(s.texte.lower())
+                unique_suggestions.append(s)
+                if len(unique_suggestions) >= limit:
+                    break
+
+        return unique_suggestions, context_text
+
+    def _get_domaines_for_module(self, module: str) -> Optional[list[str]]:
+        """Détermine les domaines de connaissance pertinents pour un module."""
+        module_lower = module.lower()
+
+        DOMAINE_MAPPING = {
+            "interventions": ["btp", "technique"],
+            "devis": ["btp", "comptabilite"],
+            "factures": ["comptabilite", "fiscalite"],
+            "paie": ["social", "rh"],
+            "employes": ["social", "rh"],
+            "patients": ["medical", "sante"],
+            "consultations": ["medical", "sante"],
+            "produits": ["commercial"],
+            "stocks": ["logistique"],
+            "projets": ["btp", "gestion"],
+            "contrats": ["juridique"],
+        }
+
+        return DOMAINE_MAPPING.get(module_lower)
+
+    def _extract_suggestions_from_rag(
+        self,
+        text: str,
+        champ: str,
+        valeur: str,
+    ) -> list[str]:
+        """Extrait des suggestions pertinentes d'un texte RAG."""
+        suggestions = []
+
+        # Découper en phrases
+        import re
+        sentences = re.split(r'[.!?\n]', text)
+
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) < 10 or len(sentence) > 200:
+                continue
+
+            # Si la phrase contient le préfixe saisi, c'est une bonne suggestion
+            if valeur.lower() in sentence.lower():
+                suggestions.append(sentence)
+
+        return suggestions[:3]
+
+    async def _get_context_aware_suggestions(
+        self,
+        module: str,
+        champ: str,
+        valeur: str,
+        contexte: dict,
+    ) -> list[Suggestion]:
+        """Génère des suggestions basées sur le contexte du formulaire."""
+        suggestions = []
+
+        try:
+            # Exemple: si on remplit une intervention et qu'on a le type d'intervention
+            if module.lower() == "interventions":
+                type_intervention = contexte.get("type_intervention") or contexte.get("type")
+                if type_intervention and champ.lower() == "description":
+                    # Suggestions basées sur le type
+                    type_suggestions = {
+                        "DEPANNAGE": ["Intervention de dépannage urgente", "Réparation suite à panne"],
+                        "MAINTENANCE": ["Maintenance préventive", "Contrôle et entretien périodique"],
+                        "INSTALLATION": ["Installation et mise en service", "Pose et raccordement"],
+                    }
+                    for s in type_suggestions.get(type_intervention.upper(), []):
+                        if valeur.lower() in s.lower():
+                            suggestions.append(Suggestion(
+                                id=uuid4(),
+                                texte=s,
+                                score=0.9,
+                                source="marceau_context",
+                            ))
+
+            # Si on a un client, suggérer des descriptions personnalisées
+            client_nom = contexte.get("client_nom") or contexte.get("client")
+            if client_nom and champ.lower() in ["objet", "description", "rapport"]:
+                suggestions.append(Suggestion(
+                    id=uuid4(),
+                    texte=f"Intervention pour {client_nom}",
+                    score=0.85,
+                    source="marceau_context",
+                ))
+
+        except Exception as e:
+            logger.debug(f"Context-aware suggestions error: {e}")
+
+        return suggestions
 
     async def _save_to_historique(self, module: str, champ: str, valeur: str) -> None:
         """Sauvegarder une valeur dans l'historique."""
@@ -376,6 +590,27 @@ Valeur actuelle: "{request.valeur}"
             historique = await self._get_historique(request.module, request.champ)
 
         # =====================================================================
+        # PRIORITÉ 2.5: Marceau - Connaissances RAG et bases métier
+        # =====================================================================
+        marceau_suggestions = []
+        marceau_context = ""
+        try:
+            marceau_suggestions, marceau_context = await self._get_marceau_suggestions(
+                module=request.module,
+                champ=request.champ,
+                valeur=request.valeur,
+                contexte=request.contexte,
+                limit=3,
+            )
+            # Si on a des suggestions Marceau de qualité, les ajouter aux apprises
+            if marceau_suggestions:
+                for ms in marceau_suggestions:
+                    if ms.texte.lower() not in {s.texte.lower() for s in learned_suggestions}:
+                        learned_suggestions.append(ms)
+        except Exception as e:
+            logger.debug(f"Marceau suggestions failed: {e}")
+
+        # =====================================================================
         # PRIORITÉ 3: Appeler l'IA pour compléter
         # =====================================================================
         # Construire les prompts
@@ -384,7 +619,7 @@ Valeur actuelle: "{request.valeur}"
             request.champ,
             request.type_completion,
         )
-        user_prompt = self._build_user_prompt(request, historique)
+        user_prompt = self._build_user_prompt(request, historique, marceau_context)
 
         # Appeler le provider
         provider_name = request.provider or config["fournisseur_defaut"]
