@@ -180,7 +180,11 @@ class ErrorCollector:
 def handle_error_for_autofix(error_data: dict) -> None:
     """
     Callback appelé pour chaque nouvelle erreur.
-    Déclenche AutoFixer si possible.
+    Déclenche le système d'auto-correction complet:
+    1. AutoFixer (patterns connus)
+    2. Claude IA (si AutoFixer échoue)
+    3. Recherche web (si Claude échoue)
+    4. Vérification et apprentissage
     """
     from .auto_fixer import AutoFixer
 
@@ -194,17 +198,65 @@ Stack: {error_data.get('stack', 'N/A')}
 Timestamp: {error_data.get('timestamp', 'N/A')}
 """
 
-    # Tenter la correction automatique
+    # Contexte pour la vérification
+    context = {
+        "file": error_data.get('source_file'),
+        "path": error_data.get('url'),
+        "verification_type": "syntax" if error_data.get('source_file', '').endswith('.py') else "http",
+    }
+
+    # 1. Essayer AutoFixer d'abord (rapide, patterns connus)
     success, message = AutoFixer.try_fix(error_log)
 
     if success:
         logger.info("autofix_applied",
                    error_type=error_data.get('error_type'),
                    fix=message)
-    else:
-        logger.debug("autofix_not_applicable",
-                    error_type=error_data.get('error_type'),
-                    reason=message)
+        return
+
+    # 2. Si AutoFixer échoue, utiliser GuardianLearner pour le cycle complet
+    # (Claude → Web search → Vérification → Apprentissage)
+    try:
+        from .guardian_learner import get_guardian_learner
+        import asyncio
+
+        learner = get_guardian_learner()
+
+        # Exécuter de manière asynchrone
+        async def resolve_async():
+            return await learner.resolve_error(error_log, context)
+
+        # Récupérer ou créer l'event loop
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # Si on est déjà dans un contexte async, créer une tâche
+                asyncio.create_task(resolve_async())
+                logger.debug("guardian_learner_task_created",
+                           error_type=error_data.get('error_type'))
+            else:
+                # Sinon exécuter directement
+                resolved, msg, solution = loop.run_until_complete(resolve_async())
+                if resolved:
+                    logger.info("guardian_learner_resolved",
+                               error_type=error_data.get('error_type'),
+                               message=msg[:100] if msg else "")
+                else:
+                    logger.warning("guardian_learner_failed",
+                                  error_type=error_data.get('error_type'),
+                                  reason=msg[:100] if msg else "")
+        except RuntimeError:
+            # Pas d'event loop, créer un nouveau
+            resolved, msg, solution = asyncio.run(resolve_async())
+            if resolved:
+                logger.info("guardian_learner_resolved",
+                           error_type=error_data.get('error_type'),
+                           message=msg[:100] if msg else "")
+
+    except ImportError as e:
+        logger.debug("guardian_learner_not_available", error=str(e))
+    except Exception as e:
+        logger.error("guardian_learner_error", error=str(e))
 
 
 def start_error_collector() -> None:

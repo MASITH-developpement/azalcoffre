@@ -1,0 +1,893 @@
+# =============================================================================
+# AZALPLUS - Base de Connaissances HTML & CSS
+# =============================================================================
+# AZAP-NC-001 : Connaissances externalisees en YAML
+# =============================================================================
+
+metadata:
+  domaine: "html_css"
+  version: "1.0.0"
+  date_maj: "2026-04-01"
+  sources:
+    - "MDN Web Docs"
+    - "W3C Standards"
+    - "CSS-Tricks"
+
+# =============================================================================
+# HTML - FONDAMENTAUX
+# =============================================================================
+
+html:
+  structure:
+    - id: html_base_001
+      titre: "Structure HTML de base"
+      contenu: |
+        STRUCTURE D'UN DOCUMENT HTML
+
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="description" content="Description de la page">
+            <title>Titre de la page</title>
+            <link rel="stylesheet" href="style.css">
+        </head>
+        <body>
+            <header>En-tete</header>
+            <nav>Navigation</nav>
+            <main>
+                <article>Contenu principal</article>
+                <aside>Barre laterale</aside>
+            </main>
+            <footer>Pied de page</footer>
+            <script src="script.js"></script>
+        </body>
+        </html>
+
+        BALISES SEMANTIQUES HTML5
+        - <header> : En-tete de page ou section
+        - <nav> : Navigation
+        - <main> : Contenu principal (unique)
+        - <article> : Contenu independant
+        - <section> : Section thematique
+        - <aside> : Contenu annexe
+        - <footer> : Pied de page ou section
+
+    - id: html_base_002
+      titre: "Balises de texte HTML"
+      contenu: |
+        TITRES
+        <h1>Titre principal (1 par page)</h1>
+        <h2>Sous-titre</h2>
+        <h3> a <h6> : Niveaux inferieurs
+
+        PARAGRAPHES ET TEXTE
+        <p>Paragraphe</p>
+        <br> : Saut de ligne
+        <hr> : Ligne horizontale
+        <strong>Texte important (gras)</strong>
+        <em>Texte emphase (italique)</em>
+        <mark>Texte surligné</mark>
+        <small>Petit texte</small>
+        <del>Texte barre</del>
+        <ins>Texte insere</ins>
+        <sub>Indice</sub>
+        <sup>Exposant</sup>
+        <code>Code inline</code>
+        <pre>Texte preformate</pre>
+        <blockquote>Citation longue</blockquote>
+        <q>Citation courte</q>
+        <abbr title="Explication">Abrev.</abbr>
+
+    - id: html_base_003
+      titre: "Liens et images"
+      contenu: |
+        LIENS
+        <a href="https://example.com">Lien externe</a>
+        <a href="/page.html">Lien interne</a>
+        <a href="#section">Ancre</a>
+        <a href="mailto:email@example.com">Email</a>
+        <a href="tel:+33123456789">Telephone</a>
+        <a href="file.pdf" download>Telecharger</a>
+        <a href="..." target="_blank" rel="noopener">Nouvel onglet</a>
+
+        IMAGES
+        <img src="image.jpg" alt="Description" width="300" height="200">
+
+        Image responsive :
+        <img srcset="small.jpg 480w, medium.jpg 800w, large.jpg 1200w"
+             sizes="(max-width: 600px) 480px, 800px"
+             src="medium.jpg"
+             alt="Description">
+
+        Figure avec legende :
+        <figure>
+            <img src="photo.jpg" alt="Description">
+            <figcaption>Legende de l'image</figcaption>
+        </figure>
+
+    - id: html_base_004
+      titre: "Listes HTML"
+      contenu: |
+        LISTE NON ORDONNEE
+        <ul>
+            <li>Element 1</li>
+            <li>Element 2</li>
+            <li>Element 3</li>
+        </ul>
+
+        LISTE ORDONNEE
+        <ol>
+            <li>Premier</li>
+            <li>Deuxieme</li>
+            <li>Troisieme</li>
+        </ol>
+
+        <ol start="5">Commence a 5</ol>
+        <ol reversed>Ordre inverse</ol>
+        <ol type="A">Lettres A, B, C</ol>
+        <ol type="I">Chiffres romains</ol>
+
+        LISTE DE DEFINITION
+        <dl>
+            <dt>Terme</dt>
+            <dd>Definition du terme</dd>
+            <dt>Autre terme</dt>
+            <dd>Sa definition</dd>
+        </dl>
+
+    - id: html_base_005
+      titre: "Tableaux HTML"
+      contenu: |
+        STRUCTURE D'UN TABLEAU
+
+        <table>
+            <caption>Titre du tableau</caption>
+            <thead>
+                <tr>
+                    <th>En-tete 1</th>
+                    <th>En-tete 2</th>
+                    <th>En-tete 3</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Cellule 1</td>
+                    <td>Cellule 2</td>
+                    <td>Cellule 3</td>
+                </tr>
+                <tr>
+                    <td>Cellule 4</td>
+                    <td colspan="2">Fusion 2 colonnes</td>
+                </tr>
+                <tr>
+                    <td rowspan="2">Fusion 2 lignes</td>
+                    <td>Cellule</td>
+                    <td>Cellule</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">Pied de tableau</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        ATTRIBUTS
+        - colspan="n" : fusion de n colonnes
+        - rowspan="n" : fusion de n lignes
+        - scope="col|row" : portee de l'en-tete
+
+  formulaires:
+    - id: html_form_001
+      titre: "Formulaires HTML"
+      contenu: |
+        STRUCTURE DE BASE
+
+        <form action="/submit" method="POST">
+            <label for="nom">Nom :</label>
+            <input type="text" id="nom" name="nom" required>
+
+            <label for="email">Email :</label>
+            <input type="email" id="email" name="email" required>
+
+            <button type="submit">Envoyer</button>
+        </form>
+
+        TYPES D'INPUT
+        <input type="text">        <!-- Texte -->
+        <input type="password">    <!-- Mot de passe -->
+        <input type="email">       <!-- Email (validation) -->
+        <input type="tel">         <!-- Telephone -->
+        <input type="url">         <!-- URL -->
+        <input type="number" min="0" max="100" step="1">
+        <input type="range" min="0" max="100">
+        <input type="date">        <!-- Date -->
+        <input type="time">        <!-- Heure -->
+        <input type="datetime-local">
+        <input type="color">       <!-- Couleur -->
+        <input type="file" accept=".pdf,.jpg">
+        <input type="hidden" name="token" value="abc123">
+        <input type="checkbox" checked>
+        <input type="radio" name="groupe" value="option1">
+
+        ATTRIBUTS UTILES
+        - required : champ obligatoire
+        - placeholder="Texte d'aide"
+        - disabled : desactive
+        - readonly : lecture seule
+        - autofocus : focus automatique
+        - pattern="[A-Z]{3}" : regex validation
+        - minlength, maxlength : longueur
+
+    - id: html_form_002
+      titre: "Elements de formulaire avances"
+      contenu: |
+        TEXTAREA
+        <textarea name="message" rows="4" cols="50"
+                  placeholder="Votre message..."></textarea>
+
+        SELECT
+        <select name="pays">
+            <option value="">Choisir...</option>
+            <option value="fr" selected>France</option>
+            <option value="be">Belgique</option>
+            <optgroup label="Amerique">
+                <option value="us">Etats-Unis</option>
+                <option value="ca">Canada</option>
+            </optgroup>
+        </select>
+
+        SELECT MULTIPLE
+        <select name="langues[]" multiple size="4">
+            <option value="fr">Francais</option>
+            <option value="en">Anglais</option>
+        </select>
+
+        DATALIST (autocompletion)
+        <input list="villes" name="ville">
+        <datalist id="villes">
+            <option value="Paris">
+            <option value="Lyon">
+            <option value="Marseille">
+        </datalist>
+
+        FIELDSET ET LEGEND
+        <fieldset>
+            <legend>Informations personnelles</legend>
+            <label>Nom : <input type="text" name="nom"></label>
+            <label>Email : <input type="email" name="email"></label>
+        </fieldset>
+
+# =============================================================================
+# CSS - FONDAMENTAUX
+# =============================================================================
+
+css:
+  selecteurs:
+    - id: css_sel_001
+      titre: "Selecteurs CSS"
+      contenu: |
+        SELECTEURS DE BASE
+
+        /* Element */
+        p { color: blue; }
+
+        /* Classe */
+        .ma-classe { color: red; }
+
+        /* ID */
+        #mon-id { color: green; }
+
+        /* Universel */
+        * { margin: 0; }
+
+        /* Attribut */
+        [type="text"] { border: 1px solid; }
+        [href^="https"] { } /* commence par */
+        [href$=".pdf"] { }  /* termine par */
+        [href*="example"] { } /* contient */
+
+        COMBINATEURS
+
+        /* Descendant (tous les niveaux) */
+        div p { }
+
+        /* Enfant direct */
+        div > p { }
+
+        /* Frere adjacent (suivant immediat) */
+        h2 + p { }
+
+        /* Freres generaux (tous les suivants) */
+        h2 ~ p { }
+
+        PSEUDO-CLASSES
+
+        a:hover { }      /* Survol */
+        a:active { }     /* Clic */
+        a:visited { }    /* Visite */
+        input:focus { }  /* Focus */
+        input:disabled { }
+        input:checked { }
+        li:first-child { }
+        li:last-child { }
+        li:nth-child(2) { }
+        li:nth-child(odd) { }
+        li:nth-child(even) { }
+        li:nth-child(3n+1) { }
+        p:not(.special) { }
+
+        PSEUDO-ELEMENTS
+
+        p::first-line { }
+        p::first-letter { }
+        div::before { content: "Avant"; }
+        div::after { content: "Apres"; }
+        ::selection { background: yellow; }
+        input::placeholder { color: gray; }
+
+    - id: css_sel_002
+      titre: "Specificite CSS"
+      contenu: |
+        CALCUL DE SPECIFICITE
+
+        Format : (inline, ID, classe, element)
+
+        /* Specificite */
+        p { }                    /* 0,0,0,1 */
+        .classe { }              /* 0,0,1,0 */
+        #id { }                  /* 0,1,0,0 */
+        style="..."              /* 1,0,0,0 */
+
+        p.classe { }             /* 0,0,1,1 */
+        #id .classe p { }        /* 0,1,1,1 */
+
+        REGLES DE PRIORITE
+        1. !important (a eviter)
+        2. Styles inline
+        3. Specificite la plus haute
+        4. Ordre d'apparition (dernier gagne)
+
+        /* !important ecrase tout */
+        p { color: red !important; }
+
+        /* Bonne pratique : eviter !important,
+           utiliser des classes specifiques */
+
+  box_model:
+    - id: css_box_001
+      titre: "Modele de boite CSS"
+      contenu: |
+        BOX MODEL
+
+        +---------------------------+
+        |         margin            |
+        |  +---------------------+  |
+        |  |      border         |  |
+        |  |  +---------------+  |  |
+        |  |  |    padding    |  |  |
+        |  |  |  +---------+  |  |  |
+        |  |  |  | content |  |  |  |
+        |  |  |  +---------+  |  |  |
+        |  |  +---------------+  |  |
+        |  +---------------------+  |
+        +---------------------------+
+
+        /* Dimensions */
+        width: 200px;
+        height: 100px;
+        min-width: 100px;
+        max-width: 500px;
+
+        /* Padding (interne) */
+        padding: 10px;              /* tous */
+        padding: 10px 20px;         /* vertical horizontal */
+        padding: 10px 20px 15px 25px; /* haut droite bas gauche */
+        padding-top: 10px;
+
+        /* Border */
+        border: 1px solid black;
+        border-width: 2px;
+        border-style: solid|dashed|dotted|double|none;
+        border-color: #333;
+        border-radius: 8px;         /* coins arrondis */
+        border-radius: 50%;         /* cercle */
+
+        /* Margin (externe) */
+        margin: 10px;
+        margin: 0 auto;             /* centrer horizontalement */
+        margin-top: 20px;
+
+        /* Box-sizing (IMPORTANT) */
+        * {
+            box-sizing: border-box; /* width inclut padding+border */
+        }
+
+  layout:
+    - id: css_layout_001
+      titre: "Display et positionnement"
+      contenu: |
+        DISPLAY
+
+        display: block;       /* Prend toute la largeur */
+        display: inline;      /* Sur la ligne, pas de width/height */
+        display: inline-block; /* Inline avec width/height */
+        display: none;        /* Cache l'element */
+        display: flex;        /* Flexbox */
+        display: grid;        /* Grid */
+
+        POSITION
+
+        position: static;     /* Normal (defaut) */
+        position: relative;   /* Relatif a sa position normale */
+        position: absolute;   /* Relatif au parent positionne */
+        position: fixed;      /* Relatif au viewport */
+        position: sticky;     /* Hybride relative/fixed */
+
+        /* Coordonnees (sauf static) */
+        top: 10px;
+        right: 10px;
+        bottom: 10px;
+        left: 10px;
+
+        /* Z-index (ordre d'empilement) */
+        z-index: 100;
+
+        /* Exemple : element fixe en bas */
+        .footer-fixe {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        /* Exemple : sticky header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+    - id: css_layout_002
+      titre: "Flexbox"
+      contenu: |
+        FLEXBOX - CONTENEUR
+
+        .container {
+            display: flex;
+
+            /* Direction */
+            flex-direction: row;          /* defaut */
+            flex-direction: column;
+            flex-direction: row-reverse;
+            flex-direction: column-reverse;
+
+            /* Retour a la ligne */
+            flex-wrap: nowrap;            /* defaut */
+            flex-wrap: wrap;
+
+            /* Alignement axe principal */
+            justify-content: flex-start;  /* defaut */
+            justify-content: flex-end;
+            justify-content: center;
+            justify-content: space-between;
+            justify-content: space-around;
+            justify-content: space-evenly;
+
+            /* Alignement axe secondaire */
+            align-items: stretch;         /* defaut */
+            align-items: flex-start;
+            align-items: flex-end;
+            align-items: center;
+            align-items: baseline;
+
+            /* Espacement */
+            gap: 10px;
+            gap: 10px 20px; /* row column */
+        }
+
+        FLEXBOX - ELEMENTS
+
+        .item {
+            /* Croissance */
+            flex-grow: 1;    /* Prend l'espace disponible */
+
+            /* Retrecissement */
+            flex-shrink: 0;  /* Ne retrecit pas */
+
+            /* Taille de base */
+            flex-basis: 200px;
+
+            /* Raccourci */
+            flex: 1;         /* grow:1, shrink:1, basis:0 */
+            flex: 0 0 200px; /* Taille fixe 200px */
+
+            /* Alignement individuel */
+            align-self: center;
+
+            /* Ordre */
+            order: 1;
+        }
+
+    - id: css_layout_003
+      titre: "CSS Grid"
+      contenu: |
+        CSS GRID - CONTENEUR
+
+        .container {
+            display: grid;
+
+            /* Colonnes */
+            grid-template-columns: 200px 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+
+            /* Lignes */
+            grid-template-rows: 100px auto 50px;
+
+            /* Espacement */
+            gap: 20px;
+            row-gap: 20px;
+            column-gap: 10px;
+
+            /* Zones nommees */
+            grid-template-areas:
+                "header header header"
+                "nav    main   aside"
+                "footer footer footer";
+        }
+
+        GRID - ELEMENTS
+
+        .item {
+            /* Placement par lignes */
+            grid-column: 1 / 3;      /* colonnes 1 a 2 */
+            grid-row: 1 / 2;
+
+            /* Raccourci */
+            grid-area: 2 / 1 / 4 / 3; /* row-start / col-start / row-end / col-end */
+
+            /* Zones nommees */
+            grid-area: header;
+        }
+
+        EXEMPLE LAYOUT COMPLET
+
+        .page {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+                "header header"
+                "nav    main"
+                "footer footer";
+            min-height: 100vh;
+        }
+
+        header { grid-area: header; }
+        nav { grid-area: nav; }
+        main { grid-area: main; }
+        footer { grid-area: footer; }
+
+  responsive:
+    - id: css_resp_001
+      titre: "Media queries et responsive"
+      contenu: |
+        MEDIA QUERIES
+
+        /* Mobile first (recommande) */
+        .element { /* styles mobile */ }
+
+        @media (min-width: 768px) {
+            .element { /* styles tablette */ }
+        }
+
+        @media (min-width: 1024px) {
+            .element { /* styles desktop */ }
+        }
+
+        /* Ou desktop first */
+        @media (max-width: 1024px) { /* tablette */ }
+        @media (max-width: 768px) { /* mobile */ }
+
+        BREAKPOINTS COURANTS
+        - Mobile : < 576px
+        - Tablette portrait : 576px - 768px
+        - Tablette paysage : 768px - 1024px
+        - Desktop : 1024px - 1200px
+        - Large desktop : > 1200px
+
+        VIEWPORT META (OBLIGATOIRE)
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        UNITES RELATIVES
+        - % : pourcentage du parent
+        - vw, vh : pourcentage du viewport
+        - em : relatif a la taille de police du parent
+        - rem : relatif a la taille de police root (html)
+        - clamp(min, preferred, max) : valeur adaptative
+
+        font-size: clamp(1rem, 2.5vw, 2rem);
+        width: min(100%, 1200px);
+
+  typographie:
+    - id: css_typo_001
+      titre: "Typographie CSS"
+      contenu: |
+        POLICES
+
+        font-family: Arial, Helvetica, sans-serif;
+        font-family: 'Open Sans', sans-serif;
+
+        /* Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        /* Police locale */
+        @font-face {
+            font-family: 'MaPolice';
+            src: url('police.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        TAILLE ET STYLE
+
+        font-size: 16px;
+        font-size: 1rem;
+        font-size: clamp(1rem, 2vw, 1.5rem);
+
+        font-weight: normal;  /* 400 */
+        font-weight: bold;    /* 700 */
+        font-weight: 300;     /* light */
+        font-weight: 600;     /* semi-bold */
+
+        font-style: normal|italic|oblique;
+
+        ESPACEMENT
+
+        line-height: 1.5;     /* Sans unite recommande */
+        letter-spacing: 0.05em;
+        word-spacing: 0.1em;
+
+        text-indent: 2em;     /* Indentation 1ere ligne */
+
+        DECORATION ET TRANSFORMATION
+
+        text-decoration: none;
+        text-decoration: underline;
+        text-decoration: line-through;
+
+        text-transform: uppercase;
+        text-transform: lowercase;
+        text-transform: capitalize;
+
+        text-align: left|center|right|justify;
+        vertical-align: middle|top|bottom;
+
+        /* Tronquer le texte */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+  couleurs:
+    - id: css_color_001
+      titre: "Couleurs et fonds"
+      contenu: |
+        FORMATS DE COULEUR
+
+        color: red;                    /* Nom */
+        color: #ff0000;                /* Hex */
+        color: #f00;                   /* Hex court */
+        color: rgb(255, 0, 0);         /* RGB */
+        color: rgba(255, 0, 0, 0.5);   /* RGB + alpha */
+        color: hsl(0, 100%, 50%);      /* HSL */
+        color: hsla(0, 100%, 50%, 0.5);
+
+        FONDS
+
+        background-color: #f0f0f0;
+
+        background-image: url('image.jpg');
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: cover;        /* Couvre tout */
+        background-size: contain;      /* Contenu visible */
+
+        /* Raccourci */
+        background: #f0f0f0 url('bg.jpg') no-repeat center/cover;
+
+        /* Gradient */
+        background: linear-gradient(to right, #ff0000, #0000ff);
+        background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff);
+        background: radial-gradient(circle, #ff0000, #0000ff);
+
+        /* Multiple backgrounds */
+        background:
+            url('overlay.png') no-repeat center,
+            linear-gradient(to bottom, #fff, #000);
+
+        OPACITE
+        opacity: 0.5;  /* Element entier */
+        /* Ou utiliser rgba/hsla pour couleur seule */
+
+  effets:
+    - id: css_effect_001
+      titre: "Ombres et effets"
+      contenu: |
+        BOX-SHADOW
+
+        /* x y blur spread color */
+        box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        /* Ombre interne */
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+
+        /* Multiples ombres */
+        box-shadow:
+            0 1px 3px rgba(0,0,0,0.12),
+            0 1px 2px rgba(0,0,0,0.24);
+
+        TEXT-SHADOW
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+
+        FILTRES
+        filter: blur(5px);
+        filter: brightness(1.2);
+        filter: contrast(1.5);
+        filter: grayscale(100%);
+        filter: sepia(50%);
+        filter: saturate(2);
+        filter: hue-rotate(90deg);
+        filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+
+        /* Combiner */
+        filter: brightness(1.1) contrast(1.1);
+
+        BACKDROP-FILTER (fond flou)
+        backdrop-filter: blur(10px);
+
+  animations:
+    - id: css_anim_001
+      titre: "Transitions et animations"
+      contenu: |
+        TRANSITIONS
+
+        .bouton {
+            background: blue;
+            transition: background 0.3s ease;
+        }
+
+        .bouton:hover {
+            background: darkblue;
+        }
+
+        /* Syntaxe complete */
+        transition: property duration timing-function delay;
+        transition: all 0.3s ease-in-out;
+        transition: transform 0.3s, opacity 0.3s;
+
+        /* Timing functions */
+        ease        /* defaut */
+        linear
+        ease-in     /* lent au debut */
+        ease-out    /* lent a la fin */
+        ease-in-out
+        cubic-bezier(0.4, 0, 0.2, 1)
+
+        ANIMATIONS KEYFRAMES
+
+        @keyframes apparition {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .element {
+            animation: apparition 0.5s ease-out;
+            animation: pulse 2s infinite;
+        }
+
+        /* Proprietes animation */
+        animation-name: nom;
+        animation-duration: 1s;
+        animation-timing-function: ease;
+        animation-delay: 0.5s;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+        animation-fill-mode: forwards;
+
+        TRANSFORM
+        transform: translateX(100px);
+        transform: translateY(50px);
+        transform: translate(100px, 50px);
+        transform: rotate(45deg);
+        transform: scale(1.5);
+        transform: skewX(10deg);
+
+        /* Combiner */
+        transform: translate(10px, 10px) rotate(45deg) scale(1.2);
+
+        transform-origin: center center;
+        transform-origin: top left;
+
+# =============================================================================
+# VARIABLES CSS (CUSTOM PROPERTIES)
+# =============================================================================
+
+  variables:
+    - id: css_var_001
+      titre: "Variables CSS"
+      contenu: |
+        DEFINITION ET UTILISATION
+
+        :root {
+            /* Couleurs */
+            --color-primary: #3498db;
+            --color-secondary: #2ecc71;
+            --color-text: #333;
+            --color-background: #fff;
+
+            /* Espacements */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 4rem;
+
+            /* Typographie */
+            --font-family: 'Inter', sans-serif;
+            --font-size-base: 16px;
+            --line-height: 1.6;
+
+            /* Bordures */
+            --border-radius: 8px;
+            --border-color: #e0e0e0;
+
+            /* Ombres */
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+
+            /* Transitions */
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s ease;
+        }
+
+        /* Utilisation */
+        .bouton {
+            background: var(--color-primary);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            transition: background var(--transition-normal);
+        }
+
+        /* Valeur par defaut */
+        color: var(--color-accent, #ff0000);
+
+        THEME SOMBRE
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-text: #fff;
+                --color-background: #1a1a1a;
+            }
+        }
+
+        /* Ou avec classe */
+        .dark-theme {
+            --color-text: #fff;
+            --color-background: #1a1a1a;
+        }

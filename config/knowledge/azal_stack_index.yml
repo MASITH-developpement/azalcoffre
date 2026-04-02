@@ -1,0 +1,1017 @@
+# =============================================================================
+# AZALPLUS - Base de Connaissances Stack Technique AZAL
+# =============================================================================
+# Technologies utilisees dans la suite AZAL (AZALPLUS, AZALCOFFRE, etc.)
+#
+# Stack :
+#   - FastAPI (API REST)
+#   - SQLAlchemy 2.0 (ORM)
+#   - Pydantic (validation)
+#   - Jinja2 (templates)
+#   - PostgreSQL (base de donnees)
+#   - Redis (cache)
+#   - Alembic (migrations)
+# =============================================================================
+
+metadata:
+  domaine: "azal_stack"
+  version: "1.0.0"
+  date_maj: "2026-04-01"
+  sources:
+    - "Documentation officielle FastAPI"
+    - "Documentation SQLAlchemy 2.0"
+    - "Documentation Pydantic v2"
+    - "Standards AZALPLUS (memoire.md)"
+
+# =============================================================================
+# FASTAPI
+# =============================================================================
+
+fastapi:
+  bases:
+    - id: fastapi_001
+      titre: "FastAPI - Introduction et structure"
+      contenu: |
+        FASTAPI - FRAMEWORK API MODERNE
+
+        Installation :
+        pip install fastapi uvicorn[standard]
+
+        # main.py - Application minimale
+        from fastapi import FastAPI
+
+        app = FastAPI(
+            title="Mon API",
+            description="Description de l'API",
+            version="1.0.0"
+        )
+
+        @app.get("/")
+        def root():
+            return {"message": "Hello World"}
+
+        @app.get("/items/{item_id}")
+        def read_item(item_id: int):
+            return {"item_id": item_id}
+
+        # Lancer le serveur
+        # uvicorn main:app --reload --port 8000
+
+        STRUCTURE PROJET AZALPLUS
+
+        azalplus/
+        ├── moteur/
+        │   ├── core.py          # App FastAPI principale
+        │   ├── api_v1.py        # Routes API v1
+        │   ├── db.py            # Base de donnees
+        │   ├── auth.py          # Authentification
+        │   ├── tenant.py        # Multi-tenant
+        │   └── ...
+        ├── modules/             # Definitions YAML
+        ├── config/              # Configuration
+        └── templates/           # Jinja2
+
+    - id: fastapi_002
+      titre: "Routes et parametres"
+      contenu: |
+        METHODES HTTP
+
+        @app.get("/items")           # Lecture liste
+        @app.get("/items/{id}")      # Lecture un
+        @app.post("/items")          # Creation
+        @app.put("/items/{id}")      # Mise a jour complete
+        @app.patch("/items/{id}")    # Mise a jour partielle
+        @app.delete("/items/{id}")   # Suppression
+
+        PARAMETRES DE CHEMIN
+
+        @app.get("/users/{user_id}")
+        def get_user(user_id: int):  # Type valide automatiquement
+            return {"user_id": user_id}
+
+        @app.get("/files/{file_path:path}")  # Chemin complet
+        def get_file(file_path: str):
+            return {"path": file_path}
+
+        PARAMETRES DE REQUETE
+
+        @app.get("/items")
+        def list_items(
+            skip: int = 0,
+            limit: int = 10,
+            q: str | None = None  # Optionnel
+        ):
+            return {"skip": skip, "limit": limit, "q": q}
+
+        # /items?skip=0&limit=10&q=recherche
+
+        from fastapi import Query
+
+        @app.get("/search")
+        def search(
+            q: str = Query(min_length=3, max_length=50),
+            page: int = Query(default=1, ge=1),
+        ):
+            return {"q": q, "page": page}
+
+    - id: fastapi_003
+      titre: "Corps de requete et Pydantic"
+      contenu: |
+        CORPS DE REQUETE AVEC PYDANTIC
+
+        from pydantic import BaseModel, Field
+        from typing import Optional
+        from uuid import UUID
+
+        class ItemCreate(BaseModel):
+            nom: str = Field(..., min_length=1, max_length=100)
+            description: Optional[str] = None
+            prix: float = Field(..., gt=0)
+            quantite: int = Field(default=1, ge=0)
+
+        class ItemResponse(BaseModel):
+            id: UUID
+            nom: str
+            description: Optional[str]
+            prix: float
+
+            class Config:
+                from_attributes = True  # Pour SQLAlchemy
+
+        @app.post("/items", response_model=ItemResponse)
+        def create_item(item: ItemCreate):
+            # item est valide automatiquement
+            return {"id": "...", **item.model_dump()}
+
+        VALIDATION AVANCEE
+
+        from pydantic import BaseModel, field_validator, EmailStr
+
+        class UserCreate(BaseModel):
+            email: EmailStr
+            password: str
+            age: int
+
+            @field_validator('password')
+            @classmethod
+            def password_strength(cls, v):
+                if len(v) < 8:
+                    raise ValueError('Mot de passe trop court')
+                return v
+
+            @field_validator('age')
+            @classmethod
+            def age_valid(cls, v):
+                if v < 0 or v > 150:
+                    raise ValueError('Age invalide')
+                return v
+
+    - id: fastapi_004
+      titre: "Dependances et injection"
+      contenu: |
+        INJECTION DE DEPENDANCES
+
+        from fastapi import Depends, HTTPException
+        from sqlalchemy.orm import Session
+
+        # Dependance base de donnees
+        def get_db():
+            db = SessionLocal()
+            try:
+                yield db
+            finally:
+                db.close()
+
+        @app.get("/items")
+        def list_items(db: Session = Depends(get_db)):
+            return db.query(Item).all()
+
+        DEPENDANCE AUTHENTIFICATION (AZALPLUS)
+
+        from fastapi.security import OAuth2PasswordBearer
+
+        oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+        async def get_current_user(token: str = Depends(oauth2_scheme)):
+            user = decode_token(token)
+            if not user:
+                raise HTTPException(status_code=401)
+            return user
+
+        @app.get("/me")
+        def read_me(user: User = Depends(get_current_user)):
+            return user
+
+        DEPENDANCE TENANT (AZALPLUS - OBLIGATOIRE)
+
+        from uuid import UUID
+
+        def get_tenant_id(
+            x_tenant_id: str = Header(..., alias="X-Tenant-ID")
+        ) -> UUID:
+            try:
+                return UUID(x_tenant_id)
+            except ValueError:
+                raise HTTPException(400, "Tenant ID invalide")
+
+        @app.get("/items")
+        def list_items(
+            tenant_id: UUID = Depends(get_tenant_id),
+            db: Session = Depends(get_db)
+        ):
+            # TOUJOURS filtrer par tenant_id
+            return db.query(Item).filter(Item.tenant_id == tenant_id).all()
+
+    - id: fastapi_005
+      titre: "Middleware et lifespan"
+      contenu: |
+        MIDDLEWARE
+
+        from fastapi import Request
+        from starlette.middleware.base import BaseHTTPMiddleware
+
+        class TenantMiddleware(BaseHTTPMiddleware):
+            async def dispatch(self, request: Request, call_next):
+                tenant_id = request.headers.get("X-Tenant-ID")
+                if not tenant_id:
+                    return JSONResponse(
+                        status_code=400,
+                        content={"detail": "X-Tenant-ID requis"}
+                    )
+                request.state.tenant_id = tenant_id
+                response = await call_next(request)
+                return response
+
+        app.add_middleware(TenantMiddleware)
+
+        # Middleware CORS
+        from fastapi.middleware.cors import CORSMiddleware
+
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["http://localhost:3000"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+        LIFESPAN (STARTUP/SHUTDOWN)
+
+        from contextlib import asynccontextmanager
+
+        @asynccontextmanager
+        async def lifespan(app: FastAPI):
+            # Startup
+            print("Demarrage de l'application")
+            await init_database()
+            await init_cache()
+            yield
+            # Shutdown
+            print("Arret de l'application")
+            await close_connections()
+
+        app = FastAPI(lifespan=lifespan)
+
+    - id: fastapi_006
+      titre: "Gestion des erreurs"
+      contenu: |
+        EXCEPTIONS HTTP
+
+        from fastapi import HTTPException
+
+        @app.get("/items/{item_id}")
+        def get_item(item_id: int):
+            item = db.get(item_id)
+            if not item:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Item non trouve"
+                )
+            return item
+
+        EXCEPTIONS PERSONNALISEES
+
+        class ItemNotFoundError(Exception):
+            def __init__(self, item_id: int):
+                self.item_id = item_id
+
+        @app.exception_handler(ItemNotFoundError)
+        async def item_not_found_handler(request, exc):
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Item {exc.item_id} non trouve"}
+            )
+
+        VALIDATION ERRORS
+
+        from fastapi.exceptions import RequestValidationError
+
+        @app.exception_handler(RequestValidationError)
+        async def validation_handler(request, exc):
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "detail": "Erreur de validation",
+                    "errors": exc.errors()
+                }
+            )
+
+# =============================================================================
+# SQLALCHEMY 2.0
+# =============================================================================
+
+sqlalchemy:
+  bases:
+    - id: sqla_001
+      titre: "SQLAlchemy 2.0 - Configuration"
+      contenu: |
+        CONFIGURATION BASE DE DONNEES
+
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker, DeclarativeBase
+
+        # URL de connexion
+        DATABASE_URL = "postgresql://user:pass@localhost:5432/dbname"
+
+        # Engine
+        engine = create_engine(
+            DATABASE_URL,
+            pool_size=5,
+            max_overflow=10,
+            pool_pre_ping=True,  # Verifie connexion
+            echo=False  # True pour debug SQL
+        )
+
+        # Session factory
+        SessionLocal = sessionmaker(
+            bind=engine,
+            autocommit=False,
+            autoflush=False
+        )
+
+        # Base declarative
+        class Base(DeclarativeBase):
+            pass
+
+        # Creer les tables
+        Base.metadata.create_all(bind=engine)
+
+    - id: sqla_002
+      titre: "Definition de modeles"
+      contenu: |
+        MODELES SQLALCHEMY 2.0
+
+        from sqlalchemy import Column, String, Integer, Float, Boolean
+        from sqlalchemy import DateTime, ForeignKey, Text, JSON
+        from sqlalchemy.dialects.postgresql import UUID
+        from sqlalchemy.orm import relationship, Mapped, mapped_column
+        from datetime import datetime
+        import uuid
+
+        class Base(DeclarativeBase):
+            pass
+
+        # Modele AZALPLUS (avec tenant_id OBLIGATOIRE)
+        class Item(Base):
+            __tablename__ = "items"
+
+            # Cle primaire UUID
+            id: Mapped[uuid.UUID] = mapped_column(
+                UUID(as_uuid=True),
+                primary_key=True,
+                default=uuid.uuid4
+            )
+
+            # TENANT ID - OBLIGATOIRE AZAP-TENANT-001
+            tenant_id: Mapped[uuid.UUID] = mapped_column(
+                UUID(as_uuid=True),
+                ForeignKey("tenants.id"),
+                nullable=False,
+                index=True
+            )
+
+            # Champs metier
+            nom: Mapped[str] = mapped_column(String(100), nullable=False)
+            description: Mapped[str | None] = mapped_column(Text)
+            prix: Mapped[float] = mapped_column(Float, default=0)
+            actif: Mapped[bool] = mapped_column(Boolean, default=True)
+
+            # Timestamps
+            created_at: Mapped[datetime] = mapped_column(
+                DateTime, default=datetime.utcnow
+            )
+            updated_at: Mapped[datetime] = mapped_column(
+                DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+            )
+
+            # Relations
+            categorie_id: Mapped[uuid.UUID | None] = mapped_column(
+                UUID(as_uuid=True),
+                ForeignKey("categories.id")
+            )
+            categorie: Mapped["Categorie"] = relationship(
+                back_populates="items"
+            )
+
+    - id: sqla_003
+      titre: "Requetes CRUD"
+      contenu: |
+        OPERATIONS CRUD
+
+        from sqlalchemy import select, update, delete
+        from sqlalchemy.orm import Session
+
+        # CREATE
+        def create_item(db: Session, tenant_id: UUID, data: dict) -> Item:
+            item = Item(tenant_id=tenant_id, **data)
+            db.add(item)
+            db.commit()
+            db.refresh(item)
+            return item
+
+        # READ - Un element
+        def get_item(db: Session, tenant_id: UUID, item_id: UUID) -> Item | None:
+            stmt = select(Item).where(
+                Item.id == item_id,
+                Item.tenant_id == tenant_id  # FILTRE TENANT OBLIGATOIRE
+            )
+            return db.execute(stmt).scalar_one_or_none()
+
+        # READ - Liste avec filtres
+        def list_items(
+            db: Session,
+            tenant_id: UUID,
+            skip: int = 0,
+            limit: int = 100,
+            actif: bool | None = None
+        ) -> list[Item]:
+            stmt = select(Item).where(Item.tenant_id == tenant_id)
+
+            if actif is not None:
+                stmt = stmt.where(Item.actif == actif)
+
+            stmt = stmt.offset(skip).limit(limit)
+            return db.execute(stmt).scalars().all()
+
+        # UPDATE
+        def update_item(
+            db: Session,
+            tenant_id: UUID,
+            item_id: UUID,
+            data: dict
+        ) -> Item | None:
+            item = get_item(db, tenant_id, item_id)
+            if item:
+                for key, value in data.items():
+                    setattr(item, key, value)
+                db.commit()
+                db.refresh(item)
+            return item
+
+        # DELETE
+        def delete_item(db: Session, tenant_id: UUID, item_id: UUID) -> bool:
+            item = get_item(db, tenant_id, item_id)
+            if item:
+                db.delete(item)
+                db.commit()
+                return True
+            return False
+
+    - id: sqla_004
+      titre: "Requetes avancees"
+      contenu: |
+        JOINTURES ET RELATIONS
+
+        from sqlalchemy import select, func
+        from sqlalchemy.orm import joinedload, selectinload
+
+        # Jointure automatique (eager loading)
+        stmt = select(Item).options(
+            joinedload(Item.categorie)  # JOIN
+        ).where(Item.tenant_id == tenant_id)
+
+        # Pour les collections (one-to-many)
+        stmt = select(Categorie).options(
+            selectinload(Categorie.items)  # SELECT IN
+        )
+
+        AGREGATIONS
+
+        # Compter
+        stmt = select(func.count(Item.id)).where(
+            Item.tenant_id == tenant_id
+        )
+        count = db.execute(stmt).scalar()
+
+        # Somme
+        stmt = select(func.sum(Item.prix)).where(
+            Item.tenant_id == tenant_id
+        )
+        total = db.execute(stmt).scalar()
+
+        # Group by
+        stmt = select(
+            Item.categorie_id,
+            func.count(Item.id).label("count"),
+            func.sum(Item.prix).label("total")
+        ).where(
+            Item.tenant_id == tenant_id
+        ).group_by(Item.categorie_id)
+
+        FILTRES AVANCES
+
+        from sqlalchemy import or_, and_, not_
+
+        # OR
+        stmt = select(Item).where(
+            or_(
+                Item.nom.ilike("%recherche%"),
+                Item.description.ilike("%recherche%")
+            )
+        )
+
+        # BETWEEN
+        stmt = select(Item).where(
+            Item.prix.between(10, 100)
+        )
+
+        # IN
+        stmt = select(Item).where(
+            Item.categorie_id.in_([id1, id2, id3])
+        )
+
+        # IS NULL
+        stmt = select(Item).where(
+            Item.description.is_(None)
+        )
+
+        TRI ET PAGINATION
+
+        from sqlalchemy import desc, asc
+
+        stmt = select(Item).order_by(
+            desc(Item.created_at)
+        ).offset(skip).limit(limit)
+
+# =============================================================================
+# PYDANTIC V2
+# =============================================================================
+
+pydantic:
+  schemas:
+    - id: pydantic_001
+      titre: "Schemas Pydantic AZALPLUS"
+      contenu: |
+        SCHEMAS DE BASE
+
+        from pydantic import BaseModel, Field, ConfigDict
+        from typing import Optional, List
+        from uuid import UUID
+        from datetime import datetime
+
+        # Schema de creation (input)
+        class ItemCreate(BaseModel):
+            nom: str = Field(..., min_length=1, max_length=100)
+            description: Optional[str] = Field(None, max_length=1000)
+            prix: float = Field(..., gt=0)
+            categorie_id: Optional[UUID] = None
+
+        # Schema de mise a jour (partiel)
+        class ItemUpdate(BaseModel):
+            nom: Optional[str] = Field(None, min_length=1, max_length=100)
+            description: Optional[str] = None
+            prix: Optional[float] = Field(None, gt=0)
+            categorie_id: Optional[UUID] = None
+
+        # Schema de reponse (output)
+        class ItemResponse(BaseModel):
+            model_config = ConfigDict(from_attributes=True)
+
+            id: UUID
+            nom: str
+            description: Optional[str]
+            prix: float
+            actif: bool
+            created_at: datetime
+
+        # Schema avec relations
+        class ItemDetailResponse(ItemResponse):
+            categorie: Optional["CategorieResponse"] = None
+
+        # Schema de liste pagine
+        class PaginatedItems(BaseModel):
+            items: List[ItemResponse]
+            total: int
+            page: int
+            pages: int
+
+    - id: pydantic_002
+      titre: "Validation personnalisee"
+      contenu: |
+        VALIDATEURS PERSONNALISES
+
+        from pydantic import BaseModel, field_validator, model_validator
+
+        class FactureCreate(BaseModel):
+            numero: str
+            montant_ht: float
+            taux_tva: float = 0.20
+            montant_ttc: Optional[float] = None
+
+            @field_validator('numero')
+            @classmethod
+            def numero_format(cls, v):
+                if not v.startswith('FAC-'):
+                    raise ValueError('Numero doit commencer par FAC-')
+                return v
+
+            @field_validator('taux_tva')
+            @classmethod
+            def taux_valide(cls, v):
+                taux_valides = [0.055, 0.10, 0.20]
+                if v not in taux_valides:
+                    raise ValueError(f'Taux doit etre parmi {taux_valides}')
+                return v
+
+            @model_validator(mode='after')
+            def calculer_ttc(self):
+                if self.montant_ttc is None:
+                    self.montant_ttc = self.montant_ht * (1 + self.taux_tva)
+                return self
+
+        TYPES PERSONNALISES
+
+        from pydantic import BaseModel, EmailStr, HttpUrl
+        from typing import Annotated
+        from pydantic import AfterValidator
+
+        # Email valide
+        email: EmailStr
+
+        # URL valide
+        site_web: HttpUrl
+
+        # SIRET (validation custom)
+        def valider_siret(v: str) -> str:
+            v = v.replace(' ', '')
+            if len(v) != 14 or not v.isdigit():
+                raise ValueError('SIRET invalide (14 chiffres)')
+            return v
+
+        Siret = Annotated[str, AfterValidator(valider_siret)]
+
+        class EntrepriseCreate(BaseModel):
+            nom: str
+            siret: Siret
+            email: EmailStr
+
+# =============================================================================
+# JINJA2 TEMPLATES
+# =============================================================================
+
+jinja2:
+  templates:
+    - id: jinja_001
+      titre: "Templates Jinja2 AZALPLUS"
+      contenu: |
+        CONFIGURATION FASTAPI + JINJA2
+
+        from fastapi import FastAPI, Request
+        from fastapi.templating import Jinja2Templates
+        from fastapi.staticfiles import StaticFiles
+
+        app = FastAPI()
+
+        # Templates
+        templates = Jinja2Templates(directory="templates")
+
+        # Fichiers statiques
+        app.mount("/static", StaticFiles(directory="static"), name="static")
+
+        @app.get("/items")
+        def list_items(request: Request):
+            items = get_items()
+            return templates.TemplateResponse(
+                "items/list.html",
+                {"request": request, "items": items}
+            )
+
+        SYNTAXE JINJA2
+
+        <!-- templates/items/list.html -->
+        {% extends "base.html" %}
+
+        {% block title %}Liste des items{% endblock %}
+
+        {% block content %}
+        <h1>{{ title }}</h1>
+
+        <!-- Boucle -->
+        <ul>
+        {% for item in items %}
+            <li>{{ item.nom }} - {{ item.prix }} EUR</li>
+        {% else %}
+            <li>Aucun item</li>
+        {% endfor %}
+        </ul>
+
+        <!-- Condition -->
+        {% if user.is_admin %}
+            <a href="/admin">Admin</a>
+        {% elif user.is_manager %}
+            <a href="/manage">Gerer</a>
+        {% else %}
+            <span>Utilisateur standard</span>
+        {% endif %}
+
+        <!-- Filtres -->
+        {{ item.prix | round(2) }}
+        {{ item.created_at | date("d/m/Y") }}
+        {{ item.description | truncate(100) }}
+        {{ item.nom | upper }}
+        {{ item.nom | default("Sans nom") }}
+
+        <!-- URL statique -->
+        <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+
+        <!-- Include -->
+        {% include "partials/header.html" %}
+
+        <!-- Macro -->
+        {% macro input(name, label, type="text") %}
+        <label>{{ label }}</label>
+        <input type="{{ type }}" name="{{ name }}">
+        {% endmacro %}
+
+        {{ input("email", "Email", "email") }}
+        {% endblock %}
+
+    - id: jinja_002
+      titre: "Templates AZALPLUS - Bonnes pratiques"
+      contenu: |
+        STRUCTURE TEMPLATES AZALPLUS
+
+        templates/
+        ├── base.html           # Template de base
+        ├── ui/
+        │   ├── list.html       # Liste generique
+        │   ├── form.html       # Formulaire generique
+        │   └── detail.html     # Detail generique
+        ├── partials/
+        │   ├── header.html
+        │   ├── footer.html
+        │   ├── sidebar.html
+        │   └── messages.html
+        └── email/
+            └── facture.html
+
+        BASE TEMPLATE
+
+        <!-- templates/base.html -->
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{% block title %}AZALPLUS{% endblock %}</title>
+            <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+            {% block head %}{% endblock %}
+        </head>
+        <body class="theme-{{ theme }}">
+            {% include "partials/header.html" %}
+
+            <main class="container">
+                {% include "partials/messages.html" %}
+                {% block content %}{% endblock %}
+            </main>
+
+            {% include "partials/footer.html" %}
+
+            <script src="{{ url_for('static', path='js/main.js') }}"></script>
+            {% block scripts %}{% endblock %}
+        </body>
+        </html>
+
+        VARIABLES CSS AZALPLUS
+
+        Toujours utiliser les variables CSS :
+        - var(--color-primary)
+        - var(--color-text)
+        - var(--spacing-md)
+        - var(--border-radius)
+
+        JAMAIS de couleurs hardcodees !
+
+# =============================================================================
+# ALEMBIC (MIGRATIONS)
+# =============================================================================
+
+alembic:
+  migrations:
+    - id: alembic_001
+      titre: "Alembic - Migrations de base de donnees"
+      contenu: |
+        INSTALLATION ET CONFIGURATION
+
+        pip install alembic
+
+        # Initialiser
+        alembic init alembic
+
+        # alembic.ini - Configurer URL
+        sqlalchemy.url = postgresql://user:pass@localhost/dbname
+
+        # alembic/env.py - Importer les modeles
+        from moteur.models import Base
+        target_metadata = Base.metadata
+
+        COMMANDES COURANTES
+
+        # Creer une migration auto
+        alembic revision --autogenerate -m "description"
+
+        # Appliquer les migrations
+        alembic upgrade head
+
+        # Voir l'etat
+        alembic current
+        alembic history
+
+        # Rollback
+        alembic downgrade -1
+
+        MIGRATION MANUELLE
+
+        # alembic/versions/xxxx_add_column.py
+        def upgrade():
+            op.add_column(
+                'items',
+                sa.Column('nouveau_champ', sa.String(100))
+            )
+
+        def downgrade():
+            op.drop_column('items', 'nouveau_champ')
+
+        OPERATIONS COURANTES
+
+        # Ajouter colonne
+        op.add_column('table', sa.Column('col', sa.String(50)))
+
+        # Supprimer colonne
+        op.drop_column('table', 'col')
+
+        # Renommer colonne
+        op.alter_column('table', 'old_name', new_column_name='new_name')
+
+        # Creer table
+        op.create_table(
+            'nouvelle_table',
+            sa.Column('id', sa.UUID(), primary_key=True),
+            sa.Column('nom', sa.String(100), nullable=False),
+        )
+
+        # Ajouter index
+        op.create_index('ix_table_col', 'table', ['col'])
+
+        # Ajouter foreign key
+        op.create_foreign_key(
+            'fk_items_categorie',
+            'items', 'categories',
+            ['categorie_id'], ['id']
+        )
+
+# =============================================================================
+# REDIS (CACHE)
+# =============================================================================
+
+redis:
+  cache:
+    - id: redis_001
+      titre: "Redis avec Python"
+      contenu: |
+        CONNEXION REDIS
+
+        import redis
+        from typing import Optional
+        import json
+
+        # Connexion
+        redis_client = redis.Redis(
+            host='localhost',
+            port=6379,
+            db=0,
+            decode_responses=True
+        )
+
+        # Ou avec URL
+        redis_client = redis.from_url("redis://localhost:6379/0")
+
+        OPERATIONS DE BASE
+
+        # SET/GET
+        redis_client.set("cle", "valeur")
+        redis_client.get("cle")
+
+        # Avec expiration (secondes)
+        redis_client.setex("cle", 3600, "valeur")  # 1 heure
+
+        # Verifier existence
+        redis_client.exists("cle")
+
+        # Supprimer
+        redis_client.delete("cle")
+
+        # JSON
+        data = {"nom": "Alice", "age": 30}
+        redis_client.set("user:1", json.dumps(data))
+        user = json.loads(redis_client.get("user:1"))
+
+        CACHE DECORATOR
+
+        from functools import wraps
+
+        def cache(ttl: int = 300):
+            def decorator(func):
+                @wraps(func)
+                async def wrapper(*args, **kwargs):
+                    # Construire cle cache
+                    cache_key = f"{func.__name__}:{args}:{kwargs}"
+
+                    # Verifier cache
+                    cached = redis_client.get(cache_key)
+                    if cached:
+                        return json.loads(cached)
+
+                    # Executer fonction
+                    result = await func(*args, **kwargs)
+
+                    # Stocker en cache
+                    redis_client.setex(
+                        cache_key,
+                        ttl,
+                        json.dumps(result)
+                    )
+
+                    return result
+                return wrapper
+            return decorator
+
+        @cache(ttl=3600)
+        async def get_expensive_data(item_id: int):
+            # Requete lente...
+            return data
+
+# =============================================================================
+# NORMES AZALPLUS
+# =============================================================================
+
+normes:
+  regles:
+    - id: norme_001
+      titre: "Normes AZALPLUS obligatoires"
+      contenu: |
+        MULTI-TENANT (OBLIGATOIRE)
+
+        AZAP-TENANT-001 : tenant_id sur CHAQUE modele
+        AZAP-TENANT-002 : Header X-Tenant-ID obligatoire
+        AZAP-TENANT-003 : TenantContext thread-local
+        AZAP-TENANT-004 : Filtre tenant sur CHAQUE requete
+        AZAP-TENANT-005 : RLS PostgreSQL active
+
+        # TOUJOURS filtrer par tenant_id
+        def get_items(db: Session, tenant_id: UUID):
+            return db.query(Item).filter(
+                Item.tenant_id == tenant_id  # OBLIGATOIRE
+            ).all()
+
+        SECURITE
+
+        AZAP-SEC-001 : Guardian WAF silencieux
+        AZAP-SEC-002 : Argon2 pour mots de passe
+        AZAP-SEC-003 : JWT avec tenant_id dans claims
+        AZAP-SEC-004 : 2FA TOTP disponible
+        AZAP-SEC-005 : Rate limiting Redis
+
+        NO-CODE
+
+        AZAP-NC-001 : Pas de listes hardcodees
+        - Options dans YAML ou base de donnees
+        - Jamais de ["A", "B", "C"] dans le code
+
+        CSS
+
+        AZA-CSS-001 : Variables CSS uniquement
+        - var(--color-primary) au lieu de #3454D1
+        - var(--spacing-md) au lieu de 16px
+        - ZERO CSS inline
+
+        INTERDICTIONS
+
+        I-01 : Code sans tenant_id
+        I-02 : Requete sans filtre tenant
+        I-03 : Secrets en dur
+        I-04 : SQL brut sans parametres
+        I-05 : Exposer Guardian
+        I-10 : Couleurs CSS hardcodees
+        I-11 : Tailles CSS hardcodees
+        I-23 : Mentir sur un resultat

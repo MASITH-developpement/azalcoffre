@@ -1,0 +1,1375 @@
+# =============================================================================
+# AZALPLUS - Base de Connaissances Python
+# =============================================================================
+# AZAP-NC-001 : Connaissances externalisees en YAML
+#
+# Domaines couverts :
+#   - Fondamentaux Python (syntaxe, types, operateurs)
+#   - Structures de controle (conditions, boucles)
+#   - Fonctions et modules
+#   - Programmation orientee objet
+#   - Gestion des fichiers et donnees
+#   - Bibliotheques courantes
+#   - Bonnes pratiques et debugging
+#   - Python pour l'automatisation metier
+# =============================================================================
+
+metadata:
+  domaine: "python_programmation"
+  version: "1.0.0"
+  date_maj: "2026-04-01"
+  sources:
+    - "Documentation officielle Python 3.12"
+    - "PEP (Python Enhancement Proposals)"
+    - "Real Python, Python.org tutorials"
+    - "Bonnes pratiques industrie"
+
+# =============================================================================
+# FONDAMENTAUX PYTHON
+# =============================================================================
+
+fondamentaux:
+  introduction:
+    - id: py_intro_001
+      titre: "Qu'est-ce que Python ?"
+      contenu: |
+        PYTHON - LANGAGE DE PROGRAMMATION
+
+        Caracteristiques principales :
+        - Langage interprete (pas de compilation)
+        - Syntaxe claire et lisible
+        - Typage dynamique
+        - Multi-paradigme (procedural, objet, fonctionnel)
+        - Grande bibliotheque standard
+        - Communaute active et nombreux packages
+
+        Cas d'usage :
+        - Automatisation de taches
+        - Developpement web (Django, Flask, FastAPI)
+        - Data Science et Machine Learning
+        - Scripts systeme et DevOps
+        - Applications desktop
+
+        Installation :
+        - Windows : python.org ou Microsoft Store
+        - macOS : brew install python3
+        - Linux : sudo apt install python3
+
+        Verifier l'installation :
+        python3 --version
+        pip3 --version
+
+    - id: py_intro_002
+      titre: "Premier programme Python"
+      contenu: |
+        HELLO WORLD ET BASES
+
+        # Premier script (hello.py)
+        print("Bonjour le monde!")
+
+        # Execution
+        python3 hello.py
+
+        # Mode interactif (REPL)
+        python3
+        >>> print("Test")
+        >>> 2 + 2
+        >>> exit()
+
+        # Commentaires
+        # Ceci est un commentaire sur une ligne
+
+        """
+        Ceci est un commentaire
+        sur plusieurs lignes (docstring)
+        """
+
+        # Affichage avec print()
+        print("Texte")
+        print("Valeur:", 42)
+        print(f"Variable: {ma_variable}")  # f-string (recommande)
+
+  variables_types:
+    - id: py_var_001
+      titre: "Variables en Python"
+      contenu: |
+        DECLARATION DE VARIABLES
+
+        # Pas de mot-cle, affectation directe
+        nom = "Alice"
+        age = 30
+        prix = 19.99
+        est_actif = True
+
+        # Typage dynamique (le type peut changer)
+        x = 10        # int
+        x = "texte"   # maintenant str
+
+        # Conventions de nommage (PEP 8)
+        ma_variable = "snake_case pour variables"
+        MA_CONSTANTE = "MAJUSCULES pour constantes"
+        MaClasse = "PascalCase pour classes"
+
+        # Affectation multiple
+        a, b, c = 1, 2, 3
+        x = y = z = 0
+
+        # Echange de valeurs
+        a, b = b, a
+
+    - id: py_var_002
+      titre: "Types de donnees Python"
+      contenu: |
+        TYPES PRIMITIFS
+
+        # Entiers (int) - precision illimitee
+        entier = 42
+        grand_nombre = 1_000_000  # separateur lisibilite
+        binaire = 0b1010
+        hexadecimal = 0xFF
+
+        # Flottants (float)
+        decimal = 3.14159
+        scientifique = 1.5e-10
+
+        # Booleens (bool)
+        vrai = True
+        faux = False
+
+        # Chaines (str)
+        texte = "Entre guillemets"
+        texte2 = 'Ou apostrophes'
+        multiligne = """Texte
+        sur plusieurs
+        lignes"""
+
+        # None (absence de valeur)
+        valeur = None
+
+        # Verification de type
+        type(42)         # <class 'int'>
+        isinstance(42, int)  # True
+
+    - id: py_var_003
+      titre: "Conversion de types (casting)"
+      contenu: |
+        CONVERSION ENTRE TYPES
+
+        # Vers entier
+        int("42")        # 42
+        int(3.7)         # 3 (tronque)
+        int(True)        # 1
+
+        # Vers flottant
+        float("3.14")    # 3.14
+        float(42)        # 42.0
+
+        # Vers chaine
+        str(42)          # "42"
+        str(3.14)        # "3.14"
+        str(True)        # "True"
+
+        # Vers booleen
+        bool(1)          # True
+        bool(0)          # False
+        bool("")         # False (chaine vide)
+        bool("texte")    # True
+        bool([])         # False (liste vide)
+        bool([1, 2])     # True
+
+        # Valeurs "falsy" en Python :
+        # False, None, 0, 0.0, "", [], {}, set()
+
+  operateurs:
+    - id: py_op_001
+      titre: "Operateurs arithmetiques"
+      contenu: |
+        OPERATIONS MATHEMATIQUES
+
+        # Operateurs de base
+        a + b    # Addition
+        a - b    # Soustraction
+        a * b    # Multiplication
+        a / b    # Division (retourne float)
+        a // b   # Division entiere
+        a % b    # Modulo (reste)
+        a ** b   # Puissance
+
+        # Exemples
+        10 / 3   # 3.3333...
+        10 // 3  # 3
+        10 % 3   # 1
+        2 ** 10  # 1024
+
+        # Operateurs d'affectation composes
+        x += 5   # x = x + 5
+        x -= 3   # x = x - 3
+        x *= 2   # x = x * 2
+        x /= 4   # x = x / 4
+        x //= 2  # x = x // 2
+        x %= 3   # x = x % 3
+        x **= 2  # x = x ** 2
+
+        # Module math pour fonctions avancees
+        import math
+        math.sqrt(16)    # 4.0
+        math.ceil(3.2)   # 4
+        math.floor(3.8)  # 3
+        math.pi          # 3.14159...
+
+    - id: py_op_002
+      titre: "Operateurs de comparaison et logiques"
+      contenu: |
+        COMPARAISONS
+
+        a == b   # Egal
+        a != b   # Different
+        a < b    # Inferieur
+        a > b    # Superieur
+        a <= b   # Inferieur ou egal
+        a >= b   # Superieur ou egal
+
+        # Comparaison chainee
+        0 < x < 10   # True si x entre 0 et 10
+
+        OPERATEURS LOGIQUES
+
+        a and b  # ET logique
+        a or b   # OU logique
+        not a    # Negation
+
+        # Exemples
+        True and False   # False
+        True or False    # True
+        not True         # False
+
+        # Evaluation paresseuse (short-circuit)
+        x = None
+        x and x.valeur   # N'evalue pas x.valeur si x est None
+        x or "defaut"    # Retourne "defaut" si x est falsy
+
+        OPERATEURS D'IDENTITE ET D'APPARTENANCE
+
+        a is b       # Meme objet en memoire
+        a is not b   # Objets differents
+        a in liste   # Appartenance
+        a not in liste
+
+# =============================================================================
+# STRUCTURES DE DONNEES
+# =============================================================================
+
+structures_donnees:
+  listes:
+    - id: py_list_001
+      titre: "Listes Python - Creation et acces"
+      contenu: |
+        LISTES - COLLECTIONS ORDONNEES MODIFIABLES
+
+        # Creation
+        liste_vide = []
+        nombres = [1, 2, 3, 4, 5]
+        mixte = [1, "deux", 3.0, True]
+
+        # Acces par index (commence a 0)
+        nombres[0]    # 1 (premier)
+        nombres[-1]   # 5 (dernier)
+        nombres[2]    # 3
+
+        # Slicing (sous-listes)
+        nombres[1:4]   # [2, 3, 4]
+        nombres[:3]    # [1, 2, 3]
+        nombres[2:]    # [3, 4, 5]
+        nombres[::2]   # [1, 3, 5] (un sur deux)
+        nombres[::-1]  # [5, 4, 3, 2, 1] (inverse)
+
+        # Longueur
+        len(nombres)   # 5
+
+        # Verification
+        3 in nombres   # True
+        10 in nombres  # False
+
+    - id: py_list_002
+      titre: "Listes Python - Modification"
+      contenu: |
+        MODIFIER UNE LISTE
+
+        fruits = ["pomme", "banane", "orange"]
+
+        # Modifier un element
+        fruits[0] = "kiwi"
+
+        # Ajouter
+        fruits.append("mangue")       # A la fin
+        fruits.insert(1, "fraise")    # A l'index 1
+        fruits.extend(["poire", "raisin"])  # Plusieurs
+
+        # Supprimer
+        fruits.remove("banane")       # Par valeur
+        del fruits[0]                 # Par index
+        element = fruits.pop()        # Retire et retourne le dernier
+        element = fruits.pop(1)       # Retire et retourne l'index 1
+        fruits.clear()                # Vide la liste
+
+        # Autres methodes
+        nombres = [3, 1, 4, 1, 5, 9, 2, 6]
+        nombres.sort()                # Trie sur place
+        nombres.reverse()             # Inverse sur place
+        nombres.count(1)              # 2 (occurrences)
+        nombres.index(4)              # Index de la valeur 4
+
+        # Copie
+        copie = nombres.copy()        # Copie superficielle
+        copie = nombres[:]            # Idem
+        import copy
+        copie = copy.deepcopy(nombres)  # Copie profonde
+
+    - id: py_list_003
+      titre: "List comprehensions"
+      contenu: |
+        LIST COMPREHENSIONS - SYNTAXE CONCISE
+
+        # Syntaxe de base
+        [expression for item in iterable]
+
+        # Exemples
+        carres = [x**2 for x in range(10)]
+        # [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+
+        # Avec condition (filtre)
+        pairs = [x for x in range(20) if x % 2 == 0]
+        # [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+
+        # Avec transformation conditionnelle
+        resultat = ["pair" if x % 2 == 0 else "impair" for x in range(5)]
+        # ["pair", "impair", "pair", "impair", "pair"]
+
+        # Nested (matrices)
+        matrice = [[i*j for j in range(3)] for i in range(3)]
+        # [[0, 0, 0], [0, 1, 2], [0, 2, 4]]
+
+        # Aplatir une liste de listes
+        nested = [[1, 2], [3, 4], [5, 6]]
+        flat = [x for sublist in nested for x in sublist]
+        # [1, 2, 3, 4, 5, 6]
+
+  dictionnaires:
+    - id: py_dict_001
+      titre: "Dictionnaires Python"
+      contenu: |
+        DICTIONNAIRES - PAIRES CLE-VALEUR
+
+        # Creation
+        vide = {}
+        personne = {
+            "nom": "Alice",
+            "age": 30,
+            "ville": "Paris"
+        }
+
+        # Avec dict()
+        personne = dict(nom="Alice", age=30)
+
+        # Acces
+        personne["nom"]          # "Alice"
+        personne.get("nom")      # "Alice"
+        personne.get("tel", "N/A")  # "N/A" (defaut si absent)
+
+        # Modifier/Ajouter
+        personne["age"] = 31
+        personne["email"] = "alice@example.com"
+        personne.update({"ville": "Lyon", "pays": "France"})
+
+        # Supprimer
+        del personne["ville"]
+        valeur = personne.pop("age")  # Retire et retourne
+        personne.clear()              # Vide le dict
+
+        # Parcourir
+        for cle in personne:
+            print(cle, personne[cle])
+
+        for cle, valeur in personne.items():
+            print(f"{cle}: {valeur}")
+
+        for cle in personne.keys():
+            print(cle)
+
+        for valeur in personne.values():
+            print(valeur)
+
+        # Verification
+        "nom" in personne   # True
+        len(personne)       # Nombre de cles
+
+    - id: py_dict_002
+      titre: "Dict comprehensions et methodes avancees"
+      contenu: |
+        DICT COMPREHENSIONS
+
+        # Syntaxe
+        {cle: valeur for item in iterable}
+
+        # Exemples
+        carres = {x: x**2 for x in range(5)}
+        # {0: 0, 1: 1, 2: 4, 3: 9, 4: 16}
+
+        # Inverser cles et valeurs
+        original = {"a": 1, "b": 2}
+        inverse = {v: k for k, v in original.items()}
+        # {1: "a", 2: "b"}
+
+        # Filtrer
+        notes = {"Alice": 15, "Bob": 8, "Charlie": 12}
+        reussis = {k: v for k, v in notes.items() if v >= 10}
+        # {"Alice": 15, "Charlie": 12}
+
+        METHODES UTILES
+
+        # Fusion de dictionnaires (Python 3.9+)
+        dict1 = {"a": 1}
+        dict2 = {"b": 2}
+        fusion = dict1 | dict2  # {"a": 1, "b": 2}
+
+        # setdefault - retourne valeur ou definit defaut
+        compteur = {}
+        compteur.setdefault("pomme", 0)
+        compteur["pomme"] += 1
+
+        # collections.defaultdict
+        from collections import defaultdict
+        compteur = defaultdict(int)  # Defaut = 0
+        compteur["pomme"] += 1
+
+        # collections.Counter
+        from collections import Counter
+        texte = "abracadabra"
+        comptage = Counter(texte)
+        # Counter({'a': 5, 'b': 2, 'r': 2, 'c': 1, 'd': 1})
+
+  tuples_sets:
+    - id: py_tuple_001
+      titre: "Tuples et Sets"
+      contenu: |
+        TUPLES - COLLECTIONS IMMUABLES
+
+        # Creation
+        vide = ()
+        singleton = (1,)  # Virgule obligatoire
+        point = (3, 4)
+        coordonnees = 1, 2, 3  # Parentheses optionnelles
+
+        # Acces (comme les listes)
+        point[0]      # 3
+        point[-1]     # 4
+
+        # Deballage (unpacking)
+        x, y = point
+        a, *reste, z = (1, 2, 3, 4, 5)  # a=1, reste=[2,3,4], z=5
+
+        # Utilisations courantes
+        # - Retour multiple de fonction
+        # - Cles de dictionnaire (hashable)
+        # - Donnees immuables
+
+        SETS - ENSEMBLES SANS DOUBLONS
+
+        # Creation
+        vide = set()
+        nombres = {1, 2, 3, 3, 2}  # {1, 2, 3}
+
+        # Ajouter/Supprimer
+        nombres.add(4)
+        nombres.remove(2)    # Erreur si absent
+        nombres.discard(2)   # Pas d'erreur si absent
+
+        # Operations ensemblistes
+        a = {1, 2, 3}
+        b = {2, 3, 4}
+        a | b    # Union: {1, 2, 3, 4}
+        a & b    # Intersection: {2, 3}
+        a - b    # Difference: {1}
+        a ^ b    # Difference symetrique: {1, 4}
+
+        # Verification
+        2 in nombres   # True
+        a.issubset(b)  # False
+        a.issuperset(b)  # False
+
+# =============================================================================
+# STRUCTURES DE CONTROLE
+# =============================================================================
+
+controle:
+  conditions:
+    - id: py_if_001
+      titre: "Conditions if/elif/else"
+      contenu: |
+        CONDITIONS EN PYTHON
+
+        # Structure de base
+        if condition:
+            # Code si vrai
+            pass
+        elif autre_condition:
+            # Code si autre condition vraie
+            pass
+        else:
+            # Code si toutes conditions fausses
+            pass
+
+        # Exemple
+        age = 18
+        if age < 13:
+            print("Enfant")
+        elif age < 20:
+            print("Adolescent")
+        else:
+            print("Adulte")
+
+        # Operateur ternaire
+        statut = "majeur" if age >= 18 else "mineur"
+
+        # Conditions combinees
+        if 0 < x < 10 and y > 0:
+            print("Valide")
+
+        if not liste:  # Liste vide = False
+            print("Liste vide")
+
+        # Match (Python 3.10+)
+        match statut:
+            case "actif":
+                print("Utilisateur actif")
+            case "inactif":
+                print("Utilisateur inactif")
+            case _:
+                print("Statut inconnu")
+
+  boucles:
+    - id: py_loop_001
+      titre: "Boucle for"
+      contenu: |
+        BOUCLE FOR - ITERATION
+
+        # Sur une liste
+        fruits = ["pomme", "banane", "orange"]
+        for fruit in fruits:
+            print(fruit)
+
+        # Avec index (enumerate)
+        for i, fruit in enumerate(fruits):
+            print(f"{i}: {fruit}")
+
+        # Sur un range
+        for i in range(5):       # 0, 1, 2, 3, 4
+            print(i)
+
+        for i in range(2, 8):    # 2, 3, 4, 5, 6, 7
+            print(i)
+
+        for i in range(0, 10, 2):  # 0, 2, 4, 6, 8
+            print(i)
+
+        # Sur un dictionnaire
+        personne = {"nom": "Alice", "age": 30}
+        for cle, valeur in personne.items():
+            print(f"{cle}: {valeur}")
+
+        # Sur plusieurs listes (zip)
+        noms = ["Alice", "Bob"]
+        ages = [30, 25]
+        for nom, age in zip(noms, ages):
+            print(f"{nom} a {age} ans")
+
+        # break et continue
+        for i in range(10):
+            if i == 3:
+                continue  # Passe a l'iteration suivante
+            if i == 7:
+                break     # Sort de la boucle
+            print(i)
+
+    - id: py_loop_002
+      titre: "Boucle while"
+      contenu: |
+        BOUCLE WHILE - TANT QUE
+
+        # Structure de base
+        compteur = 0
+        while compteur < 5:
+            print(compteur)
+            compteur += 1
+
+        # Boucle infinie controlee
+        while True:
+            reponse = input("Continuer ? (o/n) ")
+            if reponse.lower() == "n":
+                break
+
+        # while avec else
+        i = 0
+        while i < 3:
+            print(i)
+            i += 1
+        else:
+            print("Boucle terminee normalement")
+        # Le else ne s'execute pas si break
+
+        # Exemple pratique : validation input
+        while True:
+            try:
+                age = int(input("Votre age : "))
+                if 0 < age < 150:
+                    break
+                print("Age invalide")
+            except ValueError:
+                print("Entrez un nombre")
+
+# =============================================================================
+# FONCTIONS
+# =============================================================================
+
+fonctions:
+  bases:
+    - id: py_func_001
+      titre: "Definition de fonctions"
+      contenu: |
+        FONCTIONS EN PYTHON
+
+        # Definition simple
+        def saluer():
+            print("Bonjour!")
+
+        # Avec parametres
+        def saluer(nom):
+            print(f"Bonjour {nom}!")
+
+        # Avec valeur de retour
+        def additionner(a, b):
+            return a + b
+
+        resultat = additionner(3, 5)  # 8
+
+        # Parametres par defaut
+        def saluer(nom, message="Bonjour"):
+            return f"{message} {nom}!"
+
+        saluer("Alice")                # "Bonjour Alice!"
+        saluer("Bob", "Salut")         # "Salut Bob!"
+
+        # Docstring (documentation)
+        def calculer_tva(montant_ht, taux=0.20):
+            """
+            Calcule le montant TTC.
+
+            Args:
+                montant_ht: Montant hors taxes
+                taux: Taux de TVA (defaut 20%)
+
+            Returns:
+                Montant TTC
+            """
+            return montant_ht * (1 + taux)
+
+    - id: py_func_002
+      titre: "Arguments *args et **kwargs"
+      contenu: |
+        ARGUMENTS VARIABLES
+
+        # *args - arguments positionnels variables
+        def somme(*nombres):
+            total = 0
+            for n in nombres:
+                total += n
+            return total
+
+        somme(1, 2)         # 3
+        somme(1, 2, 3, 4)   # 10
+
+        # **kwargs - arguments nommes variables
+        def afficher_infos(**kwargs):
+            for cle, valeur in kwargs.items():
+                print(f"{cle}: {valeur}")
+
+        afficher_infos(nom="Alice", age=30, ville="Paris")
+
+        # Combiner les deux
+        def fonction(arg1, arg2, *args, **kwargs):
+            print(f"arg1={arg1}, arg2={arg2}")
+            print(f"args={args}")
+            print(f"kwargs={kwargs}")
+
+        # Deballage a l'appel
+        liste = [1, 2, 3]
+        somme(*liste)  # Equivalent a somme(1, 2, 3)
+
+        params = {"nom": "Alice", "age": 30}
+        afficher_infos(**params)
+
+    - id: py_func_003
+      titre: "Fonctions lambda et fonctions d'ordre superieur"
+      contenu: |
+        FONCTIONS LAMBDA (ANONYMES)
+
+        # Syntaxe
+        lambda arguments: expression
+
+        # Exemples
+        carre = lambda x: x ** 2
+        carre(5)  # 25
+
+        addition = lambda a, b: a + b
+        addition(3, 4)  # 7
+
+        FONCTIONS D'ORDRE SUPERIEUR
+
+        # map - applique fonction a chaque element
+        nombres = [1, 2, 3, 4]
+        carres = list(map(lambda x: x**2, nombres))
+        # [1, 4, 9, 16]
+
+        # filter - filtre selon condition
+        pairs = list(filter(lambda x: x % 2 == 0, nombres))
+        # [2, 4]
+
+        # sorted avec cle
+        noms = ["Charlie", "Alice", "Bob"]
+        tries = sorted(noms, key=lambda x: len(x))
+        # ["Bob", "Alice", "Charlie"]
+
+        # reduce (depuis functools)
+        from functools import reduce
+        produit = reduce(lambda a, b: a * b, [1, 2, 3, 4])
+        # 24
+
+        # Decorator simple
+        def mon_decorator(func):
+            def wrapper(*args, **kwargs):
+                print("Avant")
+                result = func(*args, **kwargs)
+                print("Apres")
+                return result
+            return wrapper
+
+        @mon_decorator
+        def dire_bonjour(nom):
+            print(f"Bonjour {nom}")
+
+# =============================================================================
+# GESTION DES ERREURS
+# =============================================================================
+
+erreurs:
+  exceptions:
+    - id: py_err_001
+      titre: "Try/Except - Gestion des exceptions"
+      contenu: |
+        GESTION DES ERREURS
+
+        # Structure de base
+        try:
+            resultat = 10 / 0
+        except ZeroDivisionError:
+            print("Division par zero!")
+
+        # Plusieurs exceptions
+        try:
+            valeur = int(input("Nombre: "))
+            resultat = 10 / valeur
+        except ValueError:
+            print("Ce n'est pas un nombre")
+        except ZeroDivisionError:
+            print("Division par zero")
+        except Exception as e:
+            print(f"Erreur: {e}")
+
+        # else et finally
+        try:
+            fichier = open("data.txt")
+            contenu = fichier.read()
+        except FileNotFoundError:
+            print("Fichier non trouve")
+        else:
+            print("Lecture reussie")  # Si pas d'erreur
+        finally:
+            fichier.close()  # Toujours execute
+
+        # Lever une exception
+        def valider_age(age):
+            if age < 0:
+                raise ValueError("L'age ne peut pas etre negatif")
+            return age
+
+    - id: py_err_002
+      titre: "Exceptions courantes"
+      contenu: |
+        EXCEPTIONS COURANTES EN PYTHON
+
+        # SyntaxError - Erreur de syntaxe
+        # if True  # Manque les deux-points
+
+        # NameError - Variable non definie
+        # print(variable_inexistante)
+
+        # TypeError - Type incorrect
+        # "texte" + 5
+
+        # ValueError - Valeur incorrecte
+        # int("abc")
+
+        # IndexError - Index hors limites
+        # liste = [1, 2, 3]
+        # liste[10]
+
+        # KeyError - Cle absente du dictionnaire
+        # dico = {"a": 1}
+        # dico["b"]
+
+        # AttributeError - Attribut inexistant
+        # "texte".methode_inexistante()
+
+        # FileNotFoundError - Fichier non trouve
+        # open("fichier_inexistant.txt")
+
+        # ZeroDivisionError - Division par zero
+        # 1 / 0
+
+        # ImportError - Module non trouve
+        # import module_inexistant
+
+# =============================================================================
+# FICHIERS ET I/O
+# =============================================================================
+
+fichiers:
+  lecture_ecriture:
+    - id: py_file_001
+      titre: "Lecture et ecriture de fichiers"
+      contenu: |
+        MANIPULATION DE FICHIERS
+
+        # Ouvrir et lire (methode recommandee avec with)
+        with open("fichier.txt", "r", encoding="utf-8") as f:
+            contenu = f.read()        # Tout le fichier
+            # ou
+            lignes = f.readlines()    # Liste de lignes
+            # ou
+            for ligne in f:           # Ligne par ligne
+                print(ligne.strip())
+
+        # Ecrire dans un fichier
+        with open("fichier.txt", "w", encoding="utf-8") as f:
+            f.write("Premiere ligne\n")
+            f.write("Deuxieme ligne\n")
+
+        # Ajouter a un fichier
+        with open("fichier.txt", "a", encoding="utf-8") as f:
+            f.write("Ligne ajoutee\n")
+
+        # Modes d'ouverture
+        # "r" - lecture (defaut)
+        # "w" - ecriture (ecrase)
+        # "a" - ajout
+        # "x" - creation (erreur si existe)
+        # "b" - binaire (ex: "rb", "wb")
+        # "+" - lecture et ecriture (ex: "r+")
+
+    - id: py_file_002
+      titre: "Fichiers JSON et CSV"
+      contenu: |
+        FICHIERS JSON
+
+        import json
+
+        # Ecrire du JSON
+        donnees = {"nom": "Alice", "age": 30}
+        with open("data.json", "w") as f:
+            json.dump(donnees, f, indent=2)
+
+        # Lire du JSON
+        with open("data.json", "r") as f:
+            donnees = json.load(f)
+
+        # Conversion string <-> dict
+        json_str = json.dumps(donnees)
+        donnees = json.loads(json_str)
+
+        FICHIERS CSV
+
+        import csv
+
+        # Lire un CSV
+        with open("data.csv", "r") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                print(row)  # Liste
+
+        # Lire en dictionnaire
+        with open("data.csv", "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                print(row["nom"], row["age"])
+
+        # Ecrire un CSV
+        with open("data.csv", "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["nom", "age"])
+            writer.writerow(["Alice", 30])
+
+# =============================================================================
+# MODULES ET PACKAGES
+# =============================================================================
+
+modules:
+  utilisation:
+    - id: py_mod_001
+      titre: "Import de modules"
+      contenu: |
+        IMPORTER DES MODULES
+
+        # Import complet
+        import math
+        math.sqrt(16)
+
+        # Import avec alias
+        import numpy as np
+        np.array([1, 2, 3])
+
+        # Import specifique
+        from math import sqrt, pi
+        sqrt(16)
+
+        # Import tout (deconseille)
+        from math import *
+
+        # Verifier si module disponible
+        try:
+            import pandas
+        except ImportError:
+            print("pandas non installe")
+
+        MODULES UTILES DE LA BIBLIOTHEQUE STANDARD
+
+        import os           # Systeme de fichiers
+        import sys          # Parametres systeme
+        import datetime     # Dates et heures
+        import re           # Expressions regulieres
+        import json         # JSON
+        import csv          # CSV
+        import random       # Aleatoire
+        import collections  # Structures de donnees
+        import itertools    # Outils d'iteration
+        import functools    # Outils fonctionnels
+        import pathlib      # Chemins de fichiers
+        import logging      # Journalisation
+        import unittest     # Tests unitaires
+        import typing       # Annotations de type
+
+    - id: py_mod_002
+      titre: "Creer ses propres modules"
+      contenu: |
+        CREER UN MODULE
+
+        # mon_module.py
+        """Documentation du module."""
+
+        MA_CONSTANTE = 42
+
+        def ma_fonction(x):
+            """Docstring de la fonction."""
+            return x * 2
+
+        class MaClasse:
+            pass
+
+        # main.py
+        import mon_module
+        mon_module.ma_fonction(5)
+
+        # ou
+        from mon_module import ma_fonction
+        ma_fonction(5)
+
+        CREER UN PACKAGE
+
+        mon_package/
+            __init__.py
+            module1.py
+            module2.py
+            sous_package/
+                __init__.py
+                module3.py
+
+        # __init__.py peut etre vide ou contenir des imports
+        # from .module1 import fonction1
+
+        # Utilisation
+        from mon_package import module1
+        from mon_package.sous_package import module3
+
+# =============================================================================
+# PROGRAMMATION ORIENTEE OBJET
+# =============================================================================
+
+poo:
+  classes:
+    - id: py_oop_001
+      titre: "Classes et objets"
+      contenu: |
+        PROGRAMMATION ORIENTEE OBJET
+
+        # Definition d'une classe
+        class Personne:
+            # Attribut de classe
+            espece = "Homo sapiens"
+
+            # Constructeur
+            def __init__(self, nom, age):
+                # Attributs d'instance
+                self.nom = nom
+                self.age = age
+
+            # Methode d'instance
+            def se_presenter(self):
+                return f"Je suis {self.nom}, {self.age} ans"
+
+            # Methode de classe
+            @classmethod
+            def creer_anonyme(cls):
+                return cls("Anonyme", 0)
+
+            # Methode statique
+            @staticmethod
+            def est_adulte(age):
+                return age >= 18
+
+        # Instanciation
+        alice = Personne("Alice", 30)
+        print(alice.nom)           # "Alice"
+        print(alice.se_presenter())
+
+        # Methode de classe
+        anon = Personne.creer_anonyme()
+
+        # Methode statique
+        Personne.est_adulte(25)    # True
+
+    - id: py_oop_002
+      titre: "Heritage et polymorphisme"
+      contenu: |
+        HERITAGE
+
+        class Animal:
+            def __init__(self, nom):
+                self.nom = nom
+
+            def parler(self):
+                raise NotImplementedError
+
+        class Chien(Animal):
+            def parler(self):
+                return f"{self.nom} dit: Wouf!"
+
+        class Chat(Animal):
+            def parler(self):
+                return f"{self.nom} dit: Miaou!"
+
+        # Utilisation
+        rex = Chien("Rex")
+        felix = Chat("Felix")
+        print(rex.parler())    # "Rex dit: Wouf!"
+        print(felix.parler())  # "Felix dit: Miaou!"
+
+        # Polymorphisme
+        animaux = [rex, felix]
+        for animal in animaux:
+            print(animal.parler())
+
+        # super() - appeler methode parente
+        class ChienSavant(Chien):
+            def parler(self):
+                base = super().parler()
+                return f"{base} Et je sais compter!"
+
+        # Verifier le type
+        isinstance(rex, Chien)   # True
+        isinstance(rex, Animal)  # True
+        issubclass(Chien, Animal)  # True
+
+    - id: py_oop_003
+      titre: "Methodes speciales (dunder)"
+      contenu: |
+        METHODES SPECIALES (DUNDER METHODS)
+
+        class Vecteur:
+            def __init__(self, x, y):
+                self.x = x
+                self.y = y
+
+            # Representation string
+            def __str__(self):
+                return f"Vecteur({self.x}, {self.y})"
+
+            def __repr__(self):
+                return f"Vecteur({self.x!r}, {self.y!r})"
+
+            # Operateurs arithmetiques
+            def __add__(self, other):
+                return Vecteur(self.x + other.x, self.y + other.y)
+
+            def __mul__(self, scalaire):
+                return Vecteur(self.x * scalaire, self.y * scalaire)
+
+            # Comparaison
+            def __eq__(self, other):
+                return self.x == other.x and self.y == other.y
+
+            # Longueur
+            def __len__(self):
+                return 2
+
+            # Indexation
+            def __getitem__(self, index):
+                if index == 0: return self.x
+                if index == 1: return self.y
+                raise IndexError
+
+        # Utilisation
+        v1 = Vecteur(1, 2)
+        v2 = Vecteur(3, 4)
+        v3 = v1 + v2       # Vecteur(4, 6)
+        print(v1)          # "Vecteur(1, 2)"
+
+# =============================================================================
+# BIBLIOTHEQUES COURANTES
+# =============================================================================
+
+bibliotheques:
+  utiles:
+    - id: py_lib_001
+      titre: "datetime - Dates et heures"
+      contenu: |
+        MODULE DATETIME
+
+        from datetime import datetime, date, time, timedelta
+
+        # Date actuelle
+        maintenant = datetime.now()
+        aujourdhui = date.today()
+
+        # Creer une date
+        d = date(2024, 12, 25)
+        dt = datetime(2024, 12, 25, 14, 30, 0)
+
+        # Formater
+        dt.strftime("%d/%m/%Y")        # "25/12/2024"
+        dt.strftime("%Y-%m-%d %H:%M")  # "2024-12-25 14:30"
+
+        # Parser
+        datetime.strptime("25/12/2024", "%d/%m/%Y")
+
+        # Calculs
+        demain = aujourdhui + timedelta(days=1)
+        dans_une_semaine = maintenant + timedelta(weeks=1)
+        diff = date(2024, 12, 31) - aujourdhui
+        print(diff.days)
+
+        # Codes de format courants
+        # %Y - annee 4 chiffres
+        # %m - mois 2 chiffres
+        # %d - jour 2 chiffres
+        # %H - heure 24h
+        # %M - minutes
+        # %S - secondes
+
+    - id: py_lib_002
+      titre: "os et pathlib - Systeme de fichiers"
+      contenu: |
+        MODULE OS
+
+        import os
+
+        # Repertoire courant
+        os.getcwd()
+        os.chdir("/chemin")
+
+        # Lister fichiers
+        os.listdir(".")
+
+        # Creer/supprimer repertoire
+        os.mkdir("nouveau_dossier")
+        os.makedirs("a/b/c", exist_ok=True)
+        os.rmdir("dossier_vide")
+
+        # Fichiers
+        os.path.exists("fichier.txt")
+        os.path.isfile("fichier.txt")
+        os.path.isdir("dossier")
+        os.path.join("dossier", "fichier.txt")
+        os.rename("ancien.txt", "nouveau.txt")
+        os.remove("fichier.txt")
+
+        MODULE PATHLIB (RECOMMANDE)
+
+        from pathlib import Path
+
+        # Chemins
+        p = Path("dossier/fichier.txt")
+        p.exists()
+        p.is_file()
+        p.is_dir()
+        p.name          # "fichier.txt"
+        p.stem          # "fichier"
+        p.suffix        # ".txt"
+        p.parent        # Path("dossier")
+
+        # Operations
+        Path("nouveau").mkdir(exist_ok=True)
+        list(Path(".").glob("*.py"))
+
+        # Lecture/ecriture
+        p.read_text()
+        p.write_text("contenu")
+
+    - id: py_lib_003
+      titre: "requests - Requetes HTTP"
+      contenu: |
+        MODULE REQUESTS (pip install requests)
+
+        import requests
+
+        # GET
+        response = requests.get("https://api.example.com/data")
+        response.status_code   # 200
+        response.text          # Contenu brut
+        response.json()        # Parse JSON
+
+        # Avec parametres
+        params = {"q": "python", "page": 1}
+        response = requests.get(url, params=params)
+
+        # POST
+        data = {"nom": "Alice", "age": 30}
+        response = requests.post(url, json=data)
+
+        # Headers
+        headers = {"Authorization": "Bearer token123"}
+        response = requests.get(url, headers=headers)
+
+        # Gestion erreurs
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()  # Leve exception si erreur HTTP
+        except requests.exceptions.RequestException as e:
+            print(f"Erreur: {e}")
+
+        # Session (cookies persistants)
+        session = requests.Session()
+        session.get(url1)
+        session.get(url2)  # Meme session
+
+# =============================================================================
+# BONNES PRATIQUES
+# =============================================================================
+
+bonnes_pratiques:
+  style:
+    - id: py_bp_001
+      titre: "PEP 8 - Style de code Python"
+      contenu: |
+        CONVENTIONS PEP 8
+
+        NOMMAGE
+        - variables, fonctions : snake_case
+        - constantes : MAJUSCULES_SNAKE
+        - classes : PascalCase
+        - modules : snake_case
+        - _prive : prefixe underscore
+        - __tres_prive : double underscore
+
+        INDENTATION
+        - 4 espaces (pas de tabulations)
+        - Lignes max 79 caracteres (code)
+        - Lignes max 72 caracteres (docstrings)
+
+        ESPACES
+        - Apres virgules : func(a, b, c)
+        - Autour operateurs : x = y + z
+        - Pas d'espace avant parenthese : func(x)
+
+        IMPORTS
+        - Un import par ligne
+        - Ordre : stdlib, tiers, local
+        - Eviter from x import *
+
+        # Bon
+        import os
+        import sys
+        from collections import defaultdict
+
+        # Mauvais
+        import os, sys
+        from collections import *
+
+        OUTILS DE VERIFICATION
+        - black (formatage auto)
+        - flake8 (linting)
+        - mypy (verification types)
+        - isort (tri imports)
+
+    - id: py_bp_002
+      titre: "Type hints et documentation"
+      contenu: |
+        TYPE HINTS (Python 3.5+)
+
+        # Variables
+        nom: str = "Alice"
+        age: int = 30
+        prix: float = 19.99
+        actif: bool = True
+
+        # Fonctions
+        def saluer(nom: str) -> str:
+            return f"Bonjour {nom}"
+
+        def calculer(a: int, b: int = 0) -> int:
+            return a + b
+
+        # Collections
+        from typing import List, Dict, Optional, Union, Tuple
+
+        nombres: List[int] = [1, 2, 3]
+        scores: Dict[str, int] = {"Alice": 100}
+        peut_etre: Optional[str] = None  # str ou None
+        mixte: Union[int, str] = 42
+        coord: Tuple[float, float] = (3.14, 2.71)
+
+        # Python 3.9+ : pas besoin d'importer
+        nombres: list[int] = [1, 2, 3]
+        scores: dict[str, int] = {"Alice": 100}
+
+        DOCSTRINGS (PEP 257)
+
+        def calculer_tva(montant: float, taux: float = 0.20) -> float:
+            """
+            Calcule le montant TTC.
+
+            Args:
+                montant: Montant hors taxes
+                taux: Taux de TVA (defaut 20%)
+
+            Returns:
+                Montant toutes taxes comprises
+
+            Raises:
+                ValueError: Si le montant est negatif
+
+            Example:
+                >>> calculer_tva(100)
+                120.0
+            """
+            if montant < 0:
+                raise ValueError("Montant negatif")
+            return montant * (1 + taux)

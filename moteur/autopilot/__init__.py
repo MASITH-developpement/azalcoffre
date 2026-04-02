@@ -39,6 +39,8 @@ from .models import FixProposal, Learning, FixStatus
 from .norms import Norm, NormsChecker, AZALPLUS_NORMS, check_against_norms
 from .alerter import AutoPilotAlerter
 from .auto_fixer import AutoFixer
+from .claude_fixer import ClaudeFixer
+from .guardian_learner import GuardianLearner, get_guardian_learner, resolve_error
 
 __all__ = [
     "AutoPilot",
@@ -60,6 +62,10 @@ __all__ = [
     "check_against_norms",
     "AutoPilotAlerter",
     "AutoFixer",
+    "ClaudeFixer",
+    "GuardianLearner",
+    "get_guardian_learner",
+    "resolve_error",
 ]
 
 __version__ = "1.0.0"

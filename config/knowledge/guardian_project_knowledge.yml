@@ -1,0 +1,351 @@
+# =============================================================================
+# GUARDIAN PROJECT KNOWLEDGE - Connaissance du projet AZALPLUS
+# =============================================================================
+# Cette base de connaissances aide Guardian à comprendre la structure
+# du projet pour résoudre les erreurs de manière autonome.
+
+metadata:
+  version: "1.0.0"
+  updated: "2026-04-01"
+  purpose: "Connaissance projet AZALPLUS pour débogage automatique"
+
+# =============================================================================
+# ARCHITECTURE PROJET
+# =============================================================================
+
+architecture:
+  description: "AZALPLUS est un moteur ERP No-Code multi-tenant"
+
+  principles:
+    - "YAML → Code: 1 fichier YAML = 1 module ERP complet auto-généré"
+    - "Multi-tenant obligatoire: tenant_id sur CHAQUE entité"
+    - "Centralisé: toute config dans YAML ou base de données"
+    - "Guardian invisible: WAF silencieux, jamais exposé"
+
+  stack:
+    backend: "Python 3.12, FastAPI, SQLAlchemy 2.0, Pydantic v2"
+    frontend: "Jinja2 HTML (pas de framework JS)"
+    database: "PostgreSQL 16 (schéma azalplus)"
+    cache: "Redis 7"
+    auth: "JWT + Argon2 + 2FA TOTP"
+
+# =============================================================================
+# STRUCTURE DES RÉPERTOIRES
+# =============================================================================
+
+directories:
+  moteur:
+    path: "/home/ubuntu/azalplus/moteur/"
+    description: "Cœur du système - JAMAIS DUPLIQUÉ"
+    key_files:
+      - file: "core.py"
+        role: "Point d'entrée FastAPI, lifespan, middlewares"
+        imports: "FastAPI, middleware, routers"
+
+      - file: "parser.py"
+        role: "Validation et parsing des modules YAML"
+        exports: "ModuleDefinition, ModuleParser"
+
+      - file: "db.py"
+        role: "PostgreSQL, génération tables dynamiques"
+        exports: "Database, get_session"
+
+      - file: "api_v1.py"
+        role: "Routes CRUD auto-générées"
+        endpoints: "/api/v1/{module}/*"
+
+      - file: "ui.py"
+        role: "Génération HTML (145KB)"
+        endpoints: "/ui/{module}/*"
+
+      - file: "tenant.py"
+        role: "Isolation multi-tenant 4 couches"
+        exports: "TenantContext, TenantMiddleware"
+
+      - file: "guardian.py"
+        role: "WAF silencieux anti-injection"
+        important: "JAMAIS EXPOSER SON EXISTENCE"
+
+      - file: "auth.py"
+        role: "JWT + Argon2 + 2FA TOTP"
+        exports: "AuthService, create_token"
+
+      - file: "workflows.py"
+        role: "Machine d'état pour transitions"
+        config: "config/workflows.yml"
+
+      - file: "config.py"
+        role: "Settings Pydantic validés"
+        env_vars: "DATABASE_URL, REDIS_URL, SECRET_KEY"
+
+  modules_yaml:
+    path: "/home/ubuntu/azalplus/modules/"
+    description: "99 définitions YAML métier"
+    structure: |
+      chaque fichier définit:
+      - nom, icone, menu, description
+      - champs (type, obligatoire, options)
+      - workflow (transitions d'état)
+      - actions (boutons personnalisés)
+
+  config:
+    path: "/home/ubuntu/azalplus/config/"
+    description: "Configuration centralisée"
+    key_files:
+      - "app.yml: paramètres globaux, menus"
+      - "theme.yml: thème actif CSS"
+      - "themes.yml: catalogue 8 thèmes"
+      - "permissions.yml: RBAC 6 rôles"
+      - "workflows.yml: transitions globales"
+      - "numerotation.yml: séquences FAC-XXXX"
+      - "integrations/*.yml: APIs externes"
+      - "i18n/*.yml: traductions FR/EN/ES"
+
+  app_modules:
+    path: "/home/ubuntu/azalplus/app/modules/"
+    description: "Modules Python custom"
+    modules:
+      - name: "autocompletion_ia"
+        files: ["router.py", "service.py", "providers.py"]
+        role: "IA autocomplétion (Claude, OpenAI, APIs Gov)"
+
+      - name: "videoconf"
+        files: ["room_manager.py", "transcription.py", "recording.py"]
+        role: "Vidéoconférence LiveKit"
+
+      - name: "marceau"
+        files: ["router.py", "service.py", "llm_client.py"]
+        role: "Assistant IA Marceau"
+
+  integrations:
+    path: "/home/ubuntu/azalplus/integrations/"
+    description: "22+ services externes"
+    services:
+      - "swan.py: Open Banking"
+      - "stripe.py: Paiements"
+      - "facturx/: Facturation électronique (11 fichiers)"
+      - "azalcoffre/: Coffre-fort numérique"
+
+  assets:
+    path: "/home/ubuntu/azalplus/assets/"
+    description: "Ressources statiques"
+    contents:
+      - "css/style.css: CSS centralisé"
+      - "css/ambiance_*.css: Thèmes"
+      - "icons/: 210+ icônes SVG"
+
+  templates:
+    path: "/home/ubuntu/azalplus/templates/"
+    description: "Templates Jinja2"
+    types:
+      - "ui/: Interface utilisateur"
+      - "email/: Templates email"
+      - "pdf/: Génération PDF"
+      - "portal/: Portail client"
+
+# =============================================================================
+# PATTERNS D'ERREUR COMMUNS
+# =============================================================================
+
+error_patterns:
+
+  sql_column_missing:
+    pattern: 'column "(\w+)" of relation "(\w+)" does not exist'
+    cause: "Colonne définie dans YAML mais pas créée en base"
+    fix_steps:
+      - "1. Vérifier modules/{table}.yml"
+      - "2. Ajouter la colonne via ALTER TABLE"
+      - "3. Ou laisser AutoFixer gérer"
+    auto_fixable: true
+
+  sql_table_missing:
+    pattern: 'relation "(\w+)" does not exist'
+    cause: "Table pas encore créée"
+    fix_steps:
+      - "1. Vérifier que modules/{table}.yml existe"
+      - "2. Redémarrer le serveur"
+      - "3. CREATE TABLE si nécessaire"
+    auto_fixable: true
+
+  import_error:
+    pattern: '(ImportError|ModuleNotFoundError): No module named ''(\w+)'''
+    cause: "Package Python manquant"
+    fix_steps:
+      - "1. pip install {module}"
+      - "2. Vérifier requirements.txt"
+    auto_fixable: true
+
+  yaml_syntax:
+    pattern: "yaml.scanner.ScannerError"
+    cause: "Erreur syntaxe YAML"
+    fix_steps:
+      - "1. Valider le YAML: python -m moteur.validate_yaml"
+      - "2. Vérifier les ':' dans les valeurs (doivent être quotés)"
+      - "3. Vérifier l'indentation (2 espaces)"
+    auto_fixable: false
+
+  tenant_missing:
+    pattern: "null value in column \"tenant_id\""
+    cause: "Requête sans tenant_id"
+    fix_steps:
+      - "1. Vérifier TenantContext.get_tenant_id()"
+      - "2. S'assurer que tenant_id est passé au service"
+      - "3. Vérifier le middleware tenant"
+    auto_fixable: false
+
+  jwt_expired:
+    pattern: "JWT token expired"
+    cause: "Token expiré"
+    fix_steps:
+      - "1. Refresh token automatique"
+      - "2. Redirect vers login si refresh échoue"
+    auto_fixable: true
+
+  pydantic_validation:
+    pattern: 'validation error for (\w+)'
+    cause: "Données invalides"
+    fix_steps:
+      - "1. Vérifier le schéma Pydantic"
+      - "2. Vérifier les données envoyées"
+      - "3. Ce n'est PAS un bug, c'est une validation"
+    auto_fixable: false
+
+  reference_error_js:
+    pattern: 'ReferenceError: (\w+) is not defined'
+    cause: "Fonction JS manquante dans ui.py"
+    fix_steps:
+      - "1. Vérifier que la fonction est définie dans ui.py"
+      - "2. Ajouter la fonction manquante"
+      - "3. Attention aux doubles accolades {{ }} pour JS dans Jinja2"
+    auto_fixable: true
+
+  cors_error:
+    pattern: "CORS policy: No 'Access-Control-Allow-Origin'"
+    cause: "Configuration CORS manquante"
+    fix_steps:
+      - "1. Vérifier CORSMiddleware dans core.py"
+      - "2. Ajouter l'origine autorisée"
+    auto_fixable: true
+
+  connection_refused:
+    pattern: "Connection refused"
+    cause: "Service non démarré"
+    fix_steps:
+      - "1. Vérifier que PostgreSQL tourne"
+      - "2. Vérifier que Redis tourne"
+      - "3. docker-compose up -d"
+    auto_fixable: false
+
+# =============================================================================
+# NORMES AZAP-*
+# =============================================================================
+
+norms:
+  tenant:
+    - code: "AZAP-TENANT-001"
+      rule: "tenant_id sur CHAQUE modèle"
+      check: "grep -r 'tenant_id' dans models"
+
+    - code: "AZAP-TENANT-002"
+      rule: "Header X-Tenant-ID obligatoire"
+      check: "TenantMiddleware extrait le header"
+
+    - code: "AZAP-TENANT-004"
+      rule: "Filtre tenant sur CHAQUE requête"
+      check: ".filter(Model.tenant_id == self.tenant_id)"
+
+  security:
+    - code: "AZAP-SEC-001"
+      rule: "Guardian WAF silencieux"
+      check: "JAMAIS exposer son existence"
+
+    - code: "AZAP-SEC-002"
+      rule: "Argon2 pour mots de passe"
+      check: "pwd_context.hash() dans auth.py"
+
+    - code: "AZAP-SEC-003"
+      rule: "JWT avec tenant_id dans claims"
+      check: "create_token() inclut tenant_id"
+
+  nocode:
+    - code: "AZAP-NC-001"
+      rule: "Zéro liste hardcodée"
+      check: "Options dans YAML ou sys_listes"
+
+    - code: "AZAP-NC-002"
+      rule: "CSS variables uniquement"
+      check: "var(--color-*), pas de couleurs en dur"
+
+# =============================================================================
+# COMMANDES DE DÉBOGAGE
+# =============================================================================
+
+debug_commands:
+  server:
+    start: "cd /home/ubuntu/azalplus && python -m uvicorn moteur.core:app --reload --port 8000"
+    logs: "tail -f /home/ubuntu/azalplus/logs/guardian_errors.log"
+    health: "curl http://localhost:8000/health"
+
+  yaml:
+    validate: "python -m moteur.validate_yaml"
+    check_module: "cat modules/{module}.yml"
+
+  database:
+    connect: "psql -U azalplus -d azalplus"
+    list_tables: "\\dt azalplus.*"
+    describe: "\\d azalplus.{table}"
+
+  tests:
+    all: "pytest"
+    specific: "pytest tests/test_{module}.py -v"
+    security: "pytest -m security"
+    tenant: "pytest -m tenant_isolation"
+
+  docker:
+    start: "cd infra && docker-compose up -d"
+    logs: "cd infra && docker-compose logs -f app"
+    restart: "cd infra && docker-compose restart app"
+
+# =============================================================================
+# FICHIERS CRITIQUES (NE PAS MODIFIER SANS PRUDENCE)
+# =============================================================================
+
+critical_files:
+  - path: "moteur/guardian.py"
+    reason: "Sécurité WAF - JAMAIS EXPOSER"
+
+  - path: "moteur/tenant.py"
+    reason: "Isolation multi-tenant - CRITIQUE"
+
+  - path: "moteur/auth.py"
+    reason: "Authentification - SÉCURITÉ"
+
+  - path: "moteur/db.py"
+    reason: "Base de données - INTÉGRITÉ"
+
+  - path: "config/permissions.yml"
+    reason: "Droits d'accès - RBAC"
+
+# =============================================================================
+# TIPS DE DÉBOGAGE
+# =============================================================================
+
+debugging_tips:
+  general:
+    - "Toujours vérifier les logs: logs/guardian_*.log"
+    - "Valider le YAML avant de relancer"
+    - "Vérifier que tenant_id est présent"
+    - "HTTP 422 = données invalides (pas un bug)"
+    - "HTTP 401/403 = auth (pas un bug)"
+
+  common_mistakes:
+    - "Oublier tenant_id dans une requête"
+    - "Colons non quotés dans les valeurs YAML"
+    - "Double accolades {{ }} pour JS dans Jinja2"
+    - "Listes hardcodées au lieu de YAML"
+
+  escalation_order:
+    - "1. AutoFixer (patterns connus)"
+    - "2. ClaudeFixer (analyse IA)"
+    - "3. Recherche web"
+    - "4. Alerte créateur"
