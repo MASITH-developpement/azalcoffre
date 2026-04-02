@@ -22,6 +22,20 @@ import html as html_module
 # =============================================================================
 APP_NAME = os.environ.get("APP_NAME", "AZALPLUS")
 
+
+# =============================================================================
+# MARCEAU Panel Loader
+# =============================================================================
+def get_marceau_panel() -> str:
+    """Charge le panneau Marceau si le module est disponible."""
+    try:
+        from app.modules.marceau.ui import get_marceau_panel_html
+        return get_marceau_panel_html()
+    except ImportError:
+        return "<!-- Marceau non disponible -->"
+    except Exception as e:
+        return f"<!-- Marceau erreur: {e} -->"
+
 from .parser import ModuleParser, ModuleDefinition, FieldDefinition
 from .auth import get_current_user, require_auth
 from .tenant import get_current_tenant, SYSTEM_TENANT_ID
@@ -100,7 +114,38 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
     required_attr = "required" if field.requis else ""
     required_class = "required" if field.requis else ""
     label = field.label or field.nom.replace("_", " ").title()
-    help_text = f'<small class="form-help">{field.aide}</small>' if field.aide else ""
+
+    # Génération du texte d'aide + liens
+    help_parts = []
+    if field.aide:
+        help_parts.append(f'<span class="help-description">{field.aide}</span>')
+
+    # Ajouter les liens d'aide (pour obtenir les clés API, etc.)
+    liens = getattr(field, 'liens', None) or []
+    if liens:
+        links_html = []
+        for lien in liens:
+            lien_label = lien.get('label', 'Lien')
+            lien_url = lien.get('url', '#')
+            lien_icone = lien.get('icone', 'external-link')
+            is_primaire = lien.get('primaire', False)
+            is_gratuit = lien.get('gratuit', False)
+
+            # Classes CSS
+            link_class = "help-link"
+            if is_primaire:
+                link_class += " help-link-primary"
+            if is_gratuit:
+                link_class += " help-link-free"
+                lien_label = f"🆓 {lien_label}"
+
+            links_html.append(
+                f'<a href="{lien_url}" target="_blank" rel="noopener" class="{link_class}">'
+                f'<span class="help-link-icon">🔗</span>{lien_label}</a>'
+            )
+        help_parts.append(f'<div class="help-links">{" ".join(links_html)}</div>')
+
+    help_text = f'<small class="form-help">{" ".join(help_parts)}</small>' if help_parts else ""
 
     # Champs auto-générés ou readonly
     is_auto_genere = getattr(field, 'auto_genere', False)
@@ -126,16 +171,47 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
     escaped_value = html_module.escape(str(value)) if value is not None else ""
 
     # Type de champ
+    # Liste des champs à exclure de l'autocomplétion (sensibles)
+    EXCLUDED_AUTOCOMPLETE_FIELDS = [
+        "password", "mot_de_passe", "mdp", "token", "secret", "api_key",
+        "cle_api", "encryption_key", "private_key", "access_token",
+        "refresh_token", "session_id", "csrf", "otp", "pin", "code_secret"
+    ]
+    field_name_lower = field.nom.lower()
+    is_sensitive_field = any(excl in field_name_lower for excl in EXCLUDED_AUTOCOMPLETE_FIELDS)
+
+    # Autocomplétion activée par défaut pour text/textarea sauf champs sensibles
+    # Peut être désactivée explicitement avec autocompletion: false dans le YAML
+    autocompletion_enabled = getattr(field, 'autocompletion', True) and not is_sensitive_field
+
     if field.type == "texte long" or field.type == "textarea":
-        return f'''
-        <div class="o-field-row" style="grid-template-columns: 150px 1fr;">
-            <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
-            <div class="o-field-widget">
-                <textarea class="o-field-text" id="{field_id}" name="{field.nom}" rows="6" {required_attr} placeholder="{placeholder}">{escaped_value}</textarea>
-                {help_text}
+        if autocompletion_enabled:
+            # Textarea avec autocomplétion IA
+            return f'''
+            <div class="o-field-row" style="grid-template-columns: 150px 1fr;">
+                <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+                <div class="o-field-widget autocomplete-container">
+                    <div class="autocomplete-wrapper" style="width: 100%;">
+                        <textarea class="o-field-text autocomplete-input" id="{field_id}" name="{field.nom}" rows="6"
+                                  data-autocomplete="true" data-module="{module_name}" data-champ="{field.nom}"
+                                  {required_attr} placeholder="{placeholder}">{escaped_value}</textarea>
+                        <div class="autocomplete-suggestions" id="{field_id}_suggestions"></div>
+                        <span class="autocomplete-indicator" title="Autocomplétion IA" style="top: 10px;">✨</span>
+                    </div>
+                    {help_text}
+                </div>
             </div>
-        </div>
-        '''
+            '''
+        else:
+            return f'''
+            <div class="o-field-row" style="grid-template-columns: 150px 1fr;">
+                <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
+                <div class="o-field-widget">
+                    <textarea class="o-field-text" id="{field_id}" name="{field.nom}" rows="6" {required_attr} placeholder="{placeholder}">{escaped_value}</textarea>
+                    {help_text}
+                </div>
+            </div>
+            '''
 
     elif field.type in ["enum", "select"] and field.enum_values:
         options = "".join([
@@ -150,6 +226,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
                     <option value="">-- Sélectionner --</option>
                     {options}
                 </select>
+                {help_text}
             </div>
         </div>
         '''
@@ -161,6 +238,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
             <label class="o-field-label" for="{field_id}">{label}</label>
             <div class="o-field-widget o-field-boolean">
                 <input type="checkbox" id="{field_id}" name="{field.nom}" {checked} data-type="boolean">
+                {help_text}
             </div>
         </div>
         '''
@@ -176,6 +254,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
                            onclick="openDateTimePicker(this, 'date')" placeholder="Sélectionner...">
                     <span class="datetime-picker-icon" onclick="openDateTimePicker(document.getElementById('{field_id}'), 'date')">📅</span>
                 </div>
+                {help_text}
             </div>
         </div>
         '''
@@ -191,6 +270,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
                            onclick="openDateTimePicker(this, 'datetime')" placeholder="Sélectionner...">
                     <span class="datetime-picker-icon" onclick="openDateTimePicker(document.getElementById('{field_id}'), 'datetime')">📅</span>
                 </div>
+                {help_text}
             </div>
         </div>
         '''
@@ -205,6 +285,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
             <div class="o-field-widget">
                 <input type="number" class="o-field-char" id="{field_id}" name="{field.nom}"
                        step="{step}" {min_attr} {max_attr} value="{escaped_value}" {required_attr}>
+                {help_text}
             </div>
         </div>
         '''
@@ -220,7 +301,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         '''
 
     elif field.type in ["lien", "relation"]:
-        # Pour les liens/relations, on génère un select avec option de création
+        # Pour les liens/relations, on génère un input searchable avec autocomplete
         linked_module = field.lien_vers or getattr(field, 'relation', '') or ""
         linked_module_lower = linked_module.lower()
 
@@ -234,7 +315,6 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
                 autofill_config = 'data-autofill="adresse_ligne1:address_line1,adresse_ligne2:address_line2,ville:city,code_postal:postal_code,contact_sur_place:contact_name,telephone_contact:phone,email_contact:email"'
         elif field.nom == "customer_id":
             # Pour les factures : construire l'adresse complète dans billing_address (textarea)
-            # Les champs clients sont: address_line1, address_line2, postal_code, city
             autofill_config = 'data-autofill="billing_address:_compose_address:address_line1|address_line2|postal_code|city"'
         elif field.nom == "donneur_ordre_id":
             autofill_config = 'data-autofill="adresse_ligne1:adresse_ligne1,adresse_ligne2:adresse_ligne2,ville:ville,code_postal:code_postal,contact_sur_place:contact_principal,telephone_contact:telephone,email_contact:email"'
@@ -242,15 +322,29 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         # Valeur actuelle pour pré-sélection
         current_value = value or ""
 
+        # Autocomplétion sur relations activée par défaut
         return f'''
         <div class="o-field-row">
             <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
             <div class="o-field-widget">
-                <div class="select-with-create">
-                    <select class="o-field-char" id="{field_id}" name="{field.nom}" data-link="{linked_module}" data-current-value="{current_value}" {autofill_config} {required_attr} onchange="handleRelationAutofill(this)">
-                        <option value="">-- Sélectionner --</option>
-                    </select>
-                    <button type="button" class="btn-create-inline" onclick="openFullCreatePage('{linked_module_lower}', '{field_id}')" title="Créer nouveau">
+                <div class="relation-autocomplete-container">
+                    <div class="relation-autocomplete-wrapper">
+                        <input type="text" class="o-field-char relation-search-input"
+                               id="{field_id}_search"
+                               placeholder="Rechercher {label.lower()}..."
+                               data-relation-module="{linked_module}"
+                               data-target-id="{field_id}"
+                               {autofill_config}
+                               autocomplete="off">
+                        <input type="hidden" id="{field_id}" name="{field.nom}"
+                               value="{current_value}" data-link="{linked_module}"
+                               data-current-value="{current_value}" {required_attr}>
+                        <div class="relation-suggestions" id="{field_id}_suggestions"></div>
+                        <span class="relation-search-icon">🔍</span>
+                    </div>
+                    <button type="button" class="btn-create-inline"
+                            onclick="openFullCreatePage('{linked_module_lower}', '{field_id}')"
+                            title="Créer nouveau">
                         +
                     </button>
                 </div>
@@ -269,6 +363,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
                            step="0.01" min="0" value="{escaped_value}" {required_attr}>
                     <span class="input-suffix">EUR</span>
                 </div>
+                {help_text}
             </div>
         </div>
         '''
@@ -313,6 +408,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
             <div class="o-field-widget">
                 <input type="tel" class="o-field-char" id="{field_id}" name="{field.nom}"
                        value="{escaped_value}" {required_attr} placeholder="+33 1 23 45 67 89">
+                {help_text}
             </div>
         </div>
         '''
@@ -325,6 +421,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
             <div class="o-field-widget">
                 <input type="url" class="o-field-char" id="{field_id}" name="{field.nom}"
                        value="{escaped_value}" {required_attr} placeholder="https://...">
+                {help_text}
             </div>
         </div>
         '''
@@ -345,10 +442,10 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
         '''
 
     else:  # texte par défaut
-        # Vérifier si autocomplétion IA est activée pour ce champ
-        has_autocompletion = getattr(field, 'autocompletion', False)
+        # Autocomplétion activée par défaut (sauf si désactivée ou champ sensible)
+        # La variable autocompletion_enabled est définie plus haut
 
-        if has_autocompletion:
+        if autocompletion_enabled and not is_readonly:
             # Input avec autocomplétion IA
             return f'''
             <div class="o-field-row">
@@ -362,6 +459,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
                         <div class="autocomplete-suggestions" id="{field_id}_suggestions"></div>
                         <span class="autocomplete-indicator" title="Autocomplétion IA">✨</span>
                     </div>
+                    {help_text}
                 </div>
             </div>
             '''
@@ -371,6 +469,7 @@ def get_field_html(field: FieldDefinition, value: Any = None, is_custom: bool = 
                 <label class="o-field-label {required_class}" for="{field_id}">{label}</label>
                 <div class="o-field-widget">
                     <input type="text" class="o-field-char" id="{field_id}" name="{field.nom}" value="{escaped_value}" placeholder="{placeholder}" {required_attr} {readonly_attr} style="{readonly_style}">
+                    {help_text}
                 </div>
             </div>
             '''
@@ -6153,6 +6252,30 @@ async def administration_mail_form(
     return HTMLResponse(content=html)
 
 
+# =============================================================================
+# MARCEAU INTERACTION PAGE
+# =============================================================================
+@ui_router.get("/marceau/interaction", response_class=HTMLResponse)
+async def marceau_interaction_page(
+    request: Request,
+    user: dict = Depends(require_auth),
+):
+    """
+    Page d'interaction avec Marceau.
+    - Analyse des expressions faciales en temps réel
+    - Interaction vocale (bouton proéminent sur smartphone)
+    - Chat textuel
+
+    Marceau peut voir l'utilisateur via la webcam pour adapter
+    ses réponses selon l'état émotionnel détecté.
+    """
+    try:
+        from app.modules.marceau.ui import get_marceau_interaction_page
+        return HTMLResponse(content=get_marceau_interaction_page())
+    except ImportError as e:
+        raise HTTPException(status_code=500, detail=f"Module Marceau non disponible: {e}")
+
+
 @ui_router.get("/{module_name}", response_class=HTMLResponse)
 async def module_list(
     module_name: str,
@@ -6581,33 +6704,51 @@ def organize_fields_into_sections(module) -> dict:
     # Utiliser les groupes définis dans les YAML
     sections = {}
 
+    # Récupérer les définitions de sections du module (pour les labels)
+    module_sections = getattr(module, 'sections', None) or []
+    section_labels = {}
+    section_order = []
+    for sec in module_sections:
+        if isinstance(sec, dict):
+            sec_nom = sec.get('nom', '')
+            sec_label = sec.get('label', sec_nom.replace('_', ' ').title())
+            section_labels[sec_nom] = sec_label
+            section_order.append(sec_nom)
+
     for nom, field in module.champs.items():
         if field.type in ["auto", "calcul"]:
             continue
 
-        # Utiliser l'attribut groupe du champ (prioritaire)
-        groupe = getattr(field, 'groupe', None)
+        # Utiliser l'attribut groupe OU section du champ
+        groupe = getattr(field, 'groupe', None) or getattr(field, 'section', None)
 
         if groupe:
-            if groupe not in sections:
-                sections[groupe] = []
-            sections[groupe].append((nom, field))
+            # Utiliser le label de la section si défini
+            section_name = section_labels.get(groupe, groupe)
+            if section_name not in sections:
+                sections[section_name] = []
+            sections[section_name].append((nom, field))
         else:
             # Fallback pour les champs sans groupe
             if "Autres" not in sections:
                 sections["Autres"] = []
             sections["Autres"].append((nom, field))
 
-    # Ordre préférentiel des sections
-    ordre_sections = [
-        "Identification", "Informations", "Contact", "Relations",
-        "Montants", "Quantites", "Dates", "Statut",
-        "Fichiers", "Configuration", "Securite", "Metadata", "Notes", "Autres"
-    ]
+    # Ordre préférentiel des sections - utiliser l'ordre du module si défini
+    if section_order:
+        # Utiliser l'ordre des sections défini dans le module YAML
+        ordre_sections_labels = [section_labels.get(s, s) for s in section_order]
+    else:
+        # Fallback sur l'ordre par défaut
+        ordre_sections_labels = [
+            "Identification", "Informations", "Contact", "Relations",
+            "Montants", "Quantites", "Dates", "Statut",
+            "Fichiers", "Configuration", "Securite", "Metadata", "Notes", "Autres"
+        ]
 
     # Trier les sections selon l'ordre préférentiel
     sections_ordonnees = {}
-    for section in ordre_sections:
+    for section in ordre_sections_labels:
         if section in sections:
             sections_ordonnees[section] = sections[section]
 
@@ -7452,6 +7593,21 @@ def generate_form_scripts(module_name: str) -> str:
                 }});
 
                 console.log('Auto-fill appliqué depuis', linkedModule);
+
+                // Si on sélectionne un client et qu'il a une remise permanente, l'appliquer
+                if (linkedModule.toLowerCase() === 'clients' && data.remise_permanente && data.remise_permanente > 0) {{
+                    const remiseType = document.getElementById('remise_type');
+                    const remiseValue = document.getElementById('remise_value');
+                    if (remiseType && remiseValue) {{
+                        remiseType.value = 'percent';
+                        remiseValue.value = data.remise_permanente;
+                        // Déclencher le recalcul
+                        if (typeof updateRemise === 'function') {{
+                            updateRemise();
+                        }}
+                        console.log('Remise permanente client appliquée:', data.remise_permanente + '%');
+                    }}
+                }}
             }}
         }} catch (e) {{
             console.error('Erreur auto-fill:', e);
@@ -8320,8 +8476,9 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
             const custom = p.custom_fields || {{}};
             const pu2 = custom.pu2 || pu1;
             const pu3 = custom.pu3 || pu1;
+            const prodType = p.type || 'PRODUIT';
             const displayText = code ? `${{code}} - ${{nom}}` : nom;
-            options += `<option value="${{p.id}}" data-pu1="${{pu1}}" data-pu2="${{pu2}}" data-pu3="${{pu3}}" data-nom="${{nom}}" data-code="${{code}}">${{displayText}}</option>`;
+            options += `<option value="${{p.id}}" data-pu1="${{pu1}}" data-pu2="${{pu2}}" data-pu3="${{pu3}}" data-nom="${{nom}}" data-code="${{code}}" data-prodtype="${{prodType}}">${{displayText}}</option>`;
         }});
         return options;
     }}
@@ -8335,6 +8492,11 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
             const niveau = niveauSelect ? niveauSelect.value : 'pu1';
             const prix = parseFloat(selectedOption.dataset[niveau]) || 0;
             prixInput.value = prix;
+            // Stocker le type de produit sur la ligne pour le calcul de remise
+            const prodType = selectedOption.dataset.prodtype || 'PRODUIT';
+            tr.dataset.prodtype = prodType;
+        }} else {{
+            tr.dataset.prodtype = 'PRODUIT';
         }}
         calculerTotaux();
     }}
@@ -8580,6 +8742,7 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
         let lineNumber = 1;
         let subtotalCalc = 0;
         let taxAmountCalc = 0;
+        let subtotalEligibleRemise = 0;  // Sous-total éligible à la remise (exclut DEPLACEMENT/MAIN_OEUVRE)
 
         document.querySelectorAll('#lignes-table tr:not(.ligne-vide)').forEach(tr => {{
             // Ligne section (titre)
@@ -8627,6 +8790,7 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
                 const productId = produitSelect.value || null;
                 const productCode = selectedOption?.dataset?.code || '';
                 const productName = selectedOption?.dataset?.nom || '';
+                const productType = selectedOption?.dataset?.prodtype || tr.dataset.prodtype || 'PRODUIT';
                 const prix = parseFloat(inputs[0].value) || 0;
                 const qte = parseFloat(inputs[1].value) || 0;
                 // Utiliser la classe .tva-select pour être sûr de cibler le bon select
@@ -8639,12 +8803,17 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
                     const taxAmount = subtotal * (tauxTVA / 100);
                     subtotalCalc += subtotal;
                     taxAmountCalc += taxAmount;
+                    // Ajouter au sous-total éligible à la remise si ce n'est pas DEPLACEMENT ou MAIN_OEUVRE
+                    if (productType !== 'DEPLACEMENT' && productType !== 'MAIN_OEUVRE') {{
+                        subtotalEligibleRemise += subtotal;
+                    }}
                     lignesData.push({{
                         line_number: lineNumber++,
                         line_type: 'product',
                         product_id: productId,
                         product_code: productCode,
                         description: productName,
+                        product_type: productType,
                         quantity: qte,
                         unit_price: prix,
                         tax_rate: tauxTVA,
@@ -8674,7 +8843,8 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
         }}));
 
         // Ajuster les totaux avec options
-        const remiseAmount = remiseType === 'percent' ? subtotalCalc * (remiseValue / 100) : remiseValue;
+        // IMPORTANT: La remise % s'applique uniquement aux produits éligibles (pas DEPLACEMENT/MAIN_OEUVRE)
+        const remiseAmount = remiseType === 'percent' ? subtotalEligibleRemise * (remiseValue / 100) : remiseValue;
         const optionnelsTotal = optionnelsInclus.reduce((sum, opt) => sum + opt.total, 0);
         const livraisonFraisVal = livraisonType === 'express' ? 15 : 0;
         const subtotalFinal = subtotalCalc - remiseAmount + optionnelsTotal + livraisonFraisVal;
@@ -9317,15 +9487,29 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
     let optionnelIndex = 0;
 
     // Mettre à jour la remise
+    // IMPORTANT: La remise ne s'applique PAS aux produits de type DEPLACEMENT et MAIN_OEUVRE
     function updateRemise() {{
         const type = document.getElementById('remise_type').value;
         const value = parseFloat(document.getElementById('remise_value').value) || 0;
-        const totalHTElement = document.getElementById('total-ht');
-        const totalHT = parseFloat(totalHTElement.textContent.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+
+        // Calculer le montant HT éligible à la remise (exclure DEPLACEMENT et MAIN_OEUVRE)
+        let totalHTEligible = 0;
+        document.querySelectorAll('#lignes-table tr:not(.ligne-vide):not(.ligne-section):not(.ligne-note)').forEach(tr => {{
+            const prodType = tr.dataset.prodtype || 'PRODUIT';
+            // Exclure DEPLACEMENT et MAIN_OEUVRE de la remise
+            if (prodType !== 'DEPLACEMENT' && prodType !== 'MAIN_OEUVRE') {{
+                const inputs = tr.querySelectorAll('input[type="number"]');
+                if (inputs.length >= 2) {{
+                    const prix = parseFloat(inputs[0].value) || 0;
+                    const qte = parseFloat(inputs[1].value) || 0;
+                    totalHTEligible += prix * qte;
+                }}
+            }}
+        }});
 
         let remise = 0;
         if (type === 'percent') {{
-            remise = totalHT * (value / 100);
+            remise = totalHTEligible * (value / 100);
         }} else if (type === 'amount') {{
             remise = value;
         }}
@@ -10109,6 +10293,21 @@ def generate_document_form(module, module_name: str, existing_data: dict = None)
                             conditionsSelect.value = '60j';
                         }}
                         console.log('Conditions de paiement:', delai, 'jours ->', conditionsSelect.value);
+                    }}
+                }}
+
+                // Si on sélectionne un client et qu'il a une remise permanente, l'appliquer
+                if (linkedModule.toLowerCase() === 'clients' && data.remise_permanente && data.remise_permanente > 0) {{
+                    const remiseType = document.getElementById('remise_type');
+                    const remiseValue = document.getElementById('remise_value');
+                    if (remiseType && remiseValue) {{
+                        remiseType.value = 'percent';
+                        remiseValue.value = data.remise_permanente;
+                        // Déclencher le recalcul
+                        if (typeof updateRemise === 'function') {{
+                            updateRemise();
+                        }}
+                        console.log('Remise permanente client appliquée:', data.remise_permanente + '%');
                     }}
                 }}
 
@@ -14640,6 +14839,7 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     document.addEventListener('DOMContentLoaded', function() {{
         loadSidebarFavoris();
         initAutocompletion();
+        initRelationAutocomplete();
     }});
 
     // ==========================================================================
@@ -14649,17 +14849,251 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     let currentAutocompleteInput = null;
 
     function initAutocompletion() {{
-        document.querySelectorAll('input[data-autocomplete="true"]').forEach(input => {{
-            const suggestionsDiv = document.getElementById(input.id + '_suggestions');
+        // Sélectionner TOUS les éléments avec data-autocomplete (inputs ET textareas)
+        document.querySelectorAll('[data-autocomplete="true"]').forEach(element => {{
+            const suggestionsDiv = document.getElementById(element.id + '_suggestions');
             if (!suggestionsDiv) return;
+
+            const isTextarea = element.tagName.toLowerCase() === 'textarea';
+
+            // Input handler avec debounce
+            element.addEventListener('input', function(e) {{
+                const value = e.target.value;
+                const module = element.dataset.module || 'default';
+                const champ = element.dataset.champ || element.name;
+
+                if (autocompleteDebounceTimer) clearTimeout(autocompleteDebounceTimer);
+
+                // Pour les textareas, chercher uniquement si le dernier mot a plus de 2 caractères
+                let searchValue = value;
+                if (isTextarea) {{
+                    const lastWord = value.split(/\s+/).pop() || '';
+                    if (lastWord.length < 2) {{
+                        suggestionsDiv.innerHTML = '';
+                        suggestionsDiv.style.display = 'none';
+                        return;
+                    }}
+                    searchValue = lastWord;
+                }} else {{
+                    if (value.length < 2) {{
+                        suggestionsDiv.innerHTML = '';
+                        suggestionsDiv.style.display = 'none';
+                        return;
+                    }}
+                }}
+
+                autocompleteDebounceTimer = setTimeout(() => {{
+                    fetchAutocompleteSuggestions(element, suggestionsDiv, module, champ, searchValue, isTextarea);
+                }}, 300);
+            }});
+
+            // Navigation clavier
+            element.addEventListener('keydown', function(e) {{
+                const items = suggestionsDiv.querySelectorAll('.autocomplete-item');
+                const activeItem = suggestionsDiv.querySelector('.autocomplete-item.active');
+                let activeIndex = Array.from(items).indexOf(activeItem);
+
+                if (e.key === 'ArrowDown' && !isTextarea) {{
+                    e.preventDefault();
+                    if (activeIndex < items.length - 1) {{
+                        if (activeItem) activeItem.classList.remove('active');
+                        items[activeIndex + 1].classList.add('active');
+                    }} else if (!activeItem && items.length > 0) {{
+                        items[0].classList.add('active');
+                    }}
+                }} else if (e.key === 'ArrowUp' && !isTextarea) {{
+                    e.preventDefault();
+                    if (activeIndex > 0) {{
+                        activeItem.classList.remove('active');
+                        items[activeIndex - 1].classList.add('active');
+                    }}
+                }} else if (e.key === 'Enter' && activeItem && !isTextarea) {{
+                    e.preventDefault();
+                    selectSuggestion(element, activeItem.dataset.value, suggestionsDiv, isTextarea);
+                }} else if (e.key === 'Tab' && items.length > 0) {{
+                    e.preventDefault();
+                    const firstItem = items[0];
+                    selectSuggestion(element, firstItem.dataset.value, suggestionsDiv, isTextarea);
+                }} else if (e.key === 'Escape') {{
+                    suggestionsDiv.innerHTML = '';
+                    suggestionsDiv.style.display = 'none';
+                }}
+            }});
+
+            // Fermer quand on clique ailleurs
+            document.addEventListener('click', function(e) {{
+                if (!element.contains(e.target) && !suggestionsDiv.contains(e.target)) {{
+                    suggestionsDiv.innerHTML = '';
+                    suggestionsDiv.style.display = 'none';
+                }}
+            }});
+        }});
+    }}
+
+    async function fetchAutocompleteSuggestions(element, suggestionsDiv, module, champ, value, isTextarea = false) {{
+        try {{
+            // Collecter le contexte du formulaire (autres champs remplis)
+            const contexte = collectFormContext(element);
+
+            const response = await fetch('/api/autocompletion-ia/suggest', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{
+                    module: module,
+                    champ: champ,
+                    valeur: value,
+                    limite: isTextarea ? 3 : 5,
+                    contexte: contexte  // Envoyer le contexte pour des suggestions plus pertinentes
+                }})
+            }});
+
+            if (response.ok) {{
+                const data = await response.json();
+                if (data.suggestions && data.suggestions.length > 0) {{
+                    renderSuggestions(element, suggestionsDiv, data.suggestions, isTextarea);
+                }} else {{
+                    suggestionsDiv.innerHTML = '';
+                    suggestionsDiv.style.display = 'none';
+                }}
+            }}
+        }} catch (e) {{
+            console.debug('Autocompletion error:', e);
+        }}
+    }}
+
+    // Collecter le contexte des autres champs du formulaire
+    function collectFormContext(currentElement) {{
+        const form = currentElement.closest('form');
+        if (!form) return {{}};
+
+        const contexte = {{}};
+        const excludeFields = ['password', 'token', 'secret', 'csrf', 'id'];
+
+        // Récupérer les valeurs des autres champs remplis
+        form.querySelectorAll('input, textarea, select').forEach(field => {{
+            const name = field.name;
+            const value = field.value;
+
+            // Ignorer le champ courant, les champs vides et les champs sensibles
+            if (!name || !value || field === currentElement) return;
+            if (excludeFields.some(ex => name.toLowerCase().includes(ex))) return;
+            if (field.type === 'hidden' && !name.includes('_id')) return;
+
+            // Limiter la longueur des valeurs pour ne pas surcharger le prompt
+            contexte[name] = value.length > 100 ? value.substring(0, 100) + '...' : value;
+        }});
+
+        // Limiter à 10 champs maximum pour ne pas surcharger le contexte
+        const keys = Object.keys(contexte);
+        if (keys.length > 10) {{
+            const limited = {{}};
+            keys.slice(0, 10).forEach(k => limited[k] = contexte[k]);
+            return limited;
+        }}
+
+        return contexte;
+    }}
+
+    function renderSuggestions(element, suggestionsDiv, suggestions, isTextarea = false) {{
+        const module = element.dataset.module || 'default';
+        const champ = element.dataset.champ || element.name;
+
+        suggestionsDiv.innerHTML = suggestions.map((s, i) => `
+            <div class="autocomplete-item ${{i === 0 ? 'active' : ''}}"
+                 data-value="${{s.texte}}"
+                 data-id="${{s.id}}"
+                 data-textarea="${{isTextarea}}"
+                 data-module="${{module}}"
+                 data-champ="${{champ}}"
+                 data-source="${{s.source || 'ia'}}">
+                <span class="suggestion-text">${{s.texte}}</span>
+                <span class="suggestion-source">${{s.source === 'ia' ? '✨' : s.source === 'historique' ? '📖' : s.source === 'feedback' ? '👍' : ''}}</span>
+            </div>
+        `).join('');
+        suggestionsDiv.style.display = 'block';
+
+        // Click handlers
+        suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {{
+            item.addEventListener('click', () => {{
+                const itemIsTextarea = item.dataset.textarea === 'true';
+                selectSuggestion(element, item, suggestionsDiv, itemIsTextarea);
+            }});
+        }});
+    }}
+
+    function selectSuggestion(element, item, suggestionsDiv, isTextarea = false) {{
+        const value = typeof item === 'string' ? item : item.dataset.value;
+        const suggestionId = typeof item === 'string' ? null : item.dataset.id;
+        const suggestionModule = typeof item === 'string' ? null : item.dataset.module;
+        const suggestionChamp = typeof item === 'string' ? null : item.dataset.champ;
+
+        if (isTextarea) {{
+            // Pour les textareas, remplacer le dernier mot par la suggestion
+            const currentValue = element.value;
+            const words = currentValue.split(/(\s+)/);  // Conserver les espaces
+            words.pop();  // Supprimer le dernier mot
+            element.value = words.join('') + value + ' ';
+        }} else {{
+            element.value = value;
+        }}
+
+        // Envoyer le feedback positif (suggestion acceptée)
+        if (suggestionId) {{
+            sendAutocompleteFeedback(suggestionId, true, value, suggestionModule, suggestionChamp);
+        }}
+        suggestionsDiv.innerHTML = '';
+        suggestionsDiv.style.display = 'none';
+        element.focus();
+        // Trigger change event
+        element.dispatchEvent(new Event('change', {{ bubbles: true }}));
+    }}
+
+    // Envoyer le feedback d'autocomplétion au backend pour apprentissage
+    async function sendAutocompleteFeedback(suggestionId, accepted, suggestionTexte, module, champ) {{
+        try {{
+            await fetch('/api/autocompletion-ia/feedback', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{
+                    suggestion_id: suggestionId,
+                    accepted: accepted,
+                    valeur_finale: accepted ? suggestionTexte : null,
+                    module: module || null,
+                    champ: champ || null,
+                    suggestion_texte: suggestionTexte
+                }})
+            }});
+        }} catch (e) {{
+            // Erreur silencieuse - le feedback est optionnel
+            console.debug('Feedback error:', e);
+        }}
+    }}
+
+    // ==========================================================================
+    // Autocomplétion Relations (champs de type lien/relation)
+    // ==========================================================================
+    let relationDebounceTimer = null;
+
+    function initRelationAutocomplete() {{
+        document.querySelectorAll('.relation-search-input').forEach(input => {{
+            const targetId = input.dataset.targetId;
+            const relationModule = input.dataset.relationModule;
+            const hiddenInput = document.getElementById(targetId);
+            const suggestionsDiv = document.getElementById(targetId + '_suggestions');
+
+            if (!suggestionsDiv || !hiddenInput) return;
+
+            // Charger la valeur initiale si elle existe
+            const currentValue = hiddenInput.value;
+            if (currentValue) {{
+                loadRelationDisplayValue(input, relationModule, currentValue);
+            }}
 
             // Input handler avec debounce
             input.addEventListener('input', function(e) {{
                 const value = e.target.value;
-                const module = input.dataset.module || 'default';
-                const champ = input.dataset.champ || input.name;
 
-                if (autocompleteDebounceTimer) clearTimeout(autocompleteDebounceTimer);
+                if (relationDebounceTimer) clearTimeout(relationDebounceTimer);
 
                 if (value.length < 2) {{
                     suggestionsDiv.innerHTML = '';
@@ -14667,15 +15101,15 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                     return;
                 }}
 
-                autocompleteDebounceTimer = setTimeout(() => {{
-                    fetchAutocompleteSuggestions(input, suggestionsDiv, module, champ, value);
+                relationDebounceTimer = setTimeout(() => {{
+                    fetchRelationSuggestions(input, suggestionsDiv, relationModule, value, hiddenInput);
                 }}, 300);
             }});
 
             // Navigation clavier
             input.addEventListener('keydown', function(e) {{
-                const items = suggestionsDiv.querySelectorAll('.autocomplete-item');
-                const activeItem = suggestionsDiv.querySelector('.autocomplete-item.active');
+                const items = suggestionsDiv.querySelectorAll('.relation-item');
+                const activeItem = suggestionsDiv.querySelector('.relation-item.active');
                 let activeIndex = Array.from(items).indexOf(activeItem);
 
                 if (e.key === 'ArrowDown') {{
@@ -14694,11 +15128,11 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                     }}
                 }} else if (e.key === 'Enter' && activeItem) {{
                     e.preventDefault();
-                    selectSuggestion(input, activeItem.dataset.value, suggestionsDiv);
+                    selectRelation(input, hiddenInput, activeItem, suggestionsDiv);
                 }} else if (e.key === 'Tab' && items.length > 0) {{
                     e.preventDefault();
                     const firstItem = items[0];
-                    selectSuggestion(input, firstItem.dataset.value, suggestionsDiv);
+                    selectRelation(input, hiddenInput, firstItem, suggestionsDiv);
                 }} else if (e.key === 'Escape') {{
                     suggestionsDiv.innerHTML = '';
                     suggestionsDiv.style.display = 'none';
@@ -14712,60 +15146,94 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
                     suggestionsDiv.style.display = 'none';
                 }}
             }});
+
+            // Effacer la valeur si l'input est vidé
+            input.addEventListener('blur', function(e) {{
+                if (!input.value.trim()) {{
+                    hiddenInput.value = '';
+                    hiddenInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                }}
+            }});
         }});
     }}
 
-    async function fetchAutocompleteSuggestions(input, suggestionsDiv, module, champ, value) {{
+    async function loadRelationDisplayValue(input, module, recordId) {{
         try {{
-            const response = await fetch('/api/autocompletion-ia/suggest', {{
-                method: 'POST',
-                headers: {{ 'Content-Type': 'application/json' }},
-                body: JSON.stringify({{
-                    module: module,
-                    champ: champ,
-                    valeur: value,
-                    limite: 5
-                }})
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`/api/v1/${{module.toLowerCase()}}/${{recordId}}`, {{
+                headers: {{
+                    'Authorization': 'Bearer ' + token
+                }}
+            }});
+            if (response.ok) {{
+                const data = await response.json();
+                // Construire le texte d'affichage
+                input.value = data.nom || data.name || data.reference || data.numero || recordId;
+            }}
+        }} catch (e) {{
+            console.debug('Error loading relation display:', e);
+        }}
+    }}
+
+    async function fetchRelationSuggestions(input, suggestionsDiv, module, query, hiddenInput) {{
+        try {{
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`/api/autocompletion-ia/relation-search?module=${{encodeURIComponent(module)}}&q=${{encodeURIComponent(query)}}&limit=10`, {{
+                headers: {{
+                    'Authorization': 'Bearer ' + token
+                }}
             }});
 
             if (response.ok) {{
                 const data = await response.json();
-                if (data.suggestions && data.suggestions.length > 0) {{
-                    renderSuggestions(input, suggestionsDiv, data.suggestions);
+                if (data.resultats && data.resultats.length > 0) {{
+                    renderRelationSuggestions(input, suggestionsDiv, data.resultats, hiddenInput);
                 }} else {{
-                    suggestionsDiv.innerHTML = '';
-                    suggestionsDiv.style.display = 'none';
+                    suggestionsDiv.innerHTML = '<div class="relation-no-results">Aucun résultat</div>';
+                    suggestionsDiv.style.display = 'block';
                 }}
             }}
         }} catch (e) {{
-            console.debug('Autocompletion error:', e);
+            console.debug('Relation search error:', e);
         }}
     }}
 
-    function renderSuggestions(input, suggestionsDiv, suggestions) {{
-        suggestionsDiv.innerHTML = suggestions.map((s, i) => `
-            <div class="autocomplete-item ${{i === 0 ? 'active' : ''}}" data-value="${{s.texte}}" data-id="${{s.id}}">
-                <span class="suggestion-text">${{s.texte}}</span>
-                <span class="suggestion-source">${{s.source === 'ia' ? '✨' : s.source === 'historique' ? '📖' : ''}}</span>
-            </div>
-        `).join('');
+    function renderRelationSuggestions(input, suggestionsDiv, results, hiddenInput) {{
+        suggestionsDiv.innerHTML = results.map((r, i) => {{
+            const extra = r.extra ? Object.entries(r.extra).map(([k, v]) => `<span class="extra-info">${{v}}</span>`).join(' ') : '';
+            return `
+                <div class="relation-item ${{i === 0 ? 'active' : ''}}" data-id="${{r.id}}" data-display="${{r.display}}">
+                    <span class="relation-display">${{r.display}}</span>
+                    <span class="relation-extras">${{extra}}</span>
+                </div>
+            `;
+        }}).join('');
         suggestionsDiv.style.display = 'block';
 
         // Click handlers
-        suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {{
+        suggestionsDiv.querySelectorAll('.relation-item').forEach(item => {{
             item.addEventListener('click', () => {{
-                selectSuggestion(input, item.dataset.value, suggestionsDiv);
+                selectRelation(input, hiddenInput, item, suggestionsDiv);
             }});
         }});
     }}
 
-    function selectSuggestion(input, value, suggestionsDiv) {{
-        input.value = value;
+    function selectRelation(input, hiddenInput, item, suggestionsDiv) {{
+        const id = item.dataset.id;
+        const display = item.dataset.display;
+
+        input.value = display;
+        hiddenInput.value = id;
         suggestionsDiv.innerHTML = '';
         suggestionsDiv.style.display = 'none';
-        input.focus();
-        // Trigger change event
-        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+
+        // Trigger change event on hidden input for autofill
+        hiddenInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+
+        // Appeler handleRelationAutofill si configuré
+        if (hiddenInput.dataset.autofill) {{
+            handleRelationAutofill(hiddenInput);
+        }}
     }}
 
     // ==========================================================================
@@ -15358,6 +15826,81 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
         margin-left: 8px;
     }}
 
+    /* Relation Autocomplete */
+    .relation-autocomplete-container {{
+        display: flex;
+        gap: 4px;
+        align-items: stretch;
+    }}
+    .relation-autocomplete-wrapper {{
+        position: relative;
+        flex: 1;
+    }}
+    .relation-search-input {{
+        width: 100%;
+        padding-right: 32px !important;
+    }}
+    .relation-search-icon {{
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        opacity: 0.5;
+        pointer-events: none;
+    }}
+    .relation-suggestions {{
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        max-height: 250px;
+        overflow-y: auto;
+        display: none;
+    }}
+    .relation-item {{
+        padding: 10px 12px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        border-bottom: 1px solid var(--gray-100);
+        transition: background 0.1s;
+    }}
+    .relation-item:last-child {{
+        border-bottom: none;
+    }}
+    .relation-item:hover,
+    .relation-item.active {{
+        background: var(--primary-light, #EEF2FF);
+    }}
+    .relation-display {{
+        font-weight: 500;
+        color: var(--gray-900);
+    }}
+    .relation-extras {{
+        font-size: 12px;
+        color: var(--gray-500);
+        display: flex;
+        gap: 8px;
+    }}
+    .relation-extras .extra-info {{
+        background: var(--gray-100);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }}
+    .relation-no-results {{
+        padding: 12px;
+        text-align: center;
+        color: var(--gray-500);
+        font-style: italic;
+    }}
+
     /* Auto-fill animations */
     @keyframes slideIn {{
         from {{ transform: translateX(100%); opacity: 0; }}
@@ -15878,6 +16421,9 @@ def generate_layout(title: str, content: str, user: dict, modules: List[Dict]) -
     }});
 
     </script>
+
+    <!-- MARCEAU Chat Panel -->
+    {get_marceau_panel()}
 </body>
 </html>
 '''

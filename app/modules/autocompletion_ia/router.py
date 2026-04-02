@@ -163,8 +163,20 @@ async def send_feedback(
 
     Permet d'améliorer les suggestions futures en apprenant
     des choix des utilisateurs.
+
+    - **suggestion_id**: ID de la suggestion reçue
+    - **accepted**: true si l'utilisateur a accepté la suggestion
+    - **valeur_finale**: La valeur finalement saisie (optionnel)
+    - **module**: Nom du module (optionnel mais recommandé)
+    - **champ**: Nom du champ (optionnel mais recommandé)
+    - **suggestion_texte**: Texte de la suggestion (optionnel mais recommandé)
     """
-    await service.record_feedback(request)
+    await service.record_feedback(
+        request=request,
+        module=request.module,
+        champ=request.champ,
+        suggestion_texte=request.suggestion_texte,
+    )
 
 
 @router.get(
@@ -265,6 +277,51 @@ async def test_autocompletion(
         provider=provider,
     )
     return await service.get_suggestions(test_request)
+
+
+@router.get(
+    "/learned",
+    response_model=SuggestionResponse,
+    summary="Suggestions apprises",
+    description="Récupère les suggestions basées sur le feedback utilisateur",
+)
+async def get_learned_suggestions(
+    module: str = Query(..., description="Nom du module (ex: Clients)"),
+    champ: str = Query(..., description="Nom du champ (ex: nom)"),
+    prefix: str = Query(default="", description="Préfixe pour filtrer"),
+    limit: int = Query(default=5, ge=1, le=20, description="Nombre max de suggestions"),
+    min_acceptance_rate: float = Query(default=0.5, ge=0, le=1, description="Taux d'acceptation minimum"),
+    min_total_count: int = Query(default=2, ge=1, description="Nombre minimum d'utilisations"),
+    service: AutocompletionIAService = Depends(get_service),
+) -> SuggestionResponse:
+    """
+    Récupérer les suggestions apprises basées sur le feedback utilisateur.
+
+    Ces suggestions sont celles qui ont été le plus souvent acceptées
+    par les utilisateurs pour ce module/champ spécifique.
+    """
+    import time
+    start_time = time.time()
+
+    suggestions = await service.get_learned_suggestions(
+        module=module,
+        champ=champ,
+        prefix=prefix,
+        limit=limit,
+        min_acceptance_rate=min_acceptance_rate,
+        min_total_count=min_total_count,
+    )
+
+    latency_ms = int((time.time() - start_time) * 1000)
+
+    from .schemas import SuggestionMeta
+    return SuggestionResponse(
+        suggestions=suggestions,
+        meta=SuggestionMeta(
+            cached=False,
+            latency_ms=latency_ms,
+        ),
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -703,3 +760,218 @@ async def smart_lookup(request: SmartLookupRequest) -> SmartLookupResponse:
             found=True,
         )
     return SmartLookupResponse(found=False)
+
+
+# -----------------------------------------------------------------------------
+# Endpoint Recherche Générique de Relations (pour TOUS les modules)
+# -----------------------------------------------------------------------------
+class RelationSearchResult(BaseModel):
+    """Un résultat de recherche de relation."""
+    id: str
+    display: str
+    module: str
+    extra: Optional[dict] = None
+
+
+class RelationSearchResponse(BaseModel):
+    """Réponse de recherche de relations."""
+    resultats: list[RelationSearchResult]
+    total: int
+    module: str
+    champs_recherches: list[str]
+
+
+# Configuration par défaut des champs de recherche par module
+# Cette config peut être surchargée par config/autocompletion.yml
+DEFAULT_RELATION_SEARCH_FIELDS = {
+    "clients": ["nom", "email", "telephone", "siret", "code"],
+    "fournisseurs": ["nom", "raison_sociale", "email", "siret", "code"],
+    "produits": ["nom", "reference", "code_barres", "code", "designation"],
+    "employes": ["nom", "prenom", "email", "matricule"],
+    "contacts": ["nom", "prenom", "email", "telephone"],
+    "projets": ["nom", "code", "reference", "titre"],
+    "interventions": ["reference", "objet", "numero"],
+    "factures": ["numero", "reference"],
+    "devis": ["numero", "reference"],
+    "commandes": ["numero", "reference"],
+    "bons_commande": ["numero", "reference"],
+    "bons_livraison": ["numero", "reference"],
+    "utilisateurs": ["nom", "prenom", "email", "login"],
+    "donneur_ordre": ["nom", "raison_sociale", "email", "siret"],
+    "articles": ["nom", "reference", "code", "designation"],
+    "prestations": ["nom", "code", "reference"],
+    "equipements": ["nom", "code", "numero_serie"],
+    "vehicules": ["immatriculation", "marque", "modele"],
+    "locaux": ["nom", "adresse", "reference"],
+    "immeubles": ["nom", "adresse", "reference"],
+    "lots": ["numero", "reference", "designation"],
+    "contrats": ["numero", "reference", "objet"],
+    "affaires": ["nom", "code", "reference"],
+}
+
+# Champs d'affichage par défaut
+DEFAULT_DISPLAY_FIELDS = {
+    "clients": ["nom", "email"],
+    "fournisseurs": ["nom", "email"],
+    "produits": ["nom", "reference"],
+    "employes": ["prenom", "nom"],
+    "contacts": ["prenom", "nom", "email"],
+    "utilisateurs": ["prenom", "nom"],
+    "factures": ["numero", "client_nom"],
+    "devis": ["numero", "client_nom"],
+}
+
+
+def _get_display_value(record: dict, module_name: str) -> str:
+    """Génère la valeur d'affichage pour un enregistrement."""
+    module_lower = module_name.lower()
+    display_fields = DEFAULT_DISPLAY_FIELDS.get(module_lower, ["nom", "name", "reference", "code", "titre"])
+
+    parts = []
+    for field in display_fields:
+        if field in record and record[field]:
+            parts.append(str(record[field]))
+
+    if parts:
+        return " - ".join(parts)
+
+    # Fallback: premier champ non-système non-vide
+    for key, value in record.items():
+        if key not in ["id", "tenant_id", "created_at", "updated_at", "deleted_at", "archived"] and value:
+            return str(value)
+
+    return str(record.get("id", ""))[:8]
+
+
+@router.get(
+    "/relation-search",
+    response_model=RelationSearchResponse,
+    summary="Recherche générique dans les relations",
+    description="Recherche dans n'importe quel module pour les champs de type relation",
+)
+async def search_relation(
+    module: str = Query(..., description="Nom du module (ex: Clients, Produits, Fournisseurs)"),
+    q: str = Query(..., min_length=2, description="Terme de recherche"),
+    limit: int = Query(default=10, ge=1, le=50, description="Nombre de résultats"),
+    fields: Optional[str] = Query(default=None, description="Champs à rechercher (séparés par des virgules)"),
+    user: dict = Depends(require_auth) if require_auth else None,
+    tenant_id: UUID = Depends(get_current_tenant) if get_current_tenant else None,
+) -> RelationSearchResponse:
+    """
+    Recherche générique dans n'importe quel module.
+
+    Permet de faire de l'autocomplétion sur les champs de type relation
+    sans avoir besoin d'un endpoint dédié par module.
+
+    Exemples:
+    - /relation-search?module=Clients&q=dupont
+    - /relation-search?module=Produits&q=vis&fields=nom,reference
+    - /relation-search?module=Employes&q=jean&limit=5
+    """
+    if not Database:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Base de données non disponible",
+        )
+
+    if tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentification requise",
+        )
+
+    # Normaliser le nom du module
+    module_lower = module.lower().replace("-", "_")
+
+    # Tenter de trouver la définition du module via ModuleParser
+    try:
+        from moteur.parser import ModuleParser
+        module_def = ModuleParser.get(module)
+        if module_def:
+            table_name = module_def.table_name or module_lower
+        else:
+            table_name = module_lower
+    except ImportError:
+        table_name = module_lower
+
+    # Déterminer les champs de recherche
+    if fields:
+        search_fields = [f.strip() for f in fields.split(",")]
+    else:
+        search_fields = DEFAULT_RELATION_SEARCH_FIELDS.get(
+            module_lower,
+            ["nom", "name", "code", "reference", "email", "titre"]
+        )
+
+    # Exécuter la recherche
+    try:
+        results = Database.search(
+            table_name=table_name,
+            tenant_id=tenant_id,
+            query=q,
+            fields=search_fields,
+            limit=limit,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur de recherche: {str(e)}",
+        )
+
+    # Formater les résultats
+    formatted_results = []
+    for record in results:
+        # Extraire les champs utiles pour extra
+        extra = {}
+        for key in ["email", "telephone", "siret", "code", "reference", "adresse", "ville"]:
+            if key in record and record[key]:
+                extra[key] = record[key]
+
+        formatted_results.append(RelationSearchResult(
+            id=str(record.get("id", "")),
+            display=_get_display_value(record, module),
+            module=module,
+            extra=extra if extra else None,
+        ))
+
+    return RelationSearchResponse(
+        resultats=formatted_results,
+        total=len(formatted_results),
+        module=module,
+        champs_recherches=search_fields,
+    )
+
+
+@router.get(
+    "/relation-modules",
+    summary="Liste des modules disponibles pour la recherche",
+    description="Retourne la liste des modules avec leurs champs de recherche configurés",
+)
+async def list_relation_modules() -> dict:
+    """
+    Liste les modules disponibles pour la recherche de relations.
+
+    Utile pour savoir quels modules peuvent être recherchés et
+    quels champs sont utilisés par défaut.
+    """
+    try:
+        from moteur.parser import ModuleParser
+        available_modules = ModuleParser.all()
+    except ImportError:
+        available_modules = list(DEFAULT_RELATION_SEARCH_FIELDS.keys())
+
+    modules_info = {}
+    for module_name in available_modules:
+        module_lower = module_name.lower()
+        modules_info[module_name] = {
+            "search_fields": DEFAULT_RELATION_SEARCH_FIELDS.get(
+                module_lower,
+                ["nom", "name", "code", "reference"]
+            ),
+            "display_fields": DEFAULT_DISPLAY_FIELDS.get(module_lower, ["nom"]),
+        }
+
+    return {
+        "modules": modules_info,
+        "total": len(modules_info),
+    }

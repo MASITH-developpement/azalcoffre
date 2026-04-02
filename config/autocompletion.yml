@@ -1,0 +1,105 @@
+# Configuration Autocomplétion AZALPLUS
+# Tous les paramètres sont centralisés ici (AZAP-NC-001)
+
+general:
+  debounce_ms: 300
+  min_length: 2
+  max_suggestions: 5
+  cache_ttl_minutes: 60
+
+providers:
+  default: anthropic
+
+  anthropic:
+    model: claude-sonnet-4-20250514
+    temperature: 0.3
+    max_tokens: 500
+
+  openai:
+    model: gpt-4o-mini
+    temperature: 0.3
+    max_tokens: 500
+
+  local:
+    enabled: true
+    fallback_only: true
+
+# Configuration par type de champ
+field_types:
+  nom_personne:
+    provider: anthropic
+    temperature: 0.3
+    context_fields: [prenom, email, telephone]
+
+  nom_entreprise:
+    provider: anthropic
+    temperature: 0.3
+    enrichment: siret_lookup
+
+  description:
+    provider: anthropic
+    temperature: 0.5
+    max_tokens: 200
+    style: professional
+
+  adresse:
+    primary_api: api_adresse
+    fallback_provider: local
+    auto_fill_fields: [code_postal, ville]
+
+  email:
+    provider: local
+    domain_suggestions: true
+
+  telephone:
+    provider: local
+    format: french
+
+  siret:
+    primary_api: entreprise_lookup
+    enrichment: true
+    auto_fill_fields: [nom, raison_sociale, adresse, code_postal, ville, siren, tva_intracommunautaire]
+
+  siren:
+    primary_api: entreprise_lookup
+    enrichment: true
+
+  code_postal:
+    primary_api: api_adresse
+    auto_fill_fields: [ville]
+
+  iban:
+    validation: true
+    format: true
+
+  tva_intracommunautaire:
+    primary_api: vies
+    validation: true
+
+# Champs à activer automatiquement
+auto_enable:
+  types:
+    - text
+    - textarea
+  exclude_fields:
+    - password
+    - mot_de_passe
+    - token
+    - secret
+    - api_key
+
+# Relation search configuration
+relations:
+  default_search_fields:
+    Clients: [nom, email, telephone, siret]
+    Fournisseurs: [nom, raison_sociale, email, siret]
+    Produits: [nom, reference, code_barres]
+    Employes: [nom, prenom, email]
+    Contacts: [nom, prenom, email, telephone]
+    Projets: [nom, code, reference]
+    Interventions: [reference, objet]
+    Factures: [numero, reference]
+    Devis: [numero, reference]
+
+  default_display_field: nom
+  max_results: 10

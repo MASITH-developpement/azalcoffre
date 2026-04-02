@@ -92,6 +92,15 @@ class FeedbackRequest(BaseModel):
     valeur_finale: Optional[str] = Field(
         default=None, description="Valeur finalement saisie"
     )
+    module: Optional[str] = Field(
+        default=None, description="Nom du module (ex: Clients)"
+    )
+    champ: Optional[str] = Field(
+        default=None, description="Nom du champ (ex: nom)"
+    )
+    suggestion_texte: Optional[str] = Field(
+        default=None, description="Texte de la suggestion"
+    )
 
 
 class ConfigUpdateRequest(BaseModel):
